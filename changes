@@ -1,94 +1,59 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'https://10.191.171.12:5443/PyPortal/',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export const getPost = () => {
-  return api.get('/EIS-GINI');
-};
-
-export const postMessage = (message) => {
-  return api.post('/EIS-GINI', { message });
-};
-
-
-
-import { useState, useEffect, useRef } from 'react';
-import { getPost, postMessage } from '../api/PostApi';
-import ProfileIcon from './ProfileIcon';
-import TypingIndicator from './TypingIndicator';
-import '../styles/Chatbot.css';
-import send from '../assets/Send.png';
+import { useState, useEffect, useRef } from "react";
+import ProfileIcon from "./ProfileIcon";
+import TypingIndicator from "./TypingIndicator";
+import "../styles/Chatbot.css";
+import send from '../assets/Send.png'; 
 import logo from '../assets/logobot.jpg';
 import chatdata from '../data/dummy.json';
+import { getPost } from "../api/PostApi";
 
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const getPostData = async () => {
-    try {
-      const res = await getPost();
-      console.log('API response:', res.data); // For debugging
-      setMessages(res.data.messages.chat_history); // Updated to match API format
-    } catch (error) {
-      console.error('Failed to fetch post data:', error);
-    }
-  };
+  // useEffect(() => {
+  //   setMessages(chatdata.chat_history);
+  // }, []);
+
+  const getPostData = async()=>{
+     const res = await getPost(); 
+     setMessages(res.messages.chat_history);
+  }
 
   useEffect(() => {
     getPostData();
-  }, []);
+  },[]);
+  
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const getCurrentTime = () => {
     const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now
+    return `${now.getHours().toString().padStart(2, "0")}:${now
       .getMinutes()
       .toString()
-      .padStart(2, '0')}`;
+      .padStart(2, "0")}`;
   };
 
-  const handleSendMessage = async (e) => {
+  const handleSendMessage = (e) => {
     e.preventDefault();
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === "") return;
 
     const userMsgId = Date.now();
     const newMsg = {
       id: userMsgId,
       text: newMessage,
-      sender: 'user',
+      sender: "user",
       time: getCurrentTime(),
     };
 
     setMessages([...messages, newMsg]);
-    setNewMessage('');
-
-    try {
-      const res = await postMessage(newMessage);
-      console.log('API response:', res.data);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          id: Date.now(),
-          text: res.data.response,
-          sender: 'bot',
-          time: getCurrentTime(),
-        },
-      ]);
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    }
+    setNewMessage("");
   };
 
   const handleOptionClick = async (optionText) => {
@@ -99,44 +64,54 @@ const Chatbot = ({ setChatbotMinimized }) => {
       sender: 'user',
       time: getCurrentTime(),
     };
-
+  
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsTyping(true);
-
+  
     try {
       const res = await postMessage(optionText);
-      console.log('API response:', res.data);
-      const botReplies = chatdata.option_responses?.[optionText] || [
+      const botReplies = res.data.messages?.chat_history || [
         {
           sender: 'bot',
-          text: `No information available for "${optionText}"`,
+          text: `No data returned for "${optionText}"`,
           time: getCurrentTime(),
         },
       ];
-
+  
       const formattedReplies = botReplies.map((reply, idx) => ({
         id: optionMsgId + idx + 1,
         sender: reply.sender,
         text: reply.text,
         time: reply.time || getCurrentTime(),
       }));
-
+  
       setMessages((prev) => [...prev, ...formattedReplies]);
-      setIsTyping(false);
     } catch (error) {
-      console.error('Failed to send option:', error);
+      console.error('Failed to fetch post data on option click:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: optionMsgId + 1,
+          sender: 'bot',
+          text: 'Sorry, something went wrong fetching that response.',
+          time: getCurrentTime(),
+        },
+      ]);
     }
+  
+    setIsTyping(false);
   };
 
   const handleMinimize = () => {
     setIsMinimized(true);
-    setChatbotMinimized(true);
+    setChatbotMinimized(true); // Notify parent
   };
 
   const handleRestore = () => {
     setIsMinimized(false);
-    setChatbotMinimized(false);
+    setChatbotMinimized(false); // Notify parent
   };
+
   return (
     <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
       <div className="chat-header">
