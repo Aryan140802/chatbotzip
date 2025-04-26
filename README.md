@@ -1,0 +1,249 @@
+import { useState, useEffect, useRef } from 'react';
+import { getPost, postMessage } from '../api/PostApi';
+import ProfileIcon from './ProfileIcon';
+import TypingIndicator from './TypingIndicator';
+import '../styles/Chatbot.css';
+import send from '../assets/Send.png';
+import logo from '../assets/logobot.jpg';
+import chatdata from '../data/dummy.json';
+
+const Chatbot = ({ setChatbotMinimized }) => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const getPostData = async () => {
+    try {
+      const res = await getPost();
+      console.log('API response:', res.data); // For debugging
+      setMessages(res.data.messages.chat_history); // Updated to match API format
+    } catch (error) {
+      console.error('Failed to fetch post data:', error);
+    }
+  };
+
+  useEffect(() => {
+    getPostData();
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}`;
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (newMessage.trim() === '') return;
+
+    const userMsgId = Date.now();
+    const newMsg = {
+      id: userMsgId,
+      text: newMessage,
+      sender: 'user',
+      time: getCurrentTime(),
+    };
+
+    setMessages([...messages, newMsg]);
+    setNewMessage('');
+
+    try {
+      const res = await postMessage(newMessage);
+      console.log('API response:', res.data);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: Date.now(),
+          text: res.data.response,
+          sender: 'bot',
+          time: getCurrentTime(),
+        },
+      ]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
+
+  const handleOptionClick = async (optionText) => {
+    const optionMsgId = Date.now();
+    const userMessage = {
+      id: optionMsgId,
+      text: optionText,
+      sender: 'user',
+      time: getCurrentTime(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setIsTyping(true);
+
+    try {
+      const res = await postMessage(optionText);
+      console.log('API response:', res.data);
+      const botReplies = chatdata.option_responses?.[optionText] || [
+        {
+          sender: 'bot',
+          text: `No information available for "${optionText}"`,
+          time: getCurrentTime(),
+        },
+      ];
+
+      const formattedReplies = botReplies.map((reply, idx) => ({
+        id: optionMsgId + idx + 1,
+        sender: reply.sender,
+        text: reply.text,
+        time: reply.time || getCurrentTime(),
+      }));
+
+      setMessages((prev) => [...prev, ...formattedReplies]);
+      setIsTyping(false);
+    } catch (error) {
+      console.error('Failed to send option:', error);
+    }
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setChatbotMinimized(true);
+  };
+
+  const handleRestore = () => {
+    setIsMinimized(false);
+    setChatbotMinimized(false);
+  };
+  return (
+    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
+      <div className="chat-header">
+        <img
+          src={logo}
+          alt="Logo"
+          className="chat-logo"
+          onClick={handleRestore}
+        />
+        {!isMinimized && (
+          <>
+            <div className="chat-title">
+              <h1>EIS GINI</h1>
+              <h5>(Generative Interactive Neural Interface)</h5>
+            </div>
+            <button
+              className="minimize-button"
+              onClick={handleMinimize}
+              aria-label="Minimize chat"
+            >
+              &#x2212;
+            </button>
+          </>
+        )}
+      </div>
+
+      {!isMinimized && (
+        <>
+          <div className="messages-container">
+            {messages.map((item, index) => (
+              <div
+                key={index}
+                className={`message-wrapper ${item.sender.toLowerCase()}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
+                  marginBottom: "12px"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
+                  <div
+                    className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}
+                  >
+                    <div className="message-content">{item.text}</div>
+
+                    {item.options && (
+                      <div className="options-list">
+                        {item.options.map((opt, i) => (
+                          <button
+                            key={i}
+                            className="option-button"
+                            onClick={() => handleOptionClick(opt)}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="message-time">{item.time}</div>
+                  </div>
+                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
+                </div>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                <ProfileIcon sender="bot" />
+                <div className="message bot-message">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form className="message-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="message-input"
+              aria-label="Type a message"
+            />
+            <button type="submit" className="send-button" aria-label="Send message">
+              <div className="send-icon">
+                <img className="logo" src={send} alt="" style={{ height: '20px' }} />
+              </div>
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Chatbot;
+
+
+
+
+
+
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const getPost = () => {
+  return api.get('/EIS-GINI');
+};
+
+export const postMessage = (message) => {
+  return api.post('/EIS-GINI', { message });
+};
+
+
+
+
+
+
