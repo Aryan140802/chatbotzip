@@ -1,4 +1,106 @@
- const handleOptionClick = async (optionText) => {
+import { useState, useEffect, useRef } from "react";
+import ProfileIcon from "./ProfileIcon";
+import TypingIndicator from "./TypingIndicator";
+import "../styles/Chatbot.css";
+import send from '../assets/Send.png';
+import logo from '../assets/logobot.jpg';
+import { getPost, postMessage } from "../api/PostApi";
+
+const Chatbot = ({ setChatbotMinimized }) => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const getPostData = async () => {
+    try {
+      setIsTyping(true);
+      const res = await getPost();
+      
+      // Transform API response to match component's expected format
+      const formattedMessages = res.data.chat_history.map((item, index) => ({
+        id: Date.now() + index,
+        text: item.message || "", // Handle the 'message' property from API
+        sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
+        time: getCurrentTime(),
+        options: item.options || []
+      }));
+      
+      setMessages(formattedMessages);
+      setIsTyping(false);
+    } catch (error) {
+      console.error('Error fetching', error);
+      setIsTyping(false);
+    }
+  };
+
+  useEffect(() => {
+    getPostData();
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, "0")}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (newMessage.trim() === "") return;
+
+    const userMsgId = Date.now();
+    const userMsg = {
+      id: userMsgId,
+      text: newMessage,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, userMsg]);
+    setNewMessage("");
+    setIsTyping(true);
+
+    try {
+      const res = await postMessage(newMessage);
+      
+      // Process the response
+      if (res.data.chat_history && res.data.chat_history.length > 0) {
+        const latestMessage = res.data.chat_history[res.data.chat_history.length - 1];
+        
+        const botResponse = {
+          id: Date.now(),
+          text: latestMessage.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latestMessage.options || []
+        };
+        
+        setMessages((prevMessages) => [...prevMessages, botResponse]);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      
+      const errorMsg = {
+        id: Date.now(),
+        text: "Sorry, something went wrong. Please try again.",
+        sender: "bot",
+        time: getCurrentTime()
+      };
+      
+      setMessages((prevMessages) => [...prevMessages, errorMsg]);
+    }
+    
+    setIsTyping(false);
+  };
+
+  const handleOptionClick = async (optionText) => {
     const optionMsgId = Date.now();
     const userMessage = {
       id: optionMsgId,
@@ -6,40 +108,152 @@
       sender: 'user',
       time: getCurrentTime(),
     };
-  
+
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setIsTyping(true);
-  
+
     try {
-      const res = await postMessage(optionText);
-      const botReplies = res.data.messages?.chat_history || [
-        {
-          sender: 'bot',
-          text: `No data returned for "${optionText}"`,
+      const cleanedOpt = optionText.replace(/^\d+\.\s*/, "");
+      const res = await postMessage(cleanedOpt);
+      
+      if (res.data.chat_history && res.data.chat_history.length > 0) {
+        // Get the latest message from the response
+        const latestMessage = res.data.chat_history[res.data.chat_history.length - 1];
+        
+        const botResponse = {
+          id: Date.now(),
+          text: latestMessage.message || "",
+          sender: "bot",
           time: getCurrentTime(),
-        },
-      ];
-  
-      const formattedReplies = botReplies.map((reply, idx) => ({
-        id: optionMsgId + idx + 1,
-        sender: reply.sender,
-        text: reply.text,
-        time: reply.time || getCurrentTime(),
-      }));
-  
-      setMessages((prev) => [...prev, ...formattedReplies]);
+          options: latestMessage.options || []
+        };
+        
+        setMessages((prevMessages) => [...prevMessages, botResponse]);
+      }
     } catch (error) {
       console.error('Failed to fetch post data on option click:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: optionMsgId + 1,
-          sender: 'bot',
-          text: 'Sorry, something went wrong fetching that response.',
-          time: getCurrentTime(),
-        },
-      ]);
+      
+      const errorMsg = {
+        id: Date.now(),
+        text: 'Sorry, something went wrong fetching that response.',
+        sender: 'bot',
+        time: getCurrentTime(),
+      };
+      
+      setMessages((prevMessages) => [...prevMessages, errorMsg]);
     }
-  
+
     setIsTyping(false);
   };
+
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setChatbotMinimized(true); // Notify parent
+  };
+
+  const handleRestore = () => {
+    setIsMinimized(false);
+    setChatbotMinimized(false); // Notify parent
+  };
+
+  return (
+    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
+      <div className="chat-header">
+        <img
+          src={logo}
+          alt="Logo"
+          className="chat-logo"
+          onClick={handleRestore}
+        />
+        {!isMinimized && (
+          <>
+            <div className="chat-title">
+              <h1>EIS GINI</h1>
+              <h5>(Generative Interactive Neural Interface)</h5>
+            </div>
+            <button
+              className="minimize-button"
+              onClick={handleMinimize}
+              aria-label="Minimize chat"
+            >
+              &#x2212;
+            </button>
+          </>
+        )}
+      </div>
+
+      {!isMinimized && (
+        <>
+          <div className="messages-container">
+            {messages.map((item, index) => (
+              <div
+                key={index}
+                className={`message-wrapper ${item.sender.toLowerCase()}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
+                  marginBottom: "12px"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
+                  <div
+                    className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}
+                  >
+                    <div className="message-content">{item.text}</div>
+
+                    {item.options && item.options.length > 0 && (
+                      <div className="options-list">
+                        {item.options.map((opt, i) => (
+                          <button
+                            key={i}
+                            className="option-button"
+                            onClick={() => handleOptionClick(opt)}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="message-time">{item.time}</div>
+                  </div>
+                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
+                </div>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                <ProfileIcon sender="bot" />
+                <div className="message bot-message">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form className="message-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="message-input"
+              aria-label="Type a message"
+            />
+            <button type="submit" className="send-button" aria-label="Send message">
+              <div className="send-icon">
+                <img className="logo" src={send} alt="" style={{ height: '20px' }} />
+              </div>
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Chatbot;
