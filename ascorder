@@ -1,11 +1,19 @@
-const convertToCSV = (jsonData) => {
-  if (!jsonData || jsonData.length === 0) return "";
+useEffect(() => {
+  const convertToCSV = (jsonData, sortBy = 'usage') => {
+    if (!jsonData || !jsonData.length) return '';
 
-  const headers = Object.keys(jsonData[0]);
-  const csvRows = [
-    headers.join(","), // header row
-    ...jsonData.map(row => headers.map(field => `"${row[field]}"`).join(","))
-  ];
+    // Sort data in descending order
+    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
 
-  return csvRows.join("\n");
-};
+    const headers = Object.keys(sortedData[0]);
+    const csvRows = [
+      headers.join(','), // header row
+      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
+    ];
+
+    return csvRows.join('\n');
+  };
+
+  const csv = convertToCSV(data, 'usage'); // change 'usage' to 'apiCalls' if needed
+  console.log(csv);
+}, []);
