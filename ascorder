@@ -1,0 +1,11 @@
+const convertToCSV = (jsonData) => {
+  if (!jsonData || jsonData.length === 0) return "";
+
+  const headers = Object.keys(jsonData[0]);
+  const csvRows = [
+    headers.join(","), // header row
+    ...jsonData.map(row => headers.map(field => `"${row[field]}"`).join(","))
+  ];
+
+  return csvRows.join("\n");
+};
