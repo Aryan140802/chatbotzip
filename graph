@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import Download from "../assets/down-arrow.png";
-import { getServiceSys, getServiceExp, getIpwiseExp, getIpwiseSys, getPortwiseSys, getPortwiseExp } from "../api/PostApi";
+import { getServiceSys, getServiceExp, getIpwiseSys, getIpwiseExp, getPortwiseSys, getPortwiseExp } from "../api/PostApi";
 
 // Sample data for testing purposes
 const sampleData = [
@@ -26,9 +26,6 @@ const GraphCarousel = () => {
   const [portwiseSysData, setPortwiseSysData] = useState([]);
   const [portwiseExpData, setPortwiseExpData] = useState([]);
 
-  // CSV data global variable (top 5)
-  let csvGlobal = [];
-
   // Fetch the data from the backend
   const fetchData = async () => {
     try {
@@ -39,13 +36,13 @@ const GraphCarousel = () => {
       const portwiseSysRes = await getPortwiseSys();
       const portwiseExpRes = await getPortwiseExp();
 
-      // Update the state with the fetched data
-      setServiceSysData(serviceSysRes.data);
-      setServiceExpData(serviceExpRes.data);
-      setIpwiseSysData(ipwiseSysRes.data);
-      setIpwiseExpData(ipwiseExpRes.data);
-      setPortwiseSysData(portwiseSysRes.data);
-      setPortwiseExpData(portwiseExpRes.data);
+      // Ensure the response data is an array before updating state
+      setServiceSysData(Array.isArray(serviceSysRes.data) ? serviceSysRes.data : []);
+      setServiceExpData(Array.isArray(serviceExpRes.data) ? serviceExpRes.data : []);
+      setIpwiseSysData(Array.isArray(ipwiseSysRes.data) ? ipwiseSysRes.data : []);
+      setIpwiseExpData(Array.isArray(ipwiseExpRes.data) ? ipwiseExpRes.data : []);
+      setPortwiseSysData(Array.isArray(portwiseSysRes.data) ? portwiseSysRes.data : []);
+      setPortwiseExpData(Array.isArray(portwiseExpRes.data) ? portwiseExpRes.data : []);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -79,10 +76,10 @@ const GraphCarousel = () => {
     return csvRows.join("\n");
   };
 
-  // Prepare CSV data for download
+  // Prepare CSV data for download (full data, not sliced)
   const prepareCSVData = (data, filename = "chart-data.csv") => {
-    csvGlobal = convertToCSV(data);
-    const blob = new Blob([csvGlobal], { type: "text/csv;charset=utf-8;" });
+    const csvData = convertToCSV(data); // Get the full data
+    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -144,7 +141,17 @@ const GraphCarousel = () => {
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={() => prepareCSVData(csvGlobal, `${charts[currentIndex].title}.csv`)}
+            onClick={() => {
+              const fullData = 
+                currentIndex === 0 ? serviceSysData : 
+                currentIndex === 1 ? serviceExpData :
+                currentIndex === 2 ? ipwiseSysData :
+                currentIndex === 3 ? ipwiseExpData :
+                currentIndex === 4 ? portwiseSysData :
+                portwiseExpData;
+              
+              prepareCSVData(fullData, `${charts[currentIndex].title}.csv`);
+            }}
           >
             <div className="logo-wrapper">
               <img
@@ -188,49 +195,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'https://10.191.171.12:5443/PyPortal/',
-  timeout: 100000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export const getPost = () => {
-  return api.get('EIS-GINI/',{timeout:100000});
-};
-
-export const postMessage = (message) => {
- const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
-        console.log(res);
-  return res;
-};
-
-export const getServiceSys = () => {
-  return api.get('EISHome/servicewise_sys/');
-};
-
-export const getServiceExp = () => {
-  return api.get('EISHome/servicewise_exp/');
-};
-
-export const getIpwiseSys = () => {
-  return api.get('EISHome/ipwise_sys/');
-};
-
-export const getIpwiseExp = () => {
-  return api.get('EISHome/ipwise_exp/');
-};
-
-
-export const getPortwiseSys = () => {
-  return api.get('EISHome/portwise_sys/');
-};
-
-export const getPortwiseExp = () => {
-  return api.get('EISHome/portwise_exp/');
-};
-
