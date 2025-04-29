@@ -6,22 +6,22 @@ import send from '../assets/Send.png';
 import logo from '../assets/logobot.jpg';
 import { getPost, postMessage } from "../api/PostApi";
 
-// ✅ Optionally keep or remove this if formatting manually
+// ✅ Formats bot messages with line breaks and bold values
 const formatDynamicMessage = (html) => {
   if (!html || typeof html !== "string") return html;
 
-  const lines = [];
-  const pattern1 = /([A-Za-z\s/.'()&,-]+?)\s*<b>(.*?)<\/b>/g;
-  let match;
+  const lines = html.split('\n');
+  const formattedLines = lines.map(line => {
+    const match = line.match(/^(.*?):\s*(.*)$/);
+    if (match) {
+      const key = match[1].trim();
+      const value = match[2].trim();
+      return `<div><strong>${key}:</strong> ${value}</div>`;
+    }
+    return `<div>${line}</div>`;
+  });
 
-  while ((match = pattern1.exec(html)) !== null) {
-    const key = match[1].trim().replace(/[:\s]*$/, "");
-    const value = match[2].trim();
-    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
-  }
-
-  if (lines.length === 0) return html;
-  return `<div class="formatted-card">${lines.join("")}</div>`;
+  return `<div class="formatted-card">${formattedLines.join("")}</div>`;
 };
 
 const Chatbot = ({ setChatbotMinimized }) => {
@@ -51,10 +51,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const getCurrentTime = () => {
     const now = new Date();
-    return `${now.getHours().toString().padStart(2, "0")}:${now
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`;
+    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
   const getPostData = async () => {
@@ -74,7 +71,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
       const formattedMessages = res.data.chat_history.map((item, index) => ({
         id: Date.now() + index,
-        text: item.message || "",
+        text: item.sender.toLowerCase() === "you" ? item.message : formatDynamicMessage(item.message || ""),
         sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
         time: getCurrentTime(),
         options: item.options || []
@@ -136,7 +133,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         const latest = res.data.chat_history[res.data.chat_history.length - 1];
         const botResponse = {
           id: Date.now(),
-          text: latest.message || "",
+          text: formatDynamicMessage(latest.message || ""),
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || []
@@ -188,7 +185,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         const latest = res.data.chat_history[res.data.chat_history.length - 1];
         const botResponse = {
           id: Date.now(),
-          text: latest.message || "",
+          text: formatDynamicMessage(latest.message || ""),
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || []
@@ -251,7 +248,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {/* ✅ Now always render bot messages as HTML */}
                     {item.sender === "bot" ? (
                       <div
                         className="message-content"
@@ -309,19 +305,14 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
 export default Chatbot;
 
+
+
 .formatted-card {
-  background-color: #f7f7f7;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  padding: 10px;
-  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.4;
 }
-
-.formatted-card div {
-  margin-bottom: 6px;
-}
-
 .formatted-card strong {
-  font-weight: bold;
-  color: #222;
+  font-weight: 600;
 }
