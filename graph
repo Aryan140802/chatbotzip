@@ -1,169 +1,190 @@
-import { useState, useEffect } from "react";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import Download from "../assets/down-arrow.png";
-import { getServiceSys, getServiceExp, getIpwiseSys, getIpwiseExp, getPortwiseSys, getPortwiseExp } from "../api/PostApi";
+import '../styles/GraphCarousel.css';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
-// Sample data for testing purposes
-const sampleData = [
-  { name: "Mon", usage: 30, apiCalls: 240 },
-  { name: "Tue", usage: 45, apiCalls: 139 },
-  { name: "Wed", usage: 60, apiCalls: 980 },
-  { name: "Thu", usage: 75, apiCalls: 390 },
-  { name: "Fri", usage: 90, apiCalls: 480 },
-  { name: "Sat", usage: 55, apiCalls: 630 },
-  { name: "Sun", usage: 35, apiCalls: 720 },
+import  Download from '../assets/down-arrow.png';
+import {getServiceSys,getServiceExp,getIpwiseExp,getIpwiseSys,getPortwiseSys,getPortwiseExp}  from "../api/PostApi";
+import { useState, useEffect, useRef } from "react";
+
+const data = [
+  { name: 'Mon', usage: 30, apiCalls: 240 },
+  { name: 'Tue', usage: 45, apiCalls: 139 },
+  { name: 'Wed', usage: 60, apiCalls: 980 },
+  { name: 'Thu', usage: 75, apiCalls: 390 },
+  { name: 'Fri', usage: 90, apiCalls: 480 },
+  { name: 'Sat', usage: 55, apiCalls: 630 },
+  { name: 'Sun', usage: 35, apiCalls: 720 },
+];
+var csvGlobal;
+const getServiceSysData =  async () => {
+   const res = await getServiceSys();
+   console.log(res.data);
+
+        const convertToCSV = (jsonData, sortBy = 'Hits') => {
+    if (!jsonData || !jsonData.length) return '';
+
+    // Sort data in descending order
+    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
+
+    const headers = Object.keys(sortedData[0]);
+    const csvRows = [
+      headers.join(','), // header row
+      ...sortedData.map(row => headers.map(field => "${row[field]}").join(','))
+    ];
+
+    return csvRows.join('\n');
+  };
+
+  csvGlobal = convertToCSV(res.data, 'Hits'); // change 'usage' to 'apiCalls' if needed
+
+
+}
+
+const getServiceExpData =  async () => {
+   const res = await getServiceExp();
+   console.log(res.data);
+}
+
+const getIpwiseSysData =  async () => {
+   const res = await getIpwiseSys();
+   console.log(res.data);
+}
+
+const getIpwiseExpData =  async () => {
+   const res = await getIpwiseExp();
+   console.log(res.data);
+}
+
+const getPortwiseSysData =  async () => {
+   const res = await getPortwiseSys();
+   console.log(res.data);
+}
+
+const getPortwiseExpData =  async () => {
+   const res = await getPortwiseExp();
+   console.log(res.data);
+}
+
+
+
+
+const charts = [
+  {
+    title: 'Disk Usage Overview',
+    chart: (
+      <ResponsiveContainer>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="name" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" />
+          <Tooltip />
+          <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
+        </LineChart>
+      </ResponsiveContainer>
+    ),
+  },
+  {
+    title: 'API Calls Per Day',
+    chart: (
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="name" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" />
+          <Tooltip />
+          <Bar dataKey="apiCalls" fill="#7559f3" />
+        </BarChart>
+      </ResponsiveContainer>
+    ),
+  },
 ];
 
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  // State variables to store the fetched data
-  const [serviceSysData, setServiceSysData] = useState([]);
-  const [serviceExpData, setServiceExpData] = useState([]);
-  const [ipwiseSysData, setIpwiseSysData] = useState([]);
-  const [ipwiseExpData, setIpwiseExpData] = useState([]);
-  const [portwiseSysData, setPortwiseSysData] = useState([]);
-  const [portwiseExpData, setPortwiseExpData] = useState([]);
 
-  // Fetch the data from the backend
-  const fetchData = async () => {
-    try {
-      const serviceSysRes = await getServiceSys();
-      const serviceExpRes = await getServiceExp();
-      const ipwiseSysRes = await getIpwiseSys();
-      const ipwiseExpRes = await getIpwiseExp();
-      const portwiseSysRes = await getPortwiseSys();
-      const portwiseExpRes = await getPortwiseExp();
-
-      // Ensure the response data is an array before updating state
-      setServiceSysData(Array.isArray(serviceSysRes.data) ? serviceSysRes.data : []);
-      setServiceExpData(Array.isArray(serviceExpRes.data) ? serviceExpRes.data : []);
-      setIpwiseSysData(Array.isArray(ipwiseSysRes.data) ? ipwiseSysRes.data : []);
-      setIpwiseExpData(Array.isArray(ipwiseExpRes.data) ? ipwiseExpRes.data : []);
-      setPortwiseSysData(Array.isArray(portwiseSysRes.data) ? portwiseSysRes.data : []);
-      setPortwiseExpData(Array.isArray(portwiseExpRes.data) ? portwiseExpRes.data : []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    // Auto-refresh data every minute
-    const interval = setInterval(() => {
-      fetchData();
-    }, 60000); // 60 seconds = 1 minute
-
-    return () => clearInterval(interval);
+ useEffect(() => {
+    getServiceSysData();
+    getServiceExpData();
+    getIpwiseSysData();
+    getIpwiseExpData();
+    getPortwiseSysData();
+    getPortwiseExpData();
   }, []);
 
-  // Convert data to CSV format
-  const convertToCSV = (jsonData) => {
-    if (!jsonData || !jsonData.length) return "";
 
-    // Sort data by 'Hits' descending
-    const sortedData = [...jsonData].sort((a, b) => b.Hits - a.Hits);
-
-    const headers = Object.keys(sortedData[0]);
-    const csvRows = [
-      headers.join(","), // header row
-      ...sortedData.map((row) =>
-        headers.map((field) => `"${row[field]}"`).join(",")
-      ),
-    ];
-
-    return csvRows.join("\n");
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
   };
 
-  // Prepare CSV data for download (full data, not sliced)
-  const prepareCSVData = (data, filename = "chart-data.csv") => {
-    const csvData = convertToCSV(data); // Get the full data
-    const blob = new Blob([csvData], { type: "text/csv;charset=utf-8;" });
+  const downloadCSV = (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) return;
+
+    const keys = Object.keys(data[0]);
+    const csvContent = [
+      keys.join(','), // header
+      ...data.map(row => keys.map(key => "${row[key]}").join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
+
+    const link = document.createElement('a');
     link.href = url;
-    link.setAttribute("download", filename);
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Create charts with service-wise, port-wise, and IP-wise data
-  const createChart = (title, data, color) => (
-    <ResponsiveContainer>
-      <BarChart data={data}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-        <XAxis dataKey="name" stroke="var(--text-color)" />
-        <YAxis stroke="var(--text-color)" />
-        <Tooltip />
-        <Bar dataKey="Hits" fill={color} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
 
-  const charts = [
-    {
-      title: "Service-wise Disk Usage",
-      chart: createChart("Service-wise Disk Usage", serviceSysData.slice(0, 5), "#f14f98"),
-    },
-    {
-      title: "Service-wise API Calls",
-      chart: createChart("Service-wise API Calls", serviceExpData.slice(0, 5), "#7559f3"),
-    },
-    {
-      title: "IP-wise Disk Usage",
-      chart: createChart("IP-wise Disk Usage", ipwiseSysData.slice(0, 5), "#ffb74d"),
-    },
-    {
-      title: "IP-wise API Calls",
-      chart: createChart("IP-wise API Calls", ipwiseExpData.slice(0, 5), "#66bb6a"),
-    },
-    {
-      title: "Port-wise Disk Usage",
-      chart: createChart("Port-wise Disk Usage", portwiseSysData.slice(0, 5), "#42a5f5"),
-    },
-    {
-      title: "Port-wise API Calls",
-      chart: createChart("Port-wise API Calls", portwiseExpData.slice(0, 5), "#ff7043"),
-    },
-  ];
+  // Auto-play effect
+  useEffect(() => {
+    if (paused) return;
 
-  // Slide navigation functions
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-  };
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [paused]);
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-        <h2>{charts[currentIndex].title}</h2>
-        <div className="download-button-wrapper">
-          <button
-            className="download-button"
-            onClick={() => {
-              const fullData = 
-                currentIndex === 0 ? serviceSysData : 
-                currentIndex === 1 ? serviceExpData :
-                currentIndex === 2 ? ipwiseSysData :
-                currentIndex === 3 ? ipwiseExpData :
-                currentIndex === 4 ? portwiseSysData :
-                portwiseExpData;
-              
-              prepareCSVData(fullData, `${charts[currentIndex].title}.csv`);
-            }}
-          >
-            <div className="logo-wrapper">
-              <img
-                className="logo"
-                src={Download}
-                alt="Download Icon"
-                style={{ height: "36px", marginRight: "3px" }}
-              />
-            </div>
-          </button>
-        </div>
-      </div>
+
+
+
+  <h2>{charts[currentIndex].title}</h2>
+
+  <div className="download-button-wrapper">
+  <button
+    className="download-button"
+    onClick={() => downloadCSV(csvGlobal, ${charts[currentIndex].title}.csv)}
+  >
+
+      <div className="logo-wrapper">
+  <img
+    className="logo"
+    src={Download}
+    alt="Download Icon"
+    style={{ height: '36px', marginRight: '3px'}}
+  />
+</div>
+
+
+  </button>
+
+</div>
+
+</div>
+
+
+
 
       <div
         className="carousel-graph"
@@ -173,8 +194,8 @@ const GraphCarousel = () => {
         {charts.map((item, index) => (
           <div
             key={index}
-            className={`chart-fade ${index === currentIndex ? "active" : ""}`}
-            style={{ display: index === currentIndex ? "block" : "none" }}
+            className={chart-fade ${index === currentIndex ? 'active' : ''}}
+            style={{ display: index === currentIndex ? 'block' : 'none' }}
           >
             {item.chart}
           </div>
@@ -182,14 +203,17 @@ const GraphCarousel = () => {
       </div>
 
       <div className="carousel-dots">
-        {charts.map((_, index) => (
-          <span
-            key={index}
-            className={`dot ${index === currentIndex ? "active" : ""} ${paused ? "paused" : ""}`}
-            onClick={() => goToSlide(index)}
-          ></span>
-        ))}
-      </div>
+  {charts.map((_, index) => (
+    <span
+      key={index}
+      className={dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}}
+      onClick={() => goToSlide(index)}
+    >
+
+    </span>
+  ))}
+</div>
+
     </div>
   );
 };
