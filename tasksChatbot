@@ -1,9 +1,9 @@
 1)trim input as well as output of chatbot check for both input as well as output done
 2)form display on multiple fields option response (reference far information option) (taken for implementation)
-3)input bar to be enabled when there are no options to choose or requires user enter text(if options length greater than 1 than disable)
-4)set time out increase for response coming from the server (effected far option ) (taken for implementation)
-5)stop the action of  submit button when the response is loading 
-6)It should render alert  that it will take time if the response is taking more than 5 sec to give the response
+3)input bar to be enabled when there are no options to choose or requires user enter text(if options length greater than 1 than disable)(need to brainstorm)
+4)set time out increase for response coming from the server (effected far option ) (done)
+5)stop the action of  submit button when the response is loading (done)
+6)It should render alert  that it will take time if the response is taking more than 5 sec to give the response(done)
 7)only options should be displayed as buttons rest of the messages should be displayed as text (need to make changes from backend)
 8)integrate api's for graph(only top ten should be displayed ) and ascending order by hits (taken for implementation)
 9)implement the .innerhtml function in the output response given by the chatbot (done)
