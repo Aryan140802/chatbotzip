@@ -1,0 +1,221 @@
+import '../styles/GraphCarousel.css';
+import {
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
+
+import  Download from '../assets/down-arrow.png';
+import {getServiceSys,getServiceExp,getIpwiseExp,getIpwiseSys,getPortwiseSys,getPortwiseExp}  from "../api/PostApi";
+import { useState, useEffect, useRef } from "react";
+
+const data = [
+  { name: 'Mon', usage: 30, apiCalls: 240 },
+  { name: 'Tue', usage: 45, apiCalls: 139 },
+  { name: 'Wed', usage: 60, apiCalls: 980 },
+  { name: 'Thu', usage: 75, apiCalls: 390 },
+  { name: 'Fri', usage: 90, apiCalls: 480 },
+  { name: 'Sat', usage: 55, apiCalls: 630 },
+  { name: 'Sun', usage: 35, apiCalls: 720 },
+];
+var csvGlobal;
+const getServiceSysData =  async () => {
+   const res = await getServiceSys();
+   console.log(res.data);
+
+        const convertToCSV = (jsonData, sortBy = 'Hits') => {
+    if (!jsonData || !jsonData.length) return '';
+
+    // Sort data in descending order
+    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
+
+    const headers = Object.keys(sortedData[0]);
+    const csvRows = [
+      headers.join(','), // header row
+      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
+    ];
+
+    return csvRows.join('\n');
+  };
+
+  csvGlobal = convertToCSV(res.data, 'Hits'); // change 'usage' to 'apiCalls' if needed
+
+
+}
+
+const getServiceExpData =  async () => {
+   const res = await getServiceExp();
+   console.log(res.data);
+}
+
+const getIpwiseSysData =  async () => {
+   const res = await getIpwiseSys();
+   console.log(res.data);
+}
+
+const getIpwiseExpData =  async () => {
+   const res = await getIpwiseExp();
+   console.log(res.data);
+}
+
+const getPortwiseSysData =  async () => {
+   const res = await getPortwiseSys();
+   console.log(res.data);
+}
+
+const getPortwiseExpData =  async () => {
+   const res = await getPortwiseExp();
+   console.log(res.data);
+}
+
+
+
+
+const charts = [
+  {
+    title: 'Disk Usage Overview',
+    chart: (
+      <ResponsiveContainer>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="name" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" />
+          <Tooltip />
+          <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
+        </LineChart>
+      </ResponsiveContainer>
+    ),
+  },
+  {
+    title: 'API Calls Per Day',
+    chart: (
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="name" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" />
+          <Tooltip />
+          <Bar dataKey="apiCalls" fill="#7559f3" />
+        </BarChart>
+      </ResponsiveContainer>
+    ),
+  },
+];
+
+const GraphCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+
+ useEffect(() => {
+    getServiceSysData();
+    getServiceExpData();
+    getIpwiseSysData();
+    getIpwiseExpData();
+    getPortwiseSysData();
+    getPortwiseExpData();
+  }, []);
+
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+  };
+
+  const downloadCSV = (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) return;
+
+    const keys = Object.keys(data[0]);
+    const csvContent = [
+      keys.join(','), // header
+      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
+  // Auto-play effect
+  useEffect(() => {
+    if (paused) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [paused]);
+
+  return (
+    <div className="carousel-container">
+      <div className="carousel-header">
+
+
+
+  <h2>{charts[currentIndex].title}</h2>
+
+  <div className="download-button-wrapper">
+  <button
+    className="download-button"
+    onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
+  >
+
+      <div className="logo-wrapper">
+  <img
+    className="logo"
+    src={Download}
+    alt="Download Icon"
+    style={{ height: '36px', marginRight: '3px'}}
+  />
+</div>
+
+
+  </button>
+
+</div>
+
+</div>
+
+
+
+
+      <div
+        className="carousel-graph"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        {charts.map((item, index) => (
+          <div
+            key={index}
+            className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
+            style={{ display: index === currentIndex ? 'block' : 'none' }}
+          >
+            {item.chart}
+          </div>
+        ))}
+      </div>
+
+      <div className="carousel-dots">
+  {charts.map((_, index) => (
+    <span
+      key={index}
+      className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+      onClick={() => goToSlide(index)}
+    >
+
+    </span>
+  ))}
+</div>
+
+    </div>
+  );
+};
+
+export default GraphCarousel;
