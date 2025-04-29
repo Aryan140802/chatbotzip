@@ -6,13 +6,11 @@ import send from '../assets/Send.png';
 import logo from '../assets/logobot.jpg';
 import { getPost, postMessage } from "../api/PostApi";
 
-// ✅ Helper: Dynamically formats bot messages using <b> tags
+// ✅ Optionally keep or remove this if formatting manually
 const formatDynamicMessage = (html) => {
   if (!html || typeof html !== "string") return html;
 
   const lines = [];
-
-  // Pattern 1: Label <b>Value</b>
   const pattern1 = /([A-Za-z\s/.'()&,-]+?)\s*<b>(.*?)<\/b>/g;
   let match;
 
@@ -22,8 +20,7 @@ const formatDynamicMessage = (html) => {
     lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
   }
 
-  if (lines.length === 0) return html; // fallback if no matches
-
+  if (lines.length === 0) return html;
   return `<div class="formatted-card">${lines.join("")}</div>`;
 };
 
@@ -254,11 +251,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {/* ✅ Render with dynamic formatting */}
-                    {item.sender === "bot" && item.text.includes("<b>") ? (
+                    {/* ✅ Now always render bot messages as HTML */}
+                    {item.sender === "bot" ? (
                       <div
                         className="message-content"
-                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                        dangerouslySetInnerHTML={{ __html: item.text }}
                       />
                     ) : (
                       <div className="message-content">{item.text}</div>
@@ -311,14 +308,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-
-
-
-
-
-
-
-
 
 .formatted-card {
   background-color: #f7f7f7;
