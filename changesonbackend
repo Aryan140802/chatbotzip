@@ -1,7 +1,7 @@
 import '../styles/GraphCarousel.css';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 import Download from '../assets/down-arrow.png';
 import {
@@ -9,8 +9,29 @@ import {
 } from "../api/PostApi";
 
 const GraphCarousel = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  const [activeChartIndex, setActiveChartIndex] = useState(0);
+  const [chartHeight, setChartHeight] = useState(400);
+  
+  // Reference for the carousel container
+  const carouselRef = useRef(null);
+  
+  // Adjust chart height based on container
+  useEffect(() => {
+    const updateHeight = () => {
+      if (carouselRef.current) {
+        const width = carouselRef.current.offsetWidth;
+        // Set height proportionally, with minimum height
+        setChartHeight(Math.max(400, width * 0.6));
+      }
+    };
+    
+    // Initial update
+    updateHeight();
+    
+    // Update on resize
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
   const [isLoading, setIsLoading] = useState(true);
   
   // State for each data set
@@ -23,18 +44,47 @@ const GraphCarousel = () => {
 
   // Function to convert data to CSV format
   const convertToCSV = (jsonData, sortBy = 'Hits') => {
-    if (!jsonData || !jsonData.length) return '';
+    if (!jsonData || !Array.isArray(jsonData) || jsonData.length === 0) {
+      console.warn("No valid data provided for CSV conversion");
+      return '';
+    }
 
-    // Sort data in descending order
-    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
+    try {
+      // Sort data in descending order if the sortBy field exists
+      let sortedData = [...jsonData];
+      if (sortBy && sortedData[0] && sortBy in sortedData[0]) {
+        sortedData.sort((a, b) => {
+          const valA = a[sortBy] || 0;
+          const valB = b[sortBy] || 0;
+          return valB - valA;
+        });
+      }
 
-    const headers = Object.keys(sortedData[0]);
-    const csvRows = [
-      headers.join(','), // header row
-      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
-    ];
+      // Get all unique headers from all objects
+      const headers = Array.from(
+        new Set(
+          sortedData.flatMap(item => Object.keys(item))
+        )
+      );
 
-    return csvRows.join('\n');
+      // Create CSV header row
+      const csvRows = [headers.join(',')];
+
+      // Create data rows
+      sortedData.forEach(item => {
+        const values = headers.map(header => {
+          const value = item[header] !== undefined ? item[header] : '';
+          // Escape quotes and wrap with quotes
+          return `"${String(value).replace(/"/g, '""')}"`;
+        });
+        csvRows.push(values.join(','));
+      });
+
+      return csvRows.join('\n');
+    } catch (error) {
+      console.error("Error converting to CSV:", error);
+      return '';
+    }
   };
 
   // Download CSV function
@@ -144,7 +194,44 @@ const GraphCarousel = () => {
   // Helper function to safely get top N items from an array
   const getTopItems = (data, count = 10) => {
     if (!data || !Array.isArray(data)) return [];
-    return [...data].sort((a, b) => b.Hits - a.Hits).slice(0, count);
+    
+    // Create a deep copy to avoid modifying original data
+    const processedData = data.map(item => ({...item}));
+    
+    // For large datasets, limit to the top N items by Hits
+    return processedData
+      .sort((a, b) => (b.Hits || 0) - (a.Hits || 0))
+      .slice(0, count);
+  };
+  
+  // Helper function to format large numbers for display
+  const formatLargeNumber = (num) => {
+    if (num === undefined || num === null) return '0';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  };
+
+  // Custom tooltip formatter
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip" style={{ 
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          padding: '10px',
+          border: '1px solid #ccc',
+          borderRadius: '5px'
+        }}>
+          <p className="label">{`${label}`}</p>
+          {payload.map((entry, index) => (
+            <p key={index} style={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value}`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
   };
 
   // Prepare chart configurations
@@ -154,11 +241,25 @@ const GraphCarousel = () => {
       data: getTopItems(serviceSysData),
       chart: (
         <ResponsiveContainer>
-          <BarChart data={getTopItems(serviceSysData)}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="Service_name" stroke="var(--text-color)" />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
+          <BarChart 
+            data={getTopItems(serviceSysData)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+          >
+            <CartesianGrid strokeDasharray="10000" stroke="var(--border-color)" />
+            <XAxis 
+              dataKey="Service_name" 
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="var(--text-color)"
+              tickFormatter={formatLargeNumber}
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="Hits" fill="#f14f98" />
           </BarChart>
         </ResponsiveContainer>
@@ -169,11 +270,25 @@ const GraphCarousel = () => {
       data: getTopItems(serviceExpData),
       chart: (
         <ResponsiveContainer>
-          <LineChart data={getTopItems(serviceExpData)}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="Service_name" stroke="var(--text-color)" />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
+          <LineChart 
+            data={getTopItems(serviceExpData)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+          >
+            <CartesianGrid strokeDasharray="10000" stroke="var(--border-color)" />
+            <XAxis 
+              dataKey="Service_name" 
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="var(--text-color)"
+              tickFormatter={formatLargeNumber}
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Line type="monotone" dataKey="Hits" stroke="#7559f3" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
@@ -184,11 +299,25 @@ const GraphCarousel = () => {
       data: getTopItems(ipwiseSysData),
       chart: (
         <ResponsiveContainer>
-          <BarChart data={getTopItems(ipwiseSysData)}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="IP" stroke="var(--text-color)" />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
+          <BarChart 
+            data={getTopItems(ipwiseSysData)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+          >
+            <CartesianGrid strokeDasharray="10000" stroke="var(--border-color)" />
+            <XAxis 
+              dataKey="IP" 
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="var(--text-color)"
+              tickFormatter={formatLargeNumber}
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="Hits" fill="#32a852" />
           </BarChart>
         </ResponsiveContainer>
@@ -199,11 +328,25 @@ const GraphCarousel = () => {
       data: getTopItems(portwiseSysData),
       chart: (
         <ResponsiveContainer>
-          <BarChart data={getTopItems(portwiseSysData)}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="Port" stroke="var(--text-color)" />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
+          <BarChart 
+            data={getTopItems(portwiseSysData)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+          >
+            <CartesianGrid strokeDasharray="10000" stroke="var(--border-color)" />
+            <XAxis 
+              dataKey="Port" 
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="var(--text-color)"
+              tickFormatter={formatLargeNumber}
+            />
+            <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="Hits" fill="#3273a8" />
           </BarChart>
         </ResponsiveContainer>
@@ -213,7 +356,7 @@ const GraphCarousel = () => {
 
   // Navigation functions
   const goToSlide = (index) => {
-    setCurrentIndex(index);
+    setActiveChartIndex(index);
   };
 
   // Auto-play effect
@@ -221,7 +364,7 @@ const GraphCarousel = () => {
     if (paused || charts.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
+      setActiveChartIndex((prevIndex) =>
         prevIndex === charts.length - 1 ? 0 : prevIndex + 1
       );
     }, 5000);
@@ -230,21 +373,44 @@ const GraphCarousel = () => {
   }, [paused, charts.length]);
 
   if (isLoading) {
-    return <div className="loading">Loading charts...</div>;
+    return (
+      <div className="loading-container" style={{ 
+        height: '300px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        flexDirection: 'column'
+      }}>
+        <div className="loading-spinner" style={{
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #3498db',
+          borderRadius: '50%',
+          width: '50px',
+          height: '50px',
+          animation: 'spin 2s linear infinite'
+        }}></div>
+        <p style={{ marginTop: '20px' }}>Loading chart data...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="carousel-container">
+    <div className="carousel-container" ref={carouselRef}>
       <div className="carousel-header">
-        <h2>{charts[currentIndex]?.title || 'Chart'}</h2>
+        <h2>{charts[activeChartIndex]?.title || 'Chart'}</h2>
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={() => downloadCSV(
-              charts[currentIndex]?.data || [], 
-              `${charts[currentIndex]?.title || 'chart-data'}.csv`
-            )}
-            disabled={!charts[currentIndex]?.data?.length}
+            onClick={() => {
+              const currentData = charts[activeChartIndex]?.data;
+              const fileName = `${charts[activeChartIndex]?.title || 'chart-data'}_${new Date().toISOString().split('T')[0]}.csv`;
+              
+              if (currentData && Array.isArray(currentData) && currentData.length > 0) {
+                downloadCSV(currentData, fileName);
+              } else {
+                alert("No data available to download");
+              }
+            }}
           >
             <div className="logo-wrapper">
               <img
@@ -260,14 +426,18 @@ const GraphCarousel = () => {
 
       <div
         className="carousel-graph"
+        style={{ height: `${chartHeight}px` }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
         {charts.map((item, index) => (
           <div
             key={index}
-            className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
-            style={{ display: index === currentIndex ? 'block' : 'none' }}
+            className={`chart-fade ${index === activeChartIndex ? 'active' : ''}`}
+            style={{ 
+              display: index === activeChartIndex ? 'block' : 'none',
+              height: '100%'
+            }}
           >
             {item.chart}
           </div>
@@ -278,7 +448,7 @@ const GraphCarousel = () => {
         {charts.map((_, index) => (
           <span
             key={index}
-            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+            className={`dot ${index === activeChartIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
             onClick={() => goToSlide(index)}
           >
           </span>
