@@ -212,6 +212,9 @@ const GraphCarousel = () => {
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
   };
+  
+  // Maximum hits value for scaling
+  const MAX_HITS = 15894840;
 
   // Custom tooltip formatter
   const CustomTooltip = ({ active, payload, label }) => {
@@ -259,6 +262,7 @@ const GraphCarousel = () => {
             <YAxis 
               stroke="var(--text-color)"
               tickFormatter={formatLargeNumber}
+              domain={[0, MAX_HITS]}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="Hits" fill="#f14f98" />
@@ -271,7 +275,7 @@ const GraphCarousel = () => {
       data: getTopItems(serviceExpData),
       chart: (
         <ResponsiveContainer>
-          <LineChart 
+          <BarChart 
             data={getTopItems(serviceExpData)}
             margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
           >
@@ -288,10 +292,11 @@ const GraphCarousel = () => {
             <YAxis 
               stroke="var(--text-color)"
               tickFormatter={formatLargeNumber}
+              domain={[0, MAX_HITS]}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Line type="monotone" dataKey="Hits" stroke="#7559f3" strokeWidth={3} />
-          </LineChart>
+            <Bar dataKey="Hits" fill="#7559f3" />
+          </BarChart>
         </ResponsiveContainer>
       ),
     },
@@ -317,6 +322,7 @@ const GraphCarousel = () => {
             <YAxis 
               stroke="var(--text-color)"
               tickFormatter={formatLargeNumber}
+              domain={[0, MAX_HITS]}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="Hits" fill="#32a852" />
@@ -346,9 +352,70 @@ const GraphCarousel = () => {
             <YAxis 
               stroke="var(--text-color)"
               tickFormatter={formatLargeNumber}
+              domain={[0, MAX_HITS]}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="Hits" fill="#3273a8" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'IP-wise Experience Metrics',
+      data: getTopItems(ipwiseExpData),
+      chart: (
+        <ResponsiveContainer>
+          <BarChart 
+            data={getTopItems(ipwiseExpData)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+          >
+            <CartesianGrid strokeDasharray="10000" stroke="var(--border-color)" />
+            <XAxis 
+              dataKey="IP" 
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="var(--text-color)"
+              tickFormatter={formatLargeNumber}
+              domain={[0, MAX_HITS]}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="Hits" fill="#e66c37" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'Port-wise Experience Metrics',
+      data: getTopItems(portwiseExpData),
+      chart: (
+        <ResponsiveContainer>
+          <BarChart 
+            data={getTopItems(portwiseExpData)}
+            margin={{ top: 20, right: 30, left: 20, bottom: 100 }}
+          >
+            <CartesianGrid strokeDasharray="10000" stroke="var(--border-color)" />
+            <XAxis 
+              dataKey="Port" 
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval={0}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis 
+              stroke="var(--text-color)"
+              tickFormatter={formatLargeNumber}
+              domain={[0, MAX_HITS]}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar dataKey="Hits" fill="#8a5fa2" />
           </BarChart>
         </ResponsiveContainer>
       ),
@@ -460,19 +527,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-
-
-
-"6988","customerInformationMR_bh_expDS","EXP","15894840","2025-04-29 00:00:00.000000"
-"5144","customerInformationMR_bh_expDS","EXP","15110597","2025-04-28 00:00:00.000000"
-"7094","customerDetailsYONO_bth_expDS","EXP","14480559","2025-04-29 00:00:00.000000"
-"5428","customerDetailsYONO_bth_expDS","EXP","13589279","2025-04-28 00:00:00.000000"
-"2825","customerInformationMR_bh_expDS","EXP","12369005","2025-04-26 00:00:00.000000"
-"2826","customerDetailsYONO_bth_expDS","EXP","11725711","2025-04-26 00:00:00.000000"
-"4098","customerInformationMR_bh_expDS","EXP","11438505","2025-04-27 00:00:00.000000"
-"4179","customerDetailsYONO_bth_expDS","EXP","10605390","2025-04-27 00:00:00.000000"
-"6678","inbAccountStatement_expDS","EXP","9357237","2025-04-29 00:00:00.000000"
-"5338","inbAccountStatement_expDS","EXP","8716748","2025-04-28 00:00:00.000000"
