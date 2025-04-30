@@ -11,6 +11,7 @@ import {
 const GraphCarousel = () => {
   const [activeChartIndex, setActiveChartIndex] = useState(0);
   const [chartHeight, setChartHeight] = useState(400);
+  const [paused, setPaused] = useState(false); // Add missing state for paused
   
   // Reference for the carousel container
   const carouselRef = useRef(null);
