@@ -30,7 +30,7 @@ const getServiceSysData =  async () => {
     const headers = Object.keys(sortedData[0]);
     const csvRows = [
       headers.join(','), // header row
-      ...sortedData.map(row => headers.map(field => "${row[field]}").join(','))
+      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
     ];
 
     return csvRows.join('\n');
@@ -41,9 +41,11 @@ const getServiceSysData =  async () => {
 
 }
 
+
 const getServiceExpData =  async () => {
-   const res = await getServiceExp();
-   console.log(res.data);
+  const res1 = await getServiceExp();
+
+        return res1.data.Service_wise_exp;
 }
 
 const getIpwiseSysData =  async () => {
@@ -67,6 +69,27 @@ const getPortwiseExpData =  async () => {
 }
 
 
+
+
+
+const GraphCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+ var data1;
+ useEffect(() => {
+    getServiceSysData();
+    data1 = getServiceExpData();
+          console.log(data1);
+    getIpwiseSysData();
+    getIpwiseExpData();
+    getPortwiseSysData();
+    getPortwiseExpData();
+  }, []);
+
+
+//const sorted = [...data1].sort((a,b)=>b.Hits - a.Hits);
+//const slicedData = data1.slice(0,10);
 
 
 const charts = [
@@ -100,19 +123,6 @@ const charts = [
   },
 ];
 
-const GraphCarousel = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-
- useEffect(() => {
-    getServiceSysData();
-    getServiceExpData();
-    getIpwiseSysData();
-    getIpwiseExpData();
-    getPortwiseSysData();
-    getPortwiseExpData();
-  }, []);
 
 
   const goToSlide = (index) => {
@@ -125,7 +135,7 @@ const GraphCarousel = () => {
     const keys = Object.keys(data[0]);
     const csvContent = [
       keys.join(','), // header
-      ...data.map(row => keys.map(key => "${row[key]}").join(','))
+      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -164,7 +174,7 @@ const GraphCarousel = () => {
   <div className="download-button-wrapper">
   <button
     className="download-button"
-    onClick={() => downloadCSV(csvGlobal, ${charts[currentIndex].title}.csv)}
+    onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
   >
 
       <div className="logo-wrapper">
@@ -194,7 +204,7 @@ const GraphCarousel = () => {
         {charts.map((item, index) => (
           <div
             key={index}
-            className={chart-fade ${index === currentIndex ? 'active' : ''}}
+            className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
             style={{ display: index === currentIndex ? 'block' : 'none' }}
           >
             {item.chart}
@@ -206,7 +216,7 @@ const GraphCarousel = () => {
   {charts.map((_, index) => (
     <span
       key={index}
-      className={dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}}
+      className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
       onClick={() => goToSlide(index)}
     >
 
