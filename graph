@@ -1,13 +1,29 @@
 import '../styles/GraphCarousel.css';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 
-import  Download from '../assets/down-arrow.png';
-import {getServiceSys,getServiceExp,getIpwiseExp,getIpwiseSys,getPortwiseSys,getPortwiseExp}  from "../api/PostApi";
-import { useState, useEffect, useRef } from "react";
+import Download from '../assets/down-arrow.png';
+import {
+  getServiceSys,
+  getServiceExp,
+  getIpwiseExp,
+  getIpwiseSys,
+  getPortwiseSys,
+  getPortwiseExp,
+} from '../api/PostApi';
 
-const data = [
+import { useState, useEffect } from 'react';
+
+const staticData = [
   { name: 'Mon', usage: 30, apiCalls: 240 },
   { name: 'Tue', usage: 45, apiCalls: 139 },
   { name: 'Wed', usage: 60, apiCalls: 980 },
@@ -16,126 +32,79 @@ const data = [
   { name: 'Sat', usage: 55, apiCalls: 630 },
   { name: 'Sun', usage: 35, apiCalls: 720 },
 ];
-var csvGlobal;
-const getServiceSysData =  async () => {
-   const res = await getServiceSys();
-   console.log(res.data);
 
-        const convertToCSV = (jsonData, sortBy = 'Hits') => {
-    if (!jsonData || !jsonData.length) return '';
+let csvGlobal;
 
-    // Sort data in descending order
-    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
+const convertToCSV = (jsonData, sortBy = 'Hits') => {
+  if (!jsonData || !jsonData.length) return '';
 
-    const headers = Object.keys(sortedData[0]);
-    const csvRows = [
-      headers.join(','), // header row
-      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
-    ];
+  const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
+  const headers = Object.keys(sortedData[0]);
+  const csvRows = [
+    headers.join(','), // header row
+    ...sortedData.map((row) => headers.map((field) => `"${row[field]}"`).join(',')),
+  ];
 
-    return csvRows.join('\n');
-  };
-
-  csvGlobal = convertToCSV(res.data, 'Hits'); // change 'usage' to 'apiCalls' if needed
-
-
-}
-
-
-const getServiceExpData =  async () => {
-  const res1 = await getServiceExp();
-
-        return res1.data.Service_wise_exp;
-}
-
-const getIpwiseSysData =  async () => {
-   const res = await getIpwiseSys();
-   console.log(res.data);
-}
-
-const getIpwiseExpData =  async () => {
-   const res = await getIpwiseExp();
-   console.log(res.data);
-}
-
-const getPortwiseSysData =  async () => {
-   const res = await getPortwiseSys();
-   console.log(res.data);
-}
-
-const getPortwiseExpData =  async () => {
-   const res = await getPortwiseExp();
-   console.log(res.data);
-}
-
-
-
-
+  return csvRows.join('\n');
+};
 
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [ipData, setIpData] = useState([]);
 
- var data1;
- useEffect(() => {
-    getServiceSysData();
-    data1 = getServiceExpData();
-          console.log(data1);
-    getIpwiseSysData();
-    getIpwiseExpData();
-    getPortwiseSysData();
-    getPortwiseExpData();
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        const serviceSys = await getServiceSys();
+        csvGlobal = convertToCSV(serviceSys.data, 'Hits');
+
+        const [ipExpRes, ipSysRes] = await Promise.all([getIpwiseExp(), getIpwiseSys()]);
+        const combined = [...ipExpRes.data, ...ipSysRes.data];
+
+        const processed = combined.map((item) => ({
+          Ip: item.Ip,
+          Layer: item.Layer,
+          Hits: parseInt(item.Hits, 10),
+        }));
+
+        const top10 = processed
+          .sort((a, b) => b.Hits - a.Hits)
+          .slice(0, 10);
+
+        setIpData(top10);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+
+    fetchAllData();
   }, []);
 
+  const downloadCSV = (chartIndex) => {
+    let dataToDownload = [];
 
-//const sorted = [...data1].sort((a,b)=>b.Hits - a.Hits);
-//const slicedData = data1.slice(0,10);
+    if (chartIndex === 2) {
+      dataToDownload = ipData;
+    } else {
+      if (!csvGlobal) return;
+      const blob = new Blob([csvGlobal], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${charts[chartIndex].title}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
 
+    if (!dataToDownload.length) return;
 
-const charts = [
-  {
-    title: 'Disk Usage Overview',
-    chart: (
-      <ResponsiveContainer>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-          <XAxis dataKey="name" stroke="var(--text-color)" />
-          <YAxis stroke="var(--text-color)" />
-          <Tooltip />
-          <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
-        </LineChart>
-      </ResponsiveContainer>
-    ),
-  },
-  {
-    title: 'API Calls Per Day',
-    chart: (
-      <ResponsiveContainer>
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-          <XAxis dataKey="name" stroke="var(--text-color)" />
-          <YAxis stroke="var(--text-color)" />
-          <Tooltip />
-          <Bar dataKey="apiCalls" fill="#7559f3" />
-        </BarChart>
-      </ResponsiveContainer>
-    ),
-  },
-];
-
-
-
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-  };
-
-  const downloadCSV = (data, filename = 'chart-data.csv') => {
-    if (!data || !data.length) return;
-
-    const keys = Object.keys(data[0]);
+    const keys = Object.keys(dataToDownload[0]);
     const csvContent = [
-      keys.join(','), // header
-      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
+      keys.join(','),
+      ...dataToDownload.map((row) => keys.map((key) => `"${row[key]}"`).join(',')),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -143,58 +112,95 @@ const charts = [
 
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', filename);
+    link.setAttribute('download', `${charts[chartIndex].title}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const charts = [
+    {
+      title: 'Disk Usage Overview',
+      chart: (
+        <ResponsiveContainer>
+          <LineChart data={staticData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis dataKey="name" stroke="var(--text-color)" />
+            <YAxis stroke="var(--text-color)" />
+            <Tooltip />
+            <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
+          </LineChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'API Calls Per Day',
+      chart: (
+        <ResponsiveContainer>
+          <BarChart data={staticData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis dataKey="name" stroke="var(--text-color)" />
+            <YAxis stroke="var(--text-color)" />
+            <Tooltip />
+            <Bar dataKey="apiCalls" fill="#7559f3" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'Top 10 IPs by Hits (EXP + SYS)',
+      chart: (
+        <ResponsiveContainer>
+          <BarChart data={ipData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis
+              dataKey="Ip"
+              stroke="var(--text-color)"
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis stroke="var(--text-color)" />
+            <Tooltip />
+            <Bar dataKey="Hits" fill="#3b82f6" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+  ];
 
-  // Auto-play effect
   useEffect(() => {
     if (paused) return;
-
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
-      );
+      setCurrentIndex((prevIndex) => (prevIndex === charts.length - 1 ? 0 : prevIndex + 1));
     }, 5000);
-
     return () => clearInterval(interval);
   }, [paused]);
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+  };
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-
-
-
-  <h2>{charts[currentIndex].title}</h2>
-
-  <div className="download-button-wrapper">
-  <button
-    className="download-button"
-    onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
-  >
-
-      <div className="logo-wrapper">
-  <img
-    className="logo"
-    src={Download}
-    alt="Download Icon"
-    style={{ height: '36px', marginRight: '3px'}}
-  />
-</div>
-
-
-  </button>
-
-</div>
-
-</div>
-
-
-
+        <h2>{charts[currentIndex].title}</h2>
+        <div className="download-button-wrapper">
+          <button
+            className="download-button"
+            onClick={() => downloadCSV(currentIndex)}
+          >
+            <div className="logo-wrapper">
+              <img
+                className="logo"
+                src={Download}
+                alt="Download Icon"
+                style={{ height: '36px', marginRight: '3px' }}
+              />
+            </div>
+          </button>
+        </div>
+      </div>
 
       <div
         className="carousel-graph"
@@ -213,59 +219,18 @@ const charts = [
       </div>
 
       <div className="carousel-dots">
-  {charts.map((_, index) => (
-    <span
-      key={index}
-      className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
-      onClick={() => goToSlide(index)}
-    >
-
-    </span>
-  ))}
-</div>
-
+        {charts.map((_, index) => (
+          <span
+            key={index}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${
+              paused ? 'paused' : ''
+            }`}
+            onClick={() => goToSlide(index)}
+          ></span>
+        ))}
+      </div>
     </div>
   );
 };
 
 export default GraphCarousel;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-0
-: 
-{Id: 76, Ip: '10.188.24.64', Layer: 'EXP', Hits: '81270', Date_day: '2025-04-24 00:00:00.000000'}
-1
-: 
-{Id: 77, Ip: '10.188.25.13', Layer: 'EXP', Hits: '137833', Date_day: '2025-04-24 00:00:00.000000'}
-2
-: 
-{Id: 78, Ip: '10.188.25.44', Layer: 'EXP', Hits: '172945', Date_day: '2025-04-24 00:00:00.000000'}
-3
-: 
-{Id: 79, Ip: '10.188.24.10', Layer: 'EXP', Hits: '133012', Date_day: '2025-04-24 00:00:00.000000'}
-4
-: 
-{Id: 80, Ip: '10.188.25.65', Layer: 'EXP', Hits: '81738', Date_day: '2025-04-24 00:00:00.000000'}
-5
-: 
-{Id: 81, Ip: '10.188.24.63', Layer: 'EXP', Hits: '81264', Date_day: '2025-04-24 00:00:00.000000'}
-6
-: 
-{Id: 82, Ip: '10.188.24.65', Layer: 'EXP', Hits: '29708', Date_day: '2025-04-24 00:00:00.000000'}
-7
-: 
-{Id: 83, Ip: '10.188.25.195', Layer: 'EXP', Hits: '2645', Date_day: '2025-04-24 00:00:00.000000'}
