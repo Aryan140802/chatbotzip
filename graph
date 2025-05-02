@@ -238,12 +238,14 @@ export default GraphCarousel;
 
 <Tooltip
   formatter={(value, name, props) => {
-    // Show "Hits" instead of "logVal"
-    return [`${props.payload.Hits}`, 'Hits'];
+    // Return empty string to suppress default value rendering
+    return ['', ''];
   }}
   labelFormatter={(label, payload) => {
     if (payload && payload.length > 0) {
-      return `Service: ${payload[0].payload.Service_name}`;
+      const service = payload[0].payload.Service_name;
+      const hits = payload[0].payload.Hits;
+      return `Service: ${service} | Hits: ${hits}`;
     }
     return '';
   }}
