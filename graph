@@ -196,16 +196,24 @@ export default GraphCarousel;
 
 
 <ResponsiveContainer>
-  <BarChart data={serviceWiseExp5Data}>
+  <BarChart
+    data={serviceWiseExp5Data}
+    margin={{ top: 40, right: 30, left: 30, bottom: 60 }}
+    barCategoryGap={30}
+  >
     <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+
     <XAxis
       dataKey="Service_name"
       stroke="var(--text-color)"
       interval={0}
       angle={-30}
       textAnchor="end"
+      height={60}
     />
+
     <YAxis tick={false} axisLine showLine />
+
     <Tooltip
       formatter={(value, name, props) => {
         if (name === 'logVal') {
@@ -215,7 +223,15 @@ export default GraphCarousel;
       }}
       labelFormatter={(label) => `Service: ${label}`}
     />
-    <Bar dataKey="logVal" fill="#7559f3" />
+
+    <Bar dataKey="logVal" fill="#7559f3">
+      <LabelList
+        dataKey="Service_name"
+        position="insideTop"
+        style={{ fill: '#fff', fontSize: 10 }}
+      />
+    </Bar>
   </BarChart>
 </ResponsiveContainer>
+
 
