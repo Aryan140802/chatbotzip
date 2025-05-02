@@ -3,11 +3,20 @@ import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
-import  Download from '../assets/down-arrow.png';
-import {getServiceSys,getServiceExp,getIpwiseExp,getIpwiseSys,getPortwiseSys,getPortwiseExp,getServiceWiseExp5}  from "../api/PostApi";
-import { useState, useEffect, useRef } from "react";
+import Download from '../assets/down-arrow.png';
+import {
+  getServiceSys,
+  getServiceExp,
+  getIpwiseExp,
+  getIpwiseSys,
+  getPortwiseSys,
+  getPortwiseExp,
+  getServiceWiseExp5
+} from "../api/PostApi";
 
-const data = [
+import { useState, useEffect } from "react";
+
+const dummyData = [
   { name: 'Mon', usage: 30, apiCalls: 240 },
   { name: 'Tue', usage: 45, apiCalls: 139 },
   { name: 'Wed', usage: 60, apiCalls: 980 },
@@ -16,155 +25,104 @@ const data = [
   { name: 'Sat', usage: 55, apiCalls: 630 },
   { name: 'Sun', usage: 35, apiCalls: 720 },
 ];
-var csvGlobal;
-const getServiceSysData =  async () => {
-   const res = await getServiceSys();
-   console.log(res.data);
 
-        const convertToCSV = (jsonData, sortBy = 'Hits') => {
+let csvGlobal;
+
+const getServiceSysData = async () => {
+  const res = await getServiceSys();
+  const convertToCSV = (jsonData, sortBy = 'Hits') => {
     if (!jsonData || !jsonData.length) return '';
-
-    // Sort data in descending order
     const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
-
     const headers = Object.keys(sortedData[0]);
     const csvRows = [
-      headers.join(','), // header row
+      headers.join(','),
       ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
     ];
-
     return csvRows.join('\n');
   };
-
-  csvGlobal = convertToCSV(res.data, 'Hits'); // change 'usage' to 'apiCalls' if needed
-
-
-}
-
-
-const getServiceExpData =  async () => {
-  const res1 = await getServiceExp();
-
-        return res1.data.Service_wise_exp;
-}
-
-const getIpwiseSysData =  async () => {
-   const res = await getIpwiseSys();
-   console.log(res.data);
-}
-
-const getIpwiseExpData =  async () => {
-   const res = await getIpwiseExp();
-   console.log(res.data);
-}
-
-const getPortwiseSysData =  async () => {
-   const res = await getPortwiseSys();
-   console.log(res.data);
-}
-
-const getPortwiseExpData =  async () => {
-   const res = await getPortwiseExp();
-   console.log(res.data);
-}
-
-const getServiceWiseExp5Data = async () => {
-   const result = await getServiceWiseExp5();
-   console.log(result.data);
-
-}
-
-
+  csvGlobal = convertToCSV(res.data, 'Hits');
+};
 
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [serviceWiseExp5Data, setServiceWiseExp5Data] = useState([]);
 
- var data1;
- var result1;
- useEffect(() => {
+  useEffect(() => {
     getServiceSysData();
-    data1 = getServiceExpData();
-          console.log(data1);
-    getIpwiseSysData();
-    getIpwiseExpData();
-    getPortwiseSysData();
-    getPortwiseExpData();
-    result1=getServiceWiseExp5Data();
+
+    getServiceWiseExp5().then((res) => {
+      const formatted = res.data.service_wise_top5.map(item => ({
+        Service_name: item.Service_name,
+        logVal: item.logVal,
+        Hits: item.Hits
+      }));
+      setServiceWiseExp5Data(formatted);
+    });
+
+    getServiceExp(); // Other API calls are optional or unused
+    getIpwiseSys();
+    getIpwiseExp();
+    getPortwiseSys();
+    getPortwiseExp();
   }, []);
 
+  const charts = [
+    {
+      title: 'Disk Usage Overview',
+      chart: (
+        <ResponsiveContainer>
+          <LineChart data={dummyData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis dataKey="name" stroke="var(--text-color)" />
+            <YAxis stroke="var(--text-color)" />
+            <Tooltip />
+            <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
+          </LineChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'API Calls Per Day',
+      chart: (
+        <ResponsiveContainer>
+          <BarChart data={dummyData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis dataKey="name" stroke="var(--text-color)" />
+            <YAxis stroke="var(--text-color)" />
+            <Tooltip />
+            <Bar dataKey="apiCalls" fill="#7559f3" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+    {
+      title: 'Service wise Exp Data (log scale)',
+      chart: (
+        <ResponsiveContainer>
+          <BarChart data={serviceWiseExp5Data}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+            <XAxis dataKey="Service_name" stroke="var(--text-color)" />
+            <YAxis hide />
+            <Tooltip />
+            <Bar dataKey="logVal" fill="#7559f3" />
+          </BarChart>
+        </ResponsiveContainer>
+      ),
+    },
+  ];
 
-//const sorted = [...data1].sort((a,b)=>b.Hits - a.Hits);
-//const slicedData = data1.slice(0,10);
-
-
-const charts = [
-  {
-    title: 'Disk Usage Overview',
-    chart: (
-      <ResponsiveContainer>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-          <XAxis dataKey="name" stroke="var(--text-color)" />
-          <YAxis stroke="var(--text-color)" />
-          <Tooltip />
-          <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
-        </LineChart>
-      </ResponsiveContainer>
-    ),
-  },
-  {
-    title: 'API Calls Per Day',
-    chart: (
-      <ResponsiveContainer>
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-          <XAxis dataKey="name" stroke="var(--text-color)" />
-          <YAxis stroke="var(--text-color)" />
-          <Tooltip />
-          <Bar dataKey="apiCalls" fill="#7559f3" />
-        </BarChart>
-      </ResponsiveContainer>
-    ),
-  },
-
-
-
-        {
-    title: 'Service wise Exp Data',
-    chart: (
-      <ResponsiveContainer>
-        <BarChart data={result1}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-          <XAxis dataKey="Ip" stroke="var(--text-color)" />
-          <YAxis stroke="var(--text-color)" domain ={[0,100000]} />
-          <Tooltip />
-          <Bar dataKey="Hits" fill="#7559f3" />
-        </BarChart>
-      </ResponsiveContainer>
-    ),
-  },
-
-];
-
-
-
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-  };
+  const goToSlide = (index) => setCurrentIndex(index);
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
     if (!data || !data.length) return;
-
     const keys = Object.keys(data[0]);
     const csvContent = [
-      keys.join(','), // header
+      keys.join(','),
       ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
     ].join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', filename);
@@ -173,52 +131,36 @@ const charts = [
     document.body.removeChild(link);
   };
 
-
-  // Auto-play effect
   useEffect(() => {
     if (paused) return;
-
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) =>
         prevIndex === charts.length - 1 ? 0 : prevIndex + 1
       );
     }, 5000);
-
     return () => clearInterval(interval);
   }, [paused]);
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-
-
-
-  <h2>{charts[currentIndex].title}</h2>
-
-  <div className="download-button-wrapper">
-  <button
-    className="download-button"
-    onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
-  >
-
-      <div className="logo-wrapper">
-  <img
-    className="logo"
-    src={Download}
-    alt="Download Icon"
-    style={{ height: '36px', marginRight: '3px'}}
-  />
-</div>
-
-
-  </button>
-
-</div>
-
-</div>
-
-
-
+        <h2>{charts[currentIndex].title}</h2>
+        <div className="download-button-wrapper">
+          <button
+            className="download-button"
+            onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
+          >
+            <div className="logo-wrapper">
+              <img
+                className="logo"
+                src={Download}
+                alt="Download Icon"
+                style={{ height: '36px', marginRight: '3px' }}
+              />
+            </div>
+          </button>
+        </div>
+      </div>
 
       <div
         className="carousel-graph"
@@ -237,23 +179,16 @@ const charts = [
       </div>
 
       <div className="carousel-dots">
-  {charts.map((_, index) => (
-    <span
-      key={index}
-      className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
-      onClick={() => goToSlide(index)}
-    >
-
-    </span>
-  ))}
-</div>
-
+        {charts.map((_, index) => (
+          <span
+            key={index}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+            onClick={() => goToSlide(index)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
 
 export default GraphCarousel;
-
-
-{"service_wise_top5": [{"Service_name": "depositAccountOpeningRD_th_orchDS", "Layer": "EXP", "Hits": "9997", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "IPOPanEnquiry_bth_OrchDS", "Layer": "EXP", "Hits": "9991", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "thirdPartyGenericService_sys", "Layer": "SYS", "Hits": "99908", "Date_day": "2025-04-28 00:00:00.000000", "logVal": 5}, {"Service_name": "loansEnquiry_sys", "Layer": "SYS", "Hits": "9979", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "loansEnquiry_bth_expDS", "Layer": "EXP", "Hits": "9979", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}]}
-
