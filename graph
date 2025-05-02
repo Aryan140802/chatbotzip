@@ -1,29 +1,13 @@
 import '../styles/GraphCarousel.css';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
+  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
-import Download from '../assets/down-arrow.png';
-import {
-  getServiceSys,
-  getServiceExp,
-  getIpwiseExp,
-  getIpwiseSys,
-  getPortwiseSys,
-  getPortwiseExp,
-} from '../api/PostApi';
+import  Download from '../assets/down-arrow.png';
+import {getServiceSys,getServiceExp,getIpwiseExp,getIpwiseSys,getPortwiseSys,getPortwiseExp,getServiceWiseExp5}  from "../api/PostApi";
+import { useState, useEffect, useRef } from "react";
 
-import { useState, useEffect } from 'react';
-
-const staticData = [
+const data = [
   { name: 'Mon', usage: 30, apiCalls: 240 },
   { name: 'Tue', usage: 45, apiCalls: 139 },
   { name: 'Wed', usage: 60, apiCalls: 980 },
@@ -32,79 +16,150 @@ const staticData = [
   { name: 'Sat', usage: 55, apiCalls: 630 },
   { name: 'Sun', usage: 35, apiCalls: 720 },
 ];
+var csvGlobal;
+const getServiceSysData =  async () => {
+   const res = await getServiceSys();
+   console.log(res.data);
 
-let csvGlobal;
+        const convertToCSV = (jsonData, sortBy = 'Hits') => {
+    if (!jsonData || !jsonData.length) return '';
 
-const convertToCSV = (jsonData, sortBy = 'Hits') => {
-  if (!jsonData || !jsonData.length) return '';
+    // Sort data in descending order
+    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
 
-  const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
-  const headers = Object.keys(sortedData[0]);
-  const csvRows = [
-    headers.join(','), // header row
-    ...sortedData.map((row) => headers.map((field) => `"${row[field]}"`).join(',')),
-  ];
+    const headers = Object.keys(sortedData[0]);
+    const csvRows = [
+      headers.join(','), // header row
+      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
+    ];
 
-  return csvRows.join('\n');
-};
+    return csvRows.join('\n');
+  };
+
+  csvGlobal = convertToCSV(res.data, 'Hits'); // change 'usage' to 'apiCalls' if needed
+
+
+}
+
+
+const getServiceExpData =  async () => {
+  const res1 = await getServiceExp();
+
+        return res1.data.Service_wise_exp;
+}
+
+const getIpwiseSysData =  async () => {
+   const res = await getIpwiseSys();
+   console.log(res.data);
+}
+
+const getIpwiseExpData =  async () => {
+   const res = await getIpwiseExp();
+   console.log(res.data);
+}
+
+const getPortwiseSysData =  async () => {
+   const res = await getPortwiseSys();
+   console.log(res.data);
+}
+
+const getPortwiseExpData =  async () => {
+   const res = await getPortwiseExp();
+   console.log(res.data);
+}
+
+const getServiceWiseExp5Data = async () => {
+   const result = await getServiceWiseExp5();
+   console.log(result.data);
+
+}
+
+
 
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [ipData, setIpData] = useState([]);
 
-  useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        const serviceSys = await getServiceSys();
-        csvGlobal = convertToCSV(serviceSys.data, 'Hits');
-
-        const [ipExpRes, ipSysRes] = await Promise.all([getIpwiseExp(), getIpwiseSys()]);
-        const combined = [...ipExpRes.data, ...ipSysRes.data];
-
-        const processed = combined.map((item) => ({
-          Ip: item.Ip,
-          Layer: item.Layer,
-          Hits: parseInt(item.Hits, 10),
-        }));
-
-        const top10 = processed
-          .sort((a, b) => b.Hits - a.Hits)
-          .slice(0, 10);
-
-        setIpData(top10);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      }
-    };
-
-    fetchAllData();
+ var data1;
+ var result1;
+ useEffect(() => {
+    getServiceSysData();
+    data1 = getServiceExpData();
+          console.log(data1);
+    getIpwiseSysData();
+    getIpwiseExpData();
+    getPortwiseSysData();
+    getPortwiseExpData();
+    result1=getServiceWiseExp5Data();
   }, []);
 
-  const downloadCSV = (chartIndex) => {
-    let dataToDownload = [];
 
-    if (chartIndex === 2) {
-      dataToDownload = ipData;
-    } else {
-      if (!csvGlobal) return;
-      const blob = new Blob([csvGlobal], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${charts[chartIndex].title}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      return;
-    }
+//const sorted = [...data1].sort((a,b)=>b.Hits - a.Hits);
+//const slicedData = data1.slice(0,10);
 
-    if (!dataToDownload.length) return;
 
-    const keys = Object.keys(dataToDownload[0]);
+const charts = [
+  {
+    title: 'Disk Usage Overview',
+    chart: (
+      <ResponsiveContainer>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="name" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" />
+          <Tooltip />
+          <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
+        </LineChart>
+      </ResponsiveContainer>
+    ),
+  },
+  {
+    title: 'API Calls Per Day',
+    chart: (
+      <ResponsiveContainer>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="name" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" />
+          <Tooltip />
+          <Bar dataKey="apiCalls" fill="#7559f3" />
+        </BarChart>
+      </ResponsiveContainer>
+    ),
+  },
+
+
+
+        {
+    title: 'Service wise Exp Data',
+    chart: (
+      <ResponsiveContainer>
+        <BarChart data={result1}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+          <XAxis dataKey="Ip" stroke="var(--text-color)" />
+          <YAxis stroke="var(--text-color)" domain ={[0,100000]} />
+          <Tooltip />
+          <Bar dataKey="Hits" fill="#7559f3" />
+        </BarChart>
+      </ResponsiveContainer>
+    ),
+  },
+
+];
+
+
+
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+  };
+
+  const downloadCSV = (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) return;
+
+    const keys = Object.keys(data[0]);
     const csvContent = [
-      keys.join(','),
-      ...dataToDownload.map((row) => keys.map((key) => `"${row[key]}"`).join(',')),
+      keys.join(','), // header
+      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -112,95 +167,58 @@ const GraphCarousel = () => {
 
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `${charts[chartIndex].title}.csv`);
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const charts = [
-    {
-      title: 'Disk Usage Overview',
-      chart: (
-        <ResponsiveContainer>
-          <LineChart data={staticData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="name" stroke="var(--text-color)" />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
-            <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
-          </LineChart>
-        </ResponsiveContainer>
-      ),
-    },
-    {
-      title: 'API Calls Per Day',
-      chart: (
-        <ResponsiveContainer>
-          <BarChart data={staticData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="name" stroke="var(--text-color)" />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
-            <Bar dataKey="apiCalls" fill="#7559f3" />
-          </BarChart>
-        </ResponsiveContainer>
-      ),
-    },
-    {
-      title: 'Top 10 IPs by Hits (EXP + SYS)',
-      chart: (
-        <ResponsiveContainer>
-          <BarChart data={ipData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis
-              dataKey="Ip"
-              stroke="var(--text-color)"
-              angle={-45}
-              textAnchor="end"
-              height={60}
-            />
-            <YAxis stroke="var(--text-color)" />
-            <Tooltip />
-            <Bar dataKey="Hits" fill="#3b82f6" />
-          </BarChart>
-        </ResponsiveContainer>
-      ),
-    },
-  ];
 
+  // Auto-play effect
   useEffect(() => {
     if (paused) return;
+
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex === charts.length - 1 ? 0 : prevIndex + 1));
+      setCurrentIndex((prevIndex) =>
+        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
+      );
     }, 5000);
+
     return () => clearInterval(interval);
   }, [paused]);
-
-  const goToSlide = (index) => {
-    setCurrentIndex(index);
-  };
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-        <h2>{charts[currentIndex].title}</h2>
-        <div className="download-button-wrapper">
-          <button
-            className="download-button"
-            onClick={() => downloadCSV(currentIndex)}
-          >
-            <div className="logo-wrapper">
-              <img
-                className="logo"
-                src={Download}
-                alt="Download Icon"
-                style={{ height: '36px', marginRight: '3px' }}
-              />
-            </div>
-          </button>
-        </div>
-      </div>
+
+
+
+  <h2>{charts[currentIndex].title}</h2>
+
+  <div className="download-button-wrapper">
+  <button
+    className="download-button"
+    onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
+  >
+
+      <div className="logo-wrapper">
+  <img
+    className="logo"
+    src={Download}
+    alt="Download Icon"
+    style={{ height: '36px', marginRight: '3px'}}
+  />
+</div>
+
+
+  </button>
+
+</div>
+
+</div>
+
+
+
 
       <div
         className="carousel-graph"
@@ -219,75 +237,22 @@ const GraphCarousel = () => {
       </div>
 
       <div className="carousel-dots">
-        {charts.map((_, index) => (
-          <span
-            key={index}
-            className={`dot ${index === currentIndex ? 'active' : ''} ${
-              paused ? 'paused' : ''
-            }`}
-            onClick={() => goToSlide(index)}
-          ></span>
-        ))}
-      </div>
+  {charts.map((_, index) => (
+    <span
+      key={index}
+      className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+      onClick={() => goToSlide(index)}
+    >
+
+    </span>
+  ))}
+</div>
+
     </div>
   );
 };
 
 export default GraphCarousel;
-
-
-
-
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'https://10.191.171.12:5443/PyPortal/',
-  timeout: 100000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export const getPost = () => {
-  return api.get('EIS-GINI/',{timeout:100000});
-};
-
-export const postMessage = (message) => {
- const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
-        console.log(res);
-  return res;
-};
-
-export const getServiceSys = () => {
-  return api.get('EISHome/servicewise_sys/');
-};
-
-export const getServiceExp = () => {
-  return api.get('EISHome/servicewise_exp/');
-};
-
-export const getIpwiseSys = () => {
-  return api.get('EISHome/ipwise_sys/');
-};
-
-export const getIpwiseExp = () => {
-  return api.get('EISHome/ipwise_exp/');
-};
-
-
-export const getPortwiseSys = () => {
-  return api.get('EISHome/portwise_sys/');
-};
-
-export const getPortwiseExp = () => {
-  return api.get('EISHome/portwise_exp/');
-};
-
-
-export const getIpWiseExp5 = () => {
-        return api.get('EISHome/ip_wise_top5/')
-};
-
 
 
 {"service_wise_top5": [{"Service_name": "depositAccountOpeningRD_th_orchDS", "Layer": "EXP", "Hits": "9997", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "IPOPanEnquiry_bth_OrchDS", "Layer": "EXP", "Hits": "9991", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "thirdPartyGenericService_sys", "Layer": "SYS", "Hits": "99908", "Date_day": "2025-04-28 00:00:00.000000", "logVal": 5}, {"Service_name": "loansEnquiry_sys", "Layer": "SYS", "Hits": "9979", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "loansEnquiry_bth_expDS", "Layer": "EXP", "Hits": "9979", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}]}
