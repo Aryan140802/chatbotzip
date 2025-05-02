@@ -288,3 +288,7 @@ export const getIpWiseExp5 = () => {
         return api.get('EISHome/ip_wise_top5/')
 };
 
+
+
+{"service_wise_top5": [{"Service_name": "depositAccountOpeningRD_th_orchDS", "Layer": "EXP", "Hits": "9997", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "IPOPanEnquiry_bth_OrchDS", "Layer": "EXP", "Hits": "9991", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "thirdPartyGenericService_sys", "Layer": "SYS", "Hits": "99908", "Date_day": "2025-04-28 00:00:00.000000", "logVal": 5}, {"Service_name": "loansEnquiry_sys", "Layer": "SYS", "Hits": "9979", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}, {"Service_name": "loansEnquiry_bth_expDS", "Layer": "EXP", "Hits": "9979", "Date_day": "2025-05-01 00:00:00.000000", "logVal": 4}]}
+
