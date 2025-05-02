@@ -234,3 +234,57 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
+
+
+
+
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  timeout: 100000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const getPost = () => {
+  return api.get('EIS-GINI/',{timeout:100000});
+};
+
+export const postMessage = (message) => {
+ const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
+        console.log(res);
+  return res;
+};
+
+export const getServiceSys = () => {
+  return api.get('EISHome/servicewise_sys/');
+};
+
+export const getServiceExp = () => {
+  return api.get('EISHome/servicewise_exp/');
+};
+
+export const getIpwiseSys = () => {
+  return api.get('EISHome/ipwise_sys/');
+};
+
+export const getIpwiseExp = () => {
+  return api.get('EISHome/ipwise_exp/');
+};
+
+
+export const getPortwiseSys = () => {
+  return api.get('EISHome/portwise_sys/');
+};
+
+export const getPortwiseExp = () => {
+  return api.get('EISHome/portwise_exp/');
+};
+
+
+export const getIpWiseExp5 = () => {
+        return api.get('EISHome/ip_wise_top5/')
+};
+
