@@ -192,3 +192,30 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
+
+
+
+<ResponsiveContainer>
+  <BarChart data={serviceWiseExp5Data}>
+    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+    <XAxis
+      dataKey="Service_name"
+      stroke="var(--text-color)"
+      interval={0}
+      angle={-30}
+      textAnchor="end"
+    />
+    <YAxis tick={false} axisLine showLine />
+    <Tooltip
+      formatter={(value, name, props) => {
+        if (name === 'logVal') {
+          return [`${props.payload.Hits}`, 'Hits'];
+        }
+        return value;
+      }}
+      labelFormatter={(label) => `Service: ${label}`}
+    />
+    <Bar dataKey="logVal" fill="#7559f3" />
+  </BarChart>
+</ResponsiveContainer>
+
