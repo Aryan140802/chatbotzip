@@ -11,7 +11,13 @@ import {
   getIpwiseSys,
   getPortwiseSys,
   getPortwiseExp,
-  getServiceWiseExp5
+  getServiceWiseExp5,
+        getServiceWiseSys5,
+        getIpWiseExp5,
+        getIpWiseSys5,
+        getPortWiseExp5,
+        getPortWiseSys5
+
 } from "../api/PostApi";
 
 import { useState, useEffect } from "react";
@@ -77,7 +83,7 @@ const GraphCarousel = () => {
             <XAxis dataKey="name" stroke="var(--text-color)" />
             <YAxis stroke="var(--text-color)" />
             <Tooltip />
-            <Line type="monotone" dataKey="usage" stroke="#f14f98" strokeWidth={3} />
+            <Line type="monotone" dataKey="usage" stroke="#894a89" strokeWidth={3} />
           </LineChart>
         </ResponsiveContainer>
       ),
@@ -91,23 +97,51 @@ const GraphCarousel = () => {
             <XAxis dataKey="name" stroke="var(--text-color)" />
             <YAxis stroke="var(--text-color)" />
             <Tooltip />
-            <Bar dataKey="apiCalls" fill="#7559f3" />
+            <Bar dataKey="apiCalls" fill="#894a89" />
           </BarChart>
         </ResponsiveContainer>
       ),
     },
     {
-      title: 'Service wise Exp Data (log scale)',
+      title: 'Service wise Exp Data',
       chart: (
-        <ResponsiveContainer>
-          <BarChart data={serviceWiseExp5Data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-            <XAxis dataKey="Service_name" stroke="var(--text-color)" />
-            <YAxis hide />
-            <Tooltip />
-            <Bar dataKey="logVal" fill="#7559f3" />
-          </BarChart>
-        </ResponsiveContainer>
+       <ResponsiveContainer>
+  <BarChart
+    data={serviceWiseExp5Data}
+    margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+    barCategoryGap={30}
+  >
+    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+
+    <XAxis
+      dataKey="Service_name"
+      stroke="var(--text-color)"
+      interval={0}
+      angle={-30}
+      textAnchor="end"
+      height={60}
+      tick={{fontSize : 10}}
+
+    />
+
+    <YAxis tick={false} axisLine showLine />
+     <Tooltip
+      formatter={(value, name, props) => {
+        if (name === 'logVal') {
+          return [`${props.payload.Hits}`, 'Hits'];
+        }
+        return value;
+      }}
+      labelFormatter={(label) => `Service: ${label}`}
+    />
+
+
+
+    <Bar dataKey="logVal" fill="#894a89"/>
+  </BarChart>
+</ResponsiveContainer>
+
+
       ),
     },
   ];
@@ -192,63 +226,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-<ResponsiveContainer>
-  <BarChart
-    data={serviceWiseExp5Data}
-    margin={{ top: 40, right: 30, left: 30, bottom: 60 }}
-    barCategoryGap={30}
-  >
-    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-
-    <XAxis
-      dataKey="Service_name"
-      stroke="var(--text-color)"
-      interval={0}
-      angle={-30}
-      textAnchor="end"
-      height={60}
-    />
-
-    <YAxis tick={false} axisLine showLine />
-
-    <Tooltip
-      formatter={(value, name, props) => {
-        if (name === 'logVal') {
-          return [`${props.payload.Hits}`, 'Hits'];
-        }
-        return value;
-      }}
-      labelFormatter={(label) => `Service: ${label}`}
-    />
-
-    <Bar dataKey="logVal" fill="#7559f3">
-      <LabelList
-        dataKey="Service_name"
-        position="insideTop"
-        style={{ fill: '#fff', fontSize: 10 }}
-      />
-    </Bar>
-  </BarChart>
-</ResponsiveContainer>
-
-
-
-<Tooltip
-  formatter={(value, name, props) => {
-    // Return empty string to suppress default value rendering
-    return ['', ''];
-  }}
-  labelFormatter={(label, payload) => {
-    if (payload && payload.length > 0) {
-      const service = payload[0].payload.Service_name;
-      const hits = payload[0].payload.Hits;
-      return `Service: ${service} | Hits: ${hits}`;
-    }
-    return '';
-  }}
-/>
-
-
