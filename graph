@@ -458,3 +458,85 @@ export default GraphCarousel;
     opacity: 0;
   }
 }
+
+
+
+
+
+// Custom 3D bar shape function
+const ThreeDBar = ({ x, y, width, height, fill }) => {
+  const depth = 6;
+
+  return (
+    <g>
+      {/* Front face */}
+      <rect x={x} y={y} width={width} height={height} fill={fill} />
+
+      {/* Top face */}
+      <polygon
+        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
+        fill="#ffffff33"
+      />
+
+      {/* Right face */}
+      <polygon
+        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
+        fill="#00000033"
+      />
+    </g>
+  );
+};
+
+
+const renderBarChart = (data, dataKeyX, title) => ({
+  title,
+  chart: (
+    <ResponsiveContainer>
+      <BarChart
+        data={data}
+        margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+        barCategoryGap={30}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+
+        <XAxis
+          dataKey={dataKeyX}
+          stroke="#f7f7f7"
+          interval={0}
+          angle={-30}
+          textAnchor="end"
+          height={60}
+          tick={{ fontSize: 10, fill: '#f7f7f7' }}
+        />
+
+        <YAxis tick={{ fill: '#f7f7f7' }} axisLine showLine />
+
+        <Tooltip
+          contentStyle={{
+            backgroundColor: '#2e1a3b',
+            borderColor: '#f285c1',
+            color: '#fff',
+            borderRadius: '8px',
+          }}
+          itemStyle={{ color: '#fff' }}
+          labelStyle={{ color: '#f285c1' }}
+          formatter={(value, name, props) => {
+            if (name === 'logVal') {
+              return [`${props.payload.Hits}`, 'Hits'];
+            }
+            return value;
+          }}
+          labelFormatter={(label) => `${dataKeyX}: ${label}`}
+        />
+
+        <Bar
+          dataKey="logVal"
+          fill="#f285c1"
+          shape={<ThreeDBar />}
+          barSize={30}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+});
+
