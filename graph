@@ -18,6 +18,44 @@ import { useState, useEffect } from "react";
 
 let csvGlobal;
 
+const formatHits = (value) => {
+  if (value >= 10000000) {
+    return (value / 10000000).toFixed(2) + ' Cr'; // Crores
+  } else if (value >= 100000) {
+    return (value / 100000).toFixed(2) + ' L'; // Lakhs
+  } else if (value >= 1000) {
+    return (value / 1000).toFixed(2) + ' K'; // Thousands
+  } else {
+    return value; // For values less than 1000
+  }
+};
+
+
+// Custom 3D bar shape function
+const ThreeDBar = ({ x, y, width, height, fill }) => {
+  const depth = 6;
+
+  return (
+    <g>
+      {/* Front face */}
+      <rect x={x} y={y} width={width} height={height} fill={fill} />
+
+      {/* Top face */}
+      <polygon
+        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
+        fill="#ffffff33"
+      />
+
+      {/* Right face */}
+      <polygon
+        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
+        fill="#00000033"
+      />
+    </g>
+  );
+};
+
+
 const getServiceSysData = async () => {
   const res = await getServiceSys();
   const convertToCSV = (jsonData, sortBy = 'Hits') => {
@@ -64,16 +102,16 @@ const GraphCarousel = () => {
     });
 
     getIpWiseExp5().then((res) => {
-      setIpWiseExp5Data(res.data.ip_wise_top5.map(item => ({
-        Ip: item.Ip,
+      setIpWiseExp5Data(res.data.Ip_wise_top5.map(item => ({
+        Ip: item.Ip.trim(),
         logVal: item.logVal,
         Hits: item.Hits
       })));
     });
 
     getIpWiseSys5().then((res) => {
-      setIpWiseSys5Data(res.data.ip_wise_top5.map(item => ({
-        Ip: item.Ip,
+      setIpWiseSys5Data(res.data.Ip_wise_top5.map(item => ({
+        Ip: item.Ip.trim(),
         logVal: item.logVal,
         Hits: item.Hits
       })));
@@ -96,40 +134,63 @@ const GraphCarousel = () => {
     });
   }, []);
 
-  const renderBarChart = (data, dataKeyX, title) => ({
-    title,
-    chart: (
-      <ResponsiveContainer>
-        <BarChart
-          data={data}
-          margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
-          barCategoryGap={30}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
-          <XAxis
-            dataKey={dataKeyX}
-            stroke="var(--text-color)"
-            interval={0}
-            angle={-30}
-            textAnchor="end"
-            height={60}
-            tick={{ fontSize: 10 }}
-          />
-          <YAxis tick={false} axisLine showLine />
-          <Tooltip
-            formatter={(value, name, props) => {
-              if (name === 'logVal') {
-                return [`${props.payload.Hits}`, 'Hits'];
-              }
-              return value;
-            }}
-            labelFormatter={(label) => `${dataKeyX}: ${label}`}
-          />
-          <Bar dataKey="logVal" fill="#894a89" />
-        </BarChart>
-      </ResponsiveContainer>
-    )
-  });
+
+
+const renderBarChart = (data, dataKeyX, title) => ({
+  title,
+  chart: (
+    <ResponsiveContainer>
+      <BarChart
+        data={data}
+        margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+        barCategoryGap={10}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+
+        <XAxis
+          dataKey={dataKeyX}
+          stroke="#f7f7f7"
+          interval={0}
+          angle={-30}
+          textAnchor="end"
+          height={60}
+          tick={{ fontSize: 10, fill: '#f7f7f7' }}
+        />
+
+        <YAxis tick={{  fill: '#f7f7f7' }} axisLine showLine
+          domain={[0, 'dataMax +10' ]}/>
+
+        <Tooltip
+          contentStyle={{
+            backgroundColor: '#2e1a3b',
+            borderColor: '#f285c1',
+            color: '#fff',
+            borderRadius: '8px',
+          }}
+          itemStyle={{ color: '#fff' }}
+          labelStyle={{ color: '#f285c1' }}
+          formatter={(value, name, props) => {
+            if (name === 'logVal') {
+              const formattedHits = formatHits(props.payload.Hits);
+              return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+            }
+            return value;
+          }}
+          labelFormatter={(label) => `${dataKeyX}: ${label}`}
+        />
+
+
+        <Bar
+          dataKey="logVal"
+          fill="#f285c1"
+          shape={<ThreeDBar />}
+          barSize={50}
+
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  )
+});
 
   const charts = [
     renderBarChart(serviceWiseExp5Data, "Service_name", "Service-wise Exp Data"),
@@ -222,51 +283,25 @@ const GraphCarousel = () => {
 export default GraphCarousel;
 
 
-{"Ip_wise_top5": [{"Ip": "10.188.24.74", "Layer": "EXP", "Hits": "99897", "Date_day": "2025-05-04 00:00:00.000000", "logVal": 5}, {"Ip": "10.188.25.74", "Layer": "EXP", "Hits": "99634", "Date_day": "2025-05-04 00:00:00.000000", "logVal": 5}, {"Ip": "10.188.25.73", "Layer": "EXP", "Hits": "99597", "Date_day": "2025-05-04 00:00:00.000000", "logVal": 5}, {"Ip": "10.188.24.73", "Layer": "EXP", "Hits": "99594", "Date_day": "2025-05-04 00:00:00.000000", "logVal": 5}, {"Ip": "10.188.24.33 ", "Layer": "EXP", "Hits": "99", "Date_day": "2025-04-28 00:00:00.000000", "logVal": 2}]}
-
-
-{"Ip_wise_top5": [{"Ip": "10.188.24.191", "Layer": "SYS", "Hits": "877602", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.25.190", "Layer": "SYS", "Hits": "877382", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.25.191", "Layer": "SYS", "Hits": "877359", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.25.192", "Layer": "SYS", "Hits": "877223", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.24.192", "Layer": "SYS", "Hits": "877148", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}]}
-
-
-
-
-
-
- linear-gradient(to top right, #a31e57, #551957, #301e68)
-
-
-
-
-
-
-
-
 
 .carousel-container {
-  background: rgba(255, 255, 255, 0.15); /* Lighter translucent base */
-  backdrop-filter: blur(12px) saturate(120%); /* Slightly more blur and saturation */
-  -webkit-backdrop-filter: blur(12px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Brighter border */
+  background: rgba(20, 20, 40, 0.6); /* Glassmorphic dark base */
+  backdrop-filter: blur(10px);       /* Frosted effect */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 2rem;
   margin: 0.3rem auto;
   width: 110%;
   max-width: 1000px;
-  color: var(--text-color); /* Make sure var(--text-color) is also adapted for light mode */
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.25); /* Lighter shadow for better contrast */
+  color: var(--text-color);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
   transition: background 0.3s ease, color 0.3s ease;
   height: 730px;
 }
-
-
-
 /* Glass-style active chart background */
 .chart-fade.active {
-  background: rgba(20, 20, 40, 0.6);
-  backdrop-filter: blur(6px);
   border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.08);
   transition: all 0.3s ease-in-out;
   opacity: 1;
   transform: translateX(0);
@@ -300,7 +335,7 @@ export default GraphCarousel;
 .carousel-header h2 {
   font-size: 1.8rem;
   margin: 0;
-  color: #f9c3dd;
+  color: #fff;
   text-align: center;
   flex: 1;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
@@ -350,9 +385,9 @@ export default GraphCarousel;
 
 /* Graph container */
 .carousel-graph {
-  margin-top: 30px;
-  width: 100%;
-  height: 660px;
+  margin-top: 19px;
+  width:97%;
+  height: 639px;
 }
 
 /* Dots (slide indicators) */
@@ -464,95 +499,7 @@ export default GraphCarousel;
 
 
 
-// Custom 3D bar shape function
-const ThreeDBar = ({ x, y, width, height, fill }) => {
-  const depth = 6;
 
-  return (
-    <g>
-      {/* Front face */}
-      <rect x={x} y={y} width={width} height={height} fill={fill} />
-
-      {/* Top face */}
-      <polygon
-        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
-        fill="#ffffff33"
-      />
-
-      {/* Right face */}
-      <polygon
-        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
-        fill="#00000033"
-      />
-    </g>
-  );
-};
-
-
-const renderBarChart = (data, dataKeyX, title) => ({
-  title,
-  chart: (
-    <ResponsiveContainer>
-      <BarChart
-        data={data}
-        margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
-        barCategoryGap={30}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-
-        <XAxis
-          dataKey={dataKeyX}
-          stroke="#f7f7f7"
-          interval={0}
-          angle={-30}
-          textAnchor="end"
-          height={60}
-          tick={{ fontSize: 10, fill: '#f7f7f7' }}
-        />
-
-        <YAxis tick={{ fill: '#f7f7f7' }} axisLine showLine />
-
-        <Tooltip
-          contentStyle={{
-            backgroundColor: '#2e1a3b',
-            borderColor: '#f285c1',
-            color: '#fff',
-            borderRadius: '8px',
-          }}
-          itemStyle={{ color: '#fff' }}
-          labelStyle={{ color: '#f285c1' }}
-          formatter={(value, name, props) => {
-            if (name === 'logVal') {
-              return [`${props.payload.Hits}`, 'Hits'];
-            }
-            return value;
-          }}
-          labelFormatter={(label) => `${dataKeyX}: ${label}`}
-        />
-
-        <Bar
-          dataKey="logVal"
-          fill="#f285c1"
-          shape={<ThreeDBar />}
-          barSize={30}
-        />
-      </BarChart>
-    </ResponsiveContainer>
-  )
-});
-
-
-const formatHits = (value) => {
-  if (value >= 10000000) {
-    return (value / 10000000).toFixed(2) + ' Cr'; // Crores
-  } else if (value >= 100000) {
-    return (value / 100000).toFixed(2) + ' L'; // Lakhs
-  } else if (value >= 1000) {
-    return (value / 1000).toFixed(2) + ' K'; // Thousands
-  } else {
-    return value; // For values less than 1000
-  }
-};
 
 
 
