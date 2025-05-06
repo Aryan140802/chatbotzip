@@ -16,37 +16,24 @@ import {
 
 import { useState, useEffect } from "react";
 
-let csvGlobal;
-
+// Format large numbers
 const formatHits = (value) => {
-  if (value >= 10000000) {
-    return (value / 10000000).toFixed(2) + ' Cr'; // Crores
-  } else if (value >= 100000) {
-    return (value / 100000).toFixed(2) + ' L'; // Lakhs
-  } else if (value >= 1000) {
-    return (value / 1000).toFixed(2) + ' K'; // Thousands
-  } else {
-    return value; // For values less than 1000
-  }
+  if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
+  if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
+  if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
+  return value;
 };
 
-
-// Custom 3D bar shape function
+// Custom 3D bar shape
 const ThreeDBar = ({ x, y, width, height, fill }) => {
   const depth = 6;
-
   return (
     <g>
-      {/* Front face */}
       <rect x={x} y={y} width={width} height={height} fill={fill} />
-
-      {/* Top face */}
       <polygon
         points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
         fill="#ffffff33"
       />
-
-      {/* Right face */}
       <polygon
         points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
         fill="#00000033"
@@ -55,153 +42,126 @@ const ThreeDBar = ({ x, y, width, height, fill }) => {
   );
 };
 
-
-const getServiceSysData = async () => {
-  const res = await getServiceSys();
-  const convertToCSV = (jsonData, sortBy = 'Hits') => {
-    if (!jsonData || !jsonData.length) return '';
-    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
-    const headers = Object.keys(sortedData[0]);
-    const csvRows = [
-      headers.join(','),
-      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
-    ];
-    return csvRows.join('\n');
-  };
-  csvGlobal = convertToCSV(res.data, 'Hits');
-};
-
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const [serviceWiseExp5Data, setServiceWiseExp5Data] = useState([]);
-  const [serviceWiseSys5Data, setServiceWiseSys5Data] = useState([]);
-  const [ipWiseExp5Data, setIpWiseExp5Data] = useState([]);
-  const [ipWiseSys5Data, setIpWiseSys5Data] = useState([]);
-  const [portWiseExp5Data, setPortWiseExp5Data] = useState([]);
-  const [portWiseSys5Data, setPortWiseSys5Data] = useState([]);
+  const [charts, setCharts] = useState([]);
 
   useEffect(() => {
-    getServiceSysData();
+    const fetchData = async () => {
+      const [
+        serviceExp,
+        serviceSys,
+        ipExp,
+        ipSys,
+        portExp,
+        portSys
+      ] = await Promise.all([
+        getServiceWiseExp5(),
+        getServiceWiseSys5(),
+        getIpWiseExp5(),
+        getIpWiseSys5(),
+        getPortWiseExp5(),
+        getPortWiseSys5()
+      ]);
 
-    getServiceWiseExp5().then((res) => {
-      setServiceWiseExp5Data(res.data.service_wise_top5.map(item => ({
-        Service_name: item.Service_name,
-        logVal: item.logVal,
-        Hits: item.Hits
-      })));
-    });
+      const formatData = (data, key) =>
+        data.map(item => ({
+          ...item,
+          [key]: item[key].toString().trim(), // Ensure keys are string
+          Hits: Number(item.Hits),
+          logVal: Number(item.logVal)
+        }));
 
-    getServiceWiseSys5().then((res) => {
-      setServiceWiseSys5Data(res.data.service_wise_top5.map(item => ({
-        Service_name: item.Service_name,
-        logVal: item.logVal,
-        Hits: item.Hits
-      })));
-    });
+      const chartConfigs = [
+        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Exp Data' },
+        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Sys Data' },
+        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Exp Data' },
+        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Sys Data' },
+        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Exp Data' },
+        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Sys Data' }
+      ];
 
-    getIpWiseExp5().then((res) => {
-      setIpWiseExp5Data(res.data.Ip_wise_top5.map(item => ({
-        Ip: item.Ip.trim(),
-        logVal: item.logVal,
-        Hits: item.Hits
-      })));
-    });
+      const chartObjects = chartConfigs.map(({ data, dataKeyX, title }) => ({
+        title,
+        rawData: data,
+        chart: (
+          <ResponsiveContainer>
+            <BarChart
+  data={data}
+  margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+  barCategoryGap={10}
+>
+  <defs>
+    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#f285c1" />
+      <stop offset="100%" stopColor="#8e2b90" />
+    </linearGradient>
+  </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+              <XAxis
+                dataKey={dataKeyX}
+                stroke="#f7f7f7"
+                interval={0}
+                angle={-30}
+                textAnchor="end"
+                height={60}
+                tick={{ fontSize: 10, fill: '#f7f7f7' }}
+              />
+              <YAxis
+                tick={{ fill: '#f7f7f7' }}
+                axisLine
+                showLine
+                tickFormatter={formatHits}
+                domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#2e1a3b',
+                  borderColor: '#f285c1',
+                  color: '#fff',
+                  borderRadius: '8px',
+                }}
+                itemStyle={{ color: '#fff' }}
+                labelStyle={{ color: '#f285c1' }}
+                formatter={(value, name, props) => {
+                  if (name === 'Hits') {
+                    const formattedHits = formatHits(props.payload.Hits);
+                    return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+                  }
+                  return value;
+                }}
+                labelFormatter={(label) => `${dataKeyX}: ${label}`}
+              />
+              <Bar
+  dataKey="Hits"
+  fill="url(#barGradient)"
+  shape={<ThreeDBar />}
+  barSize={50}
+/>
 
-    getIpWiseSys5().then((res) => {
-      setIpWiseSys5Data(res.data.Ip_wise_top5.map(item => ({
-        Ip: item.Ip.trim(),
-        logVal: item.logVal,
-        Hits: item.Hits
-      })));
-    });
+            </BarChart>
+          </ResponsiveContainer>
+        )
+      }));
 
-    getPortWiseExp5().then((res) => {
-      setPortWiseExp5Data(res.data.port_wise_top5.map(item => ({
-        Port: item.Port,
-        logVal: item.logVal,
-        Hits: item.Hits
-      })));
-    });
+      setCharts(chartObjects);
+    };
 
-    getPortWiseSys5().then((res) => {
-      setPortWiseSys5Data(res.data.port_wise_top5.map(item => ({
-        Port: item.Port,
-        logVal: item.logVal,
-        Hits: item.Hits
-      })));
-    });
+    fetchData();
   }, []);
 
-
-
-const renderBarChart = (data, dataKeyX, title) => ({
-  title,
-  chart: (
-    <ResponsiveContainer>
-      <BarChart
-        data={data}
-        margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
-        barCategoryGap={10}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-
-        <XAxis
-          dataKey={dataKeyX}
-          stroke="#f7f7f7"
-          interval={0}
-          angle={-30}
-          textAnchor="end"
-          height={60}
-          tick={{ fontSize: 10, fill: '#f7f7f7' }}
-        />
-
-        <YAxis tick={{  fill: '#f7f7f7' }} axisLine showLine
-          domain={[0, 'dataMax +10' ]}/>
-
-        <Tooltip
-          contentStyle={{
-            backgroundColor: '#2e1a3b',
-            borderColor: '#f285c1',
-            color: '#fff',
-            borderRadius: '8px',
-          }}
-          itemStyle={{ color: '#fff' }}
-          labelStyle={{ color: '#f285c1' }}
-          formatter={(value, name, props) => {
-            if (name === 'logVal') {
-              const formattedHits = formatHits(props.payload.Hits);
-              return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
-            }
-            return value;
-          }}
-          labelFormatter={(label) => `${dataKeyX}: ${label}`}
-        />
-
-
-        <Bar
-          dataKey="logVal"
-          fill="#f285c1"
-          shape={<ThreeDBar />}
-          barSize={50}
-
-        />
-      </BarChart>
-    </ResponsiveContainer>
-  )
-});
-
-  const charts = [
-    renderBarChart(serviceWiseExp5Data, "Service_name", "Service-wise Exp Data"),
-    renderBarChart(serviceWiseSys5Data, "Service_name", "Service-wise Sys Data"),
-    renderBarChart(ipWiseExp5Data, "Ip", "IP-wise Exp Data"),
-    renderBarChart(ipWiseSys5Data, "Ip", "IP-wise Sys Data"),
-    renderBarChart(portWiseExp5Data, "Port", "Port-wise Exp Data"),
-    renderBarChart(portWiseSys5Data, "Port", "Port-wise Sys Data"),
-  ];
-
-  const goToSlide = (index) => setCurrentIndex(index);
+  // Auto-rotate slides
+  useEffect(() => {
+    if (paused) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [paused, charts.length]);
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
     if (!data || !data.length) return;
@@ -220,15 +180,9 @@ const renderBarChart = (data, dataKeyX, title) => ({
     document.body.removeChild(link);
   };
 
-  useEffect(() => {
-    if (paused) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [paused]);
+  const goToSlide = (index) => setCurrentIndex(index);
+
+  if (!charts.length) return <div>Loading...</div>;
 
   return (
     <div className="carousel-container">
@@ -237,7 +191,9 @@ const renderBarChart = (data, dataKeyX, title) => ({
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={() => downloadCSV(csvGlobal, `${charts[currentIndex].title}.csv`)}
+            onClick={() =>
+              downloadCSV(charts[currentIndex].rawData, `${charts[currentIndex].title}.csv`)
+            }
           >
             <div className="logo-wrapper">
               <img
@@ -285,20 +241,21 @@ export default GraphCarousel;
 
 
 .carousel-container {
-  background: rgba(20, 20, 40, 0.6); /* Glassmorphic dark base */
-  backdrop-filter: blur(10px);       /* Frosted effect */
-  -webkit-backdrop-filter: blur(10px); /* Safari support */
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(to top right, #a31e57cc, #551957cc, #301e68cc); /* semi-transparent gradient */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
   padding: 2rem;
   margin: 0.3rem auto;
   width: 110%;
   max-width: 1000px;
   color: var(--text-color);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   transition: background 0.3s ease, color 0.3s ease;
   height: 730px;
 }
+
 /* Glass-style active chart background */
 .chart-fade.active {
   border-radius: 12px;
