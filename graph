@@ -243,18 +243,21 @@ export default GraphCarousel;
 
 
 .carousel-container {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-color);
+  background: rgba(20, 20, 40, 0.6); /* Glassmorphic dark base */
+  backdrop-filter: blur(10px);       /* Frosted effect */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 2rem;
   margin: 0.3rem auto;
   width: 110%;
   max-width: 1000px;
   color: var(--text-color);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
   transition: background 0.3s ease, color 0.3s ease;
   height: 730px;
 }
+
 
 /* Glass-style active chart background */
 .chart-fade.active {
