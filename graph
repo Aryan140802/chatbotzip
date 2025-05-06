@@ -226,3 +226,10 @@ export default GraphCarousel;
 
 
 {"Ip_wise_top5": [{"Ip": "10.188.24.191", "Layer": "SYS", "Hits": "877602", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.25.190", "Layer": "SYS", "Hits": "877382", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.25.191", "Layer": "SYS", "Hits": "877359", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.25.192", "Layer": "SYS", "Hits": "877223", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}, {"Ip": "10.188.24.192", "Layer": "SYS", "Hits": "877148", "Date_day": "2025-04-30 00:00:00.000000", "logVal": 6}]}
+
+
+
+
+
+
+ linear-gradient(to top right, #a31e57, #551957, #301e68)
