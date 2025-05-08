@@ -2,6 +2,7 @@ import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+
 import Download from '../assets/down-arrow.png';
 import {
   getServiceWiseExp5,
@@ -14,7 +15,6 @@ import {
 
 import { useState, useEffect, useRef } from "react";
 
-
 // Format large numbers
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
@@ -24,7 +24,7 @@ const formatHits = (value) => {
 };
 
 const ThreeDBar = (props) => {
-  const { x, y, width, height, fill, payload } = props;
+  const { x, y, width, height, fill } = props;
   const depth = 6;
 
   return (
@@ -59,6 +59,7 @@ const GraphCarousel = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
@@ -75,101 +76,118 @@ const GraphCarousel = () => {
     { label: "Custom date", value: "custom" },
   ];
 
+  // Base titles for different chart types
+  const baseTitles = [
+    'Service-wise Exp Data',
+    'Service-wise Sys Data',
+    'IP-wise Exp Data',
+    'IP-wise Sys Data',
+    'Port-wise Exp Data',
+    'Port-wise Sys Data'
+  ];
+
   const fetchFilteredData = async (timeRange = "5m") => {
-    const [
-      serviceExp,
-      serviceSys,
-      ipExp,
-      ipSys,
-      portExp,
-      portSys
-    ] = await Promise.all([
-      getServiceWiseExp5(timeRange),
-      getServiceWiseSys5(timeRange),
-      getIpWiseExp5(timeRange),
-      getIpWiseSys5(timeRange),
-      getPortWiseExp5(timeRange),
-      getPortWiseSys5(timeRange)
-    ]);
+    setIsLoading(true);
+    try {
+      const [
+        serviceExp,
+        serviceSys,
+        ipExp,
+        ipSys,
+        portExp,
+        portSys
+      ] = await Promise.all([
+        getServiceWiseExp5(timeRange),
+        getServiceWiseSys5(timeRange),
+        getIpWiseExp5(timeRange),
+        getIpWiseSys5(timeRange),
+        getPortWiseExp5(timeRange),
+        getPortWiseSys5(timeRange)
+      ]);
 
-    const formatData = (data, key) =>
-      data.map(item => ({
-        ...item,
-        [key]: item[key].toString().trim(),
-        Hits: Number(item.Hits),
-        logVal: Number(item.logVal)
+      const formatData = (data, key) =>
+        data.map(item => ({
+          ...item,
+          [key]: item[key].toString().trim(),
+          Hits: Number(item.Hits),
+          logVal: Number(item.logVal)
+        }));
+
+      // For custom date, use the formatted date in the chart title
+      const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
+        ? formatDate(selectedDate)
+        : selectedTimeLabel;
+
+      return [
+        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
+        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
+        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
+        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
+        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
+        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
+      ].map(({ data, dataKeyX, baseTitle }) => ({
+        baseTitle,
+        title: `${baseTitle} of ${timeDisplay}`,
+        rawData: data,
+        chart: (
+          <ResponsiveContainer>
+            <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f285c1" />
+                  <stop offset="100%" stopColor="#8e2b90" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+              <XAxis
+                dataKey={dataKeyX}
+                stroke="#f7f7f7"
+                interval={0}
+                angle={-30}
+                textAnchor="end"
+                height={60}
+                tick={{ fontSize: 10, fill: '#f7f7f7' }}
+              />
+              <YAxis
+                tick={{ fill: '#f7f7f7' }}
+                axisLine
+                showLine
+                tickFormatter={formatHits}
+                domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                itemStyle={{ color: '#fff' }}
+                labelStyle={{ color: '#f285c1' }}
+                formatter={(value, name, props) => {
+                  if (name === 'Hits') {
+                    const formattedHits = formatHits(props.payload.Hits);
+                    return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+                  }
+                  return value;
+                }}
+                labelFormatter={(label) => `${dataKeyX}: ${label}`}
+              />
+              <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
+            </BarChart>
+          </ResponsiveContainer>
+        )
       }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    // Include the time label in chart titles
-    const baseTitles = [
-      'Service-wise Exp Data',
-      'Service-wise Sys Data',
-      'IP-wise Exp Data',
-      'IP-wise Sys Data',
-      'Port-wise Exp Data',
-      'Port-wise Sys Data'
-    ];
-
-    // For custom date, use the formatted date in the chart title
-    const timeDisplay = selectedTimeValue?.startsWith('custom_') && selectedDate
-      ? formatDate(selectedDate)
-      : selectedTimeLabel;
-
-    return [
-      { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
-      { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
-      { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
-      { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
-      { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
-      { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
-    ].map(({ data, dataKeyX, baseTitle }) => ({
-      baseTitle,
-      title: `${baseTitle} of ${timeDisplay}`,
-      rawData: data,
-      chart: (
-        <ResponsiveContainer>
-          <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
-            <defs>
-              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f285c1" />
-                <stop offset="100%" stopColor="#8e2b90" />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-            <XAxis
-              dataKey={dataKeyX}
-              stroke="#f7f7f7"
-              interval={0}
-              angle={-30}
-              textAnchor="end"
-              height={60}
-              tick={{ fontSize: 10, fill: '#f7f7f7' }}
-            />
-            <YAxis
-              tick={{ fill: '#f7f7f7' }}
-              axisLine
-              showLine
-              tickFormatter={formatHits}
-              domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
-            />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
-              itemStyle={{ color: '#fff' }}
-              labelStyle={{ color: '#f285c1' }}
-              formatter={(value, name, props) => {
-                if (name === 'Hits') {
-                  const formattedHits = formatHits(props.payload.Hits);
-                  return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
-                }
-                return value;
-              }}
-              labelFormatter={(label) => `${dataKeyX}: ${label}`}
-            />
-            <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
-          </BarChart>
-        </ResponsiveContainer>
-      )
+  // Function to update chart titles without refetching data
+  const updateChartTitles = (timeDisplay) => {
+    if (charts.length === 0) return;
+    
+    const updatedCharts = charts.map((chart, index) => ({
+      ...chart,
+      title: `${baseTitles[index]} of ${timeDisplay}`
     }));
+    
+    setCharts(updatedCharts);
   };
 
   useEffect(() => {
@@ -197,7 +215,10 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
     setPaused(true);
     
-    // Fetch and update data immediately on option click
+    // Update titles immediately
+    updateChartTitles(option.label);
+    
+    // Fetch and update data
     try {
       const updatedCharts = await fetchFilteredData(option.value);
       setCharts(updatedCharts);
@@ -217,7 +238,10 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
     setPaused(true);
     
-    // Fetch and update data immediately on date selection
+    // Update titles immediately
+    updateChartTitles(`Custom: ${formattedDate}`);
+    
+    // Fetch and update data
     try {
       const updatedCharts = await fetchFilteredData(dateValue);
       setCharts(updatedCharts);
@@ -319,7 +343,7 @@ const GraphCarousel = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [dropdownOpen, calendarOpen]);
 
-  if (!charts.length) return <div>Loading...</div>;
+  if (!charts.length) return <div className="loading-container">Loading charts...</div>;
 
   return (
     <div className="carousel-container">
@@ -353,13 +377,14 @@ const GraphCarousel = () => {
             )}
           </div>
         </div>
-        <h2>{charts[currentIndex].title}</h2>
+        <h2>{isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : charts[currentIndex]?.title}</h2>
         <div className="download-button-wrapper">
           <button
             className="download-button"
             onClick={() =>
               downloadCSV(charts[currentIndex].rawData, `${charts[currentIndex].title}.csv`)
             }
+            disabled={isLoading}
           >
             <div className="logo-wrapper">
               <img className="logo" src={Download} alt="Download Icon" style={{ height: '36px', marginRight: '3px' }} />
@@ -369,11 +394,15 @@ const GraphCarousel = () => {
       </div>
 
       <div className="carousel-graph" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-        {charts.map((item, index) => (
-          <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
-            {item.chart}
-          </div>
-        ))}
+        {isLoading ? (
+          <div className="loading-overlay">Loading data...</div>
+        ) : (
+          charts.map((item, index) => (
+            <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
+              {item.chart}
+            </div>
+          ))
+        )}
       </div>
 
       <div className="carousel-dots">
@@ -390,7 +419,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-// Add these CSS rules to your GraphCarousel.css file or include them inline /* .dropdown { position: relative; display: inline-block; } .dropdown-toggle { background-color: #2e1a3b; color: #f7f7f7; border: 1px solid #f285c1; border-radius: 4px; padding: 8px 12px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: space-between; min-width: 120px; } .dropdown-menu { position: absolute; top: 100%; left: 0; background-color: #2e1a3b; border: 1px solid #f285c1; border-radius: 4px; width: 100%; margin-top: 5px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); z-index: 10; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.3s ease, opacity 0.3s ease; } .dropdown-menu.show { max-height: 300px; opacity: 1; overflow-y: auto; } .dropdown-menu li { padding: 8px 12px; cursor: pointer; transition: background-color 0.2s; list-style-type: none; } .dropdown-menu li:hover { background-color: #3e2a4b; } .dropdown-menu li.selected { background-color: #4e3a5b; font-weight: bold; } .calendar-container { position: absolute; top: calc(100% + 5px); left: 0; z-index: 20; background-color: #2e1a3b; border: 1px solid #f285c1; border-radius: 4px; padding: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); } .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; } .calendar-header { grid-column: span 7; text-align: center; margin-bottom: 10px; color: #f7f7f7; font-weight: bold; } .calendar-day { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; color: #f7f7f7; } .calendar-day:hover:not(.disabled) { background-color: #f285c166; } .calendar-day.selected { background-color: #f285c1; color: #2e1a3b; font-weight: bold; } .calendar-day.disabled { color: #6c6c6c; cursor: not-allowed; } .calendar-weekday { text-align: center; font-size: 12px; color: #f285c1; padding: 5px 0; grid-column: span 1; } */ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'; import Download from '../assets/down-arrow.png'; import { getServiceWiseExp5, getServiceWiseSys5, getIpWiseExp5, getIpWiseSys5, getPortWiseExp5, getPortWiseSys5 } from "../api/PostApi"; import { useState, useEffect } from "react";
