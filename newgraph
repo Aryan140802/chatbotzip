@@ -245,6 +245,11 @@ const GraphCarousel = () => {
       'Port-wise Sys Data'
     ];
 
+    // For custom date, use the formatted date in the chart title
+    const timeDisplay = selectedTimeValue?.startsWith('custom_') && selectedDate
+      ? formatDate(selectedDate)
+      : selectedTimeLabel;
+
     return [
       { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
       { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
@@ -254,7 +259,7 @@ const GraphCarousel = () => {
       { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
     ].map(({ data, dataKeyX, baseTitle }) => ({
       baseTitle,
-      title: `${baseTitle} of ${selectedTimeLabel}`,
+      title: `${baseTitle} of ${timeDisplay}`,
       rawData: data,
       chart: (
         <ResponsiveContainer>
@@ -326,23 +331,35 @@ const GraphCarousel = () => {
     setDropdownOpen(false);
     setCalendarOpen(false);
     setPaused(true);
-    const updatedCharts = await fetchFilteredData(option.value);
-    setCharts(updatedCharts);
-    setCurrentIndex(0);
-    setPaused(false);
+    
+    // Fetch and update data immediately on option click
+    try {
+      const updatedCharts = await fetchFilteredData(option.value);
+      setCharts(updatedCharts);
+      setCurrentIndex(0);
+    } finally {
+      setPaused(false);
+    }
   };
 
   const handleDateSelect = async (date) => {
     const formattedDate = formatDate(date);
+    const dateValue = `custom_${date.toISOString().split('T')[0]}`;
+    
     setSelectedDate(date);
     setSelectedTimeLabel(`Custom: ${formattedDate}`);
-    setSelectedTimeValue(`custom_${date.toISOString().split('T')[0]}`);
+    setSelectedTimeValue(dateValue);
     setCalendarOpen(false);
     setPaused(true);
-    const updatedCharts = await fetchFilteredData(`custom_${date.toISOString().split('T')[0]}`);
-    setCharts(updatedCharts);
-    setCurrentIndex(0);
-    setPaused(false);
+    
+    // Fetch and update data immediately on date selection
+    try {
+      const updatedCharts = await fetchFilteredData(dateValue);
+      setCharts(updatedCharts);
+      setCurrentIndex(0);
+    } finally {
+      setPaused(false);
+    }
   };
 
   const formatDate = (date) => {
