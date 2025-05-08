@@ -1,30 +1,24 @@
 const handleTimeChange = async (option) => {
-  // If the selected option is "custom", open the calendar instead
   if (option.value === "custom") {
     setDropdownOpen(false);
     setCalendarOpen(true);
     return;
   }
 
-  // Always close dropdown and calendar
-  setDropdownOpen(false);
-  setCalendarOpen(false);
-
-  // Pause carousel autoplay
-  setPaused(true);
-
-  // Update selected time label and value
   setSelectedTimeLabel(option.label);
   setSelectedTimeValue(option.value);
+  setDropdownOpen(false);
+  setCalendarOpen(false);
+  setPaused(true);
 
-  // Update chart titles immediately based on label
+  // Update titles immediately
   updateChartTitles(option.label);
 
-  // Fetch and set chart data
+  // Fetch and update data
   try {
     const updatedCharts = await fetchFilteredData(option.value);
     setCharts(updatedCharts);
-    setCurrentIndex(0); // Reset carousel index
+    setCurrentIndex(0);
   } finally {
     setPaused(false);
   }
