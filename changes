@@ -11,12 +11,9 @@ const handleTimeChange = async (option) => {
   setCalendarOpen(false);
   setPaused(true);
 
-  // Update titles immediately
-  updateChartTitles(option.label);
-
-  // Fetch and update data
+  // Fetch using the value directly, not from state
   try {
-    const updatedCharts = await fetchFilteredData(option.value);
+    const updatedCharts = await fetchFilteredData(option.value);  // <- Use option.value here
     setCharts(updatedCharts);
     setCurrentIndex(0);
   } finally {
