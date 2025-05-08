@@ -213,7 +213,8 @@ const GraphCarousel = () => {
             </ul>
           </div>
         </div>
-        <h2>{charts[currentIndex].title}</h2>
+        {/* Updated to include selectedTimeLabel */}
+        <h2>{charts[currentIndex]?.title} - {selectedTimeLabel}</h2>
         <div className="download-button-wrapper">
           <button
             className="download-button"
@@ -250,33 +251,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-
-
-
-.custom-bar:hover {
-  transform: scale(1.05);
-  transform-origin: center;
-  filter: drop-shadow(0 0 8px #f285c1);
-}
-
-
-react-dom-client.production.js:7899 Uncaught InvalidCharacterError: Failed to execute 'createElement' on 'Document': The tag name provided ('/PyPortal/static/static/media/GraphCarousel.31d6cfe0d16ae931b73c') is not a valid name.
-    at rs (react-dom-client.production.js:7899:30)
-    at ec (react-dom-client.production.js:10966:16)
-    at Yu (react-dom-client.production.js:10857:19)
-    at Gu (react-dom-client.production.js:10736:37)
-    at Ku (react-dom-client.production.js:10717:7)
-    at Du (react-dom-client.production.js:10322:40)
-    at _c (react-dom-client.production.js:11626:3)
-    at MessagePort.T (scheduler.production.js:151:44)
-rs	@	react-dom-client.production.js:7899
-ec	@	react-dom-client.production.js:10966
-Yu	@	react-dom-client.production.js:10857
-Gu	@	react-dom-client.production.js:10736
-Ku	@	react-dom-client.production.js:10717
-Du	@	react-dom-client.production.js:10322
-_c	@	react-dom-client.production.js:11626
-T	@	scheduler.production.js:151
