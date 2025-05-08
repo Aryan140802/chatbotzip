@@ -23,20 +23,12 @@ const formatHits = (value) => {
   return value;
 };
 
-const ThreeDBar = ({ x, y, width, height, fill }) => {
-  const [hovered, setHovered] = useState(false);
+const ThreeDBar = (props) => {
+  const { x, y, width, height, fill, payload } = props;
   const depth = 6;
 
   return (
-    <g
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        transform: hovered ? "scale(1.05)" : "scale(1)",
-        transformOrigin: `${x + width / 2}px ${y + height / 2}px`,
-        transition: "transform 0.3s ease"
-      }}
-    >
+    <g>
       <rect
         x={x}
         y={y}
@@ -44,22 +36,22 @@ const ThreeDBar = ({ x, y, width, height, fill }) => {
         height={height}
         fill={fill}
         style={{
-          filter: hovered ? "drop-shadow(0 0 8px #f285c1)" : "none",
-          transition: "filter 0.3s ease"
+          transition: "all 0.3s ease",
         }}
+        className="custom-bar"
       />
-
       <polygon
         points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
-        fill={hovered ? "#ffffff55" : "#ffffff33"}
+        fill="#ffffff33"
       />
       <polygon
         points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
-        fill={hovered ? "#00000055" : "#00000033"}
+        fill="#00000033"
       />
     </g>
   );
 };
+
 
 
 const GraphCarousel = () => {
@@ -154,7 +146,7 @@ const GraphCarousel = () => {
               }}
               labelFormatter={(label) => `${dataKeyX}: ${label}`}
             />
-            <Bar dataKey="Hits" fill="url(#barGradient)" shape={<ThreeDBar />} barSize={50} />
+            <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
           </BarChart>
         </ResponsiveContainer>
       )
@@ -258,3 +250,15 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
+
+
+
+
+
+
+.custom-bar:hover {
+  transform: scale(1.05);
+  transform-origin: center;
+  filter: drop-shadow(0 0 8px #f285c1);
+}
+
