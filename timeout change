@@ -1,74 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Menu from './components/Menu';
-import Dashboard from './components/Dashboard';
-import Chatbot from './components/ChatBot';
-import Login from './components/Login';
-import './App.css';
 
-function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [chatbotMinimized, setChatbotMinimized] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+import React, { useState, useRef, useEffect } from 'react';
+import ThemeToggle from './Toggle';
+import ProfileIcon from './ProfileIcon';
+import logo from '../assets/tcs.png';
+import logod from '../assets/tcsd.png';
 
-  // Check for existing login session on app load
+export default function Header({ darkMode, setDarkMode, username, onLogout, showProfileIcon = true }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const dropdownRef = useRef();
+
+  // Close dropdown if clicked outside
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-      setIsLoggedIn(true);
-    }
-  }, []);
-
-  const handleLogin = (user) => {
-    setUsername(user);
-    setIsLoggedIn(true);
-    localStorage.setItem('username', user);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsername('');
-    localStorage.removeItem('username');
-  };
-
-  useEffect(() => {
-    const clearCache = () => {
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          for (let name of names) {
-            caches.delete(name);
-          }
-        });
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
       }
     };
-    clearCache();
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
-    <div>
-      <Header
-        username={username}
-        onLogout={handleLogout}
-      />
-      {!chatbotMinimized && <div className="app-background" />}
-      <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
-        <Menu
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
+    <div
+      className="container"
+      style={{
+        paddingTop: '10px',
+        paddingBottom: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img
+          className="logo"
+          src={darkMode ? logo : logod}
+          alt="Company Logo"
+          style={{ height: '40px', marginRight: '20px' }}
         />
-        <Dashboard isSidebarOpen={isSidebarOpen} />
-        <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
       </div>
-      <Footer />
+
+      <h1 style={{ margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+        INFRA PR Home Page
+      </h1>
+
+      <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }} ref={dropdownRef}>
+        <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
+
+        {showProfileIcon && username && (
+          <>
+            <div
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{ cursor: 'pointer', marginLeft: '10px' }}
+            >
+              <ProfileIcon sender ={username} />
+            </div>
+
+            {menuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50px',
+                  right: 0,
+                  background: darkMode ? '#1e1e1e' : '#fff',
+                  color: darkMode ? '#fff' : '#000',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                  borderRadius: '6px',
+                  padding: '10px',
+                  zIndex: 100,
+                  minWidth: '120px'
+                }}
+              >
+                <div style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={onLogout}>
+                  Logout
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
-
-export default App;
