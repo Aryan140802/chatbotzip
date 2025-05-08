@@ -1,3 +1,4 @@
+// In handleTimeChange
 const handleTimeChange = async (option) => {
   if (option.value === "custom") {
     setDropdownOpen(false);
@@ -10,13 +11,52 @@ const handleTimeChange = async (option) => {
   setDropdownOpen(false);
   setCalendarOpen(false);
   setPaused(true);
+  setIsLoading(true);
 
-  // Fetch using the value directly, not from state
   try {
-    const updatedCharts = await fetchFilteredData(option.value);  // <- Use option.value here
-    setCharts(updatedCharts);
-    setCurrentIndex(0);
+    const updatedCharts = await fetchFilteredData(option.value);
+    if (updatedCharts.length > 0) {
+      setCurrentIndex(0); // Reset index before setting charts
+      setCharts(updatedCharts); // Set chart data
+      setCurrentDisplayTitle(updatedCharts[0].title); // Use freshly returned title
+    }
   } finally {
+    setIsLoading(false);
+    setPaused(false);
+  }
+};
+
+
+
+
+
+
+
+
+/////////////////////////////////////////
+
+
+// In handleDateSelect
+const handleDateSelect = async (date) => {
+  const formattedDate = formatDate(date);
+  const dateValue = `custom_${date.toISOString().split('T')[0]}`;
+
+  setSelectedDate(date);
+  setSelectedTimeLabel(`Custom: ${formattedDate}`);
+  setSelectedTimeValue(dateValue);
+  setCalendarOpen(false);
+  setPaused(true);
+  setIsLoading(true);
+
+  try {
+    const updatedCharts = await fetchFilteredData(dateValue);
+    if (updatedCharts.length > 0) {
+      setCurrentIndex(0); // Reset first
+      setCharts(updatedCharts);
+      setCurrentDisplayTitle(updatedCharts[0].title);
+    }
+  } finally {
+    setIsLoading(false);
     setPaused(false);
   }
 };
