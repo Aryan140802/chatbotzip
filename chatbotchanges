@@ -1,4 +1,3 @@
-
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -6,7 +5,6 @@ import {
 
 import Download from '../assets/down-arrow.png';
 import {
-  getServiceSys,
   getServiceWiseExp5,
   getServiceWiseSys5,
   getIpWiseExp5,
@@ -25,144 +23,165 @@ const formatHits = (value) => {
   return value;
 };
 
-// Custom 3D bar shape
 const ThreeDBar = ({ x, y, width, height, fill }) => {
+  const [hovered, setHovered] = useState(false);
   const depth = 6;
+
   return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={fill} />
+    <g
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        transform: hovered ? "scale(1.05)" : "scale(1)",
+        transformOrigin: `${x + width / 2}px ${y + height / 2}px`,
+        transition: "transform 0.3s ease"
+      }}
+    >
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        style={{
+          filter: hovered ? "drop-shadow(0 0 8px #f285c1)" : "none",
+          transition: "filter 0.3s ease"
+        }}
+      />
+
       <polygon
         points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
-        fill="#ffffff33"
+        fill={hovered ? "#ffffff55" : "#ffffff33"}
       />
       <polygon
         points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
-        fill="#00000033"
+        fill={hovered ? "#00000055" : "#00000033"}
       />
     </g>
   );
 };
 
+
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-
   const [charts, setCharts] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const [
-        serviceExp,
-        serviceSys,
-        ipExp,
-        ipSys,
-        portExp,
-        portSys
-      ] = await Promise.all([
-        getServiceWiseExp5(),
-        getServiceWiseSys5(),
-        getIpWiseExp5(),
-        getIpWiseSys5(),
-        getPortWiseExp5(),
-        getPortWiseSys5()
-      ]);
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
 
-      const formatData = (data, key) =>
-        data.map(item => ({
-          ...item,
-          [key]: item[key].toString().trim(), // Ensure keys are string
-          Hits: Number(item.Hits),
-          logVal: Number(item.logVal)
-        }));
+  const timeOptions = [
+    { label: "5 min", value: "5m" },
+    { label: "15 min", value: "15m" },
+    { label: "30 min", value: "30m" },
+    { label: "1 hour", value: "1h" },
+    { label: "Till now", value: "now" },
+    { label: "Yesterday", value: "yesterday" },
+    { label: "Last 7 days", value: "7d" },
+  ];
 
-      const chartConfigs = [
-        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Exp Data' },
-        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Sys Data' },
-        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Exp Data' },
-        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Sys Data' },
-        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Exp Data' },
-        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Sys Data' }
-      ];
+  const fetchFilteredData = async (timeRange = "5m") => {
+    const [
+      serviceExp,
+      serviceSys,
+      ipExp,
+      ipSys,
+      portExp,
+      portSys
+    ] = await Promise.all([
+      getServiceWiseExp5(timeRange),
+      getServiceWiseSys5(timeRange),
+      getIpWiseExp5(timeRange),
+      getIpWiseSys5(timeRange),
+      getPortWiseExp5(timeRange),
+      getPortWiseSys5(timeRange)
+    ]);
 
-      const chartObjects = chartConfigs.map(({ data, dataKeyX, title }) => ({
-        title,
-        rawData: data,
-        chart: (
-          <ResponsiveContainer>
-            <BarChart
-  data={data}
-  margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
-  barCategoryGap={10}
->
-  <defs>
-    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#f285c1" />
-      <stop offset="100%" stopColor="#8e2b90" />
-    </linearGradient>
-  </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-              <XAxis
-                dataKey={dataKeyX}
-                stroke="#f7f7f7"
-                interval={0}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-                tick={{ fontSize: 10, fill: '#f7f7f7' }}
-              />
-              <YAxis
-                tick={{ fill: '#f7f7f7' }}
-                axisLine
-                showLine
-                tickFormatter={formatHits}
-                domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#2e1a3b',
-                  borderColor: '#f285c1',
-                  color: '#fff',
-                  borderRadius: '8px',
-                }}
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#f285c1' }}
-                formatter={(value, name, props) => {
-                  if (name === 'Hits') {
-                    const formattedHits = formatHits(props.payload.Hits);
-                    return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
-                  }
-                  return value;
-                }}
-                labelFormatter={(label) => `${dataKeyX}: ${label}`}
-              />
-              <Bar
-  dataKey="Hits"
-  fill="url(#barGradient)"
-  shape={<ThreeDBar />}
-  barSize={50}
-/>
-
-            </BarChart>
-          </ResponsiveContainer>
-        )
+    const formatData = (data, key) =>
+      data.map(item => ({
+        ...item,
+        [key]: item[key].toString().trim(),
+        Hits: Number(item.Hits),
+        logVal: Number(item.logVal)
       }));
 
-      setCharts(chartObjects);
-    };
+    return [
+      { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Exp Data' },
+      { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Sys Data' },
+      { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Exp Data' },
+      { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Sys Data' },
+      { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Exp Data' },
+      { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Sys Data' }
+    ].map(({ data, dataKeyX, title }) => ({
+      title,
+      rawData: data,
+      chart: (
+        <ResponsiveContainer>
+          <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
+            <defs>
+              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#f285c1" />
+                <stop offset="100%" stopColor="#8e2b90" />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+            <XAxis
+              dataKey={dataKeyX}
+              stroke="#f7f7f7"
+              interval={0}
+              angle={-30}
+              textAnchor="end"
+              height={60}
+              tick={{ fontSize: 10, fill: '#f7f7f7' }}
+            />
+            <YAxis
+              tick={{ fill: '#f7f7f7' }}
+              axisLine
+              showLine
+              tickFormatter={formatHits}
+              domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+            />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+              itemStyle={{ color: '#fff' }}
+              labelStyle={{ color: '#f285c1' }}
+              formatter={(value, name, props) => {
+                if (name === 'Hits') {
+                  const formattedHits = formatHits(props.payload.Hits);
+                  return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+                }
+                return value;
+              }}
+              labelFormatter={(label) => `${dataKeyX}: ${label}`}
+            />
+            <Bar dataKey="Hits" fill="url(#barGradient)" shape={<ThreeDBar />} barSize={50} />
+          </BarChart>
+        </ResponsiveContainer>
+      )
+    }));
+  };
 
-    fetchData();
+  useEffect(() => {
+    fetchFilteredData(selectedTimeValue).then(setCharts);
   }, []);
 
-  // Auto-rotate slides
   useEffect(() => {
     if (paused) return;
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
-      );
+      setCurrentIndex((prevIndex) => (prevIndex === charts.length - 1 ? 0 : prevIndex + 1));
     }, 5000);
     return () => clearInterval(interval);
   }, [paused, charts.length]);
+
+  const handleTimeChange = async (option) => {
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
+    setPaused(true);
+    const updatedCharts = await fetchFilteredData(option.value);
+    setCharts(updatedCharts);
+    setCurrentIndex(0);
+    setPaused(false);
+  };
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
     if (!data || !data.length) return;
@@ -188,6 +207,20 @@ const GraphCarousel = () => {
   return (
     <div className="carousel-container">
       <div className="carousel-header">
+        <div className="timeline-selector">
+          <div className="dropdown">
+            <button className="dropdown-toggle">
+              {selectedTimeLabel} ▼
+            </button>
+            <ul className="dropdown-menu">
+              {timeOptions.map((option) => (
+                <li key={option.label} onClick={() => handleTimeChange(option)}>
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
         <h2>{charts[currentIndex].title}</h2>
         <div className="download-button-wrapper">
           <button
@@ -197,28 +230,15 @@ const GraphCarousel = () => {
             }
           >
             <div className="logo-wrapper">
-              <img
-                className="logo"
-                src={Download}
-                alt="Download Icon"
-                style={{ height: '36px', marginRight: '3px' }}
-              />
+              <img className="logo" src={Download} alt="Download Icon" style={{ height: '36px', marginRight: '3px' }} />
             </div>
           </button>
         </div>
       </div>
 
-      <div
-        className="carousel-graph"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
+      <div className="carousel-graph" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
         {charts.map((item, index) => (
-          <div
-            key={index}
-            className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
-            style={{ display: index === currentIndex ? 'block' : 'none' }}
-          >
+          <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
             {item.chart}
           </div>
         ))}
