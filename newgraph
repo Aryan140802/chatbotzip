@@ -1,5 +1,139 @@
 import '../styles/GraphCarousel.css';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
+import Download from '../assets/down-arrow.png';
+import {
+  getServiceWiseExp5,
+  getServiceWiseSys5,
+  getIpWiseExp5,
+  getIpWiseSys5,
+  getPortWiseExp5,
+  getPortWiseSys5
+} from "../api/PostApi";
 
+import { useState, useEffect, useRef } from "react";
+
+// Add these CSS rules to your GraphCarousel.css file or include them inline
+/*
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  background-color: #2e1a3b;
+  color: #f7f7f7;
+  border: 1px solid #f285c1;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 120px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #2e1a3b;
+  border: 1px solid #f285c1;
+  border-radius: 4px;
+  width: 100%;
+  margin-top: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.dropdown-menu.show {
+  max-height: 300px;
+  opacity: 1;
+  overflow-y: auto;
+}
+
+.dropdown-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  list-style-type: none;
+}
+
+.dropdown-menu li:hover {
+  background-color: #3e2a4b;
+}
+
+.dropdown-menu li.selected {
+  background-color: #4e3a5b;
+  font-weight: bold;
+}
+
+.calendar-container {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 20;
+  background-color: #2e1a3b;
+  border: 1px solid #f285c1;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-header {
+  grid-column: span 7;
+  text-align: center;
+  margin-bottom: 10px;
+  color: #f7f7f7;
+  font-weight: bold;
+}
+
+.calendar-day {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  color: #f7f7f7;
+}
+
+.calendar-day:hover:not(.disabled) {
+  background-color: #f285c166;
+}
+
+.calendar-day.selected {
+  background-color: #f285c1;
+  color: #2e1a3b;
+  font-weight: bold;
+}
+
+.calendar-day.disabled {
+  color: #6c6c6c;
+  cursor: not-allowed;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  color: #f285c1;
+  padding: 5px 0;
+  grid-column: span 1;
+}
+*/
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -58,9 +192,13 @@ const GraphCarousel = () => {
   const [paused, setPaused] = useState(false);
   const [charts, setCharts] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
+  
+  const calendarRef = useRef(null);
 
   const timeOptions = [
     { label: "5 min", value: "5m" },
@@ -69,7 +207,7 @@ const GraphCarousel = () => {
     { label: "1 hour", value: "1h" },
     { label: "Till now", value: "now" },
     { label: "Yesterday", value: "yesterday" },
-    { label: "Last 7 days", value: "7d" },
+    { label: "Custom date", value: "custom" },
   ];
 
   const fetchFilteredData = async (timeRange = "5m") => {
@@ -177,14 +315,87 @@ const GraphCarousel = () => {
   }, [paused, charts.length]);
 
   const handleTimeChange = async (option) => {
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+    
     setSelectedTimeLabel(option.label);
     setSelectedTimeValue(option.value);
     setDropdownOpen(false);
+    setCalendarOpen(false);
     setPaused(true);
     const updatedCharts = await fetchFilteredData(option.value);
     setCharts(updatedCharts);
     setCurrentIndex(0);
     setPaused(false);
+  };
+
+  const handleDateSelect = async (date) => {
+    const formattedDate = formatDate(date);
+    setSelectedDate(date);
+    setSelectedTimeLabel(`Custom: ${formattedDate}`);
+    setSelectedTimeValue(`custom_${date.toISOString().split('T')[0]}`);
+    setCalendarOpen(false);
+    setPaused(true);
+    const updatedCharts = await fetchFilteredData(`custom_${date.toISOString().split('T')[0]}`);
+    setCharts(updatedCharts);
+    setCurrentIndex(0);
+    setPaused(false);
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Generate calendar days
+  const generateCalendarDays = () => {
+    const today = new Date();
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Add weekday headers
+    weekdays.forEach(day => {
+      days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>);
+    });
+    
+    // Calculate first day to display (start of month or 7 days ago, whichever is later)
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6); // 7 days including today
+    
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
+    
+    // Fill in leading empty cells for the first week
+    const firstDayOfWeek = startDate.getDay();
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
+    }
+    
+    // Fill in the days of the month
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const isDisabled = date > today || date < sevenDaysAgo;
+      const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+      
+      days.push(
+        <div 
+          key={`day-${day}`}
+          className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
+          onClick={() => !isDisabled && handleDateSelect(date)}
+        >
+          {day}
+        </div>
+      );
+    }
+    
+    return days;
   };
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
@@ -206,21 +417,25 @@ const GraphCarousel = () => {
 
   const goToSlide = (index) => setCurrentIndex(index);
 
-  const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+    setCalendarOpen(false);
+  };
 
-  // Close dropdown when clicking outside
+  // Close dropdown and calendar when clicking outside
   useEffect(() => {
-    if (!dropdownOpen) return;
+    if (!dropdownOpen && !calendarOpen) return;
     
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.dropdown')) {
+      if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
         setDropdownOpen(false);
+        setCalendarOpen(false);
       }
     };
     
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [dropdownOpen]);
+  }, [dropdownOpen, calendarOpen]);
 
   if (!charts.length) return <div>Loading...</div>;
 
@@ -243,6 +458,17 @@ const GraphCarousel = () => {
                 </li>
               ))}
             </ul>
+            
+            {calendarOpen && (
+              <div className="calendar-container" ref={calendarRef}>
+                <div className="calendar-header">
+                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                <div className="calendar">
+                  {generateCalendarDays()}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <h2>{charts[currentIndex].title}</h2>
@@ -282,79 +508,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Add these CSS rules to your GraphCarousel.css file or include them inline
-/*
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-toggle {
-  background-color: #2e1a3b;
-  color: #f7f7f7;
-  border: 1px solid #f285c1;
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-width: 120px;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background-color: #2e1a3b;
-  border: 1px solid #f285c1;
-  border-radius: 4px;
-  width: 100%;
-  margin-top: 5px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-}
-
-.dropdown-menu.show {
-  max-height: 300px;
-  opacity: 1;
-  overflow-y: auto;
-}
-
-.dropdown-menu li {
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  list-style-type: none;
-}
-
-.dropdown-menu li:hover {
-  background-color: #3e2a4b;
-}
-
-.dropdown-menu li.selected {
-  background-color: #4e3a5b;
-  font-weight: bold;
-}
-*/
