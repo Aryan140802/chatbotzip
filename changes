@@ -1,23 +1,31 @@
-:
-1.Team Info
-2. Transaction Info
-3. Cache Info
-4. FAR Information
-5. Other
-11:21
-FAR Information
-11:21
-AP
-EG
-select below options:
-1.Enter FAR ID
-2. Have Multiple Fields
-11:21
-Have Multiple Fields
-11:21
-AP
-EG
-FORM
-1.Back
-2.main menu
-11:21
+const handleTimeChange = async (option) => {
+  // If the selected option is "custom", open the calendar instead
+  if (option.value === "custom") {
+    setDropdownOpen(false);
+    setCalendarOpen(true);
+    return;
+  }
+
+  // Always close dropdown and calendar
+  setDropdownOpen(false);
+  setCalendarOpen(false);
+
+  // Pause carousel autoplay
+  setPaused(true);
+
+  // Update selected time label and value
+  setSelectedTimeLabel(option.label);
+  setSelectedTimeValue(option.value);
+
+  // Update chart titles immediately based on label
+  updateChartTitles(option.label);
+
+  // Fetch and set chart data
+  try {
+    const updatedCharts = await fetchFilteredData(option.value);
+    setCharts(updatedCharts);
+    setCurrentIndex(0); // Reset carousel index
+  } finally {
+    setPaused(false);
+  }
+};
