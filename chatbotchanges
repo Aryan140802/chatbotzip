@@ -1,85 +1,240 @@
 
-import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Menu from './components/Menu';
-import Dashboard from './components/Dashboard';
-import Chatbot from './components/ChatBot';
-import Login from './components/Login';
-import './App.css';
+import '../styles/GraphCarousel.css';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+} from 'recharts';
 
-function App() {
+import Download from '../assets/down-arrow.png';
+import {
+  getServiceSys,
+  getServiceWiseExp5,
+  getServiceWiseSys5,
+  getIpWiseExp5,
+  getIpWiseSys5,
+  getPortWiseExp5,
+  getPortWiseSys5
+} from "../api/PostApi";
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [chatbotMinimized, setChatbotMinimized] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [username, setUsername] = useState('');
+import { useState, useEffect } from "react";
 
-  // Check for existing login session on app load
+// Format large numbers
+const formatHits = (value) => {
+  if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
+  if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
+  if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
+  return value;
+};
+
+// Custom 3D bar shape
+const ThreeDBar = ({ x, y, width, height, fill }) => {
+  const depth = 6;
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} fill={fill} />
+      <polygon
+        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
+        fill="#ffffff33"
+      />
+      <polygon
+        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
+        fill="#00000033"
+      />
+    </g>
+  );
+};
+
+const GraphCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const [charts, setCharts] = useState([]);
+
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-      setIsLoggedIn(true);
-    }
-  }, []);
+    const fetchData = async () => {
+      const [
+        serviceExp,
+        serviceSys,
+        ipExp,
+        ipSys,
+        portExp,
+        portSys
+      ] = await Promise.all([
+        getServiceWiseExp5(),
+        getServiceWiseSys5(),
+        getIpWiseExp5(),
+        getIpWiseSys5(),
+        getPortWiseExp5(),
+        getPortWiseSys5()
+      ]);
 
-  const handleLogin = (user) => {
-    setUsername(user);
-    setIsLoggedIn(true);
-    // Store username in localStorage for session persistence
-    localStorage.setItem('username', user);
-  };
+      const formatData = (data, key) =>
+        data.map(item => ({
+          ...item,
+          [key]: item[key].toString().trim(), // Ensure keys are string
+          Hits: Number(item.Hits),
+          logVal: Number(item.logVal)
+        }));
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUsername('');
-    // Clear localStorage on logout
-    localStorage.removeItem('username');
-  };
+      const chartConfigs = [
+        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Exp Data' },
+        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Sys Data' },
+        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Exp Data' },
+        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Sys Data' },
+        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Exp Data' },
+        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Sys Data' }
+      ];
 
-  useEffect(() => {
-    // Clear browser cache (best effort)
-    const clearCache = () => {
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          for (let name of names) {
-            caches.delete(name);
-          }
-        });
-      }
+      const chartObjects = chartConfigs.map(({ data, dataKeyX, title }) => ({
+        title,
+        rawData: data,
+        chart: (
+          <ResponsiveContainer>
+            <BarChart
+  data={data}
+  margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+  barCategoryGap={10}
+>
+  <defs>
+    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#f285c1" />
+      <stop offset="100%" stopColor="#8e2b90" />
+    </linearGradient>
+  </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+              <XAxis
+                dataKey={dataKeyX}
+                stroke="#f7f7f7"
+                interval={0}
+                angle={-30}
+                textAnchor="end"
+                height={60}
+                tick={{ fontSize: 10, fill: '#f7f7f7' }}
+              />
+              <YAxis
+                tick={{ fill: '#f7f7f7' }}
+                axisLine
+                showLine
+                tickFormatter={formatHits}
+                domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#2e1a3b',
+                  borderColor: '#f285c1',
+                  color: '#fff',
+                  borderRadius: '8px',
+                }}
+                itemStyle={{ color: '#fff' }}
+                labelStyle={{ color: '#f285c1' }}
+                formatter={(value, name, props) => {
+                  if (name === 'Hits') {
+                    const formattedHits = formatHits(props.payload.Hits);
+                    return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+                  }
+                  return value;
+                }}
+                labelFormatter={(label) => `${dataKeyX}: ${label}`}
+              />
+              <Bar
+  dataKey="Hits"
+  fill="url(#barGradient)"
+  shape={<ThreeDBar />}
+  barSize={50}
+/>
+
+            </BarChart>
+          </ResponsiveContainer>
+        )
+      }));
+
+      setCharts(chartObjects);
     };
 
-    clearCache();
+    fetchData();
   }, []);
-  console.log(isLoggedIn)
- if (!isLoggedIn) {
-    console.log("hello")
-    return <Login onLogin={handleLogin} />;
-  }
 
-   return (
-    <div className={darkMode ? "dark-mode" : ""}>
-      <Header
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        username={username}
-        onLogout={handleLogout}
-      />
-      {!chatbotMinimized && <div className="app-background" />}
-      <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
-        <Menu
-          darkMode={darkMode}
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
-        />
-        <Dashboard isSidebarOpen={isSidebarOpen} />
-        <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
+  // Auto-rotate slides
+  useEffect(() => {
+    if (paused) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [paused, charts.length]);
+
+  const downloadCSV = (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) return;
+    const keys = Object.keys(data[0]);
+    const csvContent = [
+      keys.join(','),
+      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const goToSlide = (index) => setCurrentIndex(index);
+
+  if (!charts.length) return <div>Loading...</div>;
+
+  return (
+    <div className="carousel-container">
+      <div className="carousel-header">
+        <h2>{charts[currentIndex].title}</h2>
+        <div className="download-button-wrapper">
+          <button
+            className="download-button"
+            onClick={() =>
+              downloadCSV(charts[currentIndex].rawData, `${charts[currentIndex].title}.csv`)
+            }
+          >
+            <div className="logo-wrapper">
+              <img
+                className="logo"
+                src={Download}
+                alt="Download Icon"
+                style={{ height: '36px', marginRight: '3px' }}
+              />
+            </div>
+          </button>
+        </div>
       </div>
-      <Footer />
+
+      <div
+        className="carousel-graph"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        {charts.map((item, index) => (
+          <div
+            key={index}
+            className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
+            style={{ display: index === currentIndex ? 'block' : 'none' }}
+          >
+            {item.chart}
+          </div>
+        ))}
+      </div>
+
+      <div className="carousel-dots">
+        {charts.map((_, index) => (
+          <span
+            key={index}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+            onClick={() => goToSlide(index)}
+          />
+        ))}
+      </div>
     </div>
   );
+};
 
-}
-
-export default App;
+export default GraphCarousel;
