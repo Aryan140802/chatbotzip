@@ -1,15 +1,11 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import ThemeToggle from './Toggle';
 import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
-import logod from '../assets/tcsd.png';
 
-export default function Header({ darkMode, setDarkMode, username, onLogout, showProfileIcon = true }) {
+export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef();
 
-  // Close dropdown if clicked outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -28,13 +24,15 @@ export default function Header({ darkMode, setDarkMode, username, onLogout, show
         paddingBottom: '10px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between'
+        justifyContent: 'space-between',
+        backgroundColor: '#1e1e1e',
+        color: '#ffffff'
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <img
           className="logo"
-          src={darkMode ? logo : logod}
+          src={logo}
           alt="Company Logo"
           style={{ height: '40px', marginRight: '20px' }}
         />
@@ -45,15 +43,13 @@ export default function Header({ darkMode, setDarkMode, username, onLogout, show
       </h1>
 
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }} ref={dropdownRef}>
-        <ThemeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
-
         {showProfileIcon && username && (
           <>
             <div
               onClick={() => setMenuOpen(!menuOpen)}
               style={{ cursor: 'pointer', marginLeft: '10px' }}
             >
-              <ProfileIcon sender ={username} />
+              <ProfileIcon sender={username} />
             </div>
 
             {menuOpen && (
@@ -62,8 +58,8 @@ export default function Header({ darkMode, setDarkMode, username, onLogout, show
                   position: 'absolute',
                   top: '50px',
                   right: 0,
-                  background: darkMode ? '#1e1e1e' : '#fff',
-                  color: darkMode ? '#fff' : '#000',
+                  background: '#1e1e1e',
+                  color: '#fff',
                   boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
                   borderRadius: '6px',
                   padding: '10px',
