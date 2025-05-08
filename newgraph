@@ -1,4 +1,3 @@
-
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -64,7 +63,9 @@ const GraphCarousel = () => {
 
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
-
+  // Add a new state for current display title
+  const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
+  
   const calendarRef = useRef(null);
 
   const timeOptions = [
@@ -182,18 +183,35 @@ const GraphCarousel = () => {
   // Function to update chart titles without refetching data
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
-     console.log("in charts");
+    
     const updatedCharts = charts.map((chart, index) => ({
       ...chart,
       title: `${baseTitles[index]} of ${timeDisplay}`
     }));
-
+    
     setCharts(updatedCharts);
+    
+    // Also update the current display title immediately
+    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
+    }
   };
 
   useEffect(() => {
-    fetchFilteredData(selectedTimeValue).then(setCharts);
+    fetchFilteredData(selectedTimeValue).then(chartData => {
+      setCharts(chartData);
+      if (chartData.length > 0) {
+        setCurrentDisplayTitle(chartData[0].title);
+      }
+    });
   }, []);
+
+  // Update current display title when current index changes
+  useEffect(() => {
+    if (charts.length > 0 && currentIndex >= 0 && currentIndex < charts.length) {
+      setCurrentDisplayTitle(charts[currentIndex].title);
+    }
+  }, [currentIndex, charts]);
 
   useEffect(() => {
     if (paused) return;
@@ -203,61 +221,74 @@ const GraphCarousel = () => {
     return () => clearInterval(interval);
   }, [paused, charts.length]);
 
-
-
-const handleTimeChange = async (option) => {
-  if (option.value === "custom") {
+  const handleTimeChange = async (option) => {
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+    
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
     setDropdownOpen(false);
-    setCalendarOpen(true);
-    return;
-  }
-
-  setSelectedTimeLabel(option.label);
-  setSelectedTimeValue(option.value);
-  setDropdownOpen(false);
-  setCalendarOpen(false);
-  setPaused(true);
-
-  // Fetch using the value directly, not from state
-  try {
-    console.log("updating")
-    const updatedCharts = await fetchFilteredData(option.value);  // <- Use option.value here
-    setCharts(updatedCharts);
-    setCurrentIndex(0);
-  } finally {
-    setPaused(false);
-  }
-};
-
-
-
+    setCalendarOpen(false);
+    setPaused(true);
+    
+    // Set a temporary loading title immediately
+    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
+    }
+    setIsLoading(true);
+    
+    // Fetch and update data
+    try {
+      const updatedCharts = await fetchFilteredData(option.value);
+      setCharts(updatedCharts);
+      setCurrentIndex(0);
+      // Set the final title from the first chart
+      if (updatedCharts.length > 0) {
+        setCurrentDisplayTitle(updatedCharts[0].title);
+      }
+    } finally {
+      setIsLoading(false);
+      setPaused(false);
+    }
+  };
 
   const handleDateSelect = async (date) => {
     const formattedDate = formatDate(date);
     const dateValue = `custom_${date.toISOString().split('T')[0]}`;
-
+    
     setSelectedDate(date);
     setSelectedTimeLabel(`Custom: ${formattedDate}`);
     setSelectedTimeValue(dateValue);
     setCalendarOpen(false);
     setPaused(true);
-
-    // Update titles immediately
-    updateChartTitles(`Custom: ${formattedDate}`);
-
+    
+    // Set a temporary loading title immediately
+    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of Custom: ${formattedDate}`);
+    }
+    setIsLoading(true);
+    
     // Fetch and update data
     try {
       const updatedCharts = await fetchFilteredData(dateValue);
       setCharts(updatedCharts);
       setCurrentIndex(0);
+      // Set the final title from the first chart
+      if (updatedCharts.length > 0) {
+        setCurrentDisplayTitle(updatedCharts[0].title);
+      }
     } finally {
+      setIsLoading(false);
       setPaused(false);
     }
   };
 
   const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
       day: 'numeric',
       year: 'numeric'
     });
@@ -268,34 +299,34 @@ const handleTimeChange = async (option) => {
     const today = new Date();
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
+    
     // Add weekday headers
     weekdays.forEach(day => {
       days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>);
     });
-
+    
     // Calculate first day to display (start of month or 7 days ago, whichever is later)
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(today.getDate() - 6); // 7 days including today
-
+    
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
-
+    
     // Fill in leading empty cells for the first week
     const firstDayOfWeek = startDate.getDay();
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
     }
-
+    
     // Fill in the days of the month
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
     for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const isDisabled = date > today || date < sevenDaysAgo;
       const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-
+      
       days.push(
-        <div
+        <div 
           key={`day-${day}`}
           className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
           onClick={() => !isDisabled && handleDateSelect(date)}
@@ -304,7 +335,7 @@ const handleTimeChange = async (option) => {
         </div>
       );
     }
-
+    
     return days;
   };
 
@@ -325,7 +356,12 @@ const handleTimeChange = async (option) => {
     document.body.removeChild(link);
   };
 
-  const goToSlide = (index) => setCurrentIndex(index);
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+    if (charts.length > 0 && index >= 0 && index < charts.length) {
+      setCurrentDisplayTitle(charts[index].title);
+    }
+  };
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
@@ -335,14 +371,14 @@ const handleTimeChange = async (option) => {
   // Close dropdown and calendar when clicking outside
   useEffect(() => {
     if (!dropdownOpen && !calendarOpen) return;
-
+    
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
         setDropdownOpen(false);
         setCalendarOpen(false);
       }
     };
-
+    
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [dropdownOpen, calendarOpen]);
@@ -359,8 +395,8 @@ const handleTimeChange = async (option) => {
             </button>
             <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
               {timeOptions.map((option) => (
-                <li
-                  key={option.value}
+                <li 
+                  key={option.value} 
                   onClick={() => handleTimeChange(option)}
                   className={option.value === selectedTimeValue ? 'selected' : ''}
                 >
@@ -368,7 +404,7 @@ const handleTimeChange = async (option) => {
                 </li>
               ))}
             </ul>
-
+            
             {calendarOpen && (
               <div className="calendar-container" ref={calendarRef}>
                 <div className="calendar-header">
@@ -381,12 +417,13 @@ const handleTimeChange = async (option) => {
             )}
           </div>
         </div>
-        <h2>{isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : charts[currentIndex]?.title}</h2>
+        {/* Use the new currentDisplayTitle state instead of charts[currentIndex]?.title */}
+        <h2>{isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : currentDisplayTitle}</h2>
         <div className="download-button-wrapper">
           <button
             className="download-button"
             onClick={() =>
-              downloadCSV(charts[currentIndex].rawData, `${charts[currentIndex].title}.csv`)
+              downloadCSV(charts[currentIndex].rawData, `${currentDisplayTitle}.csv`)
             }
             disabled={isLoading}
           >
