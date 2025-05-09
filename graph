@@ -1,13 +1,23 @@
 import '../styles/GraphCarousel.css';
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 import Download from '../assets/down-arrow.png';
 import {
-  getServiceWiseTop5FiveM,
-  getIpWiseTop5FiveM,
-  getPortWiseTop5FiveM
+  getServiceWiseExp5,
+  getServiceWiseSys5,
+  getIpWiseExp5,
+  getIpWiseSys5,
+  getPortWiseExp5,
+  getPortWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5,
+  postIpWiseSys5,
+  postIpWiseExp5,
+  postServiceWiseExp5,
+  postServiceWiseSys5
 } from "../api/PostApi";
 
 import { useState, useEffect, useRef } from "react";
@@ -42,18 +52,19 @@ const GraphCarousel = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
-  const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
 
   const calendarRef = useRef(null);
+  const intervalRef = useRef(null);
 
   const timeOptions = [
-    { label: "5 min", value: "5m" },
-    { label: "15 min", value: "15m" },
-    { label: "30 min", value: "30m" },
-    { label: "1 hour", value: "1h" },
-    { label: "Till now", value: "now" },
+    { label: "5 min", value: "5min" },
+    { label: "15 min", value: "15min" },
+    { label: "30 min", value: "30min" },
+    { label: "1 hour", value: "1hour" },
+    { label: "Till now", value: "tillnow" },
     { label: "Yesterday", value: "yesterday" },
     { label: "Custom date", value: "custom" },
   ];
@@ -72,55 +83,105 @@ const GraphCarousel = () => {
 
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
+    
     const updatedCharts = charts.map((chart, index) => ({
       ...chart,
       title: `${baseTitles[index]} of ${timeDisplay}`
     }));
+    
     setCharts(updatedCharts);
+    
     if (currentIndex >= 0 && currentIndex < baseTitles.length) {
       setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
     }
   };
 
-  const fetchFilteredData = async (timeRange = "5m") => {
+  const fetchFilteredData = async (timeRange, timeLabel) => {
     setIsLoading(true);
+    
     try {
+      console.log(`Fetching data for time range: ${timeRange}`);
+      
       const [
-        serviceData,
-        ipData,
-        portData
+        serviceExp,
+        serviceSys,
+        ipExp,
+        ipSys,
+        portExp,
+        portSys
       ] = await Promise.all([
-        getServiceWiseTop5FiveM(timeRange),
-        getIpWiseTop5FiveM(timeRange),
-        getPortWiseTop5FiveM(timeRange)
+        postServiceWiseExp5(timeRange),
+        postServiceWiseSys5(timeRange),
+        postIpWiseExp5(timeRange),
+        postIpWiseSys5(timeRange),
+        postPortWiseExp5(timeRange),
+        postPortWiseSys5(timeRange)
       ]);
 
-      const formatData = (data, key) =>
-        data.map(item => ({
+      const formatData = (data, key) => {
+        if (!data || !Array.isArray(data)) {
+          console.error('Invalid data format received:', data);
+          return [];
+        }
+        
+        return data.map(item => ({
           ...item,
-          [key]: item[key].toString().trim(),
-          Hits: Number(item.Hits),
-          logVal: Number(item.logVal)
+          [key]: item[key]?.toString().trim() || '',
+          Hits: Number(item.Hits || 0),
+          logVal: Number(item.logVal || 0)
         }));
+      };
 
+      // Use the provided timeLabel for display, or generate one for custom dates
       const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
-        ? formatDate(selectedDate)
-        : selectedTimeLabel;
+        ? `Custom: ${formatDate(selectedDate)}`
+        : timeLabel || selectedTimeLabel;
 
-      return [
-        { data: formatData(serviceData.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
-        { data: formatData(serviceData.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
-        { data: formatData(ipData.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
-        { data: formatData(ipData.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
-        { data: formatData(portData.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
-        { data: formatData(portData.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
-      ].map(({ data, dataKeyX, baseTitle }) => ({
+      const chartData = [
+        { 
+          data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'), 
+          dataKeyX: 'Service_name', 
+          baseTitle: baseTitles[0]
+        },
+        { 
+          data: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'), 
+          dataKeyX: 'Service_name', 
+          baseTitle: baseTitles[1]
+        },
+        { 
+          data: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'), 
+          dataKeyX: 'Ip', 
+          baseTitle: baseTitles[2]
+        },
+        { 
+          data: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'), 
+          dataKeyX: 'Ip', 
+          baseTitle: baseTitles[3]
+        },
+        { 
+          data: formatData(portExp?.data?.port_wise_top5 || [], 'Port'), 
+          dataKeyX: 'Port', 
+          baseTitle: baseTitles[4]
+        },
+        { 
+          data: formatData(portSys?.data?.port_wise_top5 || [], 'Port'), 
+          dataKeyX: 'Port', 
+          baseTitle: baseTitles[5]
+        }
+      ];
+
+      return chartData.map(({ data, dataKeyX, baseTitle }) => ({
         baseTitle,
         title: `${baseTitle} of ${timeDisplay}`,
         rawData: data,
         chart: (
           <ResponsiveContainer>
-            <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
+            <BarChart 
+              data={data} 
+              margin={{ top: 30, right: 30, left: 30, bottom: 60 }} 
+              barCategoryGap={10}
+              key={`${baseTitle}-${timeRange}-chart`} // Add key for better React reconciliation
+            >
               <defs>
                 <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#f285c1" />
@@ -157,102 +218,162 @@ const GraphCarousel = () => {
                 }}
                 labelFormatter={(label) => `${dataKeyX}: ${label}`}
               />
-              <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
+              <Bar 
+                dataKey="Hits" 
+                fill="url(#barGradient)" 
+                shape={ThreeDBar} 
+                barSize={50} 
+                key={`${baseTitle}-${timeRange}-bar`} // Add key for better React reconciliation
+              />
             </BarChart>
           </ResponsiveContainer>
         )
       }));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      return [];
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Initial data fetch
   useEffect(() => {
-    fetchFilteredData(selectedTimeValue).then(chartData => {
-      setCharts(chartData);
-      if (chartData.length > 0) {
+    fetchFilteredData(selectedTimeValue, selectedTimeLabel).then(chartData => {
+      if (chartData && chartData.length > 0) {
+        setCharts(chartData);
         setCurrentDisplayTitle(chartData[0].title);
+      } else {
+        console.error("No chart data returned from initial fetch");
       }
     });
+    
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
+  // Update display title when currentIndex changes
   useEffect(() => {
     if (charts.length > 0 && currentIndex >= 0 && currentIndex < charts.length) {
       setCurrentDisplayTitle(charts[currentIndex].title);
     }
   }, [currentIndex, charts]);
 
+  // Set up carousel auto-rotation
   useEffect(() => {
-    if (!paused) {
-      const interval = setInterval(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    
+    // Only create new interval if not paused and we have charts
+    if (!paused && charts.length > 0) {
+      intervalRef.current = setInterval(() => {
         setCurrentIndex(prev => (prev === charts.length - 1 ? 0 : prev + 1));
       }, 5000);
-      return () => clearInterval(interval);
     }
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, [paused, charts.length]);
 
+  // Sync chart titles with dropdown label
   useEffect(() => {
-    updateChartTitles(selectedTimeLabel);
-  }, [selectedTimeLabel]);
+    if (charts.length > 0) {
+      updateChartTitles(selectedTimeLabel);
+    }
+  }, [selectedTimeLabel, charts.length]);
 
   const handleTimeChange = async (option) => {
+    // Handle custom date selection
     if (option.value === "custom") {
       setDropdownOpen(false);
       setCalendarOpen(true);
       return;
     }
-
+    
+    console.log(`Time option selected: ${option.label} (${option.value})`);
+    
+    // Update state
     setSelectedTimeLabel(option.label);
     setSelectedTimeValue(option.value);
     setDropdownOpen(false);
     setCalendarOpen(false);
+    
+    // Pause carousel during loading and show loading state
     setPaused(true);
     setIsLoading(true);
-
-    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
-      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
-    }
-
+    
     try {
-      const updatedCharts = await fetchFilteredData(option.value);
-      setCharts(updatedCharts);
-      setCurrentIndex(0);
-      if (updatedCharts.length > 0) {
-        setCurrentDisplayTitle(updatedCharts[0].title);
-        updateChartTitles(option.label);
+      // Update title to show loading state for current chart
+      if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+        setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
       }
+      
+      // Fetch updated data
+      const updatedCharts = await fetchFilteredData(option.value, option.label);
+      
+      if (updatedCharts && updatedCharts.length > 0) {
+        setCharts(updatedCharts);
+        setCurrentIndex(0); // Reset to first chart
+        setCurrentDisplayTitle(updatedCharts[0].title);
+      } else {
+        console.error("No chart data returned from time change fetch");
+      }
+    } catch (error) {
+      console.error("Error in handleTimeChange:", error);
     } finally {
       setIsLoading(false);
-      setPaused(false);
+      setPaused(false); // Resume carousel
     }
   };
 
   const handleDateSelect = async (date) => {
+    if (!date) return;
+    
     const formattedDate = formatDate(date);
     const dateValue = `custom_${date.toISOString().split('T')[0]}`;
-
+    const timeLabel = `Custom: ${formattedDate}`;
+    
+    // Update state
     setSelectedDate(date);
-    setSelectedTimeLabel(`Custom: ${formattedDate}`);
+    setSelectedTimeLabel(timeLabel);
     setSelectedTimeValue(dateValue);
     setCalendarOpen(false);
+    
+    // Pause carousel during loading and show loading state
     setPaused(true);
     setIsLoading(true);
-
-    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
-      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of Custom: ${formattedDate}`);
-    }
-
+    
     try {
-      const updatedCharts = await fetchFilteredData(dateValue);
-      setCharts(updatedCharts);
-      setCurrentIndex(0);
-      if (updatedCharts.length > 0) {
-        setCurrentDisplayTitle(updatedCharts[0].title);
-        updateChartTitles(`Custom: ${formattedDate}`);
+      // Update title to show loading state for current chart
+      if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+        setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeLabel}`);
       }
+      
+      // Fetch updated data
+      const updatedCharts = await fetchFilteredData(dateValue, timeLabel);
+      
+      if (updatedCharts && updatedCharts.length > 0) {
+        setCharts(updatedCharts);
+        setCurrentIndex(0); // Reset to first chart
+        setCurrentDisplayTitle(updatedCharts[0].title);
+      } else {
+        console.error("No chart data returned from date select fetch");
+      }
+    } catch (error) {
+      console.error("Error in handleDateSelect:", error);
     } finally {
       setIsLoading(false);
-      setPaused(false);
+      setPaused(false); // Resume carousel
     }
   };
 
@@ -269,18 +390,26 @@ const GraphCarousel = () => {
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
     const firstDayOfWeek = startDate.getDay();
+    
+    // Add empty cells for days before the start date
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
     }
 
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    
+    // Add calendar days
     for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const isDisabled = date > today || date < sevenDaysAgo;
       const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
 
       days.push(
-        <div key={`day-${day}`} className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`} onClick={() => !isDisabled && handleDateSelect(date)}>
+        <div 
+          key={`day-${day}`} 
+          className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`} 
+          onClick={() => !isDisabled && handleDateSelect(date)}
+        >
           {day}
         </div>
       );
@@ -290,9 +419,17 @@ const GraphCarousel = () => {
   };
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
-    if (!data || !data.length) return;
+    if (!data || !data.length) {
+      console.warn("No data available to download");
+      return;
+    }
+    
     const keys = Object.keys(data[0]);
-    const csvContent = [keys.join(','), ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))].join('\n');
+    const csvContent = [
+      keys.join(','), 
+      ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
+    ].join('\n');
+    
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -301,10 +438,14 @@ const GraphCarousel = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Clean up
   };
 
   const goToSlide = (index) => {
+    if (index < 0 || index >= charts.length) return;
+    
     setCurrentIndex(index);
+    
     if (charts.length > 0 && index >= 0 && index < charts.length) {
       setCurrentDisplayTitle(charts[index].title);
     }
@@ -315,57 +456,95 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
   };
 
+  // Close dropdowns when clicking outside
   useEffect(() => {
     if (!dropdownOpen && !calendarOpen) return;
+    
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
         setDropdownOpen(false);
         setCalendarOpen(false);
       }
     };
+    
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [dropdownOpen, calendarOpen]);
 
-  if (!charts.length) return <div className="loading-container">Loading charts...</div>;
+  if (!charts.length) return (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div>Loading charts...</div>
+    </div>
+  );
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
         <div className="timeline-selector">
           <div className="dropdown" onClick={(e) => e.stopPropagation()}>
-            <button className="dropdown-toggle" onClick={toggleDropdown}>{selectedTimeLabel} ▼</button>
+            <button className="dropdown-toggle" onClick={toggleDropdown}>
+              {selectedTimeLabel} ▼
+            </button>
             <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
               {timeOptions.map(option => (
-                <li key={option.value} onClick={() => handleTimeChange(option)} className={option.value === selectedTimeValue ? 'selected' : ''}>
+                <li 
+                  key={option.value} 
+                  onClick={() => handleTimeChange(option)} 
+                  className={option.value === selectedTimeValue ? 'selected' : ''}
+                >
                   {option.label}
                 </li>
               ))}
             </ul>
             {calendarOpen && (
               <div className="calendar-container" ref={calendarRef}>
-                <div className="calendar-header">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                <div className="calendar-header">
+                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
                 <div className="calendar">{generateCalendarDays()}</div>
               </div>
             )}
           </div>
         </div>
+        
         <h2>{isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : currentDisplayTitle}</h2>
+        
         <div className="download-button-wrapper">
-          <button className="download-button" onClick={() => downloadCSV(charts[currentIndex].rawData, `${currentDisplayTitle}.csv`)} disabled={isLoading}>
+          <button 
+            className="download-button" 
+            onClick={() => downloadCSV(charts[currentIndex]?.rawData, `${currentDisplayTitle}.csv`)} 
+            disabled={isLoading || !charts[currentIndex]?.rawData}
+          >
             <div className="logo-wrapper">
-              <img className="logo" src={Download} alt="Download Icon" style={{ height: '36px', marginRight: '3px' }} />
+              <img 
+                className="logo" 
+                src={Download} 
+                alt="Download Icon" 
+                style={{ height: '36px', marginRight: '3px' }} 
+              />
             </div>
           </button>
         </div>
       </div>
 
-      <div className="carousel-graph" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+      <div 
+        className="carousel-graph" 
+        onMouseEnter={() => setPaused(true)} 
+        onMouseLeave={() => setPaused(false)}
+      >
         {isLoading ? (
-          <div className="loading-overlay">Loading data...</div>
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div>Loading data...</div>
+          </div>
         ) : (
           charts.map((item, index) => (
-            <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
+            <div 
+              key={`chart-container-${index}-${selectedTimeValue}`}
+              className={`chart-fade ${index === currentIndex ? 'active' : ''}`} 
+              style={{ display: index === currentIndex ? 'block' : 'none' }}
+            >
               {item.chart}
             </div>
           ))
@@ -374,7 +553,11 @@ const GraphCarousel = () => {
 
       <div className="carousel-dots">
         {charts.map((_, index) => (
-          <span key={index} className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`} onClick={() => goToSlide(index)} />
+          <span 
+            key={`dot-${index}`}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`} 
+            onClick={() => goToSlide(index)} 
+          />
         ))}
       </div>
     </div>
