@@ -1,4 +1,5 @@
 import '../styles/GraphCarousel.css';
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -51,18 +52,18 @@ const GraphCarousel = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
-  const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
 
   const calendarRef = useRef(null);
 
   const timeOptions = [
-    { label: "5 min", value: "5m" },
-    { label: "15 min", value: "15m" },
-    { label: "30 min", value: "30m" },
-    { label: "1 hour", value: "1h" },
-    { label: "Till now", value: "now" },
+    { label: "5 min", value: "5min" },
+    { label: "15 min", value: "15min" },
+    { label: "30 min", value: "30min" },
+    { label: "1 hour", value: "1hour" },
+    { label: "Till now", value: "tillnow" },
     { label: "Yesterday", value: "yesterday" },
     { label: "Custom date", value: "custom" },
   ];
@@ -91,7 +92,7 @@ const GraphCarousel = () => {
     }
   };
 
-  const fetchFilteredData = async (timeRange = "5m") => {
+  const fetchFilteredData = async (timeRange,selectedTimeLabel) => {
     setIsLoading(true);
     try {
       const [
@@ -103,11 +104,11 @@ const GraphCarousel = () => {
         portSys
       ] = await Promise.all([
         postServiceWiseExp5(timeRange),
-        getServiceWiseSys5(timeRange),
-        getIpWiseExp5(timeRange),
-        getIpWiseSys5(timeRange),
-        getPortWiseExp5(timeRange),
-        getPortWiseSys5(timeRange)
+        postServiceWiseSys5(timeRange),
+        postIpWiseExp5(timeRange),
+        postIpWiseSys5(timeRange),
+        postPortWiseExp5(timeRange),
+        postPortWiseSys5(timeRange)
       ]);
 
       const formatData = (data, key) =>
@@ -217,9 +218,10 @@ const GraphCarousel = () => {
       setCalendarOpen(true);
       return;
     }
-
+    console.log(option.value)
     setSelectedTimeLabel(option.label);
     setSelectedTimeValue(option.value);
+
     setDropdownOpen(false);
     setCalendarOpen(false);
     setPaused(true);
@@ -398,12 +400,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-
-
-
-GraphCarousel.jsx:114  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'map')
-    at l (GraphCarousel.jsx:114:14)
-    at E (GraphCarousel.jsx:126:17)
