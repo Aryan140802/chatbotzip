@@ -194,3 +194,83 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
+
+
+
+Access to fetch at 'https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/EXP/' (redirected from 'https://10.191.171.12:5443/Pyportal/ipwise_top5_FiveM/layer/EXP') from origin 'https://10.191.171.12:5443' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+GraphCarousel.jsx:47 
+            
+            
+           GET https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/EXP/ net::ERR_FAILED 404 (Not Found)
+e @ GraphCarousel.jsx:47
+(anonymous) @ GraphCarousel.jsx:56
+(anonymous) @ GraphCarousel.jsx:134
+au @ react-dom-client.production.js:8292
+qu @ react-dom-client.production.js:9771
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9782
+us @ react-dom-client.production.js:11313
+(anonymous) @ react-dom-client.production.js:11048
+_ @ scheduler.production.js:151Understand this error
+GraphCarousel.jsx:127 Error fetching data: TypeError: Failed to fetch
+    at e (GraphCarousel.jsx:47:27)
+    at GraphCarousel.jsx:56:9
+    at GraphCarousel.jsx:134:5
+    at au (react-dom-client.production.js:8292:24)
+    at qu (react-dom-client.production.js:9771:23)
+    at $u (react-dom-client.production.js:9746:7)
+    at qu (react-dom-client.production.js:9878:7)
+    at $u (react-dom-client.production.js:9746:7)
+    at qu (react-dom-client.production.js:9765:7)
+    at $u (react-dom-client.production.js:9746:7)
+(anonymous) @ GraphCarousel.jsx:127
+await in (anonymous)
+(anonymous) @ GraphCarousel.jsx:134
+au @ react-dom-client.production.js:8292
+qu @ react-dom-client.production.js:9771
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9878
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9765
+$u @ react-dom-client.production.js:9746
+qu @ react-dom-client.production.js:9782
+us @ react-dom-client.production.js:11313
+(anonymous) @ react-dom-client.production.js:11048
+_ @ scheduler.production.js:151Understand this error
+PyPortal/:1 Access to fetch at 'https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/SYS/' (redirected from 'https://10.191.171.12:5443/Pyportal/ipwise_top5_FiveM/layer/SYS') from origin 'https://10.191.171.12:5443' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
+GraphCarousel.jsx:47 
+            
+            
+           GET https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/SYS/ net::ERR_FAILED 404 (Not Found)
