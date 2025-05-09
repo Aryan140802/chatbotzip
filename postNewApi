@@ -1,0 +1,76 @@
+
+
+//post ai for time wise hits
+export const postServiceWiseExp5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+//post ai for time wise hits
+export const postServiceWiseSys5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postIpWiseExp5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postIpWiseSys5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postPortWiseExp5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postPortWiseSys5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
