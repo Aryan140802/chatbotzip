@@ -1,10 +1,3 @@
-path('portwise_top5_FiveM/<str:layer>/',views.portWiseTime,name='portWiseSortedFiveM'),
-path('ipwise_top5_FiveM/<str:layer>/',views.ipWiseTime,name='ipWiseSortedFiveM'),
-path('servicewise_top5_FiveM/<str:layer>/',views.serviceWiseTime,name='serviceWiseSortedFiveM'),
-
-
-
-
 import axios from 'axios';
 
 const api = axios.create({
@@ -16,12 +9,12 @@ const api = axios.create({
 });
 
 export const getPost = () => {
-  return api.get('EIS-GINI/',{timeout:100000});
+  return api.get('EIS-GINI/', { timeout: 100000 });
 };
 
 export const postMessage = (message) => {
- const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
-        console.log(res);
+  const res = api.post('EIS-GINI/', { "message": message }, { timeout: 100000 });
+  console.log(res);
   return res;
 };
 
@@ -41,7 +34,6 @@ export const getIpwiseExp = () => {
   return api.get('EISHome/ipwise_exp/');
 };
 
-
 export const getPortwiseSys = () => {
   return api.get('EISHome/portwise_sys/');
 };
@@ -50,103 +42,39 @@ export const getPortwiseExp = () => {
   return api.get('EISHome/portwise_exp/');
 };
 
-
 export const getServiceWiseExp5 = () => {
-        return api.get('EISHome/servicewise_top5_exp/')
+  return api.get('EISHome/servicewise_top5_exp/');
 };
 
 export const getServiceWiseSys5 = () => {
-        return api.get('EISHome/servicewise_top5_sys/')
+  return api.get('EISHome/servicewise_top5_sys/');
 };
+
 export const getIpWiseExp5 = () => {
-        return api.get('EISHome/ipwise_exp_top5/')
+  return api.get('EISHome/ipwise_exp_top5/');
 };
+
 export const getIpWiseSys5 = () => {
-        return api.get('EISHome/ipwise_sys_top5/')
+  return api.get('EISHome/ipwise_sys_top5/');
 };
+
 export const getPortWiseExp5 = () => {
-        return api.get('EISHome/portwise_top5_exp/')
+  return api.get('EISHome/portwise_top5_exp/');
 };
+
 export const getPortWiseSys5 = () => {
-        return api.get('EISHome/portwise_top5_sys/')
+  return api.get('EISHome/portwise_top5_sys/');
 };
 
-
-
-
-//post ai for time wise hits
-export const postServiceWiseExp5 = async (time) => {
-  try {
-    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', { "time":time});
-    return response;
-  } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
-  }
+// 🆕 New APIs for top 5 with dynamic layer
+export const getPortWiseTop5FiveM = (layer) => {
+  return api.get(`portwise_top5_FiveM/${layer}/`);
 };
 
-
-//post ai for time wise hits
-export const postServiceWiseSys5 = async (time) => {
-  try {
-    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time});
-    return response;
-  } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
-  }
+export const getIpWiseTop5FiveM = (layer) => {
+  return api.get(`ipwise_top5_FiveM/${layer}/`);
 };
 
-
-
-//post ai for time wise hits
-export const postIpWiseExp5 = async (time) => {
-  try {
-    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', { "time":time});
-    return response;
-  } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
-  }
+export const getServiceWiseTop5FiveM = (layer) => {
+  return api.get(`servicewise_top5_FiveM/${layer}/`);
 };
-
-
-
-//post ai for time wise hits
-export const postIpWiseSys5 = async (time) => {
-  try {
-    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time});
-    return response;
-  } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
-  }
-};
-
-
-
-//post ai for time wise hits
-export const postPortWiseExp5 = async (time) => {
-  try {
-    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', { "time":time});
-    return response;
-  } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
-  }
-};
-
-
-
-//post ai for time wise hits
-export const postPortWiseSys5 = async (time) => {
-  try {
-    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', { "time":time});
-    return response;
-  } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
-  }
-};
-
-
