@@ -1,4 +1,3 @@
-
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -11,7 +10,13 @@ import {
   getIpWiseExp5,
   getIpWiseSys5,
   getPortWiseExp5,
-  getPortWiseSys5
+  getPortWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5,
+  postIpWiseSys5,
+  postIpWiseExp5,
+  postServiceWiseExp5,
+  postServiceWiseSys5
 } from "../api/PostApi";
 
 import { useState, useEffect, useRef } from "react";
@@ -97,7 +102,7 @@ const GraphCarousel = () => {
         portExp,
         portSys
       ] = await Promise.all([
-        getServiceWiseExp5(timeRange),
+        postServiceWiseExp5(timeRange),
         getServiceWiseSys5(timeRange),
         getIpWiseExp5(timeRange),
         getIpWiseSys5(timeRange),
