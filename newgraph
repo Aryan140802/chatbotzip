@@ -398,3 +398,12 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
+
+
+
+
+
+
+GraphCarousel.jsx:114  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'map')
+    at l (GraphCarousel.jsx:114:14)
+    at E (GraphCarousel.jsx:126:17)
