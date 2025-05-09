@@ -66,15 +66,14 @@ export const getPortWiseSys5 = () => {
   return api.get('EISHome/portwise_top5_sys/');
 };
 
-// 🆕 New APIs for top 5 with dynamic layer
-export const getPortWiseTop5FiveM = (layer) => {
-  return api.get(`portwise_top5_FiveM/${layer}/`);
-};
+import axios from 'axios';
 
-export const getIpWiseTop5FiveM = (layer) => {
-  return api.get(`ipwise_top5_FiveM/${layer}/`);
-};
+export const getServiceWiseTop5FiveM = (layer) =>
+  axios.post(`/Pyportal/servicewise_top5_FiveM/${layer}/`, {});
 
-export const getServiceWiseTop5FiveM = (layer) => {
-  return api.get(`servicewise_top5_FiveM/${layer}/`);
-};
+export const getIpWiseTop5FiveM = (layer) =>
+  axios.post(`/Pyportal/ipwise_top5_FiveM/${layer}/`, {});
+
+export const getPortWiseTop5FiveM = (layer) =>
+  axios.post(`/Pyportal/portwise_top5_FiveM/${layer}/`, {});
+
