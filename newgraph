@@ -1,3 +1,4 @@
+
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
