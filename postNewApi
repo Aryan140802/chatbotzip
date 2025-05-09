@@ -1,3 +1,77 @@
+path('portwise_top5_FiveM/<str:layer>/',views.portWiseTime,name='portWiseSortedFiveM'),
+path('ipwise_top5_FiveM/<str:layer>/',views.ipWiseTime,name='ipWiseSortedFiveM'),
+path('servicewise_top5_FiveM/<str:layer>/',views.serviceWiseTime,name='serviceWiseSortedFiveM'),
+
+
+
+
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  timeout: 100000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const getPost = () => {
+  return api.get('EIS-GINI/',{timeout:100000});
+};
+
+export const postMessage = (message) => {
+ const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
+        console.log(res);
+  return res;
+};
+
+export const getServiceSys = () => {
+  return api.get('EISHome/servicewise_sys/');
+};
+
+export const getServiceExp = () => {
+  return api.get('EISHome/servicewise_exp/');
+};
+
+export const getIpwiseSys = () => {
+  return api.get('EISHome/ipwise_sys/');
+};
+
+export const getIpwiseExp = () => {
+  return api.get('EISHome/ipwise_exp/');
+};
+
+
+export const getPortwiseSys = () => {
+  return api.get('EISHome/portwise_sys/');
+};
+
+export const getPortwiseExp = () => {
+  return api.get('EISHome/portwise_exp/');
+};
+
+
+export const getServiceWiseExp5 = () => {
+        return api.get('EISHome/servicewise_top5_exp/')
+};
+
+export const getServiceWiseSys5 = () => {
+        return api.get('EISHome/servicewise_top5_sys/')
+};
+export const getIpWiseExp5 = () => {
+        return api.get('EISHome/ipwise_exp_top5/')
+};
+export const getIpWiseSys5 = () => {
+        return api.get('EISHome/ipwise_sys_top5/')
+};
+export const getPortWiseExp5 = () => {
+        return api.get('EISHome/portwise_top5_exp/')
+};
+export const getPortWiseSys5 = () => {
+        return api.get('EISHome/portwise_top5_sys/')
+};
+
+
 
 
 //post ai for time wise hits
@@ -74,3 +148,5 @@ export const postPortWiseSys5 = async (time) => {
     throw error; // Re-throw to allow component-level handling
   }
 };
+
+
