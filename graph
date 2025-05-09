@@ -1,3 +1,4 @@
+
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -5,16 +6,17 @@ import {
 
 import Download from '../assets/down-arrow.png';
 import {
-  postServiceWiseExp5,
-  postServiceWiseSys5,
-  postIpWiseExp5,
-  postIpWiseSys5,
-  postPortWiseExp5,
-  postPortWiseSys5
+  getServiceWiseExp5,
+  getServiceWiseSys5,
+  getIpWiseExp5,
+  getIpWiseSys5,
+  getPortWiseExp5,
+  getPortWiseSys5
 } from "../api/PostApi";
 
 import { useState, useEffect, useRef } from "react";
 
+// Format large numbers
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -95,12 +97,12 @@ const GraphCarousel = () => {
         portExp,
         portSys
       ] = await Promise.all([
-        postServiceWiseExp5(timeRange),
-        postServiceWiseSys5(timeRange),
-        postIpWiseExp5(timeRange),
-        postIpWiseSys5(timeRange),
-        postPortWiseExp5(timeRange),
-        postPortWiseSys5(timeRange)
+        getServiceWiseExp5(timeRange),
+        getServiceWiseSys5(timeRange),
+        getIpWiseExp5(timeRange),
+        getIpWiseSys5(timeRange),
+        getPortWiseExp5(timeRange),
+        getPortWiseSys5(timeRange)
       ]);
 
       const formatData = (data, key) =>
@@ -147,6 +149,8 @@ const GraphCarousel = () => {
               />
               <YAxis
                 tick={{ fill: '#f7f7f7' }}
+                axisLine
+                showLine
                 tickFormatter={formatHits}
                 domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
               />
@@ -197,6 +201,7 @@ const GraphCarousel = () => {
     }
   }, [paused, charts.length]);
 
+  // 🔁 Sync chart titles with dropdown label
   useEffect(() => {
     updateChartTitles(selectedTimeLabel);
   }, [selectedTimeLabel]);
@@ -214,6 +219,10 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
     setPaused(true);
     setIsLoading(true);
+
+    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
+    }
 
     try {
       const updatedCharts = await fetchFilteredData(option.value);
@@ -239,6 +248,10 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
     setPaused(true);
     setIsLoading(true);
+
+    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of Custom: ${formattedDate}`);
+    }
 
     try {
       const updatedCharts = await fetchFilteredData(dateValue);
