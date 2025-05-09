@@ -5,18 +5,16 @@ import {
 
 import Download from '../assets/down-arrow.png';
 import {
-  getServiceSys,
-  getServiceWiseExp5,
-  getServiceWiseSys5,
-  getIpWiseExp5,
-  getIpWiseSys5,
-  getPortWiseExp5,
-  getPortWiseSys5
+  postServiceWiseExp5,
+  postServiceWiseSys5,
+  postIpWiseExp5,
+  postIpWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5
 } from "../api/PostApi";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
-// Format large numbers
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -24,20 +22,15 @@ const formatHits = (value) => {
   return value;
 };
 
-// Custom 3D bar shape
-const ThreeDBar = ({ x, y, width, height, fill }) => {
+const ThreeDBar = (props) => {
+  const { x, y, width, height, fill } = props;
   const depth = 6;
+
   return (
     <g>
-      <rect x={x} y={y} width={width} height={height} fill={fill} />
-      <polygon
-        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
-        fill="#ffffff33"
-      />
-      <polygon
-        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
-        fill="#00000033"
-      />
+      <rect x={x} y={y} width={width} height={height} fill={fill} style={{ transition: "all 0.3s ease" }} className="custom-bar" />
+      <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`} fill="#ffffff33" />
+      <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill="#00000033" />
     </g>
   );
 };
@@ -45,11 +38,55 @@ const ThreeDBar = ({ x, y, width, height, fill }) => {
 const GraphCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-
   const [charts, setCharts] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
+  const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
+
+  const calendarRef = useRef(null);
+
+  const timeOptions = [
+    { label: "5 min", value: "5m" },
+    { label: "15 min", value: "15m" },
+    { label: "30 min", value: "30m" },
+    { label: "1 hour", value: "1h" },
+    { label: "Till now", value: "now" },
+    { label: "Yesterday", value: "yesterday" },
+    { label: "Custom date", value: "custom" },
+  ];
+
+  const baseTitles = [
+    'Service-wise Exp Data',
+    'Service-wise Sys Data',
+    'IP-wise Exp Data',
+    'IP-wise Sys Data',
+    'Port-wise Exp Data',
+    'Port-wise Sys Data'
+  ];
+
+  const formatDate = (date) =>
+    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const updateChartTitles = (timeDisplay) => {
+    if (charts.length === 0) return;
+    const updatedCharts = charts.map((chart, index) => ({
+      ...chart,
+      title: `${baseTitles[index]} of ${timeDisplay}`
+    }));
+    setCharts(updatedCharts);
+    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
+    }
+  };
+
+  const fetchFilteredData = async (timeRange = "5m") => {
+    setIsLoading(true);
+    try {
       const [
         serviceExp,
         serviceSys,
@@ -58,47 +95,46 @@ const GraphCarousel = () => {
         portExp,
         portSys
       ] = await Promise.all([
-        getServiceWiseExp5(),
-        getServiceWiseSys5(),
-        getIpWiseExp5(),
-        getIpWiseSys5(),
-        getPortWiseExp5(),
-        getPortWiseSys5()
+        postServiceWiseExp5(timeRange),
+        postServiceWiseSys5(timeRange),
+        postIpWiseExp5(timeRange),
+        postIpWiseSys5(timeRange),
+        postPortWiseExp5(timeRange),
+        postPortWiseSys5(timeRange)
       ]);
 
       const formatData = (data, key) =>
         data.map(item => ({
           ...item,
-          [key]: item[key].toString().trim(), // Ensure keys are string
+          [key]: item[key].toString().trim(),
           Hits: Number(item.Hits),
           logVal: Number(item.logVal)
         }));
 
-      const chartConfigs = [
-        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Exp Data' },
-        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Sys Data' },
-        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Exp Data' },
-        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Sys Data' },
-        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Exp Data' },
-        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Sys Data' }
-      ];
+      const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
+        ? formatDate(selectedDate)
+        : selectedTimeLabel;
 
-      const chartObjects = chartConfigs.map(({ data, dataKeyX, title }) => ({
-        title,
+      return [
+        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
+        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
+        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
+        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
+        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
+        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
+      ].map(({ data, dataKeyX, baseTitle }) => ({
+        baseTitle,
+        title: `${baseTitle} of ${timeDisplay}`,
         rawData: data,
         chart: (
           <ResponsiveContainer>
-            <BarChart
-  data={data}
-  margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
-  barCategoryGap={10}
->
-  <defs>
-    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#f285c1" />
-      <stop offset="100%" stopColor="#8e2b90" />
-    </linearGradient>
-  </defs>
+            <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f285c1" />
+                  <stop offset="100%" stopColor="#8e2b90" />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
               <XAxis
                 dataKey={dataKeyX}
@@ -111,18 +147,11 @@ const GraphCarousel = () => {
               />
               <YAxis
                 tick={{ fill: '#f7f7f7' }}
-                axisLine
-                showLine
                 tickFormatter={formatHits}
                 domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
               />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: '#2e1a3b',
-                  borderColor: '#f285c1',
-                  color: '#fff',
-                  borderRadius: '8px',
-                }}
+                contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
                 itemStyle={{ color: '#fff' }}
                 labelStyle={{ color: '#f285c1' }}
                 formatter={(value, name, props) => {
@@ -134,42 +163,134 @@ const GraphCarousel = () => {
                 }}
                 labelFormatter={(label) => `${dataKeyX}: ${label}`}
               />
-              <Bar
-  dataKey="Hits"
-  fill="url(#barGradient)"
-  shape={<ThreeDBar />}
-  barSize={50}
-/>
-
+              <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
             </BarChart>
           </ResponsiveContainer>
         )
       }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      setCharts(chartObjects);
-    };
-
-    fetchData();
+  useEffect(() => {
+    fetchFilteredData(selectedTimeValue).then(chartData => {
+      setCharts(chartData);
+      if (chartData.length > 0) {
+        setCurrentDisplayTitle(chartData[0].title);
+      }
+    });
   }, []);
 
-  // Auto-rotate slides
   useEffect(() => {
-    if (paused) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === charts.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 5000);
-    return () => clearInterval(interval);
+    if (charts.length > 0 && currentIndex >= 0 && currentIndex < charts.length) {
+      setCurrentDisplayTitle(charts[currentIndex].title);
+    }
+  }, [currentIndex, charts]);
+
+  useEffect(() => {
+    if (!paused) {
+      const interval = setInterval(() => {
+        setCurrentIndex(prev => (prev === charts.length - 1 ? 0 : prev + 1));
+      }, 5000);
+      return () => clearInterval(interval);
+    }
   }, [paused, charts.length]);
+
+  useEffect(() => {
+    updateChartTitles(selectedTimeLabel);
+  }, [selectedTimeLabel]);
+
+  const handleTimeChange = async (option) => {
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
+    setDropdownOpen(false);
+    setCalendarOpen(false);
+    setPaused(true);
+    setIsLoading(true);
+
+    try {
+      const updatedCharts = await fetchFilteredData(option.value);
+      setCharts(updatedCharts);
+      setCurrentIndex(0);
+      if (updatedCharts.length > 0) {
+        setCurrentDisplayTitle(updatedCharts[0].title);
+        updateChartTitles(option.label);
+      }
+    } finally {
+      setIsLoading(false);
+      setPaused(false);
+    }
+  };
+
+  const handleDateSelect = async (date) => {
+    const formattedDate = formatDate(date);
+    const dateValue = `custom_${date.toISOString().split('T')[0]}`;
+
+    setSelectedDate(date);
+    setSelectedTimeLabel(`Custom: ${formattedDate}`);
+    setSelectedTimeValue(dateValue);
+    setCalendarOpen(false);
+    setPaused(true);
+    setIsLoading(true);
+
+    try {
+      const updatedCharts = await fetchFilteredData(dateValue);
+      setCharts(updatedCharts);
+      setCurrentIndex(0);
+      if (updatedCharts.length > 0) {
+        setCurrentDisplayTitle(updatedCharts[0].title);
+        updateChartTitles(`Custom: ${formattedDate}`);
+      }
+    } finally {
+      setIsLoading(false);
+      setPaused(false);
+    }
+  };
+
+  const generateCalendarDays = () => {
+    const today = new Date();
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    weekdays.forEach(day => days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>));
+
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
+    const firstDayOfWeek = startDate.getDay();
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
+    }
+
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const isDisabled = date > today || date < sevenDaysAgo;
+      const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+
+      days.push(
+        <div key={`day-${day}`} className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`} onClick={() => !isDisabled && handleDateSelect(date)}>
+          {day}
+        </div>
+      );
+    }
+
+    return days;
+  };
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
     if (!data || !data.length) return;
     const keys = Object.keys(data[0]);
-    const csvContent = [
-      keys.join(','),
-      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
-    ].join('\n');
+    const csvContent = [keys.join(','), ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -180,56 +301,78 @@ const GraphCarousel = () => {
     document.body.removeChild(link);
   };
 
-  const goToSlide = (index) => setCurrentIndex(index);
+  const goToSlide = (index) => {
+    setCurrentIndex(index);
+    if (charts.length > 0 && index >= 0 && index < charts.length) {
+      setCurrentDisplayTitle(charts[index].title);
+    }
+  };
 
-  if (!charts.length) return <div>Loading...</div>;
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+    setCalendarOpen(false);
+  };
+
+  useEffect(() => {
+    if (!dropdownOpen && !calendarOpen) return;
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
+        setDropdownOpen(false);
+        setCalendarOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [dropdownOpen, calendarOpen]);
+
+  if (!charts.length) return <div className="loading-container">Loading charts...</div>;
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-        <h2>{charts[currentIndex].title}</h2>
+        <div className="timeline-selector">
+          <div className="dropdown" onClick={(e) => e.stopPropagation()}>
+            <button className="dropdown-toggle" onClick={toggleDropdown}>{selectedTimeLabel} ▼</button>
+            <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
+              {timeOptions.map(option => (
+                <li key={option.value} onClick={() => handleTimeChange(option)} className={option.value === selectedTimeValue ? 'selected' : ''}>
+                  {option.label}
+                </li>
+              ))}
+            </ul>
+            {calendarOpen && (
+              <div className="calendar-container" ref={calendarRef}>
+                <div className="calendar-header">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
+                <div className="calendar">{generateCalendarDays()}</div>
+              </div>
+            )}
+          </div>
+        </div>
+        <h2>{isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : currentDisplayTitle}</h2>
         <div className="download-button-wrapper">
-          <button
-            className="download-button"
-            onClick={() =>
-              downloadCSV(charts[currentIndex].rawData, `${charts[currentIndex].title}.csv`)
-            }
-          >
+          <button className="download-button" onClick={() => downloadCSV(charts[currentIndex].rawData, `${currentDisplayTitle}.csv`)} disabled={isLoading}>
             <div className="logo-wrapper">
-              <img
-                className="logo"
-                src={Download}
-                alt="Download Icon"
-                style={{ height: '36px', marginRight: '3px' }}
-              />
+              <img className="logo" src={Download} alt="Download Icon" style={{ height: '36px', marginRight: '3px' }} />
             </div>
           </button>
         </div>
       </div>
 
-      <div
-        className="carousel-graph"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
-        {charts.map((item, index) => (
-          <div
-            key={index}
-            className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
-            style={{ display: index === currentIndex ? 'block' : 'none' }}
-          >
-            {item.chart}
-          </div>
-        ))}
+      <div className="carousel-graph" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        {isLoading ? (
+          <div className="loading-overlay">Loading data...</div>
+        ) : (
+          charts.map((item, index) => (
+            <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
+              {item.chart}
+            </div>
+          ))
+        )}
       </div>
 
       <div className="carousel-dots">
         {charts.map((_, index) => (
-          <span
-            key={index}
-            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
-            onClick={() => goToSlide(index)}
-          />
+          <span key={index} className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`} onClick={() => goToSlide(index)} />
         ))}
       </div>
     </div>
@@ -237,228 +380,3 @@ const GraphCarousel = () => {
 };
 
 export default GraphCarousel;
-
-
-
-.carousel-container {
-  background: linear-gradient(to top right, #a31e57cc, #551957cc, #301e68cc); /* semi-transparent gradient */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 2rem;
-  margin: 0.3rem auto;
-  width: 110%;
-  max-width: 1000px;
-  color: var(--text-color);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-  transition: background 0.3s ease, color 0.3s ease;
-  height: 730px;
-}
-
-/* Glass-style active chart background */
-.chart-fade.active {
-  border-radius: 12px;
-  transition: all 0.3s ease-in-out;
-  opacity: 1;
-  transform: translateX(0);
-  position: relative;
-}
-
-.chart-fade {
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-  position: absolute;
-  width: 100%;
-  height: 100%;
-}
-
-/* Header */
-.carousel-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  margin-bottom: 1.2rem;
-}
-
-.carousel-title-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.carousel-header h2 {
-  font-size: 1.8rem;
-  margin: 0;
-  color: #fff;
-  text-align: center;
-  flex: 1;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Carousel navigation */
-.carousel-buttons {
-  position: absolute;
-  top: 50%;
-  height: 30px;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 10px;
-}
-
-.carousel-buttons.left {
-  left: 10px;
-}
-
-.carousel-buttons.right {
-  right: 10px;
-}
-
-.carousel-buttons button {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 12px 18px;
-  cursor: pointer;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 1.5rem;
-  transition: all 0.3s ease;
-}
-
-.carousel-buttons button:hover {
-  background: var(--secondary-color);
-  color: rgb(0, 0, 0);
-}
-
-.carousel-buttons.left,
-.carousel-buttons.right {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Graph container */
-.carousel-graph {
-  margin-top: 19px;
-  width:97%;
-  height: 639px;
-}
-
-/* Dots (slide indicators) */
-.carousel-dots {
-  text-align: center;
-  margin-top: 2px;
-  position: relative;
-}
-
-.dot {
-  position: relative;
-  height: 12px;
-  width: 12px;
-  margin: 0 6px;
-  background-color: #ffffff;
-  border-radius: 50%;
-  display: inline-block;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  opacity: 0.6;
-  border: 2px solid #f285c1;
-  box-shadow: 0 0 6px #f285c1;
-}
-
-.dot.active {
-  background-color: #f285c1;
-  transform: scale(1.2);
-  opacity: 1;
-}
-
-.dot.paused {
-  opacity: 1;
-}
-
-/* Responsive adjustments */
-@media only screen and (max-height: 800px) {
-  .carousel-container {
-    width: 75%;
-    height: 350px;
-  }
-
-  .carousel-graph {
-    margin-top: 20px;
-    height: 260px;
-  }
-}
-
-/* Download button styles */
-.download-button {
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  transition: transform 0.2s ease;
-  margin-bottom: 0.2rem;
-}
-
-.download-button:hover {
-  transform: scale(1.15);
-}
-
-.logo {
-  filter: invert(1);
-  transition: transform 0.3s ease;
-  display: block;
-  z-index: 2;
-  position: relative;
-}
-
-.logo-wrapper {
-  position: relative;
-  display: inline-block;
-  overflow: visible;
-}
-
-/* Ripple animation */
-.logo-wrapper::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 45%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.772);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  opacity: 0;
-}
-
-.logo-wrapper:hover::after {
-  animation: water-drop 0.6s ease-out;
-}
-
-@keyframes water-drop {
-  0% {
-    width: 0;
-    height: 0;
-    opacity: 1;
-  }
-  100% {
-    width: 100px;
-    height: 100px;
-    opacity: 0;
-  }
-}
-
-
-
-
-
-
-
-
-
-
-
