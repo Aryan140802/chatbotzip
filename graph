@@ -1,4 +1,3 @@
-
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -6,12 +5,9 @@ import {
 
 import Download from '../assets/down-arrow.png';
 import {
-  getServiceWiseExp5,
-  getServiceWiseSys5,
-  getIpWiseExp5,
-  getIpWiseSys5,
-  getPortWiseExp5,
-  getPortWiseSys5
+  getServiceWiseTop5FiveM,
+  getIpWiseTop5FiveM,
+  getPortWiseTop5FiveM
 } from "../api/PostApi";
 
 import { useState, useEffect, useRef } from "react";
@@ -90,19 +86,13 @@ const GraphCarousel = () => {
     setIsLoading(true);
     try {
       const [
-        serviceExp,
-        serviceSys,
-        ipExp,
-        ipSys,
-        portExp,
-        portSys
+        serviceData,
+        ipData,
+        portData
       ] = await Promise.all([
-        getServiceWiseExp5(timeRange),
-        getServiceWiseSys5(timeRange),
-        getIpWiseExp5(timeRange),
-        getIpWiseSys5(timeRange),
-        getPortWiseExp5(timeRange),
-        getPortWiseSys5(timeRange)
+        getServiceWiseTop5FiveM(timeRange),
+        getIpWiseTop5FiveM(timeRange),
+        getPortWiseTop5FiveM(timeRange)
       ]);
 
       const formatData = (data, key) =>
@@ -118,12 +108,12 @@ const GraphCarousel = () => {
         : selectedTimeLabel;
 
       return [
-        { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
-        { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
-        { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
-        { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
-        { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
-        { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
+        { data: formatData(serviceData.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
+        { data: formatData(serviceData.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
+        { data: formatData(ipData.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
+        { data: formatData(ipData.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
+        { data: formatData(portData.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
+        { data: formatData(portData.data.port_wise_top5, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
       ].map(({ data, dataKeyX, baseTitle }) => ({
         baseTitle,
         title: `${baseTitle} of ${timeDisplay}`,
@@ -201,7 +191,6 @@ const GraphCarousel = () => {
     }
   }, [paused, charts.length]);
 
-  // 🔁 Sync chart titles with dropdown label
   useEffect(() => {
     updateChartTitles(selectedTimeLabel);
   }, [selectedTimeLabel]);
