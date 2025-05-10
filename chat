@@ -10,8 +10,7 @@ from .User_Info import *
 from .Server_data import *
 import random
 from .training_data import TRAINING_DATA
-from .FAR_Info import get_far_info,get_far_db
-#import csrf_exempt
+from .FAR_Info import get_far_info, get_far_db
 from .models import FarDetailsAll
 from .forms import FarForm
 import json
@@ -23,379 +22,399 @@ lemmatizer = WordNetLemmatizer()
 tokenizer = WordPunctTokenizer()
 
 
-
 def preprocess_input(user_input):
     user_input = re.sub(r"[^\w\s]", "", user_input.lower())  # Remove punctuation
     tokens = word_tokenize(user_input)
-    pos_tags=nltk.pos_tag(tokens)
-    tokens=[ word for word,pos in pos_tags if pos in ('NNP','NN','NNPS','NNS')]
+    pos_tags = nltk.pos_tag(tokens)
+    tokens = [word for word, pos in pos_tags if pos in ('NNP', 'NN', 'NNPS', 'NNS')]
     return tokens
+
 
 def extract_keyword(tokens):
     if len(tokens) > 0:
-        return [token  for token in tokens if token.isalpha() or token.isdigit() or token.isalnum()]
-
+        return [token for token in tokens if token.isalpha() or token.isdigit() or token.isalnum()]
     return []
-
-def table_to_text(request,status,user_message):
-    if(isinstance(status,list) and len(status)> 0):
+def table_to_text(request, status, user_message):
+    if isinstance(status, list) and len(status) > 0:
         request.session["status"] = status
-        success_or_fail=[i[0] for i in status ]
-        success_or_fail_code=[i[6] if i[1] == 'Y' else i[4] for i in status ]
-        if( '1' not in success_or_fail):
+        success_or_fail = [i[0] for i in status]
+        success_or_fail_code = [i[6] if i[1] == 'Y' else i[4] for i in status]
+        if '1' not in success_or_fail:
             bot_response = "transaction is successful!!!\n"
         else:
-            if( len(set(success_or_fail_code)) == 1):
-                bot_response = f"transaction is failed with Error Code :{ success_or_fail_code[0]} !!! \n "
+            if len(set(success_or_fail_code)) == 1:
+                bot_response = f"transaction is failed with Error Code :{success_or_fail_code[0]} !!! \n "
             else:
-                bot_response = f"transaction is failed with {success_or_fail_code} !!!"," \n "
+                bot_response = f"transaction is failed with {success_or_fail_code} !!!", " \n "
 
         request.session["conversation_state"] = "awaiting_details"
-        option_button="do you want more details?:\n1.YES\n2.No"
+        option_button = "do you want more details?:\n1.YES\n2.No"
     else:
-        bot_response = str(tables(request,user_message))+"\n\n"
+        bot_response = str(tables(request, user_message)) + "\n\n"
         if "valid" in bot_response:
-            option_button="1.main menu "
+            option_button = "1.main menu "
             print(request.session.get("user_selected_option"))
-            #request.session["conversation_state"] = "awaiting_id"
-            #request.session["user_selected_option"] = "2"
         else:
-            option_button=options
+            option_button = options
             request.session["conversation_state"] = "awaiting_selection"
             request.session["user_selected_option"] = None
-    return (bot_response,option_button)
+    return bot_response, option_button
+
 
 @csrf_exempt
 def chatbot_ui(request):
     print("API HIT")
-    options="1.Team Info\n2. Transaction Info\n3. Cache Info\n4. FAR Information\n5. Other"
-    conversation_state=request.session.get("conversation_state", "start")
+    options = "1.Team Info\n2. Transaction Info\n3. Cache Info\n4. FAR Information\n5. Other"
+    conversation_state = request.session.get("conversation_state", "start")
+
     if 'chat_history' not in request.session:
-       # option_statement=options.split(":")
-       # option_state=option_statement[0]
-        option_button=options.split("\n")
-       # option_button=[option_state]+option_statement[1].split('\n')[1:]
-
-
-        request.session['chat_history']=[{"sender": "Bot", "message": "Hello! Please select from the following options:","options":option_button}]
+        option_button = options.split("\n")
+        request.session['chat_history'] = [{
+            "sender": "Bot",
+            "message": "Hello! Please select from the following options:",
+            "options": option_button
+        }]
         conversation_state = request.session.get("conversation_state", "awaiting_selection")
-    status=""
-    option_button=""
+
+    status = ""
+    option_button = ""
     conversation_state = request.session.get("conversation_state", "awaiting_selection")
     user_selected_option = request.session.get("user_selected_option", None)
-    user_back_options=request.session.get("user_back_options", [])
-    hits_choice=request.session.get("hits_choice",None)
+    user_back_options = request.session.get("user_back_options", [])
+    hits_choice = request.session.get("hits_choice", None)
     print(request.session.get("user_selected_option"))
+
     if request.method == "POST":
-        chat_map={}
+        chat_map = {}
         print(request.POST)
-        '''body_unicode=request.body.decode('utf-8')
-        body_data=json.loads(body_unicode)
-        user_m=body_data.get('message').strip() '''
         user_m = request.POST.get("message", "").strip()
-        if( not user_m):
-            return JsonResponse({"chat_history":"not found!!!!!!!!!!!!!"})
+
+        if not user_m:
+            return JsonResponse({"chat_history": "not found!!!!!!!!!!!!!"})
+
         try:
-            user_message=json.loads(user_m)
+            user_message = json.loads(user_m)
         except:
-            user_message=user_m
-        print(type(user_message),user_message)
+            user_message = user_m
+
+        print(type(user_message), user_message)
         chat_history = request.session['chat_history']
-        #greeting_response = process_greeting(user_message)
-        bot_response =""
+        bot_response = ""
         user_choices = request.session.get("users_multiple_list", [])
-        '''if conversation_state == "start":
-            bot_response = greeting_response
-            request.session["conversation_state"] = "awaiting_selection"
-        elif greeting_response:
-            bot_response = greeting_response
-            request.session["conversation_state"] = "awaiting_selection"'''
         if conversation_state == "awaiting_selection":
-            print("message",user_message)
-            print(user_message)
-            option_button=""
-            if  "Team Info".lower() in user_message.lower():
+            print("message", user_message)
+            option_button = ""
+            if "Team Info".lower() in user_message.lower():
                 bot_response = 'Please provide the name or ID of the user.'
                 request.session["conversation_state"] = "awaiting_id"
                 request.session["user_selected_option"] = user_message.lower()
-            elif  "Transaction Info".lower() in user_message.lower():
-                request.session["conversation_state"] ="awaiting_user_choice"
+            elif "Transaction Info".lower() in user_message.lower():
+                request.session["conversation_state"] = "awaiting_user_choice"
                 bot_response = 'Select from Below Options:'
-                option_button="1.Hits\n2. Transaction Flow"
-                request.session["users_multiple_list"]=option_button
+                option_button = "1.Hits\n2. Transaction Flow"
+                request.session["users_multiple_list"] = option_button
                 request.session["user_selected_option"] = user_message.lower()
-                request.session["user_back_options"]=user_message.lower()
-            elif  "Cache Info".lower() in user_message.lower():
+                request.session["user_back_options"] = user_message.lower()
+            elif "Cache Info".lower() in user_message.lower():
                 print("cache")
-                request.session["conversation_state"] ="awaiting_user_choice"
+                request.session["conversation_state"] = "awaiting_user_choice"
                 bot_response = 'Select from Below Options:'
-                option_button="1.Total Cache fields\n2. Cache Value\nA.Back\nB. Main Menu"
-                request.session["users_multiple_list"]=option_button
+                option_button = "1.Total Cache fields\n2. Cache Value\nA.Back\nB. Main Menu"
+                request.session["users_multiple_list"] = option_button
                 request.session["user_selected_option"] = user_message.lower()
-
-            elif  "FAR Information".lower() in user_message.lower():
+            elif "FAR Information".lower() in user_message.lower():
                 request.session["conversation_state"] = "awaiting_user_choice"
                 bot_response = 'select below options:'
-                option_button="1.Enter FAR ID\n2. Have Multiple Fields"
-                request.session["users_multiple_list"]=option_button
+                option_button = "1.Enter FAR ID\n2. Have Multiple Fields"
+                request.session["users_multiple_list"] = option_button
                 request.session["user_selected_option"] = user_message.lower()
                 request.session["user_back_options"].append(user_message.lower())
-            elif  "other" in user_message.lower():
+            elif "other" in user_message.lower():
                 bot_response = "Okay, ask whatever you want."
                 request.session["conversation_state"] = "awaiting_question"
                 request.session["user_selected_option"] = user_message.lower()
                 request.session["user_back_options"].append(user_message.lower())
             elif user_message.lower() == "main menu":
                 print("user")
-                bot_response=""
-                option_button=options
+                bot_response = ""
+                option_button = options
                 request.session["conversation_state"] = "awaiting_selection"
                 request.session["user_selected_option"] = None
                 if option_button == "":
-                    option_button="1.main menu"
-            elif "Back" == user_message:
+                    option_button = "1.main menu"
+            elif user_message == "Back":
                 bot_response = 'Select from Below Options:'
-                option_button =user_choices
-                request.session["conversation_state"] ="awaiting_user_choice"
+                option_button = user_choices
+                request.session["conversation_state"] = "awaiting_user_choice"
             else:
                 bot_response = "I don't understand the question."
+
             if option_button == "":
-                    option_button="1.main menu"
+                option_button = "1.main menu"
         elif conversation_state == "awaiting_id":
             bot_response = ""
             user_choices = request.session.get("users_multiple_list", [])
             if user_message == "main menu":
-                bot_response=""
-                option_button=options
+                bot_response = ""
+                option_button = options
                 request.session["conversation_state"] = "awaiting_selection"
                 request.session["user_selected_option"] = None
-            elif "Back" == user_message:
+            elif user_message == "Back":
                 bot_response = 'Select from Below Options:'
-                option_button =user_choices
-                request.session["conversation_state"] ="awaiting_user_choice"
+                option_button = user_choices
+                request.session["conversation_state"] = "awaiting_user_choice"
             else:
-                print("under awaiting_id",request.session["user_selected_option"])
-                if(request.session["user_selected_option"] == "Team Info".lower() ):
-                    bot_response,option_button = user_info(request,[user_message])
-                    request.session["users_multiple_list"]=option_button
-                if(request.session["user_selected_option"] == "Transaction Flow".lower() ):
+                print("under awaiting_id", request.session["user_selected_option"])
+                if request.session["user_selected_option"] == "team info":
+                    bot_response, option_button = user_info(request, [user_message])
+                    request.session["users_multiple_list"] = option_button
+                if request.session["user_selected_option"] == "transaction flow":
                     print("under trans")
-                    status=tables(request,user_message)
-                    print("status",status)
-                    bot_response,option_button=table_to_text(request,status,user_message)
-                    request.session["users_multiple_list"]=option_button
-                if(request.session["user_selected_option"] == "Cache Info".lower() ):
-                    bot_response=Cache_Info("Cache Info",user_message.strip())
+                    status = tables(request, user_message)
+                    print("status", status)
+                    bot_response, option_button = table_to_text(request, status, user_message)
+                    request.session["users_multiple_list"] = option_button
+                if request.session["user_selected_option"] == "cache info":
+                    bot_response = Cache_Info("Cache Info", user_message.strip())
                     option_button = "1.Back\n2.main menu"
                     request.session["conversation_state"] = "awaiting_selection"
-                if(request.session["user_selected_option"] == "FAR Information".lower() ):
-                    user_dict=request.session.get("status")
-                    if user_message == "YES":
-                        bot_response = get_far_info(request,user_dict)
+                if request.session["user_selected_option"] == "far information":
+                    user_dict = request.session.get("status")
+                    if user_message.lower() == "yes":
+                        bot_response = get_far_info(request, user_dict)
                         option_button = options
-                    elif user_message == "NO":
+                    elif user_message.lower() == "no":
                         option_button = options
-                        bot_response="ok\n"
+                        bot_response = "ok\n"
                         request.session["conversation_state"] = "awaiting_selection"
-                    elif(isinstance(user_message,dict)):
-                        user_dict=user_message
-                        bot_response,option_button = get_far_db(request,user_dict)
+                    elif isinstance(user_message, dict):
+                        user_dict = user_message
+                        bot_response, option_button = get_far_db(request, user_dict)
                     else:
-                        user_dict={"Far_Id":user_message}
-                        user_dict=request.session.get("status")
-                        bot_response,option_button = get_far_db(request,user_dict)
+                        user_dict = {"Far_Id": user_message}
+                        user_dict = request.session.get("status")
+                        bot_response, option_button = get_far_db(request, user_dict)
                     request.session["conversation_state"] = "awaiting_details"
-                    option_button="do you want more details?:\n1.YES\n2.No"
-                    bot_response,option_button = get_far_db(request,user_dict)
+                    option_button = "do you want more details?:\n1.YES\n2.No"
+                    bot_response, option_button = get_far_db(request, user_dict)
                     request.session["conversation_state"] = "awaiting_details"
                     request.session["user_selected_option"] = None
-                request.session["users_multiple_list"]=option_button
+                request.session["users_multiple_list"] = option_button
 
         elif conversation_state == "awaiting_details":
-            if(user_message.lower() == "yes" or user_message.lower() == "y"):
-                print("awaiting_details",request.session["user_selected_option"])
-                if(request.session["user_selected_option"] == "Transaction Flow".lower()):
-                    status=request.session["status"]
-                    response_map={}
-                    request_map={}
-                    time_diff={}
-                    error_codes={}
-                    child_urn={}
-                    if(len(status) == 1):
-                        request_time=status[0][16]
-                        response_time=status[0][17]
-                        Difference_in_request_response_time=time_to_string(status[0][18])
-                        error_code=status[0][4]
+            if user_message.lower() in ["yes", "y"]:
+                print("awaiting_details", request.session["user_selected_option"])
+                if request.session["user_selected_option"] == "transaction flow":
+                    status = request.session["status"]
+                    response_map = {}
+                    request_map = {}
+                    time_diff = {}
+                    error_codes = {}
+                    child_urn = {}
+                    if len(status) == 1:
+                        request_time = status[0][16]
+                        response_time = status[0][17]
+                        difference = time_to_string(status[0][18])
+                        error_code = status[0][4]
                         if status[0][0] != '0':
-                            bot_response = f"transaction is <b>failed</b> with Error Code has <b>{error_code}</b>  \n API NAME <b> {status[0][11]}</b>!!! \n backend request_time:<b> { request_time}</b> \n backend response_time:<b> { response_time}</b> \n Time difference b/n Request and Response was :<b> { Difference_in_request_response_time}</b>\n\n "
+                            bot_response = (
+                                f"transaction is <b>failed</b> with Error Code has <b>{error_code}</b>\n"
+                                f"API NAME <b>{status[0][11]}</b>!!!\n"
+                                f"backend request_time: <b>{request_time}</b>\n"
+                                f"backend response_time: <b>{response_time}</b>\n"
+                                f"Time difference: <b>{difference}</b>\n"
+                            )
                         else:
-                            bot_response = f" transaction is <b>Successful</b> \n API NAME <b>{status[0][11]}</b> \n  backend request_time: <b>{request_time}</b> \n backend response_time: <b>{response_time}</b> \n Time difference b/n Request and Response was : <b>{Difference_in_request_response_time}</b> \n\n"
+                            bot_response = (
+                                f"transaction is <b>Successful</b>\n"
+                                f"API NAME <b>{status[0][11]}</b>\n"
+                                f"backend request_time: <b>{request_time}</b>\n"
+                                f"backend response_time: <b>{response_time}</b>\n"
+                                f"Time difference: <b>{difference}</b>\n"
+                            )
                     else:
+                        bot_string = ""
                         for i in status:
-                            error_codes[i[11]]= i[6]
-                            response_map[i[11]]= i[17]
-                            request_map[i[11]]= i[16]
-                            time_diff[i[11]]= i[18]
-                            child_urn[i[11]]=i[3]
-                        bot_string=""
+                            error_codes[i[11]] = i[6]
+                            response_map[i[11]] = i[17]
+                            request_map[i[11]] = i[16]
+                            time_diff[i[11]] = i[18]
+                            child_urn[i[11]] = i[3]
                         for i in response_map.keys():
                             if not error_codes[i]:
-                                bot_string+=f"\n For Child URN <b>{child_urn[i]}</b>,\n transaction is <b>Successful</b> \n API NAME <b>{i}</b> \n  backend request_time: <b>{request_map[i]}</b> \n backend response_time: <b>{response_map[i]}</b> \n Time difference b/n Request and Response was : <b>{time_to_string(time_diff[i])}</b>\n\n"
+                                bot_string += (
+                                    f"\nFor Child URN <b>{child_urn[i]}</b>,\n"
+                                    f"transaction is <b>Successful</b>\n"
+                                    f"API NAME <b>{i}</b>\n"
+                                    f"backend request_time: <b>{request_map[i]}</b>\n"
+                                    f"backend response_time: <b>{response_map[i]}</b>\n"
+                                    f"Time difference: <b>{time_to_string(time_diff[i])}</b>\n"
+                                )
                             else:
-                                bot_string+=f"\n For Child URN <b>{child_urn[i]} </b>, \n transaction is <b>failed</b> has Error Code :  <b>{error_codes[i]}</b>!!! \n API NAME <b>{i}</b> \n  backend request_time: <b>{request_map[i]}</b> \n backend response_time: <b>{response_map[i]}</b> \n Time difference b/n Request and Response was : <b>{time_to_string(time_diff[i])}</b>\n\n"
-                        bot_response=bot_string
-                    bot_response = f"Main URN = <b>{status[0][1]}</b>\n"+bot_response
-                    if(status[0][2] == 'Y'):
-                        bot_response="This is Orch API.\n "+bot_response+"\n"
-                        option_button=options
+                                bot_string += (
+                                    f"\nFor Child URN <b>{child_urn[i]}</b>,\n"
+                                    f"transaction is <b>failed</b> with Error Code: <b>{error_codes[i]}</b>\n"
+                                    f"API NAME <b>{i}</b>\n"
+                                    f"backend request_time: <b>{request_map[i]}</b>\n"
+                                    f"backend response_time: <b>{response_map[i]}</b>\n"
+                                    f"Time difference: <b>{time_to_string(time_diff[i])}</b>\n"
+                                )
+                        bot_response = f"Main URN = <b>{status[0][1]}</b>\n" + bot_string
+
+                    if status[0][2] == 'Y':
+                        bot_response = "This is Orch API.\n" + bot_response
+                    option_button = options
+                elif request.session["user_selected_option"] == "far information":
+                    status = request.session.get("status")
+                    if status['Permanent_Rule'].lower() == "yes":
+                        bot_string = "Since it is Permanent Rule, it has no Expiry"
                     else:
-                        bot_response=bot_response
-                        option_button=options
-                elif(request.session["user_selected_option"] == "FAR Information".lower()):
-                    status=request.session.get("status")
-                    print("FAR details:",status)
-                    if status['Permanent_Rule'].lower() == "yes" :
-                        bot_string = "Since it is Permanent Rule ,it has no Expiry"
-                    else:
-                        bot_string =  f"It will Expire on {status['Expires']}"
-                    bot_response=f"FAR ID <b>{status['Far_Id']}</b>  is raised for <b>{status['Subject']} </b> which is now at <b>{status['Status']}</b>\n with initial Requested Source <b>{status['Requested_Source']}</b> \nand initial Requested Destionation <b>{status['Requested_Destination']}</b> \nfor service/port <b>{status['Requested_Service']}</b> .\nIt's Dependent Department is <b>{status['Dependent_application']}</b> and Zone <b>{status['ZONE']}</b>\n"+bot_string
+                        bot_string = f"It will Expire on {status['Expires']}"
+                    bot_response = (
+                        f"FAR ID <b>{status['Far_Id']}</b> is raised for <b>{status['Subject']}</b> "
+                        f"which is now at <b>{status['Status']}</b>\n"
+                        f"Requested Source: <b>{status['Requested_Source']}</b>\n"
+                        f"Requested Destination: <b>{status['Requested_Destination']}</b>\n"
+                        f"Service/Port: <b>{status['Requested_Service']}</b>\n"
+                        f"Dependent Department: <b>{status['Dependent_application']}</b>\n"
+                        f"Zone: <b>{status['ZONE']}</b>\n"
+                        f"{bot_string}"
+                    )
                     option_button = options
             else:
                 option_button = options
-                bot_response="ok\n"
+                bot_response = "ok\n"
                 request.session["user_selected_option"] = None
+
             request.session["conversation_state"] = "awaiting_selection"
             request.session["user_selected_option"] = None
-
-
         elif conversation_state == "awaiting_question":
             tokens = preprocess_input(user_message)
             keyword = extract_keyword(tokens)
-            information,option_button=user_info(request,keyword)
-            if("Sorry" in information):
-                status= tables(request,user_message)
-                information,option_button=table_to_text(request,status,user_message)
-                if("valid" in information):
-                    information="I don't have any information about what you have asked kindly contact admin..."
+            information, option_button = user_info(request, keyword)
+            if "Sorry" in information:
+                status = tables(request, user_message)
+                information, option_button = table_to_text(request, status, user_message)
+                if "valid" in information:
+                    information = "I don't have any information about what you have asked. Kindly contact admin..."
             bot_response = information
             if user_message.lower() == "main menu":
-                bot_response=""
-                option_button=options
+                bot_response = ""
+                option_button = options
                 request.session["conversation_state"] = "awaiting_selection"
                 request.session["user_selected_option"] = None
+
         elif conversation_state == "awaiting_user_choice":
-            print("awaiting_user_choice user_selected_option",user_selected_option)
-            print("awaiting_user_choice conversation_state",request.session.get("conversation_state"))
+            print("awaiting_user_choice user_selected_option", user_selected_option)
+            print("awaiting_user_choice conversation_state", request.session.get("conversation_state"))
             choices = request.session.get("pending_user_choice", [])
             user_choices = request.session.get("users_multiple_list", [])
+
             if user_message.lower() == "main menu":
-                bot_response=""
-                option_button=options
+                bot_response = ""
+                option_button = options
                 request.session["conversation_state"] = "awaiting_selection"
                 request.session["user_selected_option"] = None
-            if user_selected_option == "Team Info".lower():
+
+            if user_selected_option == "team info":
                 try:
                     if user_message.isdigit():
                         bot_response = "Invalid choice. Please try again."
-                        option_button=user_choices
+                        option_button = user_choices
                     else:
-                        user=[user_message.lower().strip()]
-                        bot_response,option_button = user_info(request,user)
-                except:
+                        user = [user_message.lower().strip()]
+                        bot_response, option_button = user_info(request, user)
+                except Exception:
                     bot_response = "Invalid choice. Please try again."
                     option_button = user_choices
-            elif user_selected_option == "Cache Info".lower():
-                bot_response=""
-                if "main menu" == user_message:
+
+            elif user_selected_option == "cache info":
+                if user_message.lower() == "main menu":
                     option_button = options
                     request.session["conversation_state"] = "awaiting_selection"
                     request.session["user_selected_option"] = None
-                elif "Back" == user_message:
-                    option_button =user_choices
-                elif user_message.strip() == "Cache Value":
+                elif user_message.lower() == "back":
+                    option_button = user_choices
+                elif user_message.strip().lower() == "cache value":
                     request.session["conversation_state"] = "awaiting_id"
                     bot_response = 'Enter Field Name...'
                     option_button = "1.Back\n2.main menu"
                 else:
-                    bot_response=Cache_Info(user_message)
+                    bot_response = Cache_Info(user_message)
                     option_button = "1.Back\n2.main menu"
-            elif user_selected_option == "Transaction Info".lower():
-                print("user_selected_option",user_selected_option)
-                bot_response=""
-                if "main menu" == user_message:
+
+            elif user_selected_option == "transaction info":
+                bot_response = ""
+                if user_message.lower() == "main menu":
                     option_button = options
                     request.session["conversation_state"] = "awaiting_selection"
                     request.session["user_selected_option"] = None
-                elif "Back" == user_message:
-                    option_button =user_choices
-                elif user_message.strip() == "Transaction Flow":
+                elif user_message.lower() == "back":
+                    option_button = user_choices
+                elif user_message.strip().lower() == "transaction flow":
                     request.session["conversation_state"] = "awaiting_id"
                     bot_response = 'Enter REFERENCE NUMBER/URN...'
                     request.session["user_selected_option"] = user_message.lower()
                     option_button = "1.Back\n2.main menu"
-                elif  user_message.strip() == "Hits":
+                elif user_message.strip().lower() == "hits":
                     bot_response = 'Select from Below Options:'
-                    option_button="1.Time wise Hits\n2. Port wise Hits\n3.Service wise Hits\n4.IP wise Hits\n5.Back\n6.main menu"
-                    request.session["users_multiple_list"]=option_button
-                                        request.session["user_selected_option"] = user_message.lower()
-                elif user_message.strip() == "Port wise Hits" or user_message.strip() == "Service wise Hits" or user_message.strip() == "IP wise Hits" or user_message.strip() == "Time wise Hits":
-                    request.session["hits_choice"]=user_message.strip()
+                    option_button = (
+                        "1.Time wise Hits\n2. Port wise Hits\n3.Service wise Hits\n"
+                        "4.IP wise Hits\n5.Back\n6.main menu"
+                    )
+                    request.session["users_multiple_list"] = option_button
+                    request.session["user_selected_option"] = user_message.lower()
+                elif user_message.strip().lower() in [
+                    "port wise hits", "service wise hits", "ip wise hits", "time wise hits"
+                ]:
+                    request.session["hits_choice"] = user_message.strip()
                     bot_response = 'Select from Below Options:'
-                    option_button="1.30 Min \n2. 1 Hour\n3. Today(Till Now)"
-                    request.session["users_multiple_list"]=option_button+"\n5.Back\n6.Main menu"
-                elif user_message.strip() == "30 Min":
-                    bot_response=Hits(user_message.strip(),hits_choice)
-                    print(bot_response)
+                    option_button = "1.30 Min \n2. 1 Hour\n3. Today(Till Now)\n5.Back\n6.Main menu"
+                    request.session["users_multiple_list"] = option_button
+                elif user_message.strip() in ["30 Min", "1 Hour", "Today(Till Now)"]:
+                    hits_choice = request.session.get("hits_choice")
+                    bot_response = Hits(user_message.strip(), hits_choice)
                     option_button = "1.Back\n2.main menu"
-                elif user_message.strip() == "1 Hour":
-                    bot_response=Hits(user_message.strip(),hits_choice)
-                    option_button = "1.Back\n2.main menu"
-                elif "Today" in user_message.strip() :
-                    bot_response=Hits(user_message.strip(),hits_choice)
-                    option_button = "1.Back\n2.main menu"
-            elif user_selected_option == "FAR Information".lower():
-                bot_response=""
-                if "main menu" == user_message:
+
+            elif user_selected_option == "far information":
+                if user_message.lower() == "main menu":
                     option_button = options
                     request.session["conversation_state"] = "awaiting_selection"
                     request.session["user_selected_option"] = None
-                elif "Back" == user_message:
-                    option_button =user_choices
-                elif user_message.strip() == "Enter FAR ID":
+                elif user_message.lower() == "back":
+                    option_button = user_choices
+                elif user_message.strip().lower() == "enter far id":
                     request.session["conversation_state"] = "awaiting_id"
                     bot_response = 'Enter FAR ID ...'
                     option_button = "1.Back\n2.main menu"
                 else:
-                    bot_response="FORM"
+                    bot_response = "FORM"
                     request.session["conversation_state"] = "awaiting_id"
                     option_button = "1.Back\n2.main menu"
-
-
         else:
             bot_response = "An error occurred. Let's start over."
             request.session["conversation_state"] = "start"
             option_button = options
-        if(option_button):
-            option_button=option_button.split('\n')
-            if(option_button[0]==''):
-                option_button=option_button[1:]
-            else:
-                option_button=option_button
-        print("option_button:",option_button)
-        print("bot_response:",bot_response)
-        print("user_message:",user_message)
-        print("conversation_state:",request.session.get("conversation_state"))
-        print("user_back_options:",request.session.get("user_back_options"))
-        chat_history=request.session['chat_history']
-        chat_history.append({"sender": "You", "message": user_message})
-        chat_history.append({"sender": "Bot", "message": bot_response,"options":option_button})
-        request.session['chat_history']=chat_history
-   #return render(request, "eischatbot/chat.html", {"chat_history": request.session.get('chat_history',[])})
-    return JsonResponse({"chat_history": request.session.get('chat_history',[])})
-    return JsonResponse({"chat_history": chat_history})
 
-#@csrf_exempt
+        if option_button:
+            option_button = option_button.split('\n')
+            if option_button and option_button[0] == '':
+                option_button = option_button[1:]
+
+        print("option_button:", option_button)
+        print("bot_response:", bot_response)
+        print("user_message:", user_message)
+        print("conversation_state:", request.session.get("conversation_state"))
+        print("user_back_options:", request.session.get("user_back_options"))
+
+        chat_history = request.session.get('chat_history', [])
+        chat_history.append({"sender": "You", "message": user_message})
+        chat_history.append({"sender": "Bot", "message": bot_response, "options": option_button})
+        request.session['chat_history'] = chat_history
+
+    return JsonResponse({"chat_history": request.session.get('chat_history', [])})
+@csrf_exempt
 def flush_session(request):
     if request.method == "POST":
         request.session.flush()
-        return JsonResponse({'status':'session flushed'})
+        return JsonResponse({'status': 'session flushed'})
