@@ -1,276 +1,148 @@
-import '../styles/GraphCarousel.css';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
-import { useState, useEffect } from 'react';
-import Download from '../assets/down-arrow.png';
+import axios from 'axios';
 
-// Format large numbers
-const formatHits = (value) => {
-  if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
-  if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
-  if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
-  return value;
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  timeout: 100000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const getPost = () => {
+  return api.get('EIS-GINI/',{timeout:100000});
 };
 
-const ThreeDBar = ({ x, y, width, height, fill }) => {
-  const depth = 6;
-  return (
-    <g>
-      <rect x={x} y={y} width={width} height={height} fill={fill} className="custom-bar" />
-      <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`} fill="#ffffff33" />
-      <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill="#00000033" />
-    </g>
-  );
+export const postMessage = (message) => {
+ const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
+        console.log(res);
+  return res;
 };
 
-const GraphCarousel = () => {
-  const [charts, setCharts] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentDisplayTitle, setCurrentDisplayTitle] = useState('');
-
-  const baseTitles = [
-    'Service-wise Exp Data',
-    'Service-wise Sys Data',
-    'IP-wise Exp Data',
-    'IP-wise Sys Data',
-    'Port-wise Exp Data',
-    'Port-wise Sys Data'
-  ];
-
-  const fetchAllCharts = async () => {
-    setIsLoading(true);
-    try {
-      const fetchLayerData = async (layer) => {
-        const res = await fetch(`https://10.191.171.12:5443/Pyportal/ipwise_top5_FiveM/layer/${layer}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({})
-        });
-        return res.json();
-      };
-
-      const [expData, sysData] = await Promise.all([
-        fetchLayerData("EXP"),
-        fetchLayerData("SYS")
-      ]);
-
-      const formatData = (data, key) =>
-        data.map(item => ({
-          ...item,
-          [key]: item[key].toString().trim(),
-          Hits: Number(item.Hits),
-          logVal: Number(item.logVal)
-        }));
-
-      const allCharts = [
-        { data: formatData(expData.serviceData, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[0] },
-        { data: formatData(sysData.serviceData, 'Service_name'), dataKeyX: 'Service_name', baseTitle: baseTitles[1] },
-        { data: formatData(expData.ipData, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[2] },
-        { data: formatData(sysData.ipData, 'Ip'), dataKeyX: 'Ip', baseTitle: baseTitles[3] },
-        { data: formatData(expData.portData, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[4] },
-        { data: formatData(sysData.portData, 'Port'), dataKeyX: 'Port', baseTitle: baseTitles[5] }
-      ];
-
-      const chartObjects = allCharts.map(({ data, dataKeyX, baseTitle }) => ({
-        baseTitle,
-        title: baseTitle,
-        rawData: data,
-        chart: (
-          <ResponsiveContainer>
-            <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f285c1" />
-                  <stop offset="100%" stopColor="#8e2b90" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-              <XAxis
-                dataKey={dataKeyX}
-                stroke="#f7f7f7"
-                interval={0}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-                tick={{ fontSize: 10, fill: '#f7f7f7' }}
-              />
-              <YAxis
-                tick={{ fill: '#f7f7f7' }}
-                tickFormatter={formatHits}
-                domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#f285c1' }}
-                formatter={(value, name, props) => {
-                  if (name === 'Hits') {
-                    const formattedHits = formatHits(props.payload.Hits);
-                    return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
-                  }
-                  return value;
-                }}
-                labelFormatter={(label) => `${dataKeyX}: ${label}`}
-              />
-              <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
-            </BarChart>
-          </ResponsiveContainer>
-        )
-      }));
-
-      setCharts(chartObjects);
-      setCurrentDisplayTitle(chartObjects[0].title);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchAllCharts();
-  }, []);
-
-  useEffect(() => {
-    if (!paused) {
-      const interval = setInterval(() => {
-        setCurrentIndex((prev) => (prev + 1) % charts.length);
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [paused, charts]);
-
-  useEffect(() => {
-    if (charts[currentIndex]) {
-      setCurrentDisplayTitle(charts[currentIndex].title);
-    }
-  }, [currentIndex, charts]);
-
-  const downloadCSV = (data, filename = 'chart-data.csv') => {
-    if (!data || !data.length) return;
-    const keys = Object.keys(data[0]);
-    const csvContent = [keys.join(','), ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  return (
-    <div className="carousel-container">
-      <div className="carousel-header">
-        <h2>{isLoading ? 'Loading chart...' : currentDisplayTitle}</h2>
-        <button className="download-button" onClick={() => downloadCSV(charts[currentIndex].rawData, `${currentDisplayTitle}.csv`)}>
-          <img className="logo" src={Download} alt="Download Icon" style={{ height: '36px' }} />
-        </button>
-      </div>
-
-      <div className="carousel-graph" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-        {isLoading ? (
-          <div className="loading-overlay">Loading...</div>
-        ) : (
-          charts.map((item, index) => (
-            <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
-              {item.chart}
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="carousel-dots">
-        {charts.map((_, index) => (
-          <span key={index} className={`dot ${index === currentIndex ? 'active' : ''}`} onClick={() => setCurrentIndex(index)} />
-        ))}
-      </div>
-    </div>
-  );
+export const getServiceSys = () => {
+  return api.get('EISHome/servicewise_sys/');
 };
 
-export default GraphCarousel;
+export const getServiceExp = () => {
+  return api.get('EISHome/servicewise_exp/');
+};
+
+export const getIpwiseSys = () => {
+  return api.get('EISHome/ipwise_sys/');
+};
+
+export const getIpwiseExp = () => {
+  return api.get('EISHome/ipwise_exp/');
+};
+
+
+export const getPortwiseSys = () => {
+  return api.get('EISHome/portwise_sys/');
+};
+
+export const getPortwiseExp = () => {
+  return api.get('EISHome/portwise_exp/');
+};
+
+
+export const getServiceWiseExp5 = () => {
+        return api.get('EISHome/servicewise_top5_exp/')
+};
+
+export const getServiceWiseSys5 = () => {
+        return api.get('EISHome/servicewise_top5_sys/')
+};
+export const getIpWiseExp5 = () => {
+        return api.get('EISHome/ipwise_exp_top5/')
+};
+export const getIpWiseSys5 = () => {
+        return api.get('EISHome/ipwise_sys_top5/')
+};
+export const getPortWiseExp5 = () => {
+        return api.get('EISHome/portwise_top5_exp/')
+};
+export const getPortWiseSys5 = () => {
+        return api.get('EISHome/portwise_top5_sys/')
+};
 
 
 
-Access to fetch at 'https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/EXP/' (redirected from 'https://10.191.171.12:5443/Pyportal/ipwise_top5_FiveM/layer/EXP') from origin 'https://10.191.171.12:5443' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
-GraphCarousel.jsx:47 
-            
-            
-           GET https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/EXP/ net::ERR_FAILED 404 (Not Found)
-e @ GraphCarousel.jsx:47
-(anonymous) @ GraphCarousel.jsx:56
-(anonymous) @ GraphCarousel.jsx:134
-au @ react-dom-client.production.js:8292
-qu @ react-dom-client.production.js:9771
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9782
-us @ react-dom-client.production.js:11313
-(anonymous) @ react-dom-client.production.js:11048
-_ @ scheduler.production.js:151Understand this error
-GraphCarousel.jsx:127 Error fetching data: TypeError: Failed to fetch
-    at e (GraphCarousel.jsx:47:27)
-    at GraphCarousel.jsx:56:9
-    at GraphCarousel.jsx:134:5
-    at au (react-dom-client.production.js:8292:24)
-    at qu (react-dom-client.production.js:9771:23)
-    at $u (react-dom-client.production.js:9746:7)
-    at qu (react-dom-client.production.js:9878:7)
-    at $u (react-dom-client.production.js:9746:7)
-    at qu (react-dom-client.production.js:9765:7)
-    at $u (react-dom-client.production.js:9746:7)
-(anonymous) @ GraphCarousel.jsx:127
-await in (anonymous)
-(anonymous) @ GraphCarousel.jsx:134
-au @ react-dom-client.production.js:8292
-qu @ react-dom-client.production.js:9771
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9878
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9765
-$u @ react-dom-client.production.js:9746
-qu @ react-dom-client.production.js:9782
-us @ react-dom-client.production.js:11313
-(anonymous) @ react-dom-client.production.js:11048
-_ @ scheduler.production.js:151Understand this error
-PyPortal/:1 Access to fetch at 'https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/SYS/' (redirected from 'https://10.191.171.12:5443/Pyportal/ipwise_top5_FiveM/layer/SYS') from origin 'https://10.191.171.12:5443' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.Understand this error
-GraphCarousel.jsx:47 
-            
-            
-           GET https://10.191.171.12/Pyportal/ipwise_top5_FiveM/layer/SYS/ net::ERR_FAILED 404 (Not Found)
+
+//post ai for time wise hits
+export const postServiceWiseExp5 = async (time) => {
+  try {
+    console.log(time)
+    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', { "time":time});
+    console.log(response)
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+//post ai for time wise hits
+export const postServiceWiseSys5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postIpWiseExp5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postIpWiseSys5 = async (time) => {
+  try {
+    console.log(time)
+    const response = await api.post('EISHome/ipwise_top5_FiveM/SYS/', { "time":time});
+    console.log(response)
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postPortWiseExp5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postPortWiseSys5 = async (time) => {
+  try {
+    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', { "time":time});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
