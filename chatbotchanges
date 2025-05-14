@@ -1,253 +1,321 @@
-import '../styles/GraphCarousel.css';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
+import { useState, useEffect, useRef } from "react";
+import ProfileIcon from "./ProfileIcon";
+import TypingIndicator from "./TypingIndicator";
+import "../styles/Chatbot.css";
+import send from '../assets/Send.png';
+import logo from '../assets/logobot.jpg';
+import { getPost, postMessage } from "../api/PostApi";
 
-import Download from '../assets/down-arrow.png';
-import {
-  getServiceWiseExp5,
-  getServiceWiseSys5,
-  getIpWiseExp5,
-  getIpWiseSys5,
-  getPortWiseExp5,
-  getPortWiseSys5
-} from "../api/PostApi";
+// ✅ Helper: Dynamically formats bot messages using <b> tags
+const formatDynamicMessage = (html) => {
+  if (!html || typeof html !== "string") return html;
 
-import { useState, useEffect } from "react";
+  const lines = [];
 
-// Format large numbers
-const formatHits = (value) => {
-  if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
-  if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
-  if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
-  return value;
+  /* Pattern 1: Label outside <b>Value</b>
+  const pattern1 = /([A-Za-z\s/.'()&,-]+?)\s*<b>(.*?)<\/b>/g;
+  let match1;
+  while ((match1 = pattern1.exec(html)) !== null) {
+    const key = match1[1].trim().replace(/[:\s]*$/, "");
+    const value = match1[2].trim();
+    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+  }*/
+
+  // Pattern 2: <b>Label</b>: Value
+  const pattern2 = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
+  let match2;
+  while ((match2 = pattern2.exec(html)) !== null) {
+    const key = match2[1].trim();
+    const value = match2[2].trim().replace(/\n/g, "<br/>");
+    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+  }
+
+  if (lines.length === 0) return html;
+
+  return `<div class="formatted-card">${lines.join("")}</div>`;
 };
 
-const ThreeDBar = (props) => {
-  const { x, y, width, height, fill, payload } = props;
-  const depth = 6;
+const Chatbot = ({ setChatbotMinimized }) => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const messagesEndRef = useRef(null);
+  const timeoutRef = useRef(null);
 
-  return (
-    <g>
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={fill}
-        style={{
-          transition: "all 0.3s ease",
-        }}
-        className="custom-bar"
-      />
-      <polygon
-        points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`}
-        fill="#ffffff33"
-      />
-      <polygon
-        points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`}
-        fill="#00000033"
-      />
-    </g>
-  );
-};
+  const API_TIMEOUT = 20000;
 
+  const clearCurrentTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
 
+  const setApiTimeout = (errorHandler) => {
+    clearCurrentTimeout();
+    timeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      errorHandler();
+    }, API_TIMEOUT);
+  };
 
-const GraphCarousel = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [charts, setCharts] = useState([]);
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, "0")}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
-  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
-  const [selectedTimeValue, setSelectedTimeValue] = useState("5m");
+  const getPostData = async () => {
+    try {
+      setIsTyping(true);
+      setApiTimeout(() => {
+        setMessages([{
+          id: Date.now(),
+          text: "Unable to load messages. The server is taking too long to respond. Please wait for some time.",
+          sender: "bot",
+          time: getCurrentTime()
+        }]);
+      });
 
-  const timeOptions = [
-    { label: "5 min", value: "5m" },
-    { label: "15 min", value: "15m" },
-    { label: "30 min", value: "30m" },
-    { label: "1 hour", value: "1h" },
-    { label: "Till now", value: "now" },
-    { label: "Yesterday", value: "yesterday" },
-    { label: "Last 7 days", value: "7d" },
-  ];
+      const res = await getPost();
+      clearCurrentTimeout();
 
-  const fetchFilteredData = async (timeRange = "5m") => {
-    const [
-      serviceExp,
-      serviceSys,
-      ipExp,
-      ipSys,
-      portExp,
-      portSys
-    ] = await Promise.all([
-      getServiceWiseExp5(timeRange),
-      getServiceWiseSys5(timeRange),
-      getIpWiseExp5(timeRange),
-      getIpWiseSys5(timeRange),
-      getPortWiseExp5(timeRange),
-      getPortWiseSys5(timeRange)
-    ]);
-
-    const formatData = (data, key) =>
-      data.map(item => ({
-        ...item,
-        [key]: item[key].toString().trim(),
-        Hits: Number(item.Hits),
-        logVal: Number(item.logVal)
+      const formattedMessages = res.data.chat_history.map((item, index) => ({
+        id: Date.now() + index,
+        text: item.message || "",
+        sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
+        time: getCurrentTime(),
+        options: item.options || []
       }));
 
-    return [
-      { data: formatData(serviceExp.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Exp Data' },
-      { data: formatData(serviceSys.data.service_wise_top5, 'Service_name'), dataKeyX: 'Service_name', title: 'Service-wise Sys Data' },
-      { data: formatData(ipExp.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Exp Data' },
-      { data: formatData(ipSys.data.Ip_wise_top5, 'Ip'), dataKeyX: 'Ip', title: 'IP-wise Sys Data' },
-      { data: formatData(portExp.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Exp Data' },
-      { data: formatData(portSys.data.port_wise_top5, 'Port'), dataKeyX: 'Port', title: 'Port-wise Sys Data' }
-    ].map(({ data, dataKeyX, title }) => ({
-      title,
-      rawData: data,
-      chart: (
-        <ResponsiveContainer>
-          <BarChart data={data} margin={{ top: 30, right: 30, left: 30, bottom: 60 }} barCategoryGap={10}>
-            <defs>
-              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f285c1" />
-                <stop offset="100%" stopColor="#8e2b90" />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-            <XAxis
-              dataKey={dataKeyX}
-              stroke="#f7f7f7"
-              interval={0}
-              angle={-30}
-              textAnchor="end"
-              height={60}
-              tick={{ fontSize: 10, fill: '#f7f7f7' }}
-            />
-            <YAxis
-              tick={{ fill: '#f7f7f7' }}
-              axisLine
-              showLine
-              tickFormatter={formatHits}
-              domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
-            />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
-              itemStyle={{ color: '#fff' }}
-              labelStyle={{ color: '#f285c1' }}
-              formatter={(value, name, props) => {
-                if (name === 'Hits') {
-                  const formattedHits = formatHits(props.payload.Hits);
-                  return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
-                }
-                return value;
-              }}
-              labelFormatter={(label) => `${dataKeyX}: ${label}`}
-            />
-            <Bar dataKey="Hits" fill="url(#barGradient)" shape={ThreeDBar} barSize={50} />
-          </BarChart>
-        </ResponsiveContainer>
-      )
-    }));
+      setMessages(formattedMessages);
+      setIsTyping(false);
+    } catch (error) {
+      clearCurrentTimeout();
+      setIsTyping(false);
+      setMessages([{
+        id: Date.now(),
+        text: "An error occurred while loading messages. Please try again.",
+        sender: "bot",
+        time: getCurrentTime()
+      }]);
+    }
   };
 
   useEffect(() => {
-    fetchFilteredData(selectedTimeValue).then(setCharts);
+    getPostData();
+    return () => clearCurrentTimeout();
   }, []);
 
   useEffect(() => {
-    if (paused) return;
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex === charts.length - 1 ? 0 : prevIndex + 1));
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [paused, charts.length]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const handleTimeChange = async (option) => {
-    setSelectedTimeLabel(option.label);
-    setSelectedTimeValue(option.value);
-    setPaused(true);
-    const updatedCharts = await fetchFilteredData(option.value);
-    setCharts(updatedCharts);
-    setCurrentIndex(0);
-    setPaused(false);
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (newMessage.trim() === "") return;
+
+    const userMsg = {
+      id: Date.now(),
+      text: newMessage,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setNewMessage("");
+    setIsTyping(true);
+
+    try {
+      setApiTimeout(() => {
+        const errorMsg = {
+          id: Date.now(),
+          text: "Sorry, the server is taking too long to respond. Please wait for some time.",
+          sender: "bot",
+          time: getCurrentTime()
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      });
+
+      const res = await postMessage(newMessage);
+      clearCurrentTimeout();
+
+      if (res.data.chat_history?.length > 0) {
+        const latest = res.data.chat_history[res.data.chat_history.length - 1];
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || []
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      const errorMsg = {
+        id: Date.now(),
+        text: "Sorry, something went wrong. Please try again.",
+        sender: "bot",
+        time: getCurrentTime()
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    }
+
+    setIsTyping(false);
   };
 
-  const downloadCSV = (data, filename = 'chart-data.csv') => {
-    if (!data || !data.length) return;
-    const keys = Object.keys(data[0]);
-    const csvContent = [
-      keys.join(','),
-      ...data.map(row => keys.map(key => `"${row[key]}"`).join(','))
-    ].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleOptionClick = async (optionText) => {
+    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z].\s*/, "");
+
+    const userMessage = {
+      id: Date.now(),
+      text: cleanedOpt,
+      sender: 'user',
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsTyping(true);
+
+    try {
+      setApiTimeout(() => {
+        const errorMsg = {
+          id: Date.now(),
+          text: "Sorry, the server is taking too long to respond. Please wait for some time.",
+          sender: "bot",
+          time: getCurrentTime()
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      });
+
+      const res = await postMessage(cleanedOpt);
+      clearCurrentTimeout();
+
+      if (res.data.chat_history?.length > 0) {
+        const latest = res.data.chat_history[res.data.chat_history.length - 1];
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || []
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      const errorMsg = {
+        id: Date.now(),
+        text: 'Sorry, something went wrong fetching that response.',
+        sender: 'bot',
+        time: getCurrentTime(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    }
+
+    setIsTyping(false);
   };
 
-  const goToSlide = (index) => setCurrentIndex(index);
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setChatbotMinimized(true);
+  };
 
-  if (!charts.length) return <div>Loading...</div>;
+  const handleRestore = () => {
+    setIsMinimized(false);
+    setChatbotMinimized(false);
+  };
 
   return (
-    <div className="carousel-container">
-      <div className="carousel-header">
-        <div className="timeline-selector">
-          <div className="dropdown">
-            <button className="dropdown-toggle">
-              {selectedTimeLabel} ▼
-            </button>
-            <ul className="dropdown-menu">
-              {timeOptions.map((option) => (
-                <li key={option.label} onClick={() => handleTimeChange(option)}>
-                  {option.label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-        {/* Updated to include selectedTimeLabel */}
-        <h2>{charts[currentIndex]?.title} - {selectedTimeLabel}</h2>
-        <div className="download-button-wrapper">
-          <button
-            className="download-button"
-            onClick={() =>
-              downloadCSV(charts[currentIndex].rawData, `${charts[currentIndex].title}.csv`)
-            }
-          >
-            <div className="logo-wrapper">
-              <img className="logo" src={Download} alt="Download Icon" style={{ height: '36px', marginRight: '3px' }} />
+    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
+      <div className="chat-header">
+        <img src={logo} alt="Logo" className="chat-logo" onClick={handleRestore} />
+        {!isMinimized && (
+          <>
+            <div className="chat-title">
+              <h1>EIS GINI</h1>
+              <h5>(Generative Interactive Neural Interface)</h5>
             </div>
-          </button>
-        </div>
+            <button className="minimize-button" onClick={handleMinimize}>&#x2212;</button>
+          </>
+        )}
       </div>
 
-      <div className="carousel-graph" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-        {charts.map((item, index) => (
-          <div key={index} className={`chart-fade ${index === currentIndex ? 'active' : ''}`} style={{ display: index === currentIndex ? 'block' : 'none' }}>
-            {item.chart}
+      {!isMinimized && (
+        <>
+          <div className="messages-container">
+            {messages.map((item, index) => (
+              <div
+                key={index}
+                className={`message-wrapper ${item.sender.toLowerCase()}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
+                  marginBottom: "12px"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
+                  <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
+                    {/* ✅ Render with dynamic formatting */}
+                    {item.sender === "bot" && item.text.includes("<b>") ? (
+                      <div
+                        className="message-content"
+                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                      />
+                    ) : (
+                      <div className="message-content">{item.text}</div>
+                    )}
+
+                    {item.options?.length > 0 && (
+                      <div className="options-list">
+                        {item.options.map((opt, i) => (
+                          <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="message-time">{item.time}</div>
+                  </div>
+                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
+                </div>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                <ProfileIcon sender="bot" />
+                <div className="message bot-message">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
           </div>
-        ))}
-      </div>
 
-      <div className="carousel-dots">
-        {charts.map((_, index) => (
-          <span
-            key={index}
-            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
-            onClick={() => goToSlide(index)}
-          />
-        ))}
-      </div>
+          <form className="message-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="message-input"
+            />
+            <button type="submit" className="send-button">
+              <img className="logo" src={send} alt="Send" style={{ height: '20px' }} />
+            </button>
+          </form>
+        </>
+      )}
     </div>
   );
 };
 
-export default GraphCarousel;
+export default Chatbot;
