@@ -37,10 +37,33 @@ const Chatbot = ({ setChatbotMinimized }) => {
     beforeCreationDate: "",
     beforeExpireDate: "",
   });
+  const [showMessageForm, setShowMessageForm] = useState(false);
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
   const API_TIMEOUT = 20000;
+
+  // Function to check if specific options are present
+  const checkForSpecificOptions = (messages) => {
+    const specificOptions = ["team info", "transaction flow", "cache value", "enter far id", "other"];
+    
+    // Check the last message with options
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.options && message.options.length > 0) {
+        // Check if any of the specific options are present
+        const containsSpecificOptions = message.options.some(option => 
+          specificOptions.some(specificOption => 
+            option.toLowerCase().includes(specificOption.toLowerCase())
+          )
+        );
+        
+        return containsSpecificOptions;
+      }
+    }
+    
+    return false;
+  };
 
   const clearCurrentTimeout = () => {
     if (timeoutRef.current) {
@@ -88,6 +111,10 @@ const Chatbot = ({ setChatbotMinimized }) => {
       }));
 
       setMessages(formattedMessages);
+      
+      // Check if the message form should be shown
+      setShowMessageForm(checkForSpecificOptions(formattedMessages));
+      
       setIsTyping(false);
     } catch {
       clearCurrentTimeout();
@@ -100,6 +127,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
           time: getCurrentTime(),
         },
       ]);
+      setShowMessageForm(false);
     }
   };
 
@@ -110,6 +138,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Update showMessageForm whenever messages change
+  useEffect(() => {
+    setShowMessageForm(checkForSpecificOptions(messages));
   }, [messages]);
 
   const handleSendMessage = async (e) => {
@@ -360,12 +393,21 @@ const Chatbot = ({ setChatbotMinimized }) => {
             </form>
           )}
 
-          <form className="message-form" onSubmit={handleSendMessage}>
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
-            <button type="submit" className="send-button">
-              <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
-            </button>
-          </form>
+          {showMessageForm ? (
+            <form className="message-form" onSubmit={handleSendMessage}>
+              <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
+              <button type="submit" className="send-button">
+                <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
+              </button>
+            </form>
+          ) : (
+            <div className="message-form disabled">
+              <input type="text" disabled placeholder="Chat input is currently disabled" className="message-input disabled" />
+              <button disabled className="send-button disabled">
+                <img className="logo" src={send} alt="Send" style={{ height: "20px", opacity: 0.5 }} />
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
