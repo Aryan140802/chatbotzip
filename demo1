@@ -373,3 +373,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+  "team info",  "transaction flow","cache value","enter far id","other"
+
