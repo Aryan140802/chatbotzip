@@ -28,6 +28,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [messageInputEnabled, setMessageInputEnabled] = useState(true);
   const [formData, setFormData] = useState({
     subject: "",
     source: "",
@@ -100,7 +101,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
       // Check if the last message has the required options to show the form
       const lastMessage = formattedMessages[formattedMessages.length - 1];
       if (lastMessage && lastMessage.sender === "bot" && lastMessage.options && lastMessage.options.length > 0) {
-        setShowForm(shouldShowFormForOptions(lastMessage.options));
+        const shouldShowForm = shouldShowFormForOptions(lastMessage.options);
+        setShowForm(shouldShowForm);
+        setMessageInputEnabled(!shouldShowForm); // Disable message input when form is shown
       }
       
       setIsTyping(false);
@@ -132,9 +135,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.sender === "bot" && lastMessage.options && lastMessage.options.length > 0) {
-        setShowForm(shouldShowFormForOptions(lastMessage.options));
+        const shouldShowForm = shouldShowFormForOptions(lastMessage.options);
+        setShowForm(shouldShowForm);
+        setMessageInputEnabled(!shouldShowForm); // Disable message input when form is shown
       } else {
         setShowForm(false);
+        setMessageInputEnabled(true); // Enable message input when form is hidden
       }
     }
   }, [messages]);
@@ -142,7 +148,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   // Handle sending user messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim() === "") return;
+    if (newMessage.trim() === "" || !messageInputEnabled) return;
 
     // Create user message object
     const userMsg = {
@@ -419,10 +425,15 @@ const Chatbot = ({ setChatbotMinimized }) => {
               type="text" 
               value={newMessage} 
               onChange={(e) => setNewMessage(e.target.value)} 
-              placeholder="Type a message..." 
-              className="message-input" 
+              placeholder={messageInputEnabled ? "Type a message..." : "Please use the form above"} 
+              className={`message-input ${!messageInputEnabled ? "disabled" : ""}`}
+              disabled={!messageInputEnabled}
             />
-            <button type="submit" className="send-button">
+            <button 
+              type="submit" 
+              className={`send-button ${!messageInputEnabled ? "disabled" : ""}`} 
+              disabled={!messageInputEnabled}
+            >
               <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
             </button>
           </form>
@@ -433,3 +444,15 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+.message-input.disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.send-button.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
