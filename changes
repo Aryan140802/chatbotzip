@@ -4,7 +4,23 @@ import logo from '../assets/tcs.png';
 
 export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [env, setEnv] = useState(''); // State to hold environment
   const dropdownRef = useRef();
+
+  // Fetch environment info from the API
+  useEffect(() => {
+    const fetchEnv = async () => {
+      try {
+        const response = await fetch('http://10.191.171.12:5443/PyPortal/env');
+        const data = await response.json();
+        setEnv(data.Environment); // Assuming API returns { Environment: "PR" } or "DR"
+      } catch (error) {
+        console.error('Failed to fetch environment:', error);
+        setEnv(''); // fallback or keep as empty
+      }
+    };
+    fetchEnv();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -16,6 +32,12 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getHeaderTitle = () => {
+    if (env === 'PR') return 'EIS INFRA PR Home Page';
+    if (env === 'DR') return 'EIS INFRA DR Home Page';
+    return 'EIS INFRA Home Page'; // Default/fallback
+  };
+
   return (
     <div
       className="container"
@@ -25,7 +47,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        background-gradient: linear-gradient(135deg, #667eea, #764ba2),
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
         color: '#ffffff'
       }}
     >
@@ -39,7 +61,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
       </div>
 
       <h1 style={{ margin: 0, position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
-        INFRA PR Home Page
+        {getHeaderTitle()}
       </h1>
 
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }} ref={dropdownRef}>
@@ -77,3 +99,4 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
       </div>
     </div>
   );
+}
