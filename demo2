@@ -51,14 +51,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const message = messages[i];
       if (message.options && message.options.length > 0) {
-        // Check if any of the specific options are present
-        const containsSpecificOptions = message.options.some(option => 
-          specificOptions.some(specificOption => 
-            option.toLowerCase().includes(specificOption.toLowerCase())
-          )
-        );
-        
-        return containsSpecificOptions;
+        // Check if ANY of the specific options are present exactly as specified
+        for (const option of message.options) {
+          const lowerOption = option.toLowerCase();
+          for (const specificOption of specificOptions) {
+            // Check for exact match (allowing for case-insensitivity)
+            if (lowerOption === specificOption.toLowerCase()) {
+              return true;
+            }
+          }
+        }
+        return false;
       }
     }
     
