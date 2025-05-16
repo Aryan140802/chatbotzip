@@ -6,7 +6,7 @@ import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 
-// ? Format dynamic message from bot using <b> tags
+// Format dynamic message from bot using <b> tags
 const formatDynamicMessage = (html) => {
   if (!html || typeof html !== "string") return html;
 
@@ -168,16 +168,24 @@ const Chatbot = ({ setChatbotMinimized }) => {
   };
 
   const handleOptionClick = async (optionText) => {
-    if (optionText.toLowerCase().includes("have multiple fields")) {
+    const lowered = optionText.toLowerCase();
+
+    if (lowered.includes("have multiple fields")) {
       setShowForm(true);
       return;
     }
 
-	const handleOptionClick = async (optionText) => {
-    if (optionText.toLowerCase().includes("Team Info","Transaction Flow","Cache Value","Enter FAR ID","Other")) {
+    if (
+      lowered.includes("team info") ||
+      lowered.includes("transaction flow") ||
+      lowered.includes("cache value") ||
+      lowered.includes("enter far id") ||
+      lowered.includes("other")
+    ) {
       setShowSearch(true);
       return;
     }
+
     const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "");
 
     const userMessage = {
@@ -232,7 +240,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     setShowForm(false);
-	setShowSearch(false);
+    setShowSearch(false);
     setIsTyping(true);
 
     try {
@@ -248,7 +256,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
         ]);
       });
 
-      const res = await postMessage(formData); // ?? make sure backend accepts this format
+      // Make sure backend supports this data format
+      const res = await postMessage(formData);
+
       clearCurrentTimeout();
 
       const latest = res.data.chat_history?.slice(-1)[0];
@@ -367,13 +377,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
             </form>
           )}
 
-          { showSearch && (
-		  <form className="message-form" onSubmit={handleSendMessage}>
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
-            <button type="submit" className="send-button">
-              <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
-            </button>
-          </form>
+          {showSearch && (
+            <form className="message-form" onSubmit={handleSendMessage}>
+              <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
+              <button type="submit" className="send-button">
+                <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
+              </button>
+            </form>
           )}
         </>
       )}
