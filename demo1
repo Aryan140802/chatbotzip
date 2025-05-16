@@ -6,7 +6,7 @@ import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 
-// ✅ Format dynamic message from bot using <b> tags
+// Format dynamic message from bot using <b> tags
 const formatDynamicMessage = (html) => {
   if (!html || typeof html !== "string") return html;
 
@@ -62,6 +62,14 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
+  // Check if the current set of options contains all the required values to show the form
+  const shouldShowFormForOptions = (options) => {
+    const requiredOptions = ["team info", "transaction flow", "cache value", "enter far id", "other"];
+    return requiredOptions.every(option => 
+      options.some(opt => opt.toLowerCase().includes(option.toLowerCase()))
+    );
+  };
+
   const getPostData = async () => {
     try {
       setIsTyping(true);
@@ -86,8 +94,15 @@ const Chatbot = ({ setChatbotMinimized }) => {
         time: getCurrentTime(),
         options: item.options || [],
       }));
-
+      
       setMessages(formattedMessages);
+      
+      // Check if the last message has the required options to show the form
+      const lastMessage = formattedMessages[formattedMessages.length - 1];
+      if (lastMessage && lastMessage.sender === "bot" && lastMessage.options && lastMessage.options.length > 0) {
+        setShowForm(shouldShowFormForOptions(lastMessage.options));
+      }
+      
       setIsTyping(false);
     } catch {
       clearCurrentTimeout();
@@ -112,10 +127,24 @@ const Chatbot = ({ setChatbotMinimized }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Update the showForm state when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.sender === "bot" && lastMessage.options && lastMessage.options.length > 0) {
+        setShowForm(shouldShowFormForOptions(lastMessage.options));
+      } else {
+        setShowForm(false);
+      }
+    }
+  }, [messages]);
+
+  // Handle sending user messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
 
+    // Create user message object
     const userMsg = {
       id: Date.now(),
       text: newMessage,
@@ -123,11 +152,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
       time: getCurrentTime(),
     };
 
+    // Add user message to messages list
     setMessages((prev) => [...prev, userMsg]);
+    
+    // Clear the input field
     setNewMessage("");
+    
+    // Set typing indicator
     setIsTyping(true);
 
     try {
+      // Set a timeout for the API call
       setApiTimeout(() => {
         const errorMsg = {
           id: Date.now(),
@@ -138,9 +173,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setMessages((prev) => [...prev, errorMsg]);
       });
 
+      // Send the message to the backend
       const res = await postMessage(newMessage);
       clearCurrentTimeout();
 
+      // Process the response
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest) {
         const botResponse = {
@@ -153,6 +190,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setMessages((prev) => [...prev, botResponse]);
       }
     } catch {
+      // Handle errors
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
@@ -163,17 +201,16 @@ const Chatbot = ({ setChatbotMinimized }) => {
       setMessages((prev) => [...prev, errorMsg]);
     }
 
+    // Turn off typing indicator
     setIsTyping(false);
   };
 
+  // Handle when a user clicks on an option button
   const handleOptionClick = async (optionText) => {
-    if (optionText.toLowerCase().includes("have multiple fields")) {
-      setShowForm(true);
-      return;
-    }
-
+    // Clean the option text (remove numbering/lettering)
     const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "");
 
+    // Create a user message with the selected option
     const userMessage = {
       id: Date.now(),
       text: cleanedOpt,
@@ -181,10 +218,14 @@ const Chatbot = ({ setChatbotMinimized }) => {
       time: getCurrentTime(),
     };
 
+    // Add user message to chat
     setMessages((prev) => [...prev, userMessage]);
+    
+    // Set typing indicator
     setIsTyping(true);
 
     try {
+      // Set a timeout for the API call
       setApiTimeout(() => {
         const errorMsg = {
           id: Date.now(),
@@ -195,9 +236,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setMessages((prev) => [...prev, errorMsg]);
       });
 
+      // Send the selected option to the backend
       const res = await postMessage(cleanedOpt);
       clearCurrentTimeout();
 
+      // Process the response
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest) {
         const botResponse = {
@@ -210,6 +253,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setMessages((prev) => [...prev, botResponse]);
       }
     } catch {
+      // Handle errors
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
@@ -220,15 +264,19 @@ const Chatbot = ({ setChatbotMinimized }) => {
       setMessages((prev) => [...prev, errorMsg]);
     }
 
+    // Turn off typing indicator
     setIsTyping(false);
   };
 
+  // Handle form submission
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    setShowForm(false);
+    
+    // Set typing indicator
     setIsTyping(true);
 
     try {
+      // Set a timeout for the API call
       setApiTimeout(() => {
         setMessages((prev) => [
           ...prev,
@@ -241,9 +289,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         ]);
       });
 
-      const res = await postMessage(formData); // ⚠️ make sure backend accepts this format
+      // Send the form data to the backend
+      const res = await postMessage(formData);
       clearCurrentTimeout();
 
+      // Process the response
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest) {
         const botResponse = {
@@ -256,6 +306,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setMessages((prev) => [...prev, botResponse]);
       }
     } catch {
+      // Handle errors
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
@@ -266,14 +317,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
       setMessages((prev) => [...prev, errorMsg]);
     }
 
+    // Turn off typing indicator
     setIsTyping(false);
   };
 
+  // Handle minimizing the chatbot
   const handleMinimize = () => {
     setIsMinimized(true);
     setChatbotMinimized(true);
   };
 
+  // Handle restoring the chatbot
   const handleRestore = () => {
     setIsMinimized(false);
     setChatbotMinimized(false);
@@ -361,7 +415,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
           )}
 
           <form className="message-form" onSubmit={handleSendMessage}>
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
+            <input 
+              type="text" 
+              value={newMessage} 
+              onChange={(e) => setNewMessage(e.target.value)} 
+              placeholder="Type a message..." 
+              className="message-input" 
+            />
             <button type="submit" className="send-button">
               <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
             </button>
@@ -373,7 +433,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-
-
-  "team info",  "transaction flow","cache value","enter far id","other"
-
