@@ -244,16 +244,19 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
                 <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  labelLine
-                  outerRadius={130}
-                  innerRadius={60}
-                  fill="#8884d8"
-                  dataKey="value"
-                  nameKey="name"
-                  label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+                 <Pie
+  data={data}
+  cx="50%"
+  cy="50%"
+  labelLine={false}
+  label={({ name, percent }) => `${name} (${formatPercent(percent)})`}
+  outerRadius={140}
+  innerRadius={60}
+  fill="#8884d8"
+  dataKey="value"
+  nameKey="name"
+/>
+
                 >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -281,11 +284,21 @@ const GraphCarousel = () => {
                 key={`${baseTitle}-${timeRange}-chart`}
               >
                 <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f285c1" />
-                    <stop offset="100%" stopColor="#8e2b90" />
-                  </linearGradient>
-                </defs>
+  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+    {baseTitle.includes('Exp') ? (
+      <>
+        <stop offset="0%" stopColor="#6a11cb" />
+        <stop offset="100%" stopColor="#2575fc" />
+      </>
+    ) : (
+      <>
+        <stop offset="0%" stopColor="#ff6a00" />
+        <stop offset="100%" stopColor="#ee0979" />
+      </>
+    )}
+  </linearGradient>
+</defs>
+
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
                 <XAxis
                   dataKey={dataKeyX}
@@ -316,13 +329,13 @@ const GraphCarousel = () => {
                   }}
                   labelFormatter={(label) => `${dataKeyX}: ${label}`}
                 />
-                <Bar
-                  dataKey="Hits"
-                  fill="url(#barGradient)"
-                  shape={ThreeDBar}
-                  barSize={50}
-                  key={`${baseTitle}-${timeRange}-bar`}
-                />
+               <Bar
+  dataKey="Hits"
+  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
+  shape={ThreeDBar}
+  barSize={50}
+/>
+
               </BarChart>
             </ResponsiveContainer>
           );
