@@ -1,394 +1,142 @@
-import { useState, useEffect, useRef } from "react";
-import ProfileIcon from "./ProfileIcon";
-import TypingIndicator from "./TypingIndicator";
-import "../styles/Chatbot.css";
-import send from "../assets/Send.png";
-import logo from "../assets/logobot.jpg";
-import { getPost, postMessage } from "../api/PostApi";
+import React, { useState, useRef, useEffect } from 'react';
+import ProfileIcon from './ProfileIcon';
+import logo from '../assets/tcs.png';
 
-// Format dynamic message from bot using <b> tags
-const formatDynamicMessage = (html) => {
-  if (!html || typeof html !== "string") return html;
+export default function Header({ username, onLogout, showProfileIcon = true }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [env, setEnv] = useState(''); // State to hold environment
+  const dropdownRef = useRef();
 
-  const lines = [];
-  const pattern2 = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
-  let match2;
-  while ((match2 = pattern2.exec(html)) !== null) {
-    const key = match2[1].trim();
-    const value = match2[2].trim().replace(/\n/g, "<br/>");
-    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
-  }
-
-  return lines.length === 0 ? html : `<div class="formatted-card">${lines.join("")}</div>`;
-};
-
-const Chatbot = ({ setChatbotMinimized }) => {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
-  const [formData, setFormData] = useState({
-    subject: "",
-    source: "",
-    destination: "",
-    zone: "",
-    port: "",
-    beforeCreationDate: "",
-    beforeExpireDate: "",
-  });
-
-  const messagesEndRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const API_TIMEOUT = 20000;
-
-  const clearCurrentTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  };
-
-  const setApiTimeout = (errorHandler) => {
-    clearCurrentTimeout();
-    timeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      errorHandler();
-    }, API_TIMEOUT);
-  };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  };
-
-  const getPostData = async () => {
-    try {
-      setIsTyping(true);
-      setApiTimeout(() => {
-        setMessages([
-          {
-            id: Date.now(),
-            text: "Unable to load messages. Please try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
-
-      const res = await getPost();
-      clearCurrentTimeout();
-
-      const formattedMessages = res.data.chat_history.map((item, index) => ({
-        id: Date.now() + index,
-        text: item.message || "",
-        sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
-        time: getCurrentTime(),
-        options: item.options || [],
-      }));
-
-      setMessages(formattedMessages);
-      setIsTyping(false);
-    } catch {
-      clearCurrentTimeout();
-      setIsTyping(false);
-      setMessages([
-        {
-          id: Date.now(),
-          text: "An error occurred while loading messages.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-  };
-
+  // Fetch environment info from the API
   useEffect(() => {
-    getPostData();
-    return () => clearCurrentTimeout();
+    const fetchEnv = async () => {
+      try {
+        const response = await fetch('https://10.191.171.12:5443/PyPortal/env');
+        const data = await response.json();
+        console.log(data);
+        setEnv(data.Environment); // Assuming API returns { Environment: "PR" } or "DR"
+      } catch (error) {
+        console.error('Failed to fetch environment:', error);
+        setEnv(''); // fallback or keep as empty
+      }
+    };
+    fetchEnv();
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (newMessage.trim() === "") return;
-
-    const userMsg = {
-      id: Date.now(),
-      text: newMessage,
-      sender: "user",
-      time: getCurrentTime(),
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    setMessages((prev) => [...prev, userMsg]);
-    setNewMessage("");
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {
-        const errorMsg = {
-          id: Date.now(),
-          text: "Server timeout. Try again later.",
-          sender: "bot",
-          time: getCurrentTime(),
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      });
-
-      const res = await postMessage(newMessage);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "An error occurred. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleOptionClick = async (optionText) => {
-    const lowered = optionText.toLowerCase();
-
-    if (lowered.includes("have multiple fields")) {
-      setShowForm(true);
-      return;
-    }
-
-    if (
-      lowered.includes("team info") ||
-      lowered.includes("transaction flow") ||
-      lowered.includes("cache value") ||
-      lowered.includes("enter far id") ||
-      lowered.includes("other")
-    ) {
-      setShowSearch(true);
-      return;
-    }
-
-    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "");
-
-    const userMessage = {
-      id: Date.now(),
-      text: cleanedOpt,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {
-        const errorMsg = {
-          id: Date.now(),
-          text: "Server timeout. Try again later.",
-          sender: "bot",
-          time: getCurrentTime(),
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      });
-
-      const res = await postMessage(cleanedOpt);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "An error occurred.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setShowForm(false);
-    setShowSearch(false);
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: "Server timeout. Try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
-
-      // Make sure backend supports this data format
-      const res = await postMessage(formData);
-
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "Something went wrong. Try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleMinimize = () => {
-    setIsMinimized(true);
-    setChatbotMinimized(true);
-  };
-
-  const handleRestore = () => {
-    setIsMinimized(false);
-    setChatbotMinimized(false);
+  // Determine marquee text based on environment
+  const getMarqueeText = () => {
+    if (env === 'PR') return 'PR is live now!! ';
+    if (env === 'DR') return 'DR is live now!! ';
+    return 'Welcome to EIS INFRA'; // Default/fallback text
   };
 
   return (
-    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
-      <div className="chat-header">
-        <img src={logo} alt="Logo" className="chat-logo" onClick={handleRestore} />
-        {!isMinimized && (
-          <>
-            <div className="chat-title">
-              <h1>EIS GINI</h1>
-              <h5>(Generative Interactive Neural Interface)</h5>
-            </div>
-            <button className="minimize-button" onClick={handleMinimize}>
-              &#x2212;
-            </button>
-          </>
-        )}
+    <div
+      className="container"
+      style={{
+        paddingTop: '19px',
+        paddingBottom: '19px',
+        position: 'relative',
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        color: '#ffffff',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Marquee running in the background */}
+      <div style={{
+        position: 'absolute',
+        width: '100%',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        zIndex: 1
+      }}>
+        <marquee
+          behavior="scroll"
+          direction="left"
+          scrollamount="12"
+          style={{
+            backgroundColor: 'transparent',
+            fontWeight: 'bold',
+            opacity: 0.4
+          }}
+        >
+        {Array(1000).fill(getMarqueeText()).map((text, index) => (
+    <span key={index} style={{ marginRight: '150px' }}>
+      {text}
+    </span>
+  ))}
+        </marquee>
       </div>
 
-      {!isMinimized && (
-        <>
-          <div className="messages-container">
-            {messages.map((item, index) => (
+      {/* Header content with logo, title and profile */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        position: 'relative',
+        zIndex: 2
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img
+            className="logo"
+            src={logo}
+            alt="Company Logo"
+            style={{ height: '40px', marginRight: '20px' }}
+          />
+        </div>
+
+        <h1 style={{ margin: 0 }}>
+          EIS INFRA HOME
+        </h1>
+
+        <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }} ref={dropdownRef}>
+          {showProfileIcon && username && (
+            <>
               <div
-                key={index}
-                className={`message-wrapper ${item.sender.toLowerCase()}`}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
-                  marginBottom: "12px",
-                }}
+                onClick={() => setMenuOpen(!menuOpen)}
+                style={{ cursor: 'pointer', marginLeft: '10px' }}
               >
-                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
-                  <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" && item.text.includes("<b>") ? (
-                      <div className="message-content" dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }} />
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
-                    {item.options?.length > 0 && (
-                      <div className="options-list">
-                        {item.options.map((opt, i) => (
-                          <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className="message-time">{item.time}</div>
+                <ProfileIcon sender={username} />
+              </div>
+              {menuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50px',
+                    right: 0,
+                    background: '#1e1e1e',
+                    color: '#fff',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    borderRadius: '6px',
+                    padding: '10px',
+                    zIndex: 100,
+                    minWidth: '120px'
+                  }}
+                >
+                  <div style={{ padding: '8px 12px', cursor: 'pointer' }} onClick={onLogout}>
+                    Logout
                   </div>
-                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
                 </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                <ProfileIcon sender="bot" />
-                <div className="message bot-message">
-                  <TypingIndicator />
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {showForm && (
-            <form className="multi-field-form" onSubmit={handleFormSubmit}>
-              <div className="form-grid">
-                <input type="text" placeholder="Subject" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} />
-                <input type="text" placeholder="Source" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} />
-                <input type="text" placeholder="Destination" value={formData.destination} onChange={(e) => setFormData({ ...formData, destination: e.target.value })} />
-                <input type="text" placeholder="Zone" value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} />
-                <input type="text" placeholder="Port" value={formData.port} onChange={(e) => setFormData({ ...formData, port: e.target.value })} />
-                <input type="date" placeholder="Before Creation Date" value={formData.beforeCreationDate} onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })} />
-                <input type="date" placeholder="Before Expire Date" value={formData.beforeExpireDate} onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })} />
-              </div>
-              <button type="submit" className="search-button">Search</button>
-            </form>
+              )}
+            </>
           )}
-
-          {showSearch && (
-            <form className="message-form" onSubmit={handleSendMessage}>
-              <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
-              <button type="submit" className="send-button">
-                <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
-              </button>
-            </form>
-          )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
-};
-
-export default Chatbot;
+}
