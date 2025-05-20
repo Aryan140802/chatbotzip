@@ -1,458 +1,120 @@
-import { useState, useEffect, useRef } from "react";
-import ProfileIcon from "./ProfileIcon";
-import TypingIndicator from "./TypingIndicator";
-import "../styles/Chatbot.css";
-import send from "../assets/Send.png";
-import logo from "../assets/logobot.jpg";
-import { getPost, postMessage } from "../api/PostApi";
+import React, { useEffect, useState } from 'react';
+import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { cardLinks } from '../links';
+import '../styles/Menu.css';
 
-// Format dynamic message from bot using <b> tags
-const formatDynamicMessage = (html) => {
-  if (!html || typeof html !== "string") return html;
+const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState([]);
 
-  const lines = [];
-  const pattern2 = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
-  let match2;
-  while ((match2 = pattern2.exec(html)) !== null) {
-    const key = match2[1].trim();
-    const value = match2[2].trim().replace(/\n/g, "<br/>");
-    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
-  }
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
-  return lines.length === 0 ? html : `<div class="formatted-card">${lines.join("")}</div>`;
-};
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
 
-const Chatbot = ({ setChatbotMinimized }) => {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [messageInputEnabled, setMessageInputEnabled] = useState(true);
-  const [formData, setFormData] = useState({
-    subject: "",
-    source: "",
-    destination: "",
-    zone: "",
-    port: "",
-    beforeCreationDate: "",
-    beforeExpireDate: "",
-  });
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial call
+    return () => window.removeEventListener('resize', handleResize);
+  }, [setIsSidebarOpen]);
 
-  const messagesEndRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const API_TIMEOUT = 20000;
-
-  const clearCurrentTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  };
-
-  const setApiTimeout = (errorHandler) => {
-    clearCurrentTimeout();
-    timeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      errorHandler();
-    }, API_TIMEOUT);
-  };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  };
-
-  // Check if the current set of options contains all the required values to show the form
-  const shouldShowFormForOptions = (options) => {
-    const requiredOptions = ["team info", "transaction flow", "cache value", "enter far id", "other"];
-    return requiredOptions.every(option => 
-      options.some(opt => opt.toLowerCase().includes(option.toLowerCase()))
+  const toggleFavorite = (url) => {
+    setFavorites((prev) =>
+      prev.includes(url)
+        ? prev.filter((fav) => fav !== url)
+        : [...prev, url]
     );
   };
 
-  const getPostData = async () => {
-    try {
-      setIsTyping(true);
-      setApiTimeout(() => {
-        setMessages([
-          {
-            id: Date.now(),
-            text: "Unable to load messages. Please try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
-
-      const res = await getPost();
-      clearCurrentTimeout();
-
-      const formattedMessages = res.data.chat_history.map((item, index) => ({
-        id: Date.now() + index,
-        text: item.message || "",
-        sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
-        time: getCurrentTime(),
-        options: item.options || [],
-      }));
-      
-      setMessages(formattedMessages);
-      
-      // Check if the last message has the required options to show the form
-      const lastMessage = formattedMessages[formattedMessages.length - 1];
-      if (lastMessage && lastMessage.sender === "bot" && lastMessage.options && lastMessage.options.length > 0) {
-        const shouldShowForm = shouldShowFormForOptions(lastMessage.options);
-        setShowForm(shouldShowForm);
-        setMessageInputEnabled(!shouldShowForm); // Disable message input when form is shown
-      }
-      
-      setIsTyping(false);
-    } catch {
-      clearCurrentTimeout();
-      setIsTyping(false);
-      setMessages([
-        {
-          id: Date.now(),
-          text: "An error occurred while loading messages.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-  };
-
-  useEffect(() => {
-    getPostData();
-    return () => clearCurrentTimeout();
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Update the showForm state when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage.sender === "bot" && lastMessage.options && lastMessage.options.length > 0) {
-        const shouldShowForm = shouldShowFormForOptions(lastMessage.options);
-        setShowForm(shouldShowForm);
-        setMessageInputEnabled(!shouldShowForm); // Disable message input when form is shown
-      } else {
-        setShowForm(false);
-        setMessageInputEnabled(true); // Enable message input when form is hidden
-      }
-    }
-  }, [messages]);
-
-  // Handle sending user messages
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (newMessage.trim() === "" || !messageInputEnabled) return;
-
-    // Create user message object
-    const userMsg = {
-      id: Date.now(),
-      text: newMessage,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    // Add user message to messages list
-    setMessages((prev) => [...prev, userMsg]);
-    
-    // Clear the input field
-    setNewMessage("");
-    
-    // Set typing indicator
-    setIsTyping(true);
-
-    try {
-      // Set a timeout for the API call
-      setApiTimeout(() => {
-        const errorMsg = {
-          id: Date.now(),
-          text: "Server timeout. Try again later.",
-          sender: "bot",
-          time: getCurrentTime(),
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      });
-
-      // Send the message to the backend
-      const res = await postMessage(newMessage);
-      clearCurrentTimeout();
-
-      // Process the response
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      // Handle errors
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "An error occurred. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    // Turn off typing indicator
-    setIsTyping(false);
-  };
-
-  // Handle when a user clicks on an option button
-  const handleOptionClick = async (optionText) => {
-    // Clean the option text (remove numbering/lettering)
-    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "");
-
-    // Create a user message with the selected option
-    const userMessage = {
-      id: Date.now(),
-      text: cleanedOpt,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    // Add user message to chat
-    setMessages((prev) => [...prev, userMessage]);
-    
-    // Set typing indicator
-    setIsTyping(true);
-
-    try {
-      // Set a timeout for the API call
-      setApiTimeout(() => {
-        const errorMsg = {
-          id: Date.now(),
-          text: "Server timeout. Try again later.",
-          sender: "bot",
-          time: getCurrentTime(),
-        };
-        setMessages((prev) => [...prev, errorMsg]);
-      });
-
-      // Send the selected option to the backend
-      const res = await postMessage(cleanedOpt);
-      clearCurrentTimeout();
-
-      // Process the response
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      // Handle errors
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "An error occurred.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    // Turn off typing indicator
-    setIsTyping(false);
-  };
-
-  // Handle form submission
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Set typing indicator
-    setIsTyping(true);
-
-    try {
-      // Set a timeout for the API call
-      setApiTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: "Server timeout. Try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
-
-      // Send the form data to the backend
-      const res = await postMessage(formData);
-      clearCurrentTimeout();
-
-      // Process the response
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      // Handle errors
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "Something went wrong. Try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    // Turn off typing indicator
-    setIsTyping(false);
-  };
-
-  // Handle minimizing the chatbot
-  const handleMinimize = () => {
-    setIsMinimized(true);
-    setChatbotMinimized(true);
-  };
-
-  // Handle restoring the chatbot
-  const handleRestore = () => {
-    setIsMinimized(false);
-    setChatbotMinimized(false);
-  };
+  const filteredLinks = cardLinks
+    .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const aFav = favorites.includes(a.url);
+      const bFav = favorites.includes(b.url);
+      return aFav === bFav ? 0 : aFav ? -1 : 1;
+    });
 
   return (
-    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
-      <div className="chat-header">
-        <img src={logo} alt="Logo" className="chat-logo" onClick={handleRestore} />
-        {!isMinimized && (
-          <>
-            <div className="chat-title">
-              <h1>EIS GINI</h1>
-              <h5>(Generative Interactive Neural Interface)</h5>
-            </div>
-            <button className="minimize-button" onClick={handleMinimize}>
-              &#x2212;
-            </button>
-          </>
-        )}
-      </div>
-
-      {!isMinimized && (
-        <>
-          <div className="messages-container">
-            {messages.map((item, index) => (
-              <div
-                key={index}
-                className={`message-wrapper ${item.sender.toLowerCase()}`}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
-                  marginBottom: "12px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
-                  <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" && item.text.includes("<b>") ? (
-                      <div className="message-content" dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }} />
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
-                    {item.options?.length > 0 && (
-                      <div className="options-list">
-                        {item.options.map((opt, i) => (
-                          <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className="message-time">{item.time}</div>
-                  </div>
-                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
-                </div>
-              </div>
-            ))}
-
-            {isTyping && (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                <ProfileIcon sender="bot" />
-                <div className="message bot-message">
-                  <TypingIndicator />
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {showForm && (
-            <form className="multi-field-form" onSubmit={handleFormSubmit}>
-              <div className="form-grid">
-                <input type="text" placeholder="Subject" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} />
-                <input type="text" placeholder="Source" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} />
-                <input type="text" placeholder="Destination" value={formData.destination} onChange={(e) => setFormData({ ...formData, destination: e.target.value })} />
-                <input type="text" placeholder="Zone" value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} />
-                <input type="text" placeholder="Port" value={formData.port} onChange={(e) => setFormData({ ...formData, port: e.target.value })} />
-                <input type="date" placeholder="Before Creation Date" value={formData.beforeCreationDate} onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })} />
-                <input type="date" placeholder="Before Expire Date" value={formData.beforeExpireDate} onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })} />
-              </div>
-              <button type="submit" className="search-button">Search</button>
-            </form>
-          )}
-
-          <form className="message-form" onSubmit={handleSendMessage}>
-            <input 
-              type="text" 
-              value={newMessage} 
-              onChange={(e) => setNewMessage(e.target.value)} 
-              placeholder={messageInputEnabled ? "Type a message..." : "Please use the form above"} 
-              className={`message-input ${!messageInputEnabled ? "disabled" : ""}`}
-              disabled={!messageInputEnabled}
-            />
-            <button 
-              type="submit" 
-              className={`send-button ${!messageInputEnabled ? "disabled" : ""}`} 
-              disabled={!messageInputEnabled}
-            >
-              <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
-            </button>
-          </form>
-        </>
+    <>
+      {!isSidebarOpen && (
+        <button className="sidebar-toggle" onClick={toggleSidebar}>
+          <MenuIcon size={24} />
+        </button>
       )}
-    </div>
+
+      <div className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
+        <div className="sidebar-header">
+          {isSidebarOpen && <h2 className="sidebar-title">Quick Access</h2>}
+          <button
+            className="collapse-btn"
+            onClick={toggleSidebar}
+            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
+
+        {isSidebarOpen && (
+          <div className="sidebar-search">
+            <input
+              type="text"
+              placeholder="Search links..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        )}
+
+        <div className="sidebar-content">
+          <div className="sidebar-section">
+            {filteredLinks.map((link, index) => {
+              const isFavorited = favorites.includes(link.url);
+              return (
+                <div key={index} className="link-card">
+                  <span
+                    className="star-icon"
+                    onClick={() => toggleFavorite(link.url)}
+                    title={isFavorited ? 'Unstar' : 'Star'}
+                  >
+                    {isFavorited ? (
+                      <Star fill="#facc15" color="#facc15" size={16} />
+                    ) : (
+                      <Star color="#fff" size={16} />
+                    )}
+                  </span>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link-anchor"
+                  >
+                    {isSidebarOpen ? (
+                      <span>{link.name}</span>
+                    ) : (
+
+                      <img
+                        src={link.icon}
+                        alt={link.name}
+                        title={link.name}
+                        className="link-icon"
+                      />
+
+                    )}
+                  </a>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
-export default Chatbot;
-
-
-
-.message-input.disabled {
-  background-color: #f0f0f0;
-  cursor: not-allowed;
-}
-
-.send-button.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+export default Sidebar;
