@@ -242,57 +242,33 @@ const GraphCarousel = () => {
           // Pie chart for FAR data
           chartComponent = (
             <ResponsiveContainer>
-  <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
-    <defs>
-      {data.map((entry, index) => (
-        <linearGradient
-          id={`grad-${index}`}
-          x1="0"
-          y1="0"
-          x2="1"
-          y2="1"
-          key={`grad-${index}`}
-        >
-          <stop offset="0%" stopColor={COLORS[index % COLORS.length]} stopOpacity={1} />
-          <stop offset="100%" stopColor="#000000" stopOpacity={0.3} />
-        </linearGradient>
-      ))}
-    </defs>
+              <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine
+                  outerRadius={130}
+                  innerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
 
-    <Pie
-      data={data}
-      cx="50%"
-      cy="50%"
-      outerRadius={130}
-      innerRadius={60}
-      dataKey="value"
-      nameKey="name"
-      labelLine={true}
-      label={({ name, percent }) =>
-        percent > 0.05 ? `${name}: ${formatPercent(percent)}` : ''
-      }
-    >
-      {data.map((entry, index) => (
-        <Cell key={`cell-${index}`} fill={`url(#grad-${index})`} />
-      ))}
-    </Pie>
-
-    <Tooltip
-      formatter={(value) => [`${value}`, 'Count']}
-      contentStyle={{
-        backgroundColor: '#2e1a3b',
-        borderColor: '#f285c1',
-        color: '#fff',
-        borderRadius: '8px',
-      }}
-      itemStyle={{ color: '#fff' }}
-      labelStyle={{ color: '#f285c1' }}
-    />
-
-    <Legend layout="horizontal" verticalAlign="bottom" align="center" />
-  </PieChart>
-</ResponsiveContainer>
-
+                <Tooltip
+                  formatter={(value) => [`${value}`, 'Count']}
+                  contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#f285c1' }}
+                />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              </PieChart>
+            </ResponsiveContainer>
           );
         } else {
           // Bar chart for other data
@@ -328,7 +304,7 @@ const GraphCarousel = () => {
                   angle={-30}
                   textAnchor="end"
                   height={60}
-                  tick={{ fontSize: 10, fill: '#f7f7f7' }}
+                  tick={{ fontSize: 13, fill: '#f7f7f7' }}
                 />
                 <YAxis
                   tick={{ fill: '#f7f7f7' }}
