@@ -5,48 +5,33 @@ const TypingIndicator = () => {
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      backgroundColor: 'linear-gradient(135deg, #1051d6, #0a3a9f)',
+      background: 'linear-gradient(135deg, #1051d6, #0a3a9f)',
       padding: '10px 15px',
       borderRadius: '18px',
-      maxWidth: '70px'
+      maxWidth: '80px',
+      gap: '6px'
     }}>
-      <div style={{
-        width: '10px',
-        height: '10px',
-        backgroundColor: '#FFFFFF',
-        borderRadius: '50%',
-        margin: '0 3px',
-        animation: 'typingDot 1.4s infinite ease-in-out'
-      }}>
-      </div>
-
-      <div style={{
-        width: '10px',
-        height: '10px',
-        backgroundColor: '#FFFFFF',
-        borderRadius: '50%',
-        margin: '0 3px',
-        animation: 'typingDot 1.4s infinite ease-in-out 0.2s'
-      }}>
-      </div>
-      <div style={{
-        width: '10px',
-        height: '10px',
-        backgroundColor: '#FFFFFF',
-        borderRadius: '50%',
-        margin: '0 3px',
-        animation: 'typingDot 1.4s infinite ease-in-out 0.4s'
-      }}>
-      </div>
+      {[0, 1, 2].map((i) => (
+        <div key={i} style={{
+          width: '12px',
+          height: '12px',
+          backgroundColor: 'white',
+          clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+          animation: `sparkle 1.5s ease-in-out ${i * 0.2}s infinite`,
+          opacity: 0.8
+        }} />
+      ))}
       <style>{`
-        @keyframes typingDot {
-          0%, 60%, 100% {
-            transform: initial;
-            opacity: 0.5;
+        @keyframes sparkle {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px white);
           }
-          30% {
-            transform: translateY(-5px);
+          50% {
+            transform: scale(1.4) rotate(20deg);
             opacity: 1;
+            filter: drop-shadow(0 0 6px white);
           }
         }
       `}</style>
@@ -54,3 +39,4 @@ const TypingIndicator = () => {
   )
 }
 
+export default TypingIndicator
