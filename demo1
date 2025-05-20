@@ -9,33 +9,62 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
 
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
+  // Handle sidebar open/close on resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 768) {
-        setIsSidebarOpen(true);
-      } else {
-        setIsSidebarOpen(false);
-      }
+      setIsSidebarOpen(window.innerWidth > 768);
     };
-
     window.addEventListener('resize', handleResize);
-    handleResize(); // Initial call
+    handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [setIsSidebarOpen]);
 
-  const toggleFavorite = (url) => {
-    setFavorites((prev) =>
-      prev.includes(url)
-        ? prev.filter((fav) => fav !== url)
-        : [...prev, url]
-    );
+  // 🔁 Fetch favorite names on mount
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const res = await fetch('/api/favorites');
+        const data = await res.json();
+        setFavorites(data.favorites || []); // array of names
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    };
+
+    fetchFavorites();
+  }, []);
+
+  // 🔼 Update backend when favorites change
+  const updateFavoritesOnBackend = async (updatedFavorites) => {
+    try {
+      await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favorites: updatedFavorites }), // only names
+      });
+    } catch (error) {
+      console.error('Failed to update favorites:', error);
+    }
   };
 
+  // ⭐ Toggle favorite by name
+  const toggleFavorite = (name) => {
+    setFavorites((prev) => {
+      const updated = prev.includes(name)
+        ? prev.filter((fav) => fav !== name)
+        : [...prev, name];
+
+      updateFavoritesOnBackend(updated);
+      return updated;
+    });
+  };
+
+  // 🔍 Filter and sort links
   const filteredLinks = cardLinks
     .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
-      const aFav = favorites.includes(a.url);
-      const bFav = favorites.includes(b.url);
+      const aFav = favorites.includes(a.name);
+      const bFav = favorites.includes(b.name);
       return aFav === bFav ? 0 : aFav ? -1 : 1;
     });
 
@@ -74,12 +103,12 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
         <div className="sidebar-content">
           <div className="sidebar-section">
             {filteredLinks.map((link, index) => {
-              const isFavorited = favorites.includes(link.url);
+              const isFavorited = favorites.includes(link.name);
               return (
                 <div key={index} className="link-card">
                   <span
                     className="star-icon"
-                    onClick={() => toggleFavorite(link.url)}
+                    onClick={() => toggleFavorite(link.name)}
                     title={isFavorited ? 'Unstar' : 'Star'}
                   >
                     {isFavorited ? (
@@ -97,14 +126,12 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
                     {isSidebarOpen ? (
                       <span>{link.name}</span>
                     ) : (
-
                       <img
                         src={link.icon}
                         alt={link.name}
                         title={link.name}
                         className="link-icon"
                       />
-
                     )}
                   </a>
                 </div>
