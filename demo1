@@ -10,22 +10,25 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
 
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
-  // Fetch userId on mount
+  // Fetch userId on mount with POST request
   useEffect(() => {
     const fetchUserId = async () => {
       try {
-        const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHomee/newLogin', {
-          method: 'GET', // Or POST depending on your API
+        const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHomee/newLogin/', {
+          method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          // Add any required body data for the login request
+          // body: JSON.stringify({ /* your login data */ }),
         });
 
         if (response.ok) {
           const data = await response.json();
-          setUserId(data.userId); // Assuming userId is returned in the response
+          setUserId(data.user || data.userId); // Handle different response formats
+          console.log('User ID fetched:', data.user || data.userId);
         } else {
-          console.error('Failed to fetch userId');
+          console.error('Failed to fetch userId:', response.status);
         }
       } catch (error) {
         console.error('Error fetching userId:', error);
@@ -52,14 +55,28 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
     fetchFavorites();
   }, [userId]); // Only fetch favorites if userId is available
 
-  // Update backend when favorites change
-  const updateFavoritesOnBackend = async (updatedFavorites) => {
+  // Update backend when favorites change - renamed to postFavourite
+  const postFavourite = async (updatedFavorites) => {
+    if (!userId) {
+      console.error('No userId available to post favorites');
+      return;
+    }
+
     try {
-      await fetch('/api/favorites', {
+      const response = await fetch('/api/favorites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, favorites: updatedFavorites }), // Send userId with favorites
+        body: JSON.stringify({ 
+          userId: userId, 
+          favorites: updatedFavorites 
+        }),
       });
+
+      if (response.ok) {
+        console.log('Favorites updated successfully');
+      } else {
+        console.error('Failed to update favorites:', response.status);
+      }
     } catch (error) {
       console.error('Failed to update favorites:', error);
     }
@@ -72,7 +89,8 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
         ? prev.filter((fav) => fav !== name)
         : [...prev, name];
 
-      updateFavoritesOnBackend(updated);
+      // Call postFavourite with the userId
+      postFavourite(updated);
       return updated;
     });
   };
