@@ -1,42 +1,157 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react';
+import ProfileIcon from './ProfileIcon';
+import logo from '../assets/tcs.png';
 
-const TypingIndicator = () => {
+export default function Header({ username, onLogout, showProfileIcon = true }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [env, setEnv] = useState('');
+  const dropdownRef = useRef();
+
+  // Fetch environment info
+  useEffect(() => {
+    const fetchEnv = async () => {
+      try {
+        const response = await fetch('https://10.191.171.12:5443/PyPortal/env');
+        const data = await response.json();
+        setEnv(data.Environment);
+      } catch (error) {
+        console.error('Failed to fetch environment:', error);
+        setEnv('');
+      }
+    };
+    fetchEnv();
+  }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const getMarqueeText = () => {
+    if (env === 'PR') return 'PR is live now!! ';
+    if (env === 'DR') return 'DR is live now!! ';
+    return 'Welcome to EIS INFRA ';
+  };
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      background: 'linear-gradient(135deg, #1051d6, #0a3a9f)',
-      padding: '10px 15px',
-      borderRadius: '18px',
-      maxWidth: '80px',
-      gap: '6px'
-    }}>
-      {[0, 1, 2].map((i) => (
-        <div key={i} style={{
-          width: '12px',
-          height: '12px',
-          backgroundColor: 'white',
-          clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-          animation: `sparkle 1.5s ease-in-out ${i * 0.2}s infinite`,
-          opacity: 0.8
-        }} />
-      ))}
-      <style>{`
-        @keyframes sparkle {
-          0%, 100% {
-            transform: scale(1) rotate(0deg);
-            opacity: 0.6;
-            filter: drop-shadow(0 0 2px white);
-          }
-          50% {
-            transform: scale(1.4) rotate(20deg);
-            opacity: 1;
-            filter: drop-shadow(0 0 6px white);
-          }
-        }
-      `}</style>
-    </div>
-  )
-}
+    <div
+      className="container"
+      style={{
+        paddingTop: '19px',
+        paddingBottom: '19px',
+        position: 'relative',
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        color: '#ffffff',
+        overflow: 'visible' // Allow dropdown visibility
+      }}
+    >
+      {/* Marquee background */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '100%',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'flex-end',
+          zIndex: 1
+        }}
+      >
+        <marquee
+          behavior="scroll"
+          direction="left"
+          scrollamount="12"
+          style={{
+            backgroundColor: 'transparent',
+            fontWeight: 'bold',
+            opacity: 0.4
+          }}
+        >
+          {Array(1000)
+            .fill(getMarqueeText())
+            .map((text, index) => (
+              <span key={index} style={{ marginRight: '150px' }}>
+                {text}
+              </span>
+            ))}
+        </marquee>
+      </div>
 
-export default TypingIndicator
+      {/* Gradient mask to hide marquee under logo/title */}
+
+      {/* Header content */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          position: 'relative',
+          zIndex: 3,
+          padding: '0 20px'
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img
+            className="logo"
+            src={logo}
+            alt="Company Logo"
+            style={{ height: '40px', marginRight: '20px' }}
+          />
+        </div>
+
+        {/* Title */}
+        <h1 style={{ margin: 0 }}>EIS INFRA HOME</h1>
+
+        {/* Profile & Dropdown */}
+        <div
+          style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+          ref={dropdownRef}
+        >
+          {showProfileIcon && username && (
+            <>
+              <div
+                onClick={() => setMenuOpen(!menuOpen)}
+                style={{ cursor: 'pointer', marginLeft: '10px' }}
+              >
+                <ProfileIcon sender={username} />
+              </div>
+              {menuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50px',
+                    right: 0,
+                    background: '#1e1e1e',
+                    color: '#fff',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    borderRadius: '6px',
+                    padding: '10px',
+                    zIndex: 9999,
+                    minWidth: '120px'
+                  }}
+                >
+                  <div
+                    style={{ padding: '8px 12px', cursor: 'pointer' }}
+                    onClick={onLogout}
+                  >
+                    Logout
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
