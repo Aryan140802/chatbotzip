@@ -1,6 +1,6 @@
-import React from 'react'
+import React from 'react';
 
-const ProfileIcon = ({ sender, username }) => {
+const ProfileIcon = ({ sender }) => {
   const getIconStyle = (sender) => {
     const baseStyle = {
       width: '40px',
@@ -13,34 +13,37 @@ const ProfileIcon = ({ sender, username }) => {
       fontWeight: 'bold',
       color: 'white',
       marginRight: '6px',
-      flexShrink: 0
-    }
+      flexShrink: 0,
+    };
 
     if (sender === 'user') {
       return {
         ...baseStyle,
-        background: 'linear-gradient(135deg, #ff214a, #d10abab3)'
-      }
+        background: 'linear-gradient(135deg, #ff214a, #d10abab3)',
+      };
     }
 
     return {
       ...baseStyle,
-      background: 'linear-gradient(135deg, #1051d6, #0a3a9f)'
-    }
-  }
+      background: 'linear-gradient(135deg, #1051d6, #0a3a9f)',
+    };
+  };
 
-  const getInitials = (name) => {
-    if (!name) return 'AP'
-    const parts = name.trim().split(' ')
-    if (parts.length === 1) return parts[0][0].toUpperCase()
-    return (parts[0][0] + parts[1][0]).toUpperCase()
-  }
+  const getInitials = () => {
+    const username = localStorage.getItem('username');
+    if (!username) return 'AP';
+
+    const parts = username.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    if (parts.length === 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return (parts[0][0] + parts[1][0] + parts[2][0]).toUpperCase();
+  };
 
   return (
     <div style={getIconStyle(sender)}>
-      {sender === 'user' ? getInitials(username) : 'EG'}
+      {sender === 'user' ? getInitials() : 'EG'}
     </div>
-  )
-}
+  );
+};
 
-export default ProfileIcon
+export default ProfileIcon;
