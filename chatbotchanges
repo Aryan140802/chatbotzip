@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
@@ -28,6 +29,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [formDisabled, setFormDisabled] = useState(true); // Initially disabled
+  const [specialOptionSelected, setSpecialOptionSelected] = useState(false); // Track if special option was selected
   const [formData, setFormData] = useState({
     subject: "",
     source: "",
@@ -88,6 +91,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
       }));
 
       setMessages(formattedMessages);
+
+      // Initially disable the form until user selects a special option
+      setFormDisabled(true);
+      setSpecialOptionSelected(false);
+
       setIsTyping(false);
     } catch {
       clearCurrentTimeout();
@@ -112,6 +120,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // We don't need this effect anymore as we'll control form enabled/disabled state
+  // directly in the handleOptionClick function and handleSendMessage
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
@@ -126,6 +137,10 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setMessages((prev) => [...prev, userMsg]);
     setNewMessage("");
     setIsTyping(true);
+
+    // Disable form immediately after sending a message
+    setFormDisabled(true);
+    setSpecialOptionSelected(false);
 
     try {
       setApiTimeout(() => {
@@ -166,22 +181,36 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
+  // Modified function to handle specific option buttons properly
   const handleOptionClick = async (optionText) => {
+    // Special case for the multi-field form
     if (optionText.toLowerCase().includes("have multiple fields")) {
       setShowForm(true);
       return;
     }
 
-    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "");
+    // Clean the option text (remove numbering/prefixes)
+    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "").trim();
 
+    // Define the special options that should enable the input form
+    const specialOptions = ["Team Info", "Transaction Flow", "Cache Value", "Enter FAR ID", "Other"];
+    const isSpecialOption = specialOptions.includes(cleanedOpt);
+
+    // Add user message to chat
     const userMessage = {
       id: Date.now(),
       text: cleanedOpt,
       sender: "user",
       time: getCurrentTime(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
+
+    // Enable form ONLY if the user selected one of the special options
+    if (isSpecialOption) {
+      setSpecialOptionSelected(true);
+    }
+
+    // Process the selected option
     setIsTyping(true);
 
     try {
@@ -195,6 +224,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setMessages((prev) => [...prev, errorMsg]);
       });
 
+      // Send the option selection to the API
       const res = await postMessage(cleanedOpt);
       clearCurrentTimeout();
 
@@ -208,6 +238,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
           options: latest.options || [],
         };
         setMessages((prev) => [...prev, botResponse]);
+
+        // After receiving response, enable form ONLY if we previously selected a special option
+        setFormDisabled(!isSpecialOption);
       }
     } catch {
       clearCurrentTimeout();
@@ -361,9 +394,16 @@ const Chatbot = ({ setChatbotMinimized }) => {
           )}
 
           <form className="message-form" onSubmit={handleSendMessage}>
-            <input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Type a message..." className="message-input" />
-            <button type="submit" className="send-button">
-              <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={formDisabled ? "Select one of the special options first..." : "Type a message..."}
+              className="message-input"
+              disabled={formDisabled}
+            />
+            <button type="submit" className="send-button" disabled={formDisabled}>
+              <img className="logo" src={send} alt="Send" style={{ height: "20px", opacity: formDisabled ? 0.5 : 1 }} />
             </button>
           </form>
         </>
@@ -373,39 +413,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-
-
-
-
-.multi-field-form {
-  padding: 12px;
-  background-color: #f1f1f1;
-  border-radius: 10px;
-  margin: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.multi-field-form input,
-.search-button {
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.search-button {
-  background-color: #007bff;
-  color: white;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-}
