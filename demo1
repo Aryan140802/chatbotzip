@@ -1,147 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import { cardLinks } from '../links';
-import '../styles/Menu.css';
+import React from 'react'
 
-const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [favorites, setFavorites] = useState([]);
-  const [userId, setUserId] = useState(null);
-
-  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
-
-  // Get userId from localStorage on mount
-  useEffect(() => {
-    const uid = localStorage.getItem('username'); // Ensure this key exists
-    if (uid) setUserId(uid);
-    else console.warn('No username found in localStorage');
-  }, []);
-
-  // Fetch favorites for the user on mount
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchFavorites = async () => {
-      try {
-        const res = await fetch(`/api/postFavourites?uid=${userId}`);
-        const data = await res.json();
-        setFavorites(data.favorites || []);
-      } catch (err) {
-        console.error('Failed to load favorites:', err);
-      }
-    };
-
-    fetchFavorites();
-  }, [userId]);
-
-  // Update backend when favorites change
-  const updateFavoritesOnBackend = async (updatedFavorites) => {
-    try {
-      await fetch('/api/postFavourites', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: userId, favorites: updatedFavorites }),
-      });
-    } catch (error) {
-      console.error('Failed to update favorites:', error);
-    }
-  };
-
-  // Toggle favorite
-  const toggleFavorite = (name) => {
-    setFavorites((prev) => {
-      const updated = prev.includes(name)
-        ? prev.filter((fav) => fav !== name)
-        : [...prev, name];
-
-      updateFavoritesOnBackend(updated);
-      return updated;
-    });
-  };
-
-  // Filter + Sort
-  const filteredLinks = cardLinks
-    .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => {
-      const aFav = favorites.includes(a.name);
-      const bFav = favorites.includes(b.name);
-      return aFav === bFav ? 0 : aFav ? -1 : 1;
-    });
-
+const TypingIndicator = () => {
   return (
-    <>
-      {!isSidebarOpen && (
-        <button className="sidebar-toggle" onClick={toggleSidebar}>
-          <MenuIcon size={24} />
-        </button>
-      )}
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      background: 'linear-gradient(135deg, #1051d6, #0a3a9f)',
+      padding: '10px 15px',
+      borderRadius: '18px',
+      maxWidth: '80px',
+      gap: '6px'
+    }}>
+      {[0, 1, 2].map((i) => (
+        <div key={i} style={{
+          width: '12px',
+          height: '12px',
+          backgroundColor: 'white',
+          clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+          animation: `sparkle 1.5s ease-in-out ${i * 0.2}s infinite`,
+          opacity: 0.8
+        }} />
+      ))}
+      <style>{`
+        @keyframes sparkle {
+          0%, 100% {
+            transform: scale(1) rotate(0deg);
+            opacity: 0.6;
+            filter: drop-shadow(0 0 2px white);
+          }
+          50% {
+            transform: scale(1.4) rotate(20deg);
+            opacity: 1;
+            filter: drop-shadow(0 0 6px white);
+          }
+        }
+      `}</style>
+    </div>
+  )
+}
 
-      <div className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
-        <div className="sidebar-header">
-          {isSidebarOpen && <h2 className="sidebar-title">Quick Access</h2>}
-          <button
-            className="collapse-btn"
-            onClick={toggleSidebar}
-            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
-        </div>
-
-        {isSidebarOpen && (
-          <div className="sidebar-search">
-            <input
-              type="text"
-              placeholder="Search links..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-        )}
-
-        <div className="sidebar-content">
-          <div className="sidebar-section">
-            {filteredLinks.map((link, index) => {
-              const isFavorited = favorites.includes(link.name);
-              return (
-                <div key={index} className="link-card">
-                  <span
-                    className="star-icon"
-                    onClick={() => toggleFavorite(link.name)}
-                    title={isFavorited ? 'Unstar' : 'Star'}
-                  >
-                    {isFavorited ? (
-                      <Star fill="#facc15" color="#facc15" size={16} />
-                    ) : (
-                      <Star color="#fff" size={16} />
-                    )}
-                  </span>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link-anchor"
-                  >
-                    {isSidebarOpen ? (
-                      <span>{link.name}</span>
-                    ) : (
-                      <img
-                        src={link.icon}
-                        alt={link.name}
-                        title={link.name}
-                        className="link-icon"
-                      />
-                    )}
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-};
-
-export default Sidebar;
+export default TypingIndicator
