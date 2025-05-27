@@ -401,24 +401,23 @@ export default Chatbot;
 
 
 
+{item.options.map((opt, i) => {
+  const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim();
 
- <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
-                  <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" && item.text.includes("<b>") ? (
-                      <div className="message-content" dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }} />
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
-                    {item.options?.length > 0 && (
-                      <div className="options-list">
-                        {item.options.map((opt, i) => {
-                         const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/,"").trim();
-                         return (
-                          <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-                            {displayText}
-                          </button>
-                         );
-                        })}
-                      </div>
+  // Check if this is the special message you want to render as text
+  if (displayText.toLowerCase().includes("please select one by name")) {
+    return (
+      <div key={i} className="plain-text-option">
+        {displayText}
+      </div>
+    );
+  }
+
+  return (
+    <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
+      {displayText}
+    </button>
+  );
+})}
+
 
