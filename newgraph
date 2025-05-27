@@ -1,7 +1,8 @@
 import '../styles/GraphCarousel.css';
 
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
 } from 'recharts';
 
 import Download from '../assets/down-arrow.png';
@@ -17,7 +18,8 @@ import {
   postIpWiseSys5,
   postIpWiseExp5,
   postServiceWiseExp5,
-  postServiceWiseSys5
+  postServiceWiseSys5,
+  getFARExpires
 } from "../api/PostApi";
 
 import { useState, useEffect, useRef } from "react";
@@ -29,6 +31,9 @@ const formatHits = (value) => {
   if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
   return value;
 };
+
+// Format percentage for the pie chart
+const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
 
 const ThreeDBar = (props) => {
   const { x, y, width, height, fill } = props;
@@ -55,9 +60,18 @@ const GraphCarousel = () => {
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
+  const [farData, setFarData] = useState([]);
+  const [farTotal, setFarTotal] = useState(0);
 
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
+
+  // Colors for the pie chart
+  const COLORS = [
+    '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
+    '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
+    '#33FF8C', '#FF33BD', '#338CFF'
+  ];
 
   const timeOptions = [
     { label: "5 min", value: "5min" },
@@ -75,24 +89,66 @@ const GraphCarousel = () => {
     'IP-wise Exp Data',
     'IP-wise Sys Data',
     'Port-wise Exp Data',
-    'Port-wise Sys Data'
+    'Port-wise Sys Data',
+    'Monthly FAR Expiry Distribution'
   ];
 
   const formatDate = (date) =>
     date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Fetch FAR data
+  const fetchFARData = async () => {
+    try {
+      // Mock data for now (in a real scenario you'd use the API)
+      // This simulates the data structure you provided
+      const response = await getFARExpires();
+
+
+
+
+      // In a real implementation, you'd use:
+      // const response = await getFARExpires();
+
+      const formattedData = [];
+      let total = 0;
+
+      response.data.MonthlyFarCount.forEach(monthData => {
+        const [month, value] = Object.entries(monthData)[0];
+        if (value > 0) {  // Only include non-zero values
+          formattedData.push({
+            name: month,
+            value: value
+          });
+          total += value;
+        }
+      });
+
+      setFarData(formattedData);
+      setFarTotal(total);
+
+      return formattedData;
+    } catch (error) {
+      console.error("Error fetching FAR data:", error);
+      return [];
+    }
+  };
 
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
 
     const updatedCharts = charts.map((chart, index) => ({
       ...chart,
-      title: `${baseTitles[index]} of ${timeDisplay}`
+      title: index === 6 ? baseTitles[6] : `${baseTitles[index]} of ${timeDisplay}`
     }));
 
     setCharts(updatedCharts);
 
-    if (currentIndex >= 0 && currentIndex < baseTitles.length) {
-      setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
+    if (currentIndex >= 0 && currentIndex < charts.length) {
+      if (currentIndex === 6) { // For the FAR chart
+        setCurrentDisplayTitle(baseTitles[6]);
+      } else {
+        setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
+      }
     }
   };
 
@@ -117,6 +173,9 @@ const GraphCarousel = () => {
         postPortWiseExp5(timeRange),
         postPortWiseSys5(timeRange)
       ]);
+
+      // Fetch FAR data
+      const farChartData = await fetchFARData();
 
       const formatData = (data, key) => {
         if (!data || !Array.isArray(data)) {
@@ -167,68 +226,127 @@ const GraphCarousel = () => {
           data: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
           dataKeyX: 'Port',
           baseTitle: baseTitles[5]
+        },
+        {
+          data: farChartData,
+          dataKeyX: 'name',
+          baseTitle: baseTitles[6]
         }
       ];
 
-      return chartData.map(({ data, dataKeyX, baseTitle }) => ({
-        baseTitle,
-        title: `${baseTitle} of ${timeDisplay}`,
-        rawData: data,
-        chart: (
-          <ResponsiveContainer>
-            <BarChart
-              data={data}
-              margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
-              barCategoryGap={10}
-              key={`${baseTitle}-${timeRange}-chart`} // Add key for better React reconciliation
-            >
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f285c1" />
-                  <stop offset="100%" stopColor="#8e2b90" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
-              <XAxis
-                dataKey={dataKeyX}
-                stroke="#f7f7f7"
-                interval={0}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-                tick={{ fontSize: 10, fill: '#f7f7f7' }}
-              />
-              <YAxis
-                tick={{ fill: '#f7f7f7' }}
-                axisLine
-                showLine
-                tickFormatter={formatHits}
-                domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
-              />
-              <Tooltip
-                contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
-                itemStyle={{ color: '#fff' }}
-                labelStyle={{ color: '#f285c1' }}
-                formatter={(value, name, props) => {
-                  if (name === 'Hits') {
-                    const formattedHits = formatHits(props.payload.Hits);
-                    return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
-                  }
-                  return value;
-                }}
-                labelFormatter={(label) => `${dataKeyX}: ${label}`}
-              />
-              <Bar
-                dataKey="Hits"
-                fill="url(#barGradient)"
-                shape={ThreeDBar}
-                barSize={50}
-                key={`${baseTitle}-${timeRange}-bar`} // Add key for better React reconciliation
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        )
-      }));
+      return chartData.map(({ data, dataKeyX, baseTitle }) => {
+        // Create different chart components based on chart type
+        let chartComponent;
+
+        if (baseTitle === baseTitles[6]) {
+          // Pie chart for FAR data
+          chartComponent = (
+            <ResponsiveContainer>
+              <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine
+                  outerRadius={130}
+                  innerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+
+                <Tooltip
+                  formatter={(value) => [`${value}`, 'Count']}
+                  contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#f285c1' }}
+                />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              </PieChart>
+            </ResponsiveContainer>
+          );
+        } else {
+          // Bar chart for other data
+          chartComponent = (
+            <ResponsiveContainer>
+              <BarChart
+                data={data}
+                margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+                barCategoryGap={10}
+                key={`${baseTitle}-${timeRange}-chart`}
+              >
+                <defs>
+  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+    {baseTitle.includes('Exp') ? (
+      <>
+        <stop offset="0%" stopColor="#6a11cb" />
+        <stop offset="100%" stopColor="#2575fc" />
+      </>
+    ) : (
+      <>
+        <stop offset="0%" stopColor="#ff6a00" />
+        <stop offset="100%" stopColor="#ee0979" />
+      </>
+    )}
+  </linearGradient>
+</defs>
+
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+                <XAxis
+                  dataKey={dataKeyX}
+                  stroke="#f7f7f7"
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={60}
+                  tick={{ fontSize: 13, fill: '#f7f7f7' }}
+                />
+                <YAxis
+                  tick={{ fill: '#f7f7f7' }}
+                  axisLine
+                  showLine
+                  tickFormatter={formatHits}
+                  domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+                />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#f285c1' }}
+                  formatter={(value, name, props) => {
+                    if (name === 'Hits') {
+                      const formattedHits = formatHits(props.payload.Hits);
+                      return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+                    }
+                    return value;
+                  }}
+                  labelFormatter={(label) => `${dataKeyX}: ${label}`}
+                />
+               <Bar
+  dataKey="Hits"
+  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
+  shape={ThreeDBar}
+  barSize={50}
+/>
+
+              </BarChart>
+            </ResponsiveContainer>
+          );
+        }
+
+        return {
+          baseTitle,
+          title: baseTitle === baseTitles[6]
+            ? baseTitle
+            : `${baseTitle} of ${timeDisplay}`,
+          rawData: data,
+          chart: chartComponent
+        };
+      });
     } catch (error) {
       console.error("Error fetching data:", error);
       return [];
@@ -236,6 +354,10 @@ const GraphCarousel = () => {
       setIsLoading(false);
     }
   };
+
+  // Rest of the component remains the same as in the original code...
+
+  // (Continuing with the original useEffects, event handlers, and return statement)
 
   // Initial data fetch
   useEffect(() => {
@@ -271,7 +393,8 @@ const GraphCarousel = () => {
       intervalRef.current = null;
     }
 
-    // Only create new interval if not paused and we have charts
+    // Only create new interval if not paused and we
+  // have charts
     if (!paused && charts.length > 0) {
       intervalRef.current = setInterval(() => {
         setCurrentIndex(prev => (prev === charts.length - 1 ? 0 : prev + 1));
@@ -293,6 +416,9 @@ const GraphCarousel = () => {
   }, [selectedTimeLabel, charts.length]);
 
   const handleTimeChange = async (option) => {
+    // Skip time change for FAR chart
+    if (currentIndex === 6) return;
+
     // Handle custom date selection
     if (option.value === "custom") {
       setDropdownOpen(false);
@@ -323,7 +449,6 @@ const GraphCarousel = () => {
 
       if (updatedCharts && updatedCharts.length > 0) {
         setCharts(updatedCharts);
-        setCurrentIndex(0); // Reset to first chart
         setCurrentDisplayTitle(updatedCharts[0].title);
       } else {
         console.error("No chart data returned from time change fetch");
@@ -337,6 +462,9 @@ const GraphCarousel = () => {
   };
 
   const handleDateSelect = async (date) => {
+    // Skip date select for FAR chart
+    if (currentIndex === 6) return;
+
     if (!date) return;
 
     const formattedDate = formatDate(date);
@@ -364,7 +492,6 @@ const GraphCarousel = () => {
 
       if (updatedCharts && updatedCharts.length > 0) {
         setCharts(updatedCharts);
-        setCurrentIndex(0); // Reset to first chart
         setCurrentDisplayTitle(updatedCharts[0].title);
       } else {
         console.error("No chart data returned from date select fetch");
@@ -481,32 +608,37 @@ const GraphCarousel = () => {
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-        <div className="timeline-selector">
-          <div className="dropdown" onClick={(e) => e.stopPropagation()}>
-            <button className="dropdown-toggle" onClick={toggleDropdown}>
-              {selectedTimeLabel} ▼
-            </button>
-            <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
-              {timeOptions.map(option => (
-                <li
-                  key={option.value}
-                  onClick={() => handleTimeChange(option)}
-                  className={option.value === selectedTimeValue ? 'selected' : ''}
-                >
-                  {option.label}
-                </li>
-              ))}
-            </ul>
-            {calendarOpen && (
-              <div className="calendar-container" ref={calendarRef}>
-                <div className="calendar-header">
-                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+        {currentIndex !== 6 && (
+          <div className="timeline-selector">
+            <div className="dropdown" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={toggleDropdown}
+              >
+                {selectedTimeLabel}
+              </button>
+              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
+                {timeOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleTimeChange(option)}
+                    className={option.value === selectedTimeValue ? 'selected' : ''}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+              {calendarOpen && (
+                <div className="calendar-container" ref={calendarRef}>
+                  <div className="calendar-header">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="calendar">{generateCalendarDays()}</div>
                 </div>
-                <div className="calendar">{generateCalendarDays()}</div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <h2>{isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : currentDisplayTitle}</h2>
 
