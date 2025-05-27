@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 
 const TypingIndicator = () => {
   return (
@@ -7,35 +7,42 @@ const TypingIndicator = () => {
       alignItems: 'center',
       padding: '10px 15px',
       borderRadius: '18px',
-      maxWidth: '80px',
-      gap: '6px'
+      maxWidth: '100px',
+      gap: '8px'
     }}>
       {[0, 1, 2].map((i) => (
-        <div key={i} style={{
-          width: '12px',
-          height: '12px',
-          backgroundColor: 'white',
-          clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-          animation: `sparkle 1.5s ease-in-out ${i * 0.2}s infinite`,
-          opacity: 0.8
-        }} />
+        <div
+          key={i}
+          style={{
+            width: '18px',
+            height: '18px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            clipPath: 'polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%)',
+            WebkitClipPath: 'polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%)',
+
+            animation: `sparkle 1.5s ease-in-out ${i * 0.2}s infinite`,
+            opacity: 0.8,
+            transformOrigin: 'center',
+            filter: 'drop-shadow(0 0 4px white)'
+          }}
+        />
       ))}
+
       <style>{`
         @keyframes sparkle {
           0%, 100% {
             transform: scale(1) rotate(0deg);
             opacity: 0.6;
-            filter: drop-shadow(0 0 2px white);
           }
           50% {
-            transform: scale(1.4) rotate(20deg);
+            transform: scale(1.4) rotate(45deg);
             opacity: 1;
-            filter: drop-shadow(0 0 6px white);
           }
         }
       `}</style>
     </div>
-  )
-}
+  );
+};
 
-export default TypingIndicator
+export default TypingIndicator;
