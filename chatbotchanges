@@ -402,22 +402,23 @@ export default Chatbot;
 
 
 {item.options.map((opt, i) => {
-  const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim();
+  const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
 
-  // Check if this is the special message you want to render as text
-  if (displayText.toLowerCase().includes("please select one by name")) {
+  // Check if this option should be rendered as plain text
+  const isPlainText = displayText.includes("please select one by name") ||
+                      displayText.includes("please select from the following options");
+
+  if (isPlainText) {
     return (
       <div key={i} className="plain-text-option">
-        {displayText}
+        {opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim()}
       </div>
     );
   }
 
   return (
     <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-      {displayText}
+      {opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim()}
     </button>
   );
 })}
-
-
