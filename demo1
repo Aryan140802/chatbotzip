@@ -10,7 +10,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
 
   // Fetch environment info
   useEffect(() => {
-    const fetchEnv,fetchSetup = async () => {
+    const fetchEnvAndSetup = async () => {
       try {
         const response = await fetch('https://10.191.171.12:5443/PyPortal/env');
         const data = await response.json();
@@ -21,8 +21,8 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
         setEnv('');
       }
     };
-    fetchEnv();
-    fetchSetup();
+
+    fetchEnvAndSetup();
   }, []);
 
   // Close menu on outside click
@@ -37,11 +37,10 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
   }, []);
 
   const getMarqueeText = () => {
+    if (env === 'PR' && setup === 'YES') return 'PR is live now!! PR DR SETUP is live';
+    if (env === 'DR' && setup === 'YES') return 'DR is live now!! PR DR SETUP is live';
     if (env === 'PR') return 'PR is live now!! ';
     if (env === 'DR') return 'DR is live now!! ';
-    if (env === 'PR' && setup === 'YES' ) return 'PR is live now!!PR DR SETUP is live';
-    if (env === 'DR' && setup === 'YES' )return 'DR is live now!!PR DR SETUP is live';
-
     return 'Welcome to EIS INFRA ';
   };
 
@@ -54,10 +53,10 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
         position: 'relative',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
         color: '#ffffff',
-        overflow: 'visible' // Allow dropdown visibility
+        overflow: 'visible'
       }}
     >
-      {/* Marquee background */}
+      {/* Marquee Background */}
       <div
         style={{
           position: 'absolute',
@@ -89,11 +88,14 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
               </span>
             ))}
         </marquee>
+
+        {/* Optional: Replace <marquee> with modern animation */}
+        {/* <div style={{ whiteSpace: 'nowrap', animation: 'scrollText 20s linear infinite', fontWeight: 'bold', opacity: 0.4 }}>
+          {getMarqueeText().repeat(50)}
+        </div> */}
       </div>
 
-      {/* Gradient mask to hide marquee under logo/title */}
-
-      {/* Header content */}
+      {/* Header Content */}
       <div
         style={{
           display: 'flex',
@@ -110,13 +112,15 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
           <img
             className="logo"
             src={logo}
-            alt="Company Logo"
+            alt="TCS Company Logo"
             style={{ height: '40px', marginRight: '20px' }}
           />
         </div>
 
         {/* Title */}
-        <h1 style={{ margin: 0 }}>EIS INFRA HOME</h1>
+        <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 2vw, 2.5rem)' }}>
+          EIS INFRA HOME
+        </h1>
 
         {/* Profile & Dropdown */}
         <div
@@ -128,6 +132,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
               <div
                 onClick={() => setMenuOpen(!menuOpen)}
                 style={{ cursor: 'pointer', marginLeft: '10px' }}
+                aria-label="Profile menu toggle"
               >
                 <ProfileIcon sender="user" />
               </div>
@@ -145,10 +150,12 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                     zIndex: 9999,
                     minWidth: '120px'
                   }}
+                  aria-label="Dropdown menu"
                 >
                   <div
                     style={{ padding: '8px 12px', cursor: 'pointer' }}
                     onClick={onLogout}
+                    aria-label="Logout button"
                   >
                     Logout
                   </div>
