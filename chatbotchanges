@@ -6,20 +6,34 @@ import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 
-const formatDynamicMessage = (html) => {
-  if (!html || typeof html !== "string") return html;
+const formatDynamicMessage = (text) => {
+  if (!text || typeof text !== "string") return text;
 
-  const lines = [];
-  const pattern2 = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
-  let match2;
-  while ((match2 = pattern2.exec(html)) !== null) {
-    const key = match2[1].trim();
-    const value = match2[2].trim().replace(/\n/g, "<br/>");
-    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
-  }
+  // Preserve the initial line if it's a note
+  const noteMatch = text.match(/^Note:.*?(?=Information for|$)/i);
+  const note = noteMatch ? `<div class="info-note">${noteMatch[0].trim()}</div>` : "";
 
-  return lines.length === 0 ? html : `<div class="formatted-card">${lines.join("")}</div>`;
+  // Extract the IP/Server line
+  const infoMatch = text.match(/Information for\s+([^\s]+)/i);
+  const serverInfo = infoMatch ? `<div class="info-header"><strong>Server:</strong> ${infoMatch[1]}</div>` : "";
+
+  // Extract the rest of the data as key-value pairs
+  const keyValuePairs = text
+    .replace(/^Note:.*?\s+Information for\s+[^\s]+/i, "") // Remove note and server info
+    .replace(/:/g, ": ") // Normalize spacing after colons
+    .replace(/\s+/g, " ") // Normalize whitespace
+    .match(/([A-Za-z \(\)]+):\s*([^:]+)(?=\s*[A-Za-z \(\)]+:|$)/g); // Match key-value format
+
+  const formattedPairs = keyValuePairs
+    ? keyValuePairs.map((pair) => {
+        const [key, ...rest] = pair.split(":");
+        return `<div><strong>${key.trim()}:</strong> ${rest.join(":").trim()}</div>`;
+      }).join("")
+    : `<div>${text}</div>`; // fallback
+
+  return `<div class="formatted-card">${note}${serverInfo}${formattedPairs}</div>`;
 };
+
 
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
@@ -379,4 +393,29 @@ export default Chatbot;
 
 
 
-Note: This Information is updated on 03:00:00 PM Information for 10.188.24.100 This is PR LINUX Server with OS Version 9.5(Plow) fileSystem :Below Threshold UPTime : 1 day 7 hours 8 minutes RAM: 64 CPU core:8 Kernal Version : 5.14.0-503.40.1.el9_5.x86_64 ACE Version : 12.0.12.0 MQ Version : FIREWALL : inactive DSAgent : DSrunning SPLUNK : SPLnotrunning RAgent : undefined eisuser Expiry : Aug 09 2025 root Expiry: Aug 13 2025 addmitam Expiry: May 19 2026
+.formatted-card {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 10px;
+  margin-top: 5px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.formatted-card div {
+  margin-bottom: 5px;
+}
+
+.info-note {
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.info-header {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #2c3e50;
+}
