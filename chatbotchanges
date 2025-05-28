@@ -48,13 +48,13 @@ const formatDynamicMessage = (text) => {
   return text;
 };
 
+
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [showWorkloadForm, setShowWorkloadForm] = useState(false);
   const [formDisabled, setFormDisabled] = useState(true);
   const [formData, setFormData] = useState({
     subject: "",
@@ -64,17 +64,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     port: "",
     beforeCreationDate: "",
     beforeExpireDate: "",
-  });
-  const [workloadFormData, setWorkloadFormData] = useState({
-    layer: "",
-    server: "",
-    eg: "",
-    service: ""
-  });
-  const [workloadOptions, setWorkloadOptions] = useState({
-    layer: [],
-    server: [],
-    eg: []
   });
 
   const messagesEndRef = useRef(null);
@@ -113,6 +102,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
             time: getCurrentTime(),
           },
         ]);
+
       });
 
       const res = await getPost();
@@ -154,7 +144,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const checkEnableForm = (text) => {
     const lowerText = text.toLowerCase();
-    return lowerText.includes("enter") || lowerText.includes("provide");
+    return lowerText.includes("enter") || lowerText.includes("provide") ;
   };
 
   const handleSendMessage = async (e) => {
@@ -174,7 +164,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setFormDisabled(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => {
+      });
 
       const res = await postMessage(newMessage);
       clearCurrentTimeout();
@@ -205,59 +196,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-const handleWorkloadOptionClick = async (optionText) => {
-  try {
-    setIsTyping(true);
-
-    // Real API call
-    const res = await getWorkloadFormFields();
-    const workloadData = res.data;
-
-    setWorkloadOptions({
-      layer: workloadData.layer || [],
-      server: workloadData.server || [],
-      eg: workloadData.eg || []
-    });
-
-    setWorkloadFormData({
-      layer: workloadData.layer?.length === 1 ? workloadData.layer[0] : "",
-      server: workloadData.server?.length === 1 ? workloadData.server[0] : "",
-      eg: workloadData.eg?.length === 1 ? workloadData.eg[0] : "",
-      service: workloadData.service || ""
-    });
-
-    setShowWorkloadForm(true);
-    setIsTyping(false);
-  } catch (error) {
-    setIsTyping(false);
-    console.error("Error fetching workload form data:", error);
-  }
-};
-
-      
-      // Initialize form data
-      setWorkloadFormData({
-        layer: workloadData.layer?.length === 1 ? workloadData.layer[0] : "",
-        server: workloadData.server?.length === 1 ? workloadData.server[0] : "",
-        eg: workloadData.eg?.length === 1 ? workloadData.eg[0] : "",
-        service: workloadData.service || ""
-      });
-      
-      setShowWorkloadForm(true);
-      setIsTyping(false);
-    } catch (error) {
-      setIsTyping(false);
-      console.error("Error fetching workload form data:", error);
-    }
-  };
-
   const handleOptionClick = async (optionText) => {
-    // Check if this is a workload option
-    if (optionText.toLowerCase().includes("workload")) {
-      await handleWorkloadOptionClick(optionText);
-      return;
-    }
-
     if (optionText.toLowerCase().includes("have multiple fields")) {
       setShowForm(true);
       return;
@@ -276,7 +215,8 @@ const handleWorkloadOptionClick = async (optionText) => {
     setIsTyping(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => {
+      });
 
       const res = await postMessage(cleanedOpt);
       clearCurrentTimeout();
@@ -295,6 +235,7 @@ const handleWorkloadOptionClick = async (optionText) => {
       }
     } catch {
       clearCurrentTimeout();
+
     }
 
     setIsTyping(false);
@@ -306,7 +247,8 @@ const handleWorkloadOptionClick = async (optionText) => {
     setIsTyping(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => {
+      });
 
       const res = await postMessage(formData);
       clearCurrentTimeout();
@@ -334,87 +276,6 @@ const handleWorkloadOptionClick = async (optionText) => {
     }
 
     setIsTyping(false);
-  };
-
-  const handleWorkloadFormSubmit = async (e) => {
-    e.preventDefault();
-    setShowWorkloadForm(false);
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {});
-
-      const res = await postMessage(workloadFormData);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "Something went wrong. Try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const renderWorkloadField = (fieldName, label) => {
-    const options = workloadOptions[fieldName];
-    const value = workloadFormData[fieldName];
-
-    // If field is empty array, render input field
-    if (options.length === 0) {
-      return (
-        <input
-          type="text"
-          placeholder={label}
-          value={value}
-          onChange={(e) => setWorkloadFormData({ ...workloadFormData, [fieldName]: e.target.value })}
-          required
-        />
-      );
-    }
-
-    // If field has single value, display it as readonly with label
-    if (options.length === 1) {
-      return (
-        <div className="single-value-field">
-          <label>{label}:</label>
-          <span className="single-value">{options[0]}</span>
-          <input type="hidden" value={options[0]} />
-        </div>
-      );
-    }
-
-    // If field has multiple values, render dropdown
-    return (
-      <select
-        value={value}
-        onChange={(e) => setWorkloadFormData({ ...workloadFormData, [fieldName]: e.target.value })}
-        required
-      >
-        <option value="">Select {label}</option>
-        {options.map((option, index) => (
-          <option key={index} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-    );
   };
 
   const handleMinimize = () => {
@@ -461,37 +322,37 @@ const handleWorkloadOptionClick = async (optionText) => {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" ? (
-                      <div
-                        className="message-content"
-                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
-                      />
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
+                   {item.sender === "bot" ? (
+  <div
+    className="message-content"
+    dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+  />
+) : (
+  <div className="message-content">{item.text}</div>
+)}
                     {item.options?.length > 0 && (
                       <div className="options-list">
-                        {item.options.map((opt, i) => {
-                          const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
+                       {item.options.map((opt, i) => {
+  const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
 
-                          // Check if this option should be rendered as plain text
-                          const isPlainText = displayText.includes("please select one by name") ||
-                                              displayText.includes("please select from the following options");
+  // Check if this option should be rendered as plain text
+  const isPlainText = displayText.includes("please select one by name") ||
+                      displayText.includes("please select from the following options");
 
-                          if (isPlainText) {
-                            return (
-                              <div key={i} className="plain-text-option">
-                                {opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim()}
-                              </div>
-                            );
-                          }
+  if (isPlainText) {
+    return (
+      <div key={i} className="plain-text-option">
+        {opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim()}
+      </div>
+    );
+  }
 
-                          return (
-                            <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-                              {opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim()}
-                            </button>
-                          );
-                        })}
+  return (
+    <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
+      {opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim()}
+    </button>
+  );
+})}
                       </div>
                     )}
                     <div className="message-time">{item.time}</div>
@@ -520,51 +381,29 @@ const handleWorkloadOptionClick = async (optionText) => {
                 <input type="text" placeholder="Zone" value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} />
                 <input type="text" placeholder="Port" value={formData.port} onChange={(e) => setFormData({ ...formData, port: e.target.value })} />
                 <input
-                  type="text"
-                  placeholder="Before Creation Date"
-                  value={formData.beforeCreationDate}
-                  onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })}
-                  onFocus={(e) => (e.target.type = "date")}
-                  onBlur={(e) => {
-                    if (!e.target.value) e.target.type = "text";
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Before Expire Date"
-                  value={formData.beforeExpireDate}
-                  onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })}
-                  onFocus={(e) => (e.target.type = "date")}
-                  onBlur={(e) => {
-                    if (!e.target.value) e.target.type = "text";
-                  }}
-                />
+  type="text"
+  placeholder="Before Creation Date"
+  value={formData.beforeCreationDate}
+  onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })}
+  onFocus={(e) => (e.target.type = "date")}
+  onBlur={(e) => {
+    if (!e.target.value) e.target.type = "text";
+  }}
+/>
+
+<input
+  type="text"
+  placeholder="Before Expire Date"
+  value={formData.beforeExpireDate}
+  onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })}
+  onFocus={(e) => (e.target.type = "date")}
+  onBlur={(e) => {
+    if (!e.target.value) e.target.type = "text";
+  }}
+/>
+
               </div>
               <button type="submit" className="search-button">Search</button>
-            </form>
-          )}
-
-          {showWorkloadForm && (
-            <form className="workload-form" onSubmit={handleWorkloadFormSubmit}>
-              <h3>Workload Configuration</h3>
-              <div className="workload-form-grid">
-                {renderWorkloadField("layer", "Layer")}
-                {renderWorkloadField("server", "Server")}
-                {renderWorkloadField("eg", "EG")}
-                <input
-                  type="text"
-                  placeholder="Service"
-                  value={workloadFormData.service}
-                  onChange={(e) => setWorkloadFormData({ ...workloadFormData, service: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-buttons">
-                <button type="button" onClick={() => setShowWorkloadForm(false)} className="cancel-button">
-                  Cancel
-                </button>
-                <button type="submit" className="submit-button">Submit</button>
-              </div>
             </form>
           )}
 
@@ -583,103 +422,8 @@ const handleWorkloadOptionClick = async (optionText) => {
           </form>
         </>
       )}
-      
-
     </div>
   );
 };
 
 export default Chatbot;
-
-
-/* === Chatbot Form Container === */
-.chatbot-form-container {
-  padding: 14px;
-  background-color: #ededed;
-  border-top: 1px solid #ccc;
-  border-radius: 0 0 10px 10px;
-  animation: fadeIn 0.3s ease-in-out;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chatbot-form-container h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #333;
-}
-
-/* Input and Dropdown Fields */
-.chatbot-form-container input[type="text"],
-.chatbot-form-container input[type="date"],
-.chatbot-form-container select {
-  width: 100%;
-  padding: 8px 10px;
-  font-size: 0.95rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background-color: #fff;
-  transition: border 0.3s ease;
-}
-
-.chatbot-form-container input:focus,
-.chatbot-form-container select:focus {
-  border-color: #4a90e2;
-  outline: none;
-}
-
-/* Label for each field */
-.chatbot-form-container label {
-  font-weight: 500;
-  color: #222;
-  margin-bottom: 3px;
-  display: block;
-}
-
-/* Submit Button */
-.chatbot-form-container button[type="submit"] {
-  padding: 10px;
-  border: none;
-  background-color: #4a90e2;
-  color: white;
-  font-weight: bold;
-  font-size: 0.95rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.chatbot-form-container button[type="submit"]:hover {
-  background-color: #357ac9;
-}
-
-/* Read-only Value Field */
-.single-value-field {
-  margin-bottom: 8px;
-}
-
-.single-value-field label {
-  font-weight: 600;
-  color: #444;
-}
-
-.single-value-field .single-value {
-  background-color: #d9d9d9;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-
-/* Optional fade animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
