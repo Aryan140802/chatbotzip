@@ -409,3 +409,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+message
+: 
+{layer: [], server: [], eg: [], service: ""}
