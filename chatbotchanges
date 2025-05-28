@@ -380,8 +380,10 @@ const Chatbot = ({ setChatbotMinimized }) => {
                 <input type="text" placeholder="Destination" value={formData.destination} onChange={(e) => setFormData({ ...formData, destination: e.target.value })} />
                 <input type="text" placeholder="Zone" value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} />
                 <input type="text" placeholder="Port" value={formData.port} onChange={(e) => setFormData({ ...formData, port: e.target.value })} />
-                <input type="date" placeholder="Before Creation Date" value={formData.beforeCreationDate} onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })} />
-                <input type="date" placeholder="Before Expire Date" value={formData.beforeExpireDate} onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })} />
+                <input type="date" placeholder="Before Creation Date" value={formData.beforeCreationDate} onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })} onFocus={(e) => (e.target.type = "date")}
+        onBlur={(e) => (e.target.type = "text")} />
+                <input type="date" placeholder="Before Expire Date" value={formData.beforeExpireDate} onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })}  onFocus={(e) => (e.target.type = "date")}
+        onBlur={(e) => (e.target.type = "text")} />
               </div>
               <button type="submit" className="search-button">Search</button>
             </form>
