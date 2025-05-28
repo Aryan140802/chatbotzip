@@ -376,3 +376,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+Note: This Information is updated on 03:00:00 PM Information for 10.188.24.100 This is PR LINUX Server with OS Version 9.5(Plow) fileSystem :Below Threshold UPTime : 1 day 7 hours 8 minutes RAM: 64 CPU core:8 Kernal Version : 5.14.0-503.40.1.el9_5.x86_64 ACE Version : 12.0.12.0 MQ Version : FIREWALL : inactive DSAgent : DSrunning SPLUNK : SPLnotrunning RAgent : undefined eisuser Expiry : Aug 09 2025 root Expiry: Aug 13 2025 addmitam Expiry: May 19 2026
