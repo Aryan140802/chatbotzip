@@ -205,30 +205,35 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleWorkloadOptionClick = async (optionText) => {
-    try {
-      setIsTyping(true);
-      
-      // Mock API call to get workload form fields
-      // Replace this with your actual API call
-      const mockApiResponse = {
-        data: {
-          layer: [], // empty - user needs to fill
-          server: ["server1"], // single value - display in front
-          eg: ["option1", "option2", "option3"], // multiple values - dropdown
-          service: "" // empty string - user needs to fill
-        }
-      };
-      
-      // In real implementation, replace above with:
-      // const res = await getWorkloadFormFields(); // or whatever your API call is
-      const workloadData = mockApiResponse.data;
-      
-      setWorkloadOptions({
-        layer: workloadData.layer || [],
-        server: workloadData.server || [],
-        eg: workloadData.eg || []
-      });
+const handleWorkloadOptionClick = async (optionText) => {
+  try {
+    setIsTyping(true);
+
+    // Real API call
+    const res = await getWorkloadFormFields();
+    const workloadData = res.data;
+
+    setWorkloadOptions({
+      layer: workloadData.layer || [],
+      server: workloadData.server || [],
+      eg: workloadData.eg || []
+    });
+
+    setWorkloadFormData({
+      layer: workloadData.layer?.length === 1 ? workloadData.layer[0] : "",
+      server: workloadData.server?.length === 1 ? workloadData.server[0] : "",
+      eg: workloadData.eg?.length === 1 ? workloadData.eg[0] : "",
+      service: workloadData.service || ""
+    });
+
+    setShowWorkloadForm(true);
+    setIsTyping(false);
+  } catch (error) {
+    setIsTyping(false);
+    console.error("Error fetching workload form data:", error);
+  }
+};
+
       
       // Initialize form data
       setWorkloadFormData({
