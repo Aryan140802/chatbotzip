@@ -6,20 +6,48 @@ import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 
-const formatDynamicMessage = (html) => {
-  if (!html || typeof html !== "string") return html;
+const formatDynamicMessage = (text) => {
+  if (!text || typeof text !== "string") return text;
 
-  const lines = [];
-  const pattern2 = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
-  let match2;
-  while ((match2 = pattern2.exec(html)) !== null) {
-    const key = match2[1].trim();
-    const value = match2[2].trim().replace(/\n/g, "<br/>");
-    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+  // Case 1: HTML-formatted messages with <b> tags
+  if (text.includes("<b>")) {
+    const pattern = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
+    const lines = [];
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const key = match[1].trim();
+      const value = match[2].trim().replace(/\n/g, "<br/>");
+      lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+    }
+    return `<div class="formatted-card">${lines.join("")}</div>`;
   }
 
-  return lines.length === 0 ? html : `<div class="formatted-card">${lines.join("")}</div>`;
+  // Case 2: Likely a server config line (very long, no <b>, many ":")
+  const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
+  if (isServerConfig) {
+    // Insert a <br/> before each key-value pair, except the first 2–3 lines
+    const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
+    let formatted = "";
+    let index = 0;
+
+    const introMatch = text.match(/^(.*?OS Version.*?\))\s*/);
+    if (introMatch) {
+      formatted += introMatch[1] + "<br/>";
+      text = text.slice(introMatch[0].length);
+    }
+
+    const kvPairs = [...text.matchAll(pattern)];
+    kvPairs.forEach((m) => {
+      formatted += m[1].trim() + "<br/>";
+    });
+
+    return `<div class="formatted-card">${formatted.trim()}</div>`;
+  }
+
+  // Default: return plain text for non-server, non-HTML messages
+  return text;
 };
+
 
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
@@ -294,11 +322,14 @@ const Chatbot = ({ setChatbotMinimized }) => {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" && item.text.includes("<b>") ? (
-                      <div className="message-content" dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }} />
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
+                   {item.sender === "bot" ? (
+  <div
+    className="message-content"
+    dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+  />
+) : (
+  <div className="message-content">{item.text}</div>
+)}
                     {item.options?.length > 0 && (
                       <div className="options-list">
                        {item.options.map((opt, i) => {
@@ -376,10 +407,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-when user clcks on server config nad type server name they get this kind of response i want to make this response look good with each field and value on new line 
-example reposne
-
-
-
-
-Note: This Information is updated on 03:00:00 PM Information for 10.188.24.100 This is PR LINUX Server with OS Version 9.5(Plow) fileSystem :Below Threshold UPTime : 1 day 7 hours 8 minutes RAM: 64 CPU core:8 Kernal Version : 5.14.0-503.40.1.el9_5.x86_64 ACE Version : 12.0.12.0 MQ Version : FIREWALL : inactive DSAgent : DSrunning SPLUNK : SPLnotrunning RAgent : undefined eisuser Expiry : Aug 09 2025 root Expiry: Aug 13 2025 addmitam Expiry: May 19 2026
