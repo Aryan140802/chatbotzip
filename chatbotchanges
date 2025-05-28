@@ -65,10 +65,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
     beforeCreationDate: "",
     beforeExpireDate: "",
   });
-
-  // Workload form state
-  const [workloadFormData, setWorkloadFormData] = useState({});
-  const [workloadFields, setWorkloadFields] = useState({});
+  const [workloadFormData, setWorkloadFormData] = useState({
+    layer: "",
+    server: "",
+    eg: "",
+    service: ""
+  });
+  const [workloadOptions, setWorkloadOptions] = useState({
+    layer: [],
+    server: [],
+    eg: []
+  });
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -150,78 +157,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return lowerText.includes("enter") || lowerText.includes("provide");
   };
 
-  // Function to fetch workload form fields from backend
-  const fetchWorkloadFields = async () => {
-    try {
-      // Replace this with your actual API call to get workload form fields
-      // const response = await getWorkloadFields();
-      
-      // Mock data based on your API format: {layer: [], server: [], eg: [], service: ""}
-      // Replace this with actual API call
-      const apiResponse = {
-        layer: ["Layer 1", "Layer 2", "Layer 3"], // Multiple values - dropdown
-        server: [], // Empty array - user input
-        eg: ["Production"], // Single value - display only
-        service: "" // Empty string - user input required (mandatory)
-      };
-
-      // Transform API response to internal format
-      const transformedFields = {};
-      
-      Object.keys(apiResponse).forEach(fieldName => {
-        const fieldValue = apiResponse[fieldName];
-        
-        const fieldValue = apiResponse[fieldName];
-        
-        if (fieldName === 'service') {
-          // Service is always mandatory user input
-          transformedFields[fieldName] = {
-            type: "input",
-            value: "",
-            options: [],
-            required: true
-          };
-        } else if (Array.isArray(fieldValue)) {
-          if (fieldValue.length === 0) {
-            // Empty array - user input field
-            transformedFields[fieldName] = {
-              type: "input",
-              value: "",
-              options: []
-            };
-          } else if (fieldValue.length === 1) {
-            // Single value - display only
-            transformedFields[fieldName] = {
-              type: "display",
-              value: fieldValue[0],
-              options: []
-            };
-          } else {
-            // Multiple values - dropdown
-            transformedFields[fieldName] = {
-              type: "dropdown",
-              value: "",
-              options: fieldValue
-            };
-          }
-        }
-      });
-
-      setWorkloadFields(transformedFields);
-      
-      // Initialize form data with default values
-      const initialFormData = {};
-      Object.keys(transformedFields).forEach(key => {
-        initialFormData[key] = transformedFields[key].value || "";
-      });
-      setWorkloadFormData(initialFormData);
-      
-    } catch (error) {
-      console.error("Error fetching workload fields:", error);
-    }
-  };
-        
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
@@ -270,11 +205,51 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleOptionClick = async (optionText) => {
-    // Check for workload option
-    if (optionText.toLowerCase().includes("workload")) {
-      await fetchWorkloadFields();
+  const handleWorkloadOptionClick = async (optionText) => {
+    try {
+      setIsTyping(true);
+      
+      // Mock API call to get workload form fields
+      // Replace this with your actual API call
+      const mockApiResponse = {
+        data: {
+          layer: [], // empty - user needs to fill
+          server: ["server1"], // single value - display in front
+          eg: ["option1", "option2", "option3"], // multiple values - dropdown
+          service: "" // empty string - user needs to fill
+        }
+      };
+      
+      // In real implementation, replace above with:
+      // const res = await getWorkloadFormFields(); // or whatever your API call is
+      const workloadData = mockApiResponse.data;
+      
+      setWorkloadOptions({
+        layer: workloadData.layer || [],
+        server: workloadData.server || [],
+        eg: workloadData.eg || []
+      });
+      
+      // Initialize form data
+      setWorkloadFormData({
+        layer: workloadData.layer?.length === 1 ? workloadData.layer[0] : "",
+        server: workloadData.server?.length === 1 ? workloadData.server[0] : "",
+        eg: workloadData.eg?.length === 1 ? workloadData.eg[0] : "",
+        service: workloadData.service || ""
+      });
+      
       setShowWorkloadForm(true);
+      setIsTyping(false);
+    } catch (error) {
+      setIsTyping(false);
+      console.error("Error fetching workload form data:", error);
+    }
+  };
+
+  const handleOptionClick = async (optionText) => {
+    // Check if this is a workload option
+    if (optionText.toLowerCase().includes("workload")) {
+      await handleWorkloadOptionClick(optionText);
       return;
     }
 
@@ -358,19 +333,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const handleWorkloadFormSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate required fields
-    const requiredFields = Object.keys(workloadFields).filter(
-      key => workloadFields[key].required
-    );
-    
-    for (const field of requiredFields) {
-      if (!workloadFormData[field] || workloadFormData[field].trim() === "") {
-        alert(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
-        return;
-      }
-    }
-
     setShowWorkloadForm(false);
     setIsTyping(true);
 
@@ -395,7 +357,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
-        text: "Something went wrong with workload submission. Try again.",
+        text: "Something went wrong. Try again.",
         sender: "bot",
         time: getCurrentTime(),
       };
@@ -405,66 +367,49 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleWorkloadFieldChange = (fieldName, value) => {
-    setWorkloadFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
-  };
+  const renderWorkloadField = (fieldName, label) => {
+    const options = workloadOptions[fieldName];
+    const value = workloadFormData[fieldName];
 
-  const renderWorkloadField = (fieldName, fieldConfig) => {
-    const { type, value, options, required } = fieldConfig;
-    const currentValue = workloadFormData[fieldName] || value || "";
-
-    switch (type) {
-      case "display":
-        return (
-          <div key={fieldName} className="form-field">
-            <label>{fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}:</label>
-            <div className="display-value">{value}</div>
-          </div>
-        );
-
-      case "dropdown":
-        return (
-          <div key={fieldName} className="form-field">
-            <label>
-              {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-              {required && <span className="required">*</span>}:
-            </label>
-            <select
-              value={currentValue}
-              onChange={(e) => handleWorkloadFieldChange(fieldName, e.target.value)}
-              required={required}
-            >
-              <option value="">Select {fieldName}</option>
-              {options.map((option, index) => (
-                <option key={index} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-
-      case "input":
-      default:
-        return (
-          <div key={fieldName} className="form-field">
-            <label>
-              {fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}
-              {required && <span className="required">*</span>}:
-            </label>
-            <input
-              type="text"
-              value={currentValue}
-              onChange={(e) => handleWorkloadFieldChange(fieldName, e.target.value)}
-              placeholder={`Enter ${fieldName}`}
-              required={required}
-            />
-          </div>
-        );
+    // If field is empty array, render input field
+    if (options.length === 0) {
+      return (
+        <input
+          type="text"
+          placeholder={label}
+          value={value}
+          onChange={(e) => setWorkloadFormData({ ...workloadFormData, [fieldName]: e.target.value })}
+          required
+        />
+      );
     }
+
+    // If field has single value, display it as readonly with label
+    if (options.length === 1) {
+      return (
+        <div className="single-value-field">
+          <label>{label}:</label>
+          <span className="single-value">{options[0]}</span>
+          <input type="hidden" value={options[0]} />
+        </div>
+      );
+    }
+
+    // If field has multiple values, render dropdown
+    return (
+      <select
+        value={value}
+        onChange={(e) => setWorkloadFormData({ ...workloadFormData, [fieldName]: e.target.value })}
+        required
+      >
+        <option value="">Select {label}</option>
+        {options.map((option, index) => (
+          <option key={index} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    );
   };
 
   const handleMinimize = () => {
@@ -561,7 +506,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Original Multi-field Form */}
           {showForm && (
             <form className="multi-field-form" onSubmit={handleFormSubmit}>
               <div className="form-grid">
@@ -595,22 +539,26 @@ const Chatbot = ({ setChatbotMinimized }) => {
             </form>
           )}
 
-          {/* New Workload Form */}
           {showWorkloadForm && (
             <form className="workload-form" onSubmit={handleWorkloadFormSubmit}>
               <h3>Workload Configuration</h3>
               <div className="workload-form-grid">
-                {Object.entries(workloadFields).map(([fieldName, fieldConfig]) =>
-                  renderWorkloadField(fieldName, fieldConfig)
-                )}
+                {renderWorkloadField("layer", "Layer")}
+                {renderWorkloadField("server", "Server")}
+                {renderWorkloadField("eg", "EG")}
+                <input
+                  type="text"
+                  placeholder="Service"
+                  value={workloadFormData.service}
+                  onChange={(e) => setWorkloadFormData({ ...workloadFormData, service: e.target.value })}
+                  required
+                />
               </div>
-              <div className="form-actions">
+              <div className="form-buttons">
                 <button type="button" onClick={() => setShowWorkloadForm(false)} className="cancel-button">
                   Cancel
                 </button>
-                <button type="submit" className="submit-button">
-                  Submit Workload
-                </button>
+                <button type="submit" className="submit-button">Submit</button>
               </div>
             </form>
           )}
@@ -630,6 +578,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
           </form>
         </>
       )}
+      
+
     </div>
   );
 };
