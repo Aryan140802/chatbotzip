@@ -45,7 +45,8 @@ const formatDynamicMessage = (text) => {
   }
 
   // Default: return plain text for non-server, non-HTML messages
-  return text;
+  const cleanedText = text.replace(/:,\s*$/, ":").trim();
+  return cleanedText;
 };
 
 
