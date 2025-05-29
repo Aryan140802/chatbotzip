@@ -38,18 +38,6 @@ const formatDynamicMessage = (text) => {
 
 
 
-eg
-: 
-[]
-layer
-: 
-[]
-server
-: 
-[]
-service
-: 
-""
     const kvPairs = [...text.matchAll(pattern)];
     kvPairs.forEach((m) => {
       formatted += m[1].trim() + "<br/>";
@@ -69,12 +57,16 @@ const parseWorkloadData = (text) => {
   
   console.log("Checking text for workload data:", text); // Debug log
   
-  // Look for pattern like: [] layer: [] ,server [] , service ""
-  // More flexible pattern matching
+  // Updated patterns to match your actual format: eg : [] layer : [] server : [] service : ""
   const workloadPatterns = [
-    /\[(.*?)\]\s*layer:\s*\[(.*?)\]\s*,?\s*server\s*\[(.*?)\]\s*,?\s*service\s*"([^"]*)"/i,
-    /\[(.*?)\]\s*layer:\s*\[(.*?)\]\s*,\s*server\s*\[(.*?)\]\s*,\s*service\s*"([^"]*)"/i,
-    /layer:\s*\[(.*?)\]\s*,?\s*server\s*\[(.*?)\]\s*,?\s*service\s*"([^"]*)"/i
+    // Pattern 1: eg : [value] layer : [value] server : [value] service : "value"
+    /eg\s*:\s*\[([^\]]*)\]\s*layer\s*:\s*\[([^\]]*)\]\s*server\s*:\s*\[([^\]]*)\]\s*service\s*:\s*"([^"]*)"/i,
+    
+    // Pattern 2: layer : [value] server : [value] service : "value" (without eg)
+    /layer\s*:\s*\[([^\]]*)\]\s*server\s*:\s*\[([^\]]*)\]\s*service\s*:\s*"([^"]*)"/i,
+    
+    // Pattern 3: More flexible matching with optional commas
+    /eg\s*:\s*\[([^\]]*)\]\s*,?\s*layer\s*:\s*\[([^\]]*)\]\s*,?\s*server\s*:\s*\[([^\]]*)\]\s*,?\s*service\s*:\s*"([^"]*)"/i
   ];
   
   for (const pattern of workloadPatterns) {
@@ -82,7 +74,6 @@ const parseWorkloadData = (text) => {
     if (match) {
       console.log("Workload data found:", match); // Debug log
       
-      // Handle different pattern match groups
       if (match.length === 5) {
         // Full pattern with eg field
         const [, eg, layer, server, service] = match;
@@ -708,16 +699,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
 export default Chatbot;
 
-
-eg
-: 
-[]
-layer
-: 
-[]
-server
-: 
-[]
-service
-: 
-""
