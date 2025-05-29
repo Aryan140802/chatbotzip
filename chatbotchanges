@@ -17,15 +17,18 @@ const formatDynamicMessage = (text) => {
     while ((match = pattern.exec(text)) !== null) {
       const key = match[1].trim();
       const value = match[2].trim().replace(/\n/g, "<br/>");
-      lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+      lines.push(
+        <div key={key}>
+          <strong>{key}:</strong> {value}
+        </div>
+      );
     }
-    return `<div class="formatted-card">${lines.join("")}</div>`;
+    return <div className="formatted-card">{lines}</div>;
   }
 
   // Case 2: Likely a server config line (very long, no <b>, many ":")
   const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
   if (isServerConfig) {
-    // Insert a <br/> before each key-value pair, except the first 2–3 lines
     const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
     let formatted = "";
     let index = 0;
@@ -41,153 +44,12 @@ const formatDynamicMessage = (text) => {
       formatted += m[1].trim() + "<br/>";
     });
 
-    return `<div class="formatted-card">${formatted.trim()}</div>`;
+    return <div className="formatted-card" dangerouslySetInnerHTML={{ __html: formatted.trim() }} />;
   }
 
   // Default: return plain text for non-server, non-HTML messages
   const cleanedText = text.replace(/:,\s*$/, ":").trim();
   return cleanedText;
-};
-
-// Helper function to parse actual array data
-const parseArrayData = (data) => {
-  const result = {
-    eg: null,
-    layer: null,
-    server: null,
-    service: null
-  };
-  
-  // Handle different array formats
-  for (let i = 0; i < data.length; i++) {
-    const item = data[i];
-    
-    if (typeof item === 'string') {
-      const lowerItem = item.toLowerCase();
-      
-      // Look ahead for the value after the key
-      if (i + 1 < data.length) {
-        const nextItem = data[i + 1];
-        
-        if (lowerItem === 'eg') {
-          result.eg = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
-          i++; // Skip the next item since we processed it
-        } else if (lowerItem === 'layer') {
-          result.layer = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
-          i++; // Skip the next item since we processed it
-        } else if (lowerItem === 'server') {
-          result.server = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
-          i++; // Skip the next item since we processed it
-        } else if (lowerItem === 'service') {
-          result.service = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
-          i++; // Skip the next item since we processed it
-        }
-      }
-    }
-  }
-  
-  return result;
-};
-
-// Function to parse workload data format
-const parseWorkloadData = (text) => {
-  if (!text || typeof text !== "string") return null;
-  
-  console.log("Checking text for workload data:", text); // Debug log
-  
-  // First, try to parse as JSON array if it looks like one
-  if (text.trim().startsWith('[') && text.trim().endsWith(']')) {
-    try {
-      const data = JSON.parse(text);
-      if (Array.isArray(data)) {
-        console.log("Parsed as JSON array:", data); // Debug log
-        return parseArrayData(data);
-      }
-    } catch (e) {
-      console.log("Failed to parse as JSON, trying regex patterns"); // Debug log
-    }
-  }
-  
-  // Check if text contains array-like structure (e.g., "eg" : [] "layer" : [] etc.)
-  const arrayPattern = /"?(\w+)"?\s*:\s*\[([^\]]*)\]/g;
-  const matches = [...text.matchAll(arrayPattern)];
-  
-  if (matches.length >= 3) { // At least layer, server, service
-    console.log("Found array pattern matches:", matches); // Debug log
-    
-    const result = {
-      eg: null,
-      layer: null,
-      server: null,
-      service: null
-    };
-    
-    matches.forEach(match => {
-      const [, key, value] = match;
-      const cleanKey = key.toLowerCase();
-      const cleanValue = value.trim();
-      
-      if (cleanKey === 'eg') {
-        result.eg = cleanValue || null;
-      } else if (cleanKey === 'layer') {
-        result.layer = cleanValue || null;
-      } else if (cleanKey === 'server') {
-        result.server = cleanValue || null;
-      }
-    });
-    
-    // Look for service field which might be a string
-    const serviceMatch = text.match(/"?service"?\s*:\s*"([^"]*)"/i);
-    if (serviceMatch) {
-      result.service = serviceMatch[1].trim() || null;
-    }
-    
-    // Check if we have the minimum required fields
-    if (result.layer !== null || result.server !== null) {
-      return result;
-    }
-  }
-  
-  // Fallback to original regex patterns
-  const workloadPatterns = [
-    /eg\s*:\s*\[([^\]]*)\]\s*layer\s*:\s*\[([^\]]*)\]\s*server\s*:\s*\[([^\]]*)\]\s*service\s*:\s*"([^"]*)"/i,
-    /layer\s*:\s*\[([^\]]*)\]\s*server\s*:\s*\[([^\]]*)\]\s*service\s*:\s*"([^"]*)"/i,
-    /eg\s*:\s*\[([^\]]*)\]\s*,?\s*layer\s*:\s*\[([^\]]*)\]\s*,?\s*server\s*:\s*\[([^\]]*)\]\s*,?\s*service\s*:\s*"([^"]*)"/i
-  ];
-  
-  for (const pattern of workloadPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      console.log("Workload data found with regex:", match); // Debug log
-      
-      if (match.length === 5) {
-        const [, eg, layer, server, service] = match;
-        return {
-          eg: eg.trim() || null,
-          layer: layer.trim() || null,
-          server: server.trim() || null,
-          service: service.trim() || null
-        };
-      } else if (match.length === 4) {
-        const [, layer, server, service] = match;
-        return {
-          eg: null,
-          layer: layer.trim() || null,
-          server: server.trim() || null,
-          service: service.trim() || null
-        };
-      }
-    }
-  }
-  
-  console.log("No workload data pattern found"); // Debug log
-  return null;
-};
-
-// Function to parse multiple values (comma-separated or other delimiters)
-const parseMultipleValues = (value) => {
-  if (!value) return [];
-  return value.split(',').map(v => v.trim()).filter(v => v.length > 0);
 };
 
 const Chatbot = ({ setChatbotMinimized }) => {
@@ -196,7 +58,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [showWorkloadForm, setShowWorkloadForm] = useState(false);
   const [formDisabled, setFormDisabled] = useState(true);
   const [formData, setFormData] = useState({
     subject: "",
@@ -207,18 +68,21 @@ const Chatbot = ({ setChatbotMinimized }) => {
     beforeCreationDate: "",
     beforeExpireDate: "",
   });
-  
-  // Workload form state
+
+  // New state for workload data
   const [workloadData, setWorkloadData] = useState({
+    eg: [],
+    layer: [],
+    server: [],
+    service: [], // Service will be user-entered
+  });
+
+  // State to store user selections/inputs for workload form
+  const [workloadFormInputs, setWorkloadFormInputs] = useState({
     eg: "",
     layer: "",
     server: "",
-    service: ""
-  });
-  const [workloadOptions, setWorkloadOptions] = useState({
-    egOptions: [],
-    layerOptions: [],
-    serverOptions: []
+    service: "",
   });
 
   const messagesEndRef = useRef(null);
@@ -273,7 +137,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
       setMessages(formattedMessages);
       setFormDisabled(true);
       setIsTyping(false);
-    } catch {
+    } catch (error) {
+      console.error("Error fetching initial messages:", error);
       clearCurrentTimeout();
       setIsTyping(false);
       setMessages([
@@ -318,7 +183,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setFormDisabled(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => {
+        // Handle timeout for sendMessage
+      });
 
       const res = await postMessage(newMessage);
       clearCurrentTimeout();
@@ -334,15 +201,32 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
-        
-        // Check if the response contains workload data
-        const workloadInfo = parseWorkloadData(botResponse.text);
-        if (workloadInfo) {
-          console.log("Workload info parsed:", workloadInfo);
-          handleWorkloadResponse(workloadInfo);
+
+        // Check if the message contains workload data (e.g., "[ ]", "layer: [ ]")
+        // This is a simplistic check; you might need a more robust parsing
+        const workloadRegex = /eg:\s*(\[.*?\]),\s*layer:\s*(\[.*?\]),\s*server:\s*(\[.*?\]),\s*service:\s*(\[.*?\])/;
+        const match = botResponse.text.match(workloadRegex);
+
+        if (match) {
+          const parsedData = {
+            eg: JSON.parse(match[1].replace(/'/g, '"')),
+            layer: JSON.parse(match[2].replace(/'/g, '"')),
+            server: JSON.parse(match[3].replace(/'/g, '"')),
+            service: JSON.parse(match[4].replace(/'/g, '"')), // Service should ideally be an empty array here
+          };
+          setWorkloadData(parsedData);
+          setShowForm(true); // Show the workload form
+          // Initialize workload form inputs based on received data
+          setWorkloadFormInputs({
+            eg: parsedData.eg.length > 0 ? parsedData.eg[0] : "",
+            layer: parsedData.layer.length > 0 ? parsedData.layer[0] : "",
+            server: parsedData.server.length > 0 ? parsedData.server[0] : "",
+            service: "", // Service is always user-filled
+          });
         }
       }
-    } catch {
+    } catch (error) {
+      console.error("Error sending message:", error);
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
@@ -356,59 +240,53 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleWorkloadResponse = (workloadInfo) => {
-    // Parse the workload data and set up the form
-    const newWorkloadData = { ...workloadData };
-    const newWorkloadOptions = { egOptions: [], layerOptions: [], serverOptions: [] };
-    
-    // Handle eg field
-    if (workloadInfo.eg) {
-      const egValues = parseMultipleValues(workloadInfo.eg);
-      if (egValues.length > 1) {
-        newWorkloadOptions.egOptions = egValues;
-        newWorkloadData.eg = ""; // Reset to empty for selection
-      } else if (egValues.length === 1) {
-        newWorkloadData.eg = egValues[0];
-      }
-    }
-    
-    // Handle layer field
-    if (workloadInfo.layer) {
-      const layerValues = parseMultipleValues(workloadInfo.layer);
-      if (layerValues.length > 1) {
-        newWorkloadOptions.layerOptions = layerValues;
-        newWorkloadData.layer = ""; // Reset to empty for selection
-      } else if (layerValues.length === 1) {
-        newWorkloadData.layer = layerValues[0];
-      }
-    }
-    
-    // Handle server field
-    if (workloadInfo.server) {
-      const serverValues = parseMultipleValues(workloadInfo.server);
-      if (serverValues.length > 1) {
-        newWorkloadOptions.serverOptions = serverValues;
-        newWorkloadData.server = ""; // Reset to empty for selection
-      } else if (serverValues.length === 1) {
-        newWorkloadData.server = serverValues[0];
-      }
-    }
-    
-    // Service is always user input
-    newWorkloadData.service = workloadInfo.service || "";
-    
-    console.log("Setting workload data:", newWorkloadData);
-    console.log("Setting workload options:", newWorkloadOptions);
-    
-    setWorkloadData(newWorkloadData);
-    setWorkloadOptions(newWorkloadOptions);
-    setShowWorkloadForm(true);
-  };
-
   const handleOptionClick = async (optionText) => {
-    if (optionText.toLowerCase().includes("have multiple fields")) {
-      setShowForm(true);
-      return;
+    // Check if the option clicked is related to "workload"
+    if (optionText.toLowerCase().includes("workload")) {
+      // Simulate an API call for workload data or directly set it if you have it
+      setIsTyping(true);
+      try {
+        // In a real scenario, you'd make an API call here to get the workload data
+        // For demonstration, I'm using a dummy response structure
+        const dummyWorkloadResponse = {
+          eg: ["EG-1", "EG-2"],
+          layer: ["Layer-A", "Layer-B"],
+          server: [], // Empty, will prompt user to add
+          service: [], // Empty, will be user-entered
+        };
+        setWorkloadData(dummyWorkloadResponse);
+        setWorkloadFormInputs({
+          eg: dummyWorkloadResponse.eg.length > 0 ? dummyWorkloadResponse.eg[0] : "",
+          layer: dummyWorkloadResponse.layer.length > 0 ? dummyWorkloadResponse.layer[0] : "",
+          server: dummyWorkloadResponse.server.length > 0 ? dummyWorkloadResponse.server[0] : "",
+          service: "", // Always empty initially for user input
+        });
+        setShowForm(true);
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: `You selected: ${optionText}. Please fill the workload details below.`,
+            sender: "bot",
+            time: getCurrentTime(),
+          },
+        ]);
+        return;
+      } catch (error) {
+        console.error("Error fetching workload data:", error);
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: "Failed to load workload form. Please try again.",
+            sender: "bot",
+            time: getCurrentTime(),
+          },
+        ]);
+        return;
+      }
     }
 
     const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "").trim();
@@ -424,7 +302,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => {
+        // Handle timeout for option click
+      });
 
       const res = await postMessage(cleanedOpt);
       clearCurrentTimeout();
@@ -440,44 +320,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
-        
-        // Check if the response contains workload data
-        const workloadInfo = parseWorkloadData(botResponse.text);
-        if (workloadInfo) {
-          console.log("Workload info parsed from option click:", workloadInfo);
-          handleWorkloadResponse(workloadInfo);
-        }
       }
-    } catch {
-      clearCurrentTimeout();
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setShowForm(false);
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {});
-
-      const res = await postMessage(formData);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
+    } catch (error) {
+      console.error("Error handling option click:", error);
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
@@ -491,33 +336,48 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleWorkloadSubmit = async (e) => {
+  const handleWorkloadFormChange = (e) => {
+    const { name, value } = e.target;
+    setWorkloadFormInputs((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleWorkloadFormSubmit = async (e) => {
     e.preventDefault();
-    setShowWorkloadForm(false);
+    setShowForm(false);
     setIsTyping(true);
 
-    try {
-      setApiTimeout(() => {});
+    // Prepare data to send to backend
+    const dataToSend = {
+      ...workloadFormInputs,
+    };
 
-      const res = await postMessage(workloadData);
+    console.log("Submitting workload data:", dataToSend); // For debugging
+
+    try {
+      setApiTimeout(() => {
+        // Handle timeout for workload form submit
+      });
+
+      const res = await postMessage(dataToSend); // Send the workload form data
       clearCurrentTimeout();
 
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest) {
         const botResponse = {
           id: Date.now(),
-          text: latest.message || "",
+          text: latest.message || "Workload details submitted successfully!",
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || [],
         };
         setMessages((prev) => [...prev, botResponse]);
       }
-    } catch {
+    } catch (error) {
+      console.error("Error submitting workload form:", error);
       clearCurrentTimeout();
       const errorMsg = {
         id: Date.now(),
-        text: "Something went wrong. Try again.",
+        text: "Failed to submit workload details. Please try again.",
         sender: "bot",
         time: getCurrentTime(),
       };
@@ -584,8 +444,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
                         {item.options.map((opt, i) => {
                           const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
 
-                          const isPlainText = displayText.includes("please select one by name") ||
-                                              displayText.includes("please select from the following options");
+                          const isPlainText =
+                            displayText.includes("please select one by name") ||
+                            displayText.includes("please select from the following options");
 
                           if (isPlainText) {
                             return (
@@ -620,150 +481,94 @@ const Chatbot = ({ setChatbotMinimized }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Original Multi-field Form */}
+          {/* New Workload Form */}
           {showForm && (
-            <form className="multi-field-form" onSubmit={handleFormSubmit}>
-              <div className="form-grid">
-                <input type="text" placeholder="Subject" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} />
-                <input type="text" placeholder="Source" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} />
-                <input type="text" placeholder="Destination" value={formData.destination} onChange={(e) => setFormData({ ...formData, destination: e.target.value })} />
-                <input type="text" placeholder="Zone" value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} />
-                <input type="text" placeholder="Port" value={formData.port} onChange={(e) => setFormData({ ...formData, port: e.target.value })} />
-                <input
-                  type="text"
-                  placeholder="Before Creation Date"
-                  value={formData.beforeCreationDate}
-                  onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })}
-                  onFocus={(e) => (e.target.type = "date")}
-                  onBlur={(e) => {
-                    if (!e.target.value) e.target.type = "text";
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Before Expire Date"
-                  value={formData.beforeExpireDate}
-                  onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })}
-                  onFocus={(e) => (e.target.type = "date")}
-                  onBlur={(e) => {
-                    if (!e.target.value) e.target.type = "text";
-                  }}
-                />
-              </div>
-              <button type="submit" className="search-button">Search</button>
-            </form>
-          )}
-
-          {/* Workload Form */}
-          {showWorkloadForm && (
-            <form className="workload-form" onSubmit={handleWorkloadSubmit}>
-              <h3>Workload Configuration</h3>
-              <div className="form-grid">
-                {/* EG Field */}
-                <div className="form-field">
-                  <label>EG:</label>
-                  {workloadOptions.egOptions.length > 0 ? (
-                    <select 
-                      value={workloadData.eg} 
-                      onChange={(e) => setWorkloadData({ ...workloadData, eg: e.target.value })}
-                      required
-                    >
-                      <option value="">Select EG</option>
-                      {workloadOptions.egOptions.map((option, i) => (
-                        <option key={i} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : workloadData.eg ? (
-                    <input type="text" value={workloadData.eg} readOnly className="readonly-field" />
-                  ) : (
-                    <input 
-                      type="text" 
-                      placeholder="Please enter EG"
-                      value={workloadData.eg}
-                      onChange={(e) => setWorkloadData({ ...workloadData, eg: e.target.value })}
-                      required
-                      className="required-field"
-                    />
-                  )}
-                </div>
-
-                {/* Layer Field */}
-                <div className="form-field">
-                  <label>Layer:</label>
-                  {workloadOptions.layerOptions.length > 0 ? (
-                    <select 
-                      value={workloadData.layer} 
-                      onChange={(e) => setWorkloadData({ ...workloadData, layer: e.target.value })}
-                      required
-                    >
-                      <option value="">Select Layer</option>
-                      {workloadOptions.layerOptions.map((option, i) => (
-                        <option key={i} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : workloadData.layer ? (
-                    <input type="text" value={workloadData.layer} readOnly className="readonly-field" />
-                  ) : (
-                    <input 
-                      type="text" 
-                      placeholder="Please enter Layer"
-                      value={workloadData.layer}
-                      onChange={(e) => setWorkloadData({ ...workloadData, layer: e.target.value })}
-                      required
-                      className="required-field"
-                    />
-                  )}
-                </div>
-
-                {/* Server Field */}
-                <div className="form-field">
-                  <label>Server:</label>
-                  {workloadOptions.serverOptions.length > 0 ? (
-                    <select 
-                      value={workloadData.server} 
-                      onChange={(e) => setWorkloadData({ ...workloadData, server: e.target.value })}
-                      required
-                    >
-                      <option value="">Select Server</option>
-                      {workloadOptions.serverOptions.map((option, i) => (
-                        <option key={i} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  ) : workloadData.server ? (
-                    <input type="text" value={workloadData.server} readOnly className="readonly-field" />
-                  ) : (
-                    <input 
-                      type="text" 
-                      placeholder="Please enter Server"
-                      value={workloadData.server}
-                      onChange={(e) => setWorkloadData({ ...workloadData, server: e.target.value })}
-                      required
-                      className="required-field"
-                    />
-                  )}
-                </div>
-
-                {/* Service Field - Always editable */}
-                <div className="form-field">
-                  <label>Service:</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter service information"
-                    value={workloadData.service}
-                    onChange={(e) => setWorkloadData({ ...workloadData, service: e.target.value })}
-                    required
+            <form className="workload-form" onSubmit={handleWorkloadFormSubmit}>
+              <h3 className="form-title">Workload Details</h3>
+              <div className="form-field-group">
+                <label htmlFor="eg">EG:</label>
+                {workloadData.eg.length > 1 ? (
+                  <select name="eg" id="eg" value={workloadFormInputs.eg} onChange={handleWorkloadFormChange}>
+                    {workloadData.eg.map((val) => (
+                      <option key={val} value={val}>
+                        {val}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    name="eg"
+                    id="eg"
+                    placeholder={workloadData.eg.length === 0 ? "Add EG" : ""}
+                    value={workloadFormInputs.eg}
+                    onChange={handleWorkloadFormChange}
+                    readOnly={workloadData.eg.length === 1} // Make read-only if only one value
                   />
-                </div>
+                )}
               </div>
-              
-              <div className="form-buttons">
-                <button type="button" onClick={() => setShowWorkloadForm(false)} className="cancel-button">
-                  Cancel
-                </button>
-                <button type="submit" className="submit-button">
-                  Submit Workload
-                </button>
+
+              <div className="form-field-group">
+                <label htmlFor="layer">Layer:</label>
+                {workloadData.layer.length > 1 ? (
+                  <select name="layer" id="layer" value={workloadFormInputs.layer} onChange={handleWorkloadFormChange}>
+                    {workloadData.layer.map((val) => (
+                      <option key={val} value={val}>
+                        {val}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    name="layer"
+                    id="layer"
+                    placeholder={workloadData.layer.length === 0 ? "Add Layer" : ""}
+                    value={workloadFormInputs.layer}
+                    onChange={handleWorkloadFormChange}
+                    readOnly={workloadData.layer.length === 1}
+                  />
+                )}
               </div>
+
+              <div className="form-field-group">
+                <label htmlFor="server">Server:</label>
+                {workloadData.server.length > 1 ? (
+                  <select name="server" id="server" value={workloadFormInputs.server} onChange={handleWorkloadFormChange}>
+                    {workloadData.server.map((val) => (
+                      <option key={val} value={val}>
+                        {val}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    name="server"
+                    id="server"
+                    placeholder={workloadData.server.length === 0 ? "Add Server" : ""}
+                    value={workloadFormInputs.server}
+                    onChange={handleWorkloadFormChange}
+                    readOnly={workloadData.server.length === 1}
+                  />
+                )}
+              </div>
+
+              <div className="form-field-group">
+                <label htmlFor="service">Service:</label>
+                <input
+                  type="text"
+                  name="service"
+                  id="service"
+                  placeholder="Enter Service"
+                  value={workloadFormInputs.service}
+                  onChange={handleWorkloadFormChange}
+                />
+              </div>
+
+              <button type="submit" className="submit-workload-button">
+                Submit Workload
+              </button>
             </form>
           )}
 
@@ -777,7 +582,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
               disabled={formDisabled}
             />
             <button type="submit" className="send-button" disabled={formDisabled}>
-              <img className="logo" src={send} alt="Send" style={{ height: "20px", opacity: formDisabled ? 0.5 : 1 }} />
+              <img
+                className="logo"
+                src={send}
+                alt="Send"
+                style={{ height: "20px", opacity: formDisabled ? 0.5 : 1 }}
+              />
             </button>
           </form>
         </>
