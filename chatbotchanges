@@ -36,8 +36,6 @@ const formatDynamicMessage = (text) => {
       text = text.slice(introMatch[0].length);
     }
 
-
-
     const kvPairs = [...text.matchAll(pattern)];
     kvPairs.forEach((m) => {
       formatted += m[1].trim() + "<br/>";
@@ -51,31 +49,118 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
+// Helper function to parse actual array data
+const parseArrayData = (data) => {
+  const result = {
+    eg: null,
+    layer: null,
+    server: null,
+    service: null
+  };
+  
+  // Handle different array formats
+  for (let i = 0; i < data.length; i++) {
+    const item = data[i];
+    
+    if (typeof item === 'string') {
+      const lowerItem = item.toLowerCase();
+      
+      // Look ahead for the value after the key
+      if (i + 1 < data.length) {
+        const nextItem = data[i + 1];
+        
+        if (lowerItem === 'eg') {
+          result.eg = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
+          i++; // Skip the next item since we processed it
+        } else if (lowerItem === 'layer') {
+          result.layer = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
+          i++; // Skip the next item since we processed it
+        } else if (lowerItem === 'server') {
+          result.server = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
+          i++; // Skip the next item since we processed it
+        } else if (lowerItem === 'service') {
+          result.service = Array.isArray(nextItem) ? nextItem.join(', ') : String(nextItem);
+          i++; // Skip the next item since we processed it
+        }
+      }
+    }
+  }
+  
+  return result;
+};
+
 // Function to parse workload data format
 const parseWorkloadData = (text) => {
   if (!text || typeof text !== "string") return null;
   
   console.log("Checking text for workload data:", text); // Debug log
   
-  // Updated patterns to match your actual format: eg : [] layer : [] server : [] service : ""
+  // First, try to parse as JSON array if it looks like one
+  if (text.trim().startsWith('[') && text.trim().endsWith(']')) {
+    try {
+      const data = JSON.parse(text);
+      if (Array.isArray(data)) {
+        console.log("Parsed as JSON array:", data); // Debug log
+        return parseArrayData(data);
+      }
+    } catch (e) {
+      console.log("Failed to parse as JSON, trying regex patterns"); // Debug log
+    }
+  }
+  
+  // Check if text contains array-like structure (e.g., "eg" : [] "layer" : [] etc.)
+  const arrayPattern = /"?(\w+)"?\s*:\s*\[([^\]]*)\]/g;
+  const matches = [...text.matchAll(arrayPattern)];
+  
+  if (matches.length >= 3) { // At least layer, server, service
+    console.log("Found array pattern matches:", matches); // Debug log
+    
+    const result = {
+      eg: null,
+      layer: null,
+      server: null,
+      service: null
+    };
+    
+    matches.forEach(match => {
+      const [, key, value] = match;
+      const cleanKey = key.toLowerCase();
+      const cleanValue = value.trim();
+      
+      if (cleanKey === 'eg') {
+        result.eg = cleanValue || null;
+      } else if (cleanKey === 'layer') {
+        result.layer = cleanValue || null;
+      } else if (cleanKey === 'server') {
+        result.server = cleanValue || null;
+      }
+    });
+    
+    // Look for service field which might be a string
+    const serviceMatch = text.match(/"?service"?\s*:\s*"([^"]*)"/i);
+    if (serviceMatch) {
+      result.service = serviceMatch[1].trim() || null;
+    }
+    
+    // Check if we have the minimum required fields
+    if (result.layer !== null || result.server !== null) {
+      return result;
+    }
+  }
+  
+  // Fallback to original regex patterns
   const workloadPatterns = [
-    // Pattern 1: eg : [value] layer : [value] server : [value] service : "value"
     /eg\s*:\s*\[([^\]]*)\]\s*layer\s*:\s*\[([^\]]*)\]\s*server\s*:\s*\[([^\]]*)\]\s*service\s*:\s*"([^"]*)"/i,
-    
-    // Pattern 2: layer : [value] server : [value] service : "value" (without eg)
     /layer\s*:\s*\[([^\]]*)\]\s*server\s*:\s*\[([^\]]*)\]\s*service\s*:\s*"([^"]*)"/i,
-    
-    // Pattern 3: More flexible matching with optional commas
     /eg\s*:\s*\[([^\]]*)\]\s*,?\s*layer\s*:\s*\[([^\]]*)\]\s*,?\s*server\s*:\s*\[([^\]]*)\]\s*,?\s*service\s*:\s*"([^"]*)"/i
   ];
   
   for (const pattern of workloadPatterns) {
     const match = text.match(pattern);
     if (match) {
-      console.log("Workload data found:", match); // Debug log
+      console.log("Workload data found with regex:", match); // Debug log
       
       if (match.length === 5) {
-        // Full pattern with eg field
         const [, eg, layer, server, service] = match;
         return {
           eg: eg.trim() || null,
@@ -84,7 +169,6 @@ const parseWorkloadData = (text) => {
           service: service.trim() || null
         };
       } else if (match.length === 4) {
-        // Pattern without eg field
         const [, layer, server, service] = match;
         return {
           eg: null,
@@ -254,6 +338,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         // Check if the response contains workload data
         const workloadInfo = parseWorkloadData(botResponse.text);
         if (workloadInfo) {
+          console.log("Workload info parsed:", workloadInfo);
           handleWorkloadResponse(workloadInfo);
         }
       }
@@ -312,6 +397,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
     // Service is always user input
     newWorkloadData.service = workloadInfo.service || "";
     
+    console.log("Setting workload data:", newWorkloadData);
+    console.log("Setting workload options:", newWorkloadOptions);
+    
     setWorkloadData(newWorkloadData);
     setWorkloadOptions(newWorkloadOptions);
     setShowWorkloadForm(true);
@@ -356,6 +444,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         // Check if the response contains workload data
         const workloadInfo = parseWorkloadData(botResponse.text);
         if (workloadInfo) {
+          console.log("Workload info parsed from option click:", workloadInfo);
           handleWorkloadResponse(workloadInfo);
         }
       }
@@ -698,4 +787,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-
