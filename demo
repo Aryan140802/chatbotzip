@@ -21,22 +21,31 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
     else console.warn('No username found in localStorage');
   }, []);
 
-  // Fetch favorites for the user on mount
- /* useEffect(() => {
-    if (!userId) return;
+ useEffect(() => {
+  if (!userId || !password) return;
 
-    const fetchFavorites = async () => {
-      try {
-        const res = await fetch(`/EISHome/postFavourites?uid=${userId}`);
-        const data = await res.json();
-        setFavorites(data.favorites || []);
-      } catch (err) {
-        console.error('Failed to load favorites:', err);
-      }
-    };
+  const fetchFavorites = async () => {
+    try {
+      const res = await fetch('/PyPortal/EISHome/postFavourites/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          password,
+          favList: []  // Indicate this is a fetch-only request
+        }),
+      });
 
-    fetchFavorites();
-  }, [userId,password]);*/
+      const data = await res.json();
+      setFavorites(data.favorites || []);
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    }
+  };
+
+  fetchFavorites();
+}, [userId, password]);
+
 
   // Update backend when favorites change
   const updateFavoritesOnBackend = async (updatedFavorites) => {
