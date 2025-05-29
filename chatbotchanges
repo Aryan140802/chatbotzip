@@ -36,6 +36,20 @@ const formatDynamicMessage = (text) => {
       text = text.slice(introMatch[0].length);
     }
 
+
+
+eg
+: 
+[]
+layer
+: 
+[]
+server
+: 
+[]
+service
+: 
+""
     const kvPairs = [...text.matchAll(pattern)];
     kvPairs.forEach((m) => {
       formatted += m[1].trim() + "<br/>";
