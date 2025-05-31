@@ -1,161 +1,166 @@
-import React, { useEffect, useState } from 'react';
-import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import { cardLinks } from '../links';
-import '../styles/Menu.css';
+import axios from 'axios';
 
-const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [favorites, setFavorites] = useState([]);
-  const [userId,setUserId] = useState(null);
-  const [password,setPassword] = useState(null);
-  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  timeout: 100000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-  // Get userId from localStorage on mount
-  useEffect(() => {
-    const uid = localStorage.getItem('uidd'); // Ensure this key exists
-    const password = localStorage.getItem('password');
-    if (uid && password) {
-            setUserId(uid);
-            setPassword(password);
-    }
-    else console.warn('No username found in localStorage');
-  }, []);
-
- useEffect(() => {
-  if (!userId || !password) return;
-
-  const fetchFavorites = async () => {
-    try {
-      const res = await fetch('/PyPortal/EISHome/postFavourites/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          password,
-          favList: []  // Indicate this is a fetch-only request
-        }),
-      });
-
-      const data = await res.json();
-      setFavorites(data.favorites || []);
-    } catch (err) {
-      console.error('Failed to load favorites:', err);
-    }
-  };
-
-  fetchFavorites();
-}, [userId, password]);
-
-
-  // Update backend when favorites change
-  const updateFavoritesOnBackend = async (updatedFavorites) => {
-    try {
-      await fetch('/PyPortal/EISHome/postFavourites/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        payload : {'favList':updatedFavorites,'userId':userId,'password':password},
-        body: JSON.stringify({ userId: userId, favList: updatedFavorites,password:password}),
-      });
-    } catch (error) {
-      console.error('Failed to update favorites:', error);
-    }
-  };
-
-  // Toggle favorite
-  const toggleFavorite = (name) => {
-    setFavorites((prev) => {
-      const updated = prev.includes(name)
-        ? prev.filter((fav) => fav !== name)
-        : [...prev, name];
-
-      updateFavoritesOnBackend(updated);
-      return updated;
-    });
-  };
-
-  // Filter + Sort
-  const filteredLinks = cardLinks
-    .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => {
-      const aFav = favorites.includes(a.name);
-      const bFav = favorites.includes(b.name);
-      return aFav === bFav ? 0 : aFav ? -1 : 1;
-    });
-
-  return (
-    <>
-      {!isSidebarOpen && (
-        <button className="sidebar-toggle" onClick={toggleSidebar}>
-          <MenuIcon size={24} />
-        </button>
-      )}
-
-      <div className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
-        <div className="sidebar-header">
-          {isSidebarOpen && <h2 className="sidebar-title">Quick Access</h2>}
-          <button
-            className="collapse-btn"
-            onClick={toggleSidebar}
-            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
-        </div>
-
-        {isSidebarOpen && (
-          <div className="sidebar-search">
-            <input
-              type="text"
-              placeholder="Search links..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-        )}
-
-        <div className="sidebar-content">
-          <div className="sidebar-section">
-            {filteredLinks.map((link, index) => {
-              const isFavorited = favorites.includes(link.name);
-              return (
-                <div key={index} className="link-card">
-                  <span
-                    className="star-icon"
-                    onClick={() => toggleFavorite(link.name)}
-                    title={isFavorited ? 'Unstar' : 'Star'}
-                  >
-                    {isFavorited ? (
-                      <Star fill="#facc15" color="#facc15" size={16} />
-                    ) : (
-                      <Star color="#fff" size={16} />
-                    )}
-                  </span>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link-anchor"
-                  >
-                    {isSidebarOpen ? (
-                      <span>{link.name}</span>
-                    ) : (
-                      <img
-                        src={link.icon}
-                        alt={link.name}
-                        title={link.name}
-                        className="link-icon"
-                      />
-                    )}
-                  </a>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </>
-  );
+export const getPost = () => {
+  return api.get('EIS-GINI/',{timeout:100000});
 };
 
-export default Sidebar;
+export const postMessage = (message) => {
+ const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
+        console.log(res);
+  return res;
+};
+
+export const getServiceSys = () => {
+  return api.get('EISHome/servicewise_sys/');
+};
+
+export const getServiceExp = () => {
+  return api.get('EISHome/servicewise_exp/');
+};
+
+export const getIpwiseSys = () => {
+  return api.get('EISHome/ipwise_sys/');
+};
+
+export const getIpwiseExp = () => {
+  return api.get('EISHome/ipwise_exp/');
+};
+
+
+export const getPortwiseSys = () => {
+  return api.get('EISHome/portwise_sys/');
+};
+
+export const getPortwiseExp = () => {
+  return api.get('EISHome/portwise_exp/');
+};
+
+
+export const getServiceWiseExp5 = () => {
+        return api.get('EISHome/servicewise_top5_exp/')
+};
+
+export const getServiceWiseSys5 = () => {
+        return api.get('EISHome/servicewise_top5_sys/')
+};
+export const getIpWiseExp5 = () => {
+        return api.get('EISHome/ipwise_exp_top5/')
+};
+export const getIpWiseSys5 = () => {
+        return api.get('EISHome/ipwise_sys_top5/')
+};
+export const getPortWiseExp5 = () => {
+        return api.get('EISHome/portwise_top5_exp/')
+};
+export const getPortWiseSys5 = () => {
+        return api.get('EISHome/portwise_top5_sys/')
+};
+
+export const getFARExpires = () => {
+  return api.get('EISHome/farExpiresNext5M/');
+};
+
+
+
+
+
+//post ai for time wise hits
+export const postServiceWiseExp5 = async (time) => {
+  try {
+    console.log(time)
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', { "time":time,"uid":uid,"password":password});
+    console.log(response)
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+//post ai for time wise hits
+export const postServiceWiseSys5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time,"uid":uid,"password":password});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postIpWiseExp5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', { "time":time,"uid":uid,"password":password});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postIpWiseSys5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    console.log(time)
+    const response = await api.post('EISHome/ipwise_top5_FiveM/SYS/', { "time":time,"uid":uid,"password":password});
+    console.log(response)
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postPortWiseExp5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', { "time":time,"uid":uid,"password":password});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
+
+//post ai for time wise hits
+export const postPortWiseSys5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', { "time":time,"uid":uid,"password":password});
+    return response;
+  } catch (error) {
+    console.error('could not  fetch error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
+
+
