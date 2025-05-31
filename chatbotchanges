@@ -45,7 +45,7 @@ const formatDynamicMessage = (text) => {
   }
 
   // Default: return plain text for non-server, non-HTML messages
-  const cleanedText = text.replace(/:,\s*$/, ":").trim();
+  const cleanedText= text.replace(/:,\s*$/, ":").trim();
   return cleanedText;
 };
 
@@ -55,17 +55,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [showForm, setShowForm] = useState(false);
   const [formDisabled, setFormDisabled] = useState(true);
-  const [formData, setFormData] = useState({
-    subject: "",
-    source: "",
-    destination: "",
-    zone: "",
-    port: "",
-    beforeCreationDate: "",
-    beforeExpireDate: "",
-  });
+
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -197,11 +188,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleOptionClick = async (optionText) => {
-    if (optionText.toLowerCase().includes("have multiple fields")) {
-      setShowForm(true);
-      return;
-    }
 
     const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "").trim();
 
@@ -242,42 +228,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleFormSubmit = async (e) => {
-    e.preventDefault();
-    setShowForm(false);
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {
-      });
-
-      const res = await postMessage(formData);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        setMessages((prev) => [...prev, botResponse]);
-      }
-    } catch {
-      clearCurrentTimeout();
-      const errorMsg = {
-        id: Date.now(),
-        text: "Something went wrong. Try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    }
-
-    setIsTyping(false);
-  };
 
   const handleMinimize = () => {
     setIsMinimized(true);
@@ -373,40 +323,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {showForm && (
-            <form className="multi-field-form" onSubmit={handleFormSubmit}>
-              <div className="form-grid">
-                <input type="text" placeholder="Subject" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} />
-                <input type="text" placeholder="Source" value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} />
-                <input type="text" placeholder="Destination" value={formData.destination} onChange={(e) => setFormData({ ...formData, destination: e.target.value })} />
-                <input type="text" placeholder="Zone" value={formData.zone} onChange={(e) => setFormData({ ...formData, zone: e.target.value })} />
-                <input type="text" placeholder="Port" value={formData.port} onChange={(e) => setFormData({ ...formData, port: e.target.value })} />
-                <input
-  type="text"
-  placeholder="Before Creation Date"
-  value={formData.beforeCreationDate}
-  onChange={(e) => setFormData({ ...formData, beforeCreationDate: e.target.value })}
-  onFocus={(e) => (e.target.type = "date")}
-  onBlur={(e) => {
-    if (!e.target.value) e.target.type = "text";
-  }}
-/>
-
-<input
-  type="text"
-  placeholder="Before Expire Date"
-  value={formData.beforeExpireDate}
-  onChange={(e) => setFormData({ ...formData, beforeExpireDate: e.target.value })}
-  onFocus={(e) => (e.target.type = "date")}
-  onBlur={(e) => {
-    if (!e.target.value) e.target.type = "text";
-  }}
-/>
-
-              </div>
-              <button type="submit" className="search-button">Search</button>
-            </form>
-          )}
 
           <form className="message-form" onSubmit={handleSendMessage}>
             <input
