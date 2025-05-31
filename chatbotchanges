@@ -48,304 +48,6 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
-const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit, onFormClose }) => {
-  const [expandedField, setExpandedField] = useState(null);
-  const [formData, setFormData] = useState({});
-  
-  const formFields = {};
-  const optionFields = {};
-  const regularOptions = [];
-
-  // Initialize form data with current field values
-  useEffect(() => {
-    if (typeof message !== 'object' || message === null) {
-      return;
-    }
-
-    Object.keys(message).forEach(key => {
-      if (key === 'options') {
-        regularOptions.push(...message[key]);
-      } else if (key.endsWith('options')) {
-        const fieldName = key.replace('options', '');
-        optionFields[fieldName] = message[key];
-      } else if (key !== 'sender') {
-        formFields[key] = message[key];
-      }
-    });
-
-    const initialFormData = {};
-    Object.keys(formFields).forEach(fieldName => {
-      const fieldValue = formFields[fieldName];
-      if (!isFieldEmpty(fieldValue)) {
-        initialFormData[fieldName] = fieldValue;
-      }
-    });
-    setFormData(initialFormData);
-  }, [message]);
-
-  // Early return after hooks
-  if (typeof message !== 'object' || message === null) {
-    return null;
-  }
-
-  // Re-extract fields for rendering
-  Object.keys(message).forEach(key => {
-    if (key === 'options') {
-      regularOptions.push(...message[key]);
-    } else if (key.endsWith('options')) {
-      const fieldName = key.replace('options', '');
-      optionFields[fieldName] = message[key];
-    } else if (key !== 'sender') {
-      formFields[key] = message[key];
-    }
-  });
-
-  // Helper function to check if a field is empty
-  const isFieldEmpty = (fieldValue) => {
-    if (fieldValue === "" || fieldValue === "date") return true;
-    if (Array.isArray(fieldValue) && fieldValue.length === 0) return true;
-    return false;
-  };
-
-  // Helper function to check if field has values to show in dropdown
-  const hasFieldValues = (fieldValue, fieldName) => {
-    if (Array.isArray(fieldValue) && fieldValue.length > 0) return true;
-    if (optionFields[fieldName] && optionFields[fieldName].length > 0) return true;
-    return false;
-  };
-
-  const handleFieldClick = (fieldName) => {
-    const fieldValue = formFields[fieldName];
-    
-    if (Array.isArray(fieldValue) && fieldValue.length > 0) {
-      // If field is an array with values, toggle dropdown
-      setExpandedField(expandedField === fieldName ? null : fieldName);
-    } else if (optionFields[fieldName] && optionFields[fieldName].length > 0) {
-      // If field has options, toggle dropdown
-      setExpandedField(expandedField === fieldName ? null : fieldName);
-    }
-  };
-
-  const handleOptionSelect = (fieldName, option) => {
-    // Update form data
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: Array.isArray(formData[fieldName]) 
-        ? [...(formData[fieldName] || []), option]
-        : option
-    }));
-    setExpandedField(null);
-  };
-
-  const handleInputChange = (fieldName, value) => {
-    const fieldType = formFields[fieldName];
-    
-    if (Array.isArray(fieldType)) {
-      // For array fields, we'll handle multiple values separated by commas
-      const values = value.split(',').map(v => v.trim()).filter(v => v);
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: values
-      }));
-    } else {
-      // For single value fields
-      setFormData(prev => ({
-        ...prev,
-        [fieldName]: value
-      }));
-    }
-  };
-
-  const handleRemoveItem = (fieldName, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: prev[fieldName].filter((_, i) => i !== index)
-    }));
-  };
-
-  const getDisplayValue = (fieldName) => {
-    const formValue = formData[fieldName];
-    const originalValue = formFields[fieldName];
-    
-    // Use form data if available, otherwise use original value
-    const value = formValue !== undefined ? formValue : originalValue;
-    
-    if (Array.isArray(value)) {
-      return value.length === 0 ? 'No items selected' : `${value.length} item(s) selected`;
-    }
-    return value || 'Not set';
-  };
-
-  const getDropdownOptions = (fieldName, fieldValue) => {
-    // If field is an array with values, show those values
-    if (Array.isArray(fieldValue) && fieldValue.length > 0) {
-      return fieldValue;
-    }
-    // Otherwise, show options from optionFields
-    return optionFields[fieldName] || [];
-  };
-
-  const handleFormSubmit = () => {
-    // Check if all required fields are filled
-    const requiredFields = Object.keys(formFields).filter(fieldName => {
-      const fieldValue = formFields[fieldName];
-      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
-    });
-
-    const missingFields = requiredFields.filter(fieldName => !formData[fieldName]);
-    
-    if (missingFields.length > 0) {
-      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
-      return;
-    }
-
-    // Submit the form data
-    onFormSubmit(formData);
-  };
-
-  const isFormValid = () => {
-    const requiredFields = Object.keys(formFields).filter(fieldName => {
-      const fieldValue = formFields[fieldName];
-      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
-    });
-
-    return requiredFields.every(fieldName => formData[fieldName]);
-  };
-
-  return (
-    <div className="form-container">
-      <div className="form-header">
-        <h4>Form Fields</h4>
-        <button 
-          className="close-form-button"
-          onClick={onFormClose}
-          title="Close form and return to main menu"
-        >
-          ✕
-        </button>
-      </div>
-      
-      {Object.keys(formFields).map(fieldName => {
-        const fieldValue = formFields[fieldName];
-        const isEmpty = isFieldEmpty(fieldValue);
-        const dropdownOptions = getDropdownOptions(fieldName, fieldValue);
-        const hasDropdownOptions = hasFieldValues(fieldValue, fieldName);
-        const currentFormValue = formData[fieldName];
-        
-        return (
-          <div key={fieldName} className="form-field">
-            <label className="field-label">
-              {fieldName}:
-            </label>
-            
-            {isEmpty ? (
-              <div className="input-container">
-                <input
-                  id={`field-${fieldName}`}
-                  type={fieldValue === "date" ? "date" : "text"}
-                  placeholder={Array.isArray(fieldValue) ? `Enter ${fieldName} (comma-separated for multiple)...` : `Enter ${fieldName}...`}
-                  value={Array.isArray(currentFormValue) ? currentFormValue.join(', ') : (currentFormValue || '')}
-                  onChange={(e) => handleInputChange(fieldName, e.target.value)}
-                  className="form-input"
-                />
-                <span className={`field-status ${Array.isArray(fieldValue) ? 'add-items' : 'required'}`}>
-                  {Array.isArray(fieldValue) ? 'Optional' : 'Required'}
-                </span>
-              </div>
-            ) : (
-              <div className="dropdown-field">
-                <div
-                  className={`dropdown-trigger ${hasDropdownOptions ? 'active' : 'disabled'} ${expandedField === fieldName ? 'expanded' : ''}`}
-                  onClick={() => handleFieldClick(fieldName)}
-                >
-                  <span className={`display-value ${
-                    Array.isArray(currentFormValue) && currentFormValue?.length === 0 ? 'empty' : 
-                    Array.isArray(currentFormValue) && currentFormValue?.length > 0 ? 'multiple-items' : ''
-                  }`}>
-                    {getDisplayValue(fieldName)}
-                  </span>
-                  {hasDropdownOptions && (
-                    <span className={`dropdown-arrow ${expandedField === fieldName ? 'expanded' : ''}`}>
-                      ▼
-                    </span>
-                  )}
-                </div>
-                
-                {hasDropdownOptions && expandedField === fieldName && (
-                  <div className="dropdown-menu">
-                    {dropdownOptions.map((option, index) => (
-                      <div
-                        key={index}
-                        className="dropdown-option"
-                        onClick={() => handleOptionSelect(fieldName, option)}
-                      >
-                        {option}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Show selected items for array fields */}
-            {Array.isArray(currentFormValue) && currentFormValue.length > 0 && (
-              <div className="selected-items">
-                {currentFormValue.map((item, index) => (
-                  <div key={index} className="selected-item">
-                    <span>{item}</span>
-                    <button
-                      className="remove-item-button"
-                      onClick={() => handleRemoveItem(fieldName, index)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Show current value for single fields */}
-            {!Array.isArray(currentFormValue) && currentFormValue && !isEmpty && (
-              <div className="current-value">
-                Current: <strong>{currentFormValue}</strong>
-              </div>
-            )}
-          </div>
-        );
-      })}
-      
-      <div className="form-actions">
-        <button 
-          className={`submit-form-button ${isFormValid() ? 'enabled' : 'disabled'}`}
-          onClick={handleFormSubmit}
-          disabled={!isFormValid()}
-        >
-          Submit Form
-        </button>
-      </div>
-      
-      {regularOptions.length > 0 && (
-        <div className="options-section">
-          <div className="options-list">
-            {regularOptions.map((opt, i) => {
-              const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim();
-              return (
-                <button 
-                  key={i} 
-                  className="option-button" 
-                  onClick={() => onOptionClick(opt)}
-                >
-                  {displayText}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -400,7 +102,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
         sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
         time: getCurrentTime(),
         options: item.options || [],
-        originalMessage: item.message // Store original message for form rendering
       }));
 
       setMessages(formattedMessages);
@@ -430,154 +131,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
   }, [messages]);
 
   const checkEnableForm = (text) => {
-    const lowerText = typeof text === 'string' ? text.toLowerCase() : '';
+    const lowerText = text.toLowerCase();
     return lowerText.includes("enter") || lowerText.includes("provide");
-  };
-
-  const handleFieldUpdate = async (fieldName, value) => {
-    // Send field update to API
-    const updateMessage = `${fieldName}: ${value}`;
-    
-    const userMsg = {
-      id: Date.now(),
-      text: updateMessage,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-      const res = await postMessage(updateMessage);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-          originalMessage: latest.message
-        };
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleFormSubmit = async (formData) => {
-    // Convert form data to a formatted string for backend
-    const formSubmission = Object.entries(formData)
-      .map(([key, value]) => {
-        if (Array.isArray(value)) {
-          return `${key}: ${value.join(', ')}`;
-        }
-        return `${key}: ${value}`;
-      })
-      .join('\n');
-
-    // Don't show "Form Submitted:" in the user message
-    const userMsg = {
-      id: Date.now(),
-      text: formSubmission,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-      // Send the form submission without the "FORM_SUBMIT:" prefix
-      const res = await postMessage(formSubmission);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-          originalMessage: latest.message
-        };
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred while submitting the form. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleFormClose = async () => {
-    // Don't show the close message to user, just send to backend
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-      const res = await postMessage("CLOSE_FORM");
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-          originalMessage: latest.message
-        };
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-
-    setIsTyping(false);
   };
 
   const handleSendMessage = async (e) => {
@@ -609,7 +164,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || [],
-          originalMessage: latest.message
         };
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
@@ -657,7 +211,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || [],
-          originalMessage: latest.message
         };
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
@@ -677,12 +230,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleRestore = () => {
     setIsMinimized(false);
     setChatbotMinimized(false);
-  };
-
-  // Check if message is a form object
-  const isFormMessage = (message) => {
-    return typeof message === 'object' && message !== null && 
-           !Array.isArray(message) && typeof message !== 'string';
   };
 
   return (
@@ -720,28 +267,14 @@ const Chatbot = ({ setChatbotMinimized }) => {
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
                     {item.sender === "bot" ? (
-                      <>
-                        {isFormMessage(item.originalMessage) ? (
-                          <FormFieldRenderer 
-                            message={item.originalMessage}
-                            onFieldUpdate={handleFieldUpdate}
-                            onOptionClick={handleOptionClick}
-                            onFormSubmit={handleFormSubmit}
-                            onFormClose={handleFormClose}
-                          />
-                        ) : (
-                          <div
-                            className="message-content"
-                            dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
-                          />
-                        )}
-                      </>
+                      <div
+                        className="message-content"
+                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                      />
                     ) : (
                       <div className="message-content">{item.text}</div>
                     )}
-                    
-                    {/* Render regular options for non-form messages */}
-                    {!isFormMessage(item.originalMessage) && item.options?.length > 0 && (
+                    {item.options?.length > 0 && (
                       <div className="options-list">
                         {item.options.map((opt, i) => {
                           const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
