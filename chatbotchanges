@@ -52,15 +52,9 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
   const [expandedField, setExpandedField] = useState(null);
   const [formData, setFormData] = useState({});
   
-  const formFields = {};
-  const optionFields = {};
-  const regularOptions = [];
-
   // Initialize form data with current field values
   useEffect(() => {
-    if (typeof message !== 'object' || message === null) {
-      return;
-    }
+    if (typeof message !== 'object' || message === null) return;
 
     Object.keys(message).forEach(key => {
       if (key === 'options') {
@@ -74,14 +68,15 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
     });
 
     const initialFormData = {};
-    Object.keys(formFields).forEach(fieldName => {
-      const fieldValue = formFields[fieldName];
-      if (!isFieldEmpty(fieldValue)) {
-        initialFormData[fieldName] = fieldValue;
+    Object.entries(message).forEach(([key, value]) => {
+      if (key !== 'sender' && key !== 'options') {
+        // Convert backend array data to form format
+        initialFormData[key] = Array.isArray(value) ? value : [value];
       }
     });
     setFormData(initialFormData);
   }, [message]);
+
 
   // Early return after hooks
   if (typeof message !== 'object' || message === null) {
@@ -185,23 +180,61 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
     return optionFields[fieldName] || [];
   };
 
-  const handleFormSubmit = () => {
-    // Check if all required fields are filled
-    const requiredFields = Object.keys(formFields).filter(fieldName => {
-      const fieldValue = formFields[fieldName];
-      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
-    });
+ const handleFormSubmit = async (formData) => {
+  // Convert form data to array format for backend
+  const formSubmission = Object.entries(formData).map(([fieldName, fieldValue]) => ({
+    fieldName,
+    fieldValue: Array.isArray(fieldValue) ? fieldValue : [fieldValue] // Ensure value is always an array
+  }));
 
-    const missingFields = requiredFields.filter(fieldName => !formData[fieldName]);
-    
-    if (missingFields.length > 0) {
-      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
-      return;
-    }
-
-    // Submit the form data
-    onFormSubmit(formData);
+  const userMsg = {
+    id: Date.now(),
+    text: "Form submitted", // Simple display message
+    sender: "user",
+    time: getCurrentTime(),
   };
+
+  setMessages((prev) => [...prev, userMsg]);
+  setIsTyping(true);
+  setFormDisabled(true);
+
+  try {
+    setApiTimeout(() => {});
+    const res = await postMessage({
+      url: "https://10.191.171.12:5443/Pyportal/EIS-GINI",
+      data: formSubmission
+    });
+    clearCurrentTimeout();
+
+    const latest = res.data.chat_history?.slice(-1)[0];
+    if (latest) {
+      const botResponse = {
+        id: Date.now(),
+        text: latest.message || "",
+        sender: "bot",
+        time: getCurrentTime(),
+        options: latest.options || [],
+        originalMessage: latest.fields || latest.message // Handle both field-based and text responses
+      };
+      setMessages((prev) => [...prev, botResponse]);
+      setFormDisabled(!checkEnableForm(botResponse.text));
+    }
+  } catch (error) {
+    clearCurrentTimeout();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: "An error occurred while submitting the form. Please try again.",
+        sender: "bot",
+        time: getCurrentTime(),
+      },
+    ]);
+    console.error("Form submission error:", error);
+  }
+
+  setIsTyping(false);
+};
 
   const isFormValid = () => {
     const requiredFields = Object.keys(formFields).filter(fieldName => {
@@ -377,48 +410,55 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
-  const getPostData = async () => {
-    try {
-      setIsTyping(true);
-      setApiTimeout(() => {
-        setMessages([
-          {
-            id: Date.now(),
-            text: "Unable to load messages. Please try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
+const getPostData = async () => {
+  try {
+    setIsTyping(true);
+    setApiTimeout(() => {
+      setMessages([{
+        id: Date.now(),
+        text: "Unable to load messages. Please try again later.",
+        sender: "bot",
+        time: getCurrentTime(),
+      }]);
+    });
 
-      const res = await getPost();
-      clearCurrentTimeout();
+    const res = await getPost();
+    clearCurrentTimeout();
 
-      const formattedMessages = res.data.chat_history.map((item, index) => ({
+    const formattedMessages = res.data.chat_history.map((item, index) => {
+      // Convert backend array data to proper format
+      const formattedFields = {};
+      if (item.fields) {
+        item.fields.forEach(field => {
+          formattedFields[field.fieldName] = field.fieldValue;
+        });
+      }
+
+      return {
         id: Date.now() + index,
         text: item.message || "",
         sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
         time: getCurrentTime(),
         options: item.options || [],
-        originalMessage: item.message // Store original message for form rendering
-      }));
+        originalMessage: item.fields ? formattedFields : item.message
+      };
+    });
 
-      setMessages(formattedMessages);
-      setFormDisabled(true);
-      setIsTyping(false);
-    } catch {
-      clearCurrentTimeout();
-      setIsTyping(false);
-      setMessages([
-        {
-          id: Date.now(),
-          text: "An error occurred while loading messages.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-  };
+    setMessages(formattedMessages);
+    setFormDisabled(true);
+    setIsTyping(false);
+  } catch (error) {
+    clearCurrentTimeout();
+    setIsTyping(false);
+    setMessages([{
+      id: Date.now(),
+      text: "An error occurred while loading messages.",
+      sender: "bot",
+      time: getCurrentTime(),
+    }]);
+    console.error("Error fetching data:", error);
+  }
+};
 
   useEffect(() => {
     getPostData();
@@ -681,9 +721,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   // Check if message is a form object
   const isFormMessage = (message) => {
-    return typeof message === 'object' && message !== null && 
-           !Array.isArray(message) && typeof message !== 'string';
-  };
+  // Check if it's a form object (has fields that aren't standard message properties)
+  return typeof message === 'object' && message !== null && 
+         !Array.isArray(message) && 
+         Object.keys(message).some(key => 
+           !['id', 'text', 'sender', 'time', 'options'].includes(key)
+         );
+};
 
   return (
     <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
@@ -802,6 +846,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+
+
+
+
+
+
+
+
 
 
 
