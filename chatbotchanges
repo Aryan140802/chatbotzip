@@ -50,7 +50,6 @@ const formatDynamicMessage = (text) => {
 
 const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit, onFormClose }) => {
   const [expandedField, setExpandedField] = useState(null);
-  const [inputValues, setInputValues] = useState({});
   const [formData, setFormData] = useState({});
   
   const formFields = {};
@@ -118,11 +117,7 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
   const handleFieldClick = (fieldName) => {
     const fieldValue = formFields[fieldName];
     
-    if (isFieldEmpty(fieldValue)) {
-      // If field is empty, focus on input
-      const input = document.getElementById(`field-${fieldName}`);
-      if (input) input.focus();
-    } else if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+    if (Array.isArray(fieldValue) && fieldValue.length > 0) {
       // If field is an array with values, toggle dropdown
       setExpandedField(expandedField === fieldName ? null : fieldName);
     } else if (optionFields[fieldName] && optionFields[fieldName].length > 0) {
@@ -132,7 +127,7 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
   };
 
   const handleOptionSelect = (fieldName, option) => {
-    // Update form data instead of calling onFieldUpdate immediately
+    // Update form data
     setFormData(prev => ({
       ...prev,
       [fieldName]: Array.isArray(formData[fieldName]) 
@@ -143,37 +138,21 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
   };
 
   const handleInputChange = (fieldName, value) => {
-    setInputValues(prev => ({ ...prev, [fieldName]: value }));
-  };
-
-  const handleInputSubmit = (fieldName) => {
-    const value = inputValues[fieldName];
-    if (value && value.trim()) {
-      // Update form data instead of calling onFieldUpdate immediately
-      const currentValue = formData[fieldName];
-      const fieldType = formFields[fieldName];
-      
-      if (Array.isArray(fieldType)) {
-        // If it's an array field, add to existing array
-        setFormData(prev => ({
-          ...prev,
-          [fieldName]: [...(currentValue || []), value.trim()]
-        }));
-      } else {
-        // If it's a single value field, replace
-        setFormData(prev => ({
-          ...prev,
-          [fieldName]: value.trim()
-        }));
-      }
-      
-      setInputValues(prev => ({ ...prev, [fieldName]: '' }));
-    }
-  };
-
-  const handleKeyPress = (e, fieldName) => {
-    if (e.key === 'Enter') {
-      handleInputSubmit(fieldName);
+    const fieldType = formFields[fieldName];
+    
+    if (Array.isArray(fieldType)) {
+      // For array fields, we'll handle multiple values separated by commas
+      const values = value.split(',').map(v => v.trim()).filter(v => v);
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: values
+      }));
+    } else {
+      // For single value fields
+      setFormData(prev => ({
+        ...prev,
+        [fieldName]: value
+      }));
     }
   };
 
@@ -236,7 +215,7 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
   return (
     <div className="form-container">
       <div className="form-header">
-        <h4>Form Fields:</h4>
+        <h4>Form Fields</h4>
         <button 
           className="close-form-button"
           onClick={onFormClose}
@@ -255,7 +234,7 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
         
         return (
           <div key={fieldName} className="form-field">
-            <label>
+            <label className="field-label">
               {fieldName}:
             </label>
             
@@ -264,26 +243,19 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
                 <input
                   id={`field-${fieldName}`}
                   type={fieldValue === "date" ? "date" : "text"}
-                  placeholder={`Enter ${fieldName}...`}
-                  value={inputValues[fieldName] || ''}
+                  placeholder={Array.isArray(fieldValue) ? `Enter ${fieldName} (comma-separated for multiple)...` : `Enter ${fieldName}...`}
+                  value={Array.isArray(currentFormValue) ? currentFormValue.join(', ') : (currentFormValue || '')}
                   onChange={(e) => handleInputChange(fieldName, e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, fieldName)}
+                  className="form-input"
                 />
-                <button
-                  className="add-button"
-                  onClick={() => handleInputSubmit(fieldName)}
-                  disabled={!inputValues[fieldName]?.trim()}
-                >
-                  Add
-                </button>
                 <span className={`field-status ${Array.isArray(fieldValue) ? 'add-items' : 'required'}`}>
-                  {Array.isArray(fieldValue) ? 'Add items' : 'Required'}
+                  {Array.isArray(fieldValue) ? 'Optional' : 'Required'}
                 </span>
               </div>
             ) : (
               <div className="dropdown-field">
                 <div
-                  className={`dropdown-trigger ${hasDropdownOptions ? 'active' : 'disabled'} ${expandedField === fieldName ? 'active' : ''}`}
+                  className={`dropdown-trigger ${hasDropdownOptions ? 'active' : 'disabled'} ${expandedField === fieldName ? 'expanded' : ''}`}
                   onClick={() => handleFieldClick(fieldName)}
                 >
                   <span className={`display-value ${
@@ -512,7 +484,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   };
 
   const handleFormSubmit = async (formData) => {
-    // Convert form data to a formatted string
+    // Convert form data to a formatted string for backend
     const formSubmission = Object.entries(formData)
       .map(([key, value]) => {
         if (Array.isArray(value)) {
@@ -522,9 +494,10 @@ const Chatbot = ({ setChatbotMinimized }) => {
       })
       .join('\n');
 
+    // Don't show "Form Submitted:" in the user message
     const userMsg = {
       id: Date.now(),
-      text: `Form Submitted:\n${formSubmission}`,
+      text: formSubmission,
       sender: "user",
       time: getCurrentTime(),
     };
@@ -535,7 +508,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     try {
       setApiTimeout(() => {});
-      const res = await postMessage(`FORM_SUBMIT: ${formSubmission}`);
+      // Send the form submission without the "FORM_SUBMIT:" prefix
+      const res = await postMessage(formSubmission);
       clearCurrentTimeout();
 
       const latest = res.data.chat_history?.slice(-1)[0];
@@ -568,14 +542,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   };
 
   const handleFormClose = async () => {
-    const userMsg = {
-      id: Date.now(),
-      text: "Close form and return to main menu",
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    // Don't show the close message to user, just send to backend
     setIsTyping(true);
     setFormDisabled(true);
 
@@ -835,3 +802,28 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+
+.close-form-button {
+  background: linear-gradient(135deg, rgb(102, 126, 234), rgb(118, 75, 162));
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.close-form-button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
