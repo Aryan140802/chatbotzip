@@ -1,3 +1,39 @@
+In my chatbot app, I want to dynamically render a form based on certain structured bot responses. Whenever the Bot sends a message that is a JSON object (not a string), I want to:
+1. Loop through each key-value pair in that object.
+2. For each key:
+   - If the value is a string ("" or "date"), render a text input or date input.
+   - If the value is an empty array ([]), render a text input for user entry.
+   - If the value is a non-empty array (e.g., ["opt1", "opt2"]), render a dropdown/select input with those values as options.
+   - If there is a key like createdoptions or expiryoptions, and the sibling key is created or expiry, use the options array to render a dropdown for the corresponding field.
+3. On form submit, collect all user input as a JSON object and send it via POST to this API endpoint:
+https://10.191.171.12:5443/PyPortal/EIS-GINI/
+
+Also:
+- Skip rendering fields ending in "options" as separate inputs — they are only helpers.
+- After successful submission, show a “Submitted successfully!” message.
+- Use modern styling 
+- Make sure it works for various structured responses like:
+```json
+{
+ "Subject": "",
+ "Source": "",
+ "Destination": "",
+ "Zone": "",
+ "Port": "",
+ "expiryoptions": ["before", "after"],
+ "expiry": "date",
+ "createdoptions": ["before", "after"],
+ "created": "date"
+}
+And:
+{
+  "layer": [],
+  "server": [],
+  "eg": [],
+  "service": []
+}
+give me full code
+
 import React, { useState, useRef, useEffect } from 'react';
 import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
