@@ -50,22 +50,49 @@ const formatDynamicMessage = (text) => {
 
 // Replace your FormFieldRenderer component with this updated version:
 
-// Replace your FormFieldRenderer component with this updated version:
-
 const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit, onFormClose }) => {
   const [expandedField, setExpandedField] = useState(null);
   const [inputValues, setInputValues] = useState({});
   const [formData, setFormData] = useState({});
   
-  if (typeof message !== 'object' || message === null) {
-    return null;
-  }
-
-  // Extract regular fields and option fields
+  // Move the early return AFTER all hooks
   const formFields = {};
   const optionFields = {};
   const regularOptions = [];
 
+  // Initialize form data with current field values
+  useEffect(() => {
+    if (typeof message !== 'object' || message === null) {
+      return;
+    }
+
+    Object.keys(message).forEach(key => {
+      if (key === 'options') {
+        regularOptions.push(...message[key]);
+      } else if (key.endsWith('options')) {
+        const fieldName = key.replace('options', '');
+        optionFields[fieldName] = message[key];
+      } else if (key !== 'sender') {
+        formFields[key] = message[key];
+      }
+    });
+
+    const initialFormData = {};
+    Object.keys(formFields).forEach(fieldName => {
+      const fieldValue = formFields[fieldName];
+      if (!isFieldEmpty(fieldValue)) {
+        initialFormData[fieldName] = fieldValue;
+      }
+    });
+    setFormData(initialFormData);
+  }, [message]);
+
+  // Early return after hooks
+  if (typeof message !== 'object' || message === null) {
+    return null;
+  }
+
+  // Re-extract fields for rendering (since we can't use the ones from useEffect)
   Object.keys(message).forEach(key => {
     if (key === 'options') {
       regularOptions.push(...message[key]);
@@ -90,18 +117,6 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
     if (optionFields[fieldName] && optionFields[fieldName].length > 0) return true;
     return false;
   };
-
-  // Initialize form data with current field values
-  useEffect(() => {
-    const initialFormData = {};
-    Object.keys(formFields).forEach(fieldName => {
-      const fieldValue = formFields[fieldName];
-      if (!isFieldEmpty(fieldValue)) {
-        initialFormData[fieldName] = fieldValue;
-      }
-    });
-    setFormData(initialFormData);
-  }, []);
 
   const handleFieldClick = (fieldName) => {
     const fieldValue = formFields[fieldName];
@@ -194,7 +209,209 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
     return optionFields[fieldName] || [];
   };
 
-  // Add these new handler functions to your Chatbot component:
+  const handleFormSubmit = () => {
+    // Check if all required fields are filled
+    const requiredFields = Object.keys(formFields).filter(fieldName => {
+      const fieldValue = formFields[fieldName];
+      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
+    });
+
+    const missingFields = requiredFields.filter(fieldName => !formData[fieldName]);
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    // Submit the form data
+    onFormSubmit(formData);
+  };
+
+  const isFormValid = () => {
+    const requiredFields = Object.keys(formFields).filter(fieldName => {
+      const fieldValue = formFields[fieldName];
+      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
+    });
+
+    return requiredFields.every(fieldName => formData[fieldName]);
+  };
+
+  return (
+    <div className="form-container">
+      <div className="form-header">
+        <h4>Form Fields:</h4>
+        <button 
+          className="close-form-button"
+          onClick={onFormClose}
+          title="Close form and return to main menu"
+        >
+          ✕
+        </button>
+      </div>
+      
+      {Object.keys(formFields).map(fieldName => {
+        const fieldValue = formFields[fieldName];
+        const isEmpty = isFieldEmpty(fieldValue);
+        const dropdownOptions = getDropdownOptions(fieldName, fieldValue);
+        const hasDropdownOptions = hasFieldValues(fieldValue, fieldName);
+        const currentFormValue = formData[fieldName];
+        
+        return (
+          <div key={fieldName} className="form-field">
+            <label>
+              {fieldName}:
+            </label>
+            
+            {isEmpty ? (
+              <div className="input-container">
+                <input
+                  id={`field-${fieldName}`}
+                  type={fieldValue === "date" ? "date" : "text"}
+                  placeholder={`Enter ${fieldName}...`}
+                  value={inputValues[fieldName] || ''}
+                  onChange={(e) => handleInputChange(fieldName, e.target.value)}
+                  onKeyPress={(e) => handleKeyPress(e, fieldName)}
+                />
+                <button
+                  className="add-button"
+                  onClick={() => handleInputSubmit(fieldName)}
+                  disabled={!inputValues[fieldName]?.trim()}
+                >
+                  Add
+                </button>
+                <span className={`field-status ${Array.isArray(fieldValue) ? 'add-items' : 'required'}`}>
+                  {Array.isArray(fieldValue) ? 'Add items' : 'Required'}
+                </span>
+              </div>
+            ) : (
+              <div className="dropdown-field">
+                <div
+                  className={`dropdown-trigger ${hasDropdownOptions ? 'active' : 'disabled'} ${expandedField === fieldName ? 'active' : ''}`}
+                  onClick={() => handleFieldClick(fieldName)}
+                >
+                  <span className={`display-value ${
+                    Array.isArray(currentFormValue) && currentFormValue?.length === 0 ? 'empty' : 
+                    Array.isArray(currentFormValue) && currentFormValue?.length > 0 ? 'multiple-items' : ''
+                  }`}>
+                    {getDisplayValue(fieldName)}
+                  </span>
+                  {hasDropdownOptions && (
+                    <span className={`dropdown-arrow ${expandedField === fieldName ? 'expanded' : ''}`}>
+                      ▼
+                    </span>
+                  )}
+                </div>
+                
+                {hasDropdownOptions && expandedField === fieldName && (
+                  <div className="dropdown-menu">
+                    {dropdownOptions.map((option, index) => (
+                      <div
+                        key={index}
+                        className="dropdown-option"
+                        onClick={() => handleOptionSelect(fieldName, option)}
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Show selected items for array fields */}
+            {Array.isArray(currentFormValue) && currentFormValue.length > 0 && (
+              <div className="selected-items">
+                {currentFormValue.map((item, index) => (
+                  <div key={index} className="selected-item">
+                    <span>{item}</span>
+                    <button
+                      className="remove-item-button"
+                      onClick={() => handleRemoveItem(fieldName, index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Show current value for single fields */}
+            {!Array.isArray(currentFormValue) && currentFormValue && !isEmpty && (
+              <div className="current-value">
+                Current: <strong>{currentFormValue}</strong>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      
+      <div className="form-actions">
+        <button 
+          className={`submit-form-button ${isFormValid() ? 'enabled' : 'disabled'}`}
+          onClick={handleFormSubmit}
+          disabled={!isFormValid()}
+        >
+          Submit Form
+        </button>
+      </div>
+      
+      {regularOptions.length > 0 && (
+        <div className="options-section">
+          <div className="options-list">
+            {regularOptions.map((opt, i) => {
+              const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim();
+              return (
+                <button 
+                  key={i} 
+                  className="option-button" 
+                  onClick={() => onOptionClick(opt)}
+                >
+                  {displayText}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+  const handleKeyPress = (e, fieldName) => {
+    if (e.key === 'Enter') {
+      handleInputSubmit(fieldName);
+    }
+  };
+
+  const handleRemoveItem = (fieldName, index) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: prev[fieldName].filter((_, i) => i !== index)
+    }));
+  };
+
+  const getDisplayValue = (fieldName) => {
+    const formValue = formData[fieldName];
+    const originalValue = formFields[fieldName];
+    
+    // Use form data if available, otherwise use original value
+    const value = formValue !== undefined ? formValue : originalValue;
+    
+    if (Array.isArray(value)) {
+      return value.length === 0 ? 'No items selected' : `${value.length} item(s) selected`;
+    }
+    return value || 'Not set';
+  };
+
+  const getDropdownOptions = (fieldName, fieldValue) => {
+    // If field is an array with values, show those values
+    if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+      return fieldValue;
+    }
+    // Otherwise, show options from optionFields
+    return optionFields[fieldName] || [];
+  };
+
+  // Add these two functions to your Chatbot component, right after your existing handleOptionClick function:
 
 const handleFormSubmit = async (formData) => {
   // Convert form data to a formatted string
@@ -297,7 +514,6 @@ const handleFormClose = async () => {
 
   setIsTyping(false);
 };
-
   const isFormValid = () => {
     const requiredFields = Object.keys(formFields).filter(fieldName => {
       const fieldValue = formFields[fieldName];
@@ -725,8 +941,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
                     {item.sender === "bot" ? (
                       <>
-                        // Update the FormFieldRenderer call in your render method to include the new handlers:
-{isFormMessage(item.originalMessage) ? (
+   {isFormMessage(item.originalMessage) ? (
   <FormFieldRenderer 
     message={item.originalMessage}
     onFieldUpdate={handleFieldUpdate}
