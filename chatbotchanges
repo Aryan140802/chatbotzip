@@ -48,14 +48,11 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
-// Replace your FormFieldRenderer component with this updated version:
-
 const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit, onFormClose }) => {
   const [expandedField, setExpandedField] = useState(null);
   const [inputValues, setInputValues] = useState({});
   const [formData, setFormData] = useState({});
   
-  // Move the early return AFTER all hooks
   const formFields = {};
   const optionFields = {};
   const regularOptions = [];
@@ -92,7 +89,7 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
     return null;
   }
 
-  // Re-extract fields for rendering (since we can't use the ones from useEffect)
+  // Re-extract fields for rendering
   Object.keys(message).forEach(key => {
     if (key === 'options') {
       regularOptions.push(...message[key]);
@@ -376,293 +373,7 @@ const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit
     </div>
   );
 };
-  const handleKeyPress = (e, fieldName) => {
-    if (e.key === 'Enter') {
-      handleInputSubmit(fieldName);
-    }
-  };
 
-  const handleRemoveItem = (fieldName, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: prev[fieldName].filter((_, i) => i !== index)
-    }));
-  };
-
-  const getDisplayValue = (fieldName) => {
-    const formValue = formData[fieldName];
-    const originalValue = formFields[fieldName];
-    
-    // Use form data if available, otherwise use original value
-    const value = formValue !== undefined ? formValue : originalValue;
-    
-    if (Array.isArray(value)) {
-      return value.length === 0 ? 'No items selected' : `${value.length} item(s) selected`;
-    }
-    return value || 'Not set';
-  };
-
-  const getDropdownOptions = (fieldName, fieldValue) => {
-    // If field is an array with values, show those values
-    if (Array.isArray(fieldValue) && fieldValue.length > 0) {
-      return fieldValue;
-    }
-    // Otherwise, show options from optionFields
-    return optionFields[fieldName] || [];
-  };
-
-  // Add these two functions to your Chatbot component, right after your existing handleOptionClick function:
-
-const handleFormSubmit = async (formData) => {
-  // Convert form data to a formatted string
-  const formSubmission = Object.entries(formData)
-    .map(([key, value]) => {
-      if (Array.isArray(value)) {
-        return `${key}: ${value.join(', ')}`;
-      }
-      return `${key}: ${value}`;
-    })
-    .join('\n');
-
-  const userMsg = {
-    id: Date.now(),
-    text: `Form Submitted:\n${formSubmission}`,
-    sender: "user",
-    time: getCurrentTime(),
-  };
-
-  setMessages((prev) => [...prev, userMsg]);
-  setIsTyping(true);
-  setFormDisabled(true);
-
-  try {
-    setApiTimeout(() => {});
-    const res = await postMessage(`FORM_SUBMIT: ${formSubmission}`);
-    clearCurrentTimeout();
-
-    const latest = res.data.chat_history?.slice(-1)[0];
-    if (latest) {
-      const botResponse = {
-        id: Date.now(),
-        text: latest.message || "",
-        sender: "bot",
-        time: getCurrentTime(),
-        options: latest.options || [],
-        originalMessage: latest.message
-      };
-      setMessages((prev) => [...prev, botResponse]);
-      setFormDisabled(!checkEnableForm(botResponse.text));
-    }
-  } catch {
-    clearCurrentTimeout();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: "An error occurred while submitting the form. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      },
-    ]);
-  }
-
-  setIsTyping(false);
-};
-
-const handleFormClose = async () => {
-  const userMsg = {
-    id: Date.now(),
-    text: "Close form and return to main menu",
-    sender: "user",
-    time: getCurrentTime(),
-  };
-
-  setMessages((prev) => [...prev, userMsg]);
-  setIsTyping(true);
-  setFormDisabled(true);
-
-  try {
-    setApiTimeout(() => {});
-    const res = await postMessage("CLOSE_FORM");
-    clearCurrentTimeout();
-
-    const latest = res.data.chat_history?.slice(-1)[0];
-    if (latest) {
-      const botResponse = {
-        id: Date.now(),
-        text: latest.message || "",
-        sender: "bot",
-        time: getCurrentTime(),
-        options: latest.options || [],
-        originalMessage: latest.message
-      };
-      setMessages((prev) => [...prev, botResponse]);
-      setFormDisabled(!checkEnableForm(botResponse.text));
-    }
-  } catch {
-    clearCurrentTimeout();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: "An error occurred. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      },
-    ]);
-  }
-
-  setIsTyping(false);
-};
-  const isFormValid = () => {
-    const requiredFields = Object.keys(formFields).filter(fieldName => {
-      const fieldValue = formFields[fieldName];
-      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
-    });
-
-    return requiredFields.every(fieldName => formData[fieldName]);
-  };
-
-  return (
-    <div className="form-container">
-      <div className="form-header">
-        <h4>Form Fields:</h4>
-        <button 
-          className="close-form-button"
-          onClick={onFormClose}
-          title="Close form and return to main menu"
-        >
-          ✕
-        </button>
-      </div>
-      
-      {Object.keys(formFields).map(fieldName => {
-        const fieldValue = formFields[fieldName];
-        const isEmpty = isFieldEmpty(fieldValue);
-        const dropdownOptions = getDropdownOptions(fieldName, fieldValue);
-        const hasDropdownOptions = hasFieldValues(fieldValue, fieldName);
-        const currentFormValue = formData[fieldName];
-        
-        return (
-          <div key={fieldName} className="form-field">
-            <label>
-              {fieldName}:
-            </label>
-            
-            {isEmpty ? (
-              <div className="input-container">
-                <input
-                  id={`field-${fieldName}`}
-                  type={fieldValue === "date" ? "date" : "text"}
-                  placeholder={`Enter ${fieldName}...`}
-                  value={inputValues[fieldName] || ''}
-                  onChange={(e) => handleInputChange(fieldName, e.target.value)}
-                  onKeyPress={(e) => handleKeyPress(e, fieldName)}
-                />
-                <button
-                  className="add-button"
-                  onClick={() => handleInputSubmit(fieldName)}
-                  disabled={!inputValues[fieldName]?.trim()}
-                >
-                  Add
-                </button>
-                <span className={`field-status ${Array.isArray(fieldValue) ? 'add-items' : 'required'}`}>
-                  {Array.isArray(fieldValue) ? 'Add items' : 'Required'}
-                </span>
-              </div>
-            ) : (
-              <div className="dropdown-field">
-                <div
-                  className={`dropdown-trigger ${hasDropdownOptions ? 'active' : 'disabled'} ${expandedField === fieldName ? 'active' : ''}`}
-                  onClick={() => handleFieldClick(fieldName)}
-                >
-                  <span className={`display-value ${
-                    Array.isArray(currentFormValue) && currentFormValue?.length === 0 ? 'empty' : 
-                    Array.isArray(currentFormValue) && currentFormValue?.length > 0 ? 'multiple-items' : ''
-                  }`}>
-                    {getDisplayValue(fieldName)}
-                  </span>
-                  {hasDropdownOptions && (
-                    <span className={`dropdown-arrow ${expandedField === fieldName ? 'expanded' : ''}`}>
-                      ▼
-                    </span>
-                  )}
-                </div>
-                
-                {hasDropdownOptions && expandedField === fieldName && (
-                  <div className="dropdown-menu">
-                    {dropdownOptions.map((option, index) => (
-                      <div
-                        key={index}
-                        className="dropdown-option"
-                        onClick={() => handleOptionSelect(fieldName, option)}
-                      >
-                        {option}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Show selected items for array fields */}
-            {Array.isArray(currentFormValue) && currentFormValue.length > 0 && (
-              <div className="selected-items">
-                {currentFormValue.map((item, index) => (
-                  <div key={index} className="selected-item">
-                    <span>{item}</span>
-                    <button
-                      className="remove-item-button"
-                      onClick={() => handleRemoveItem(fieldName, index)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Show current value for single fields */}
-            {!Array.isArray(currentFormValue) && currentFormValue && !isEmpty && (
-              <div className="current-value">
-                Current: <strong>{currentFormValue}</strong>
-              </div>
-            )}
-          </div>
-        );
-      })}
-      
-      <div className="form-actions">
-        <button 
-          className={`submit-form-button ${isFormValid() ? 'enabled' : 'disabled'}`}
-          onClick={handleFormSubmit}
-          disabled={!isFormValid()}
-        >
-          Submit Form
-        </button>
-      </div>
-      
-      {regularOptions.length > 0 && (
-        <div className="options-section">
-          <div className="options-list">
-            {regularOptions.map((opt, i) => {
-              const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim();
-              return (
-                <button 
-                  key={i} 
-                  className="option-button" 
-                  onClick={() => onOptionClick(opt)}
-                >
-                  {displayText}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -769,6 +480,108 @@ const Chatbot = ({ setChatbotMinimized }) => {
     try {
       setApiTimeout(() => {});
       const res = await postMessage(updateMessage);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+          originalMessage: latest.message
+        };
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch {
+      clearCurrentTimeout();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
+    }
+
+    setIsTyping(false);
+  };
+
+  const handleFormSubmit = async (formData) => {
+    // Convert form data to a formatted string
+    const formSubmission = Object.entries(formData)
+      .map(([key, value]) => {
+        if (Array.isArray(value)) {
+          return `${key}: ${value.join(', ')}`;
+        }
+        return `${key}: ${value}`;
+      })
+      .join('\n');
+
+    const userMsg = {
+      id: Date.now(),
+      text: `Form Submitted:\n${formSubmission}`,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+    setFormDisabled(true);
+
+    try {
+      setApiTimeout(() => {});
+      const res = await postMessage(`FORM_SUBMIT: ${formSubmission}`);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+          originalMessage: latest.message
+        };
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch {
+      clearCurrentTimeout();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred while submitting the form. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
+    }
+
+    setIsTyping(false);
+  };
+
+  const handleFormClose = async () => {
+    const userMsg = {
+      id: Date.now(),
+      text: "Close form and return to main menu",
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+    setFormDisabled(true);
+
+    try {
+      setApiTimeout(() => {});
+      const res = await postMessage("CLOSE_FORM");
       clearCurrentTimeout();
 
       const latest = res.data.chat_history?.slice(-1)[0];
@@ -941,20 +754,20 @@ const Chatbot = ({ setChatbotMinimized }) => {
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
                     {item.sender === "bot" ? (
                       <>
-   {isFormMessage(item.originalMessage) ? (
-  <FormFieldRenderer 
-    message={item.originalMessage}
-    onFieldUpdate={handleFieldUpdate}
-    onOptionClick={handleOptionClick}
-    onFormSubmit={handleFormSubmit}
-    onFormClose={handleFormClose}
-  />
-) : (
-  <div
-    className="message-content"
-    dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
-  />
-)}
+                        {isFormMessage(item.originalMessage) ? (
+                          <FormFieldRenderer 
+                            message={item.originalMessage}
+                            onFieldUpdate={handleFieldUpdate}
+                            onOptionClick={handleOptionClick}
+                            onFormSubmit={handleFormSubmit}
+                            onFormClose={handleFormClose}
+                          />
+                        ) : (
+                          <div
+                            className="message-content"
+                            dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                          />
+                        )}
                       </>
                     ) : (
                       <div className="message-content">{item.text}</div>
@@ -1022,85 +835,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-
-
-
-
-
-.submit-form-button.enabled:hover {
-  background: #1976d2;
-  transform: translateY(-1px);
-}
-
-.submit-form-button.disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.submit-form-button:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-/* Update existing form field styles if needed */
-.form-field {
-  margin-bottom: 15px;
-}
-
-.form-field label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: #333;
-}
-
-.display-value.empty {
-  color: #999;
-  font-style: italic;
-}
-
-.display-value.multiple-items {
-  color: #2196f3;
-  font-weight: 500;
-}
-
-
-
-src/components/ChatBot.jsx
-  Line 95:3:    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
-  Line 214:11:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
-  Line 217:3:   'setMessages' is not defined                                                                                                                                                                 no-undef
-  Line 218:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
-  Line 219:3:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
-  Line 222:5:   'setApiTimeout' is not defined                                                                                                                                                               no-undef
-  Line 224:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
-  Line 232:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
-  Line 236:7:   'setMessages' is not defined                                                                                                                                                                 no-undef
-  Line 237:7:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
-  Line 237:24:  'checkEnableForm' is not defined                                                                                                                                                             no-undef
-  Line 240:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
-  Line 241:5:   'setMessages' is not defined                                                                                                                                                                 no-undef
-  Line 247:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
-  Line 252:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
-  Line 260:11:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
-  Line 263:3:   'setMessages' is not defined                                                                                                                                                                 no-undef
-  Line 264:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
-  Line 265:3:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
-  Line 268:5:   'setApiTimeout' is not defined                                                                                                                                                               no-undef
-  Line 270:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
-  Line 278:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
-  Line 282:7:   'setMessages' is not defined                                                                                                                                                                 no-undef
-  Line 283:7:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
-  Line 283:24:  'checkEnableForm' is not defined                                                                                                                                                             no-undef
-  Line 286:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
-  Line 287:5:   'setMessages' is not defined                                                                                                                                                                 no-undef
-  Line 293:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
-  Line 298:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
-  Line 734:19:  'handleFormSubmit' is not defined                                                                                                                                                            no-undef
-  Line 735:18:  'handleFormClose' is not defined                                                                                                                                                             no-undef
-
-Search for the keywords to learn more about each error.
-
-
