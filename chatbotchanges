@@ -48,36 +48,19 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
-const FormFieldRenderer = ({ 
-  message, 
-  onFieldUpdate, 
-  onOptionClick, 
-  onFormSubmit, 
-  onFormClose,
-  getCurrentTime,
-  setMessages,
-  setIsTyping,
-  setFormDisabled,
-  setApiTimeout,
-  clearCurrentTimeout,
-  checkEnableForm
-}) => {
+const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit, onFormClose }) => {
   const [expandedField, setExpandedField] = useState(null);
   const [formData, setFormData] = useState({});
   
-  // Declare these variables at the component level
   const formFields = {};
   const optionFields = {};
   const regularOptions = [];
 
   // Initialize form data with current field values
   useEffect(() => {
-    if (typeof message !== 'object' || message === null) return;
-
-    // Clear previous values
-    regularOptions.length = 0;
-    Object.keys(optionFields).forEach(key => delete optionFields[key]);
-    Object.keys(formFields).forEach(key => delete formFields[key]);
+    if (typeof message !== 'object' || message === null) {
+      return;
+    }
 
     Object.keys(message).forEach(key => {
       if (key === 'options') {
@@ -91,10 +74,10 @@ const FormFieldRenderer = ({
     });
 
     const initialFormData = {};
-    Object.entries(message).forEach(([key, value]) => {
-      if (key !== 'sender' && key !== 'options') {
-        // Convert backend array data to form format
-        initialFormData[key] = Array.isArray(value) ? value : [value];
+    Object.keys(formFields).forEach(fieldName => {
+      const fieldValue = formFields[fieldName];
+      if (!isFieldEmpty(fieldValue)) {
+        initialFormData[fieldName] = fieldValue;
       }
     });
     setFormData(initialFormData);
@@ -202,61 +185,23 @@ const FormFieldRenderer = ({
     return optionFields[fieldName] || [];
   };
 
- const handleFormSubmit = async (formData) => {
-  // Convert form data to array format for backend
-  const formSubmission = Object.entries(formData).map(([fieldName, fieldValue]) => ({
-    fieldName,
-    fieldValue: Array.isArray(fieldValue) ? fieldValue : [fieldValue] // Ensure value is always an array
-  }));
-
-  const userMsg = {
-    id: Date.now(),
-    text: "Form submitted", // Simple display message
-    sender: "user",
-    time: getCurrentTime(),
-  };
-
-  setMessages((prev) => [...prev, userMsg]);
-  setIsTyping(true);
-  setFormDisabled(true);
-
-  try {
-    setApiTimeout(() => {});
-    const res = await postMessage({
-      url: "https://10.191.171.12:5443/Pyportal/EIS-GINI",
-      data: formSubmission
+  const handleFormSubmit = () => {
+    // Check if all required fields are filled
+    const requiredFields = Object.keys(formFields).filter(fieldName => {
+      const fieldValue = formFields[fieldName];
+      return isFieldEmpty(fieldValue) && !Array.isArray(fieldValue);
     });
-    clearCurrentTimeout();
 
-    const latest = res.data.chat_history?.slice(-1)[0];
-    if (latest) {
-      const botResponse = {
-        id: Date.now(),
-        text: latest.message || "",
-        sender: "bot",
-        time: getCurrentTime(),
-        options: latest.options || [],
-        originalMessage: latest.fields || latest.message // Handle both field-based and text responses
-      };
-      setMessages((prev) => [...prev, botResponse]);
-      setFormDisabled(!checkEnableForm(botResponse.text));
+    const missingFields = requiredFields.filter(fieldName => !formData[fieldName]);
+    
+    if (missingFields.length > 0) {
+      alert(`Please fill in all required fields: ${missingFields.join(', ')}`);
+      return;
     }
-  } catch (error) {
-    clearCurrentTimeout();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: "An error occurred while submitting the form. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      },
-    ]);
-    console.error("Form submission error:", error);
-  }
 
-  setIsTyping(false);
-};
+    // Submit the form data
+    onFormSubmit(formData);
+  };
 
   const isFormValid = () => {
     const requiredFields = Object.keys(formFields).filter(fieldName => {
@@ -432,55 +377,48 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
-const getPostData = async () => {
-  try {
-    setIsTyping(true);
-    setApiTimeout(() => {
-      setMessages([{
-        id: Date.now(),
-        text: "Unable to load messages. Please try again later.",
-        sender: "bot",
-        time: getCurrentTime(),
-      }]);
-    });
+  const getPostData = async () => {
+    try {
+      setIsTyping(true);
+      setApiTimeout(() => {
+        setMessages([
+          {
+            id: Date.now(),
+            text: "Unable to load messages. Please try again later.",
+            sender: "bot",
+            time: getCurrentTime(),
+          },
+        ]);
+      });
 
-    const res = await getPost();
-    clearCurrentTimeout();
+      const res = await getPost();
+      clearCurrentTimeout();
 
-    const formattedMessages = res.data.chat_history.map((item, index) => {
-      // Convert backend array data to proper format
-      const formattedFields = {};
-      if (item.fields) {
-        item.fields.forEach(field => {
-          formattedFields[field.fieldName] = field.fieldValue;
-        });
-      }
-
-      return {
+      const formattedMessages = res.data.chat_history.map((item, index) => ({
         id: Date.now() + index,
         text: item.message || "",
         sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
         time: getCurrentTime(),
         options: item.options || [],
-        originalMessage: item.fields ? formattedFields : item.message
-      };
-    });
+        originalMessage: item.message // Store original message for form rendering
+      }));
 
-    setMessages(formattedMessages);
-    setFormDisabled(true);
-    setIsTyping(false);
-  } catch (error) {
-    clearCurrentTimeout();
-    setIsTyping(false);
-    setMessages([{
-      id: Date.now(),
-      text: "An error occurred while loading messages.",
-      sender: "bot",
-      time: getCurrentTime(),
-    }]);
-    console.error("Error fetching data:", error);
-  }
-};
+      setMessages(formattedMessages);
+      setFormDisabled(true);
+      setIsTyping(false);
+    } catch {
+      clearCurrentTimeout();
+      setIsTyping(false);
+      setMessages([
+        {
+          id: Date.now(),
+          text: "An error occurred while loading messages.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
+    }
+  };
 
   useEffect(() => {
     getPostData();
@@ -743,13 +681,9 @@ const getPostData = async () => {
 
   // Check if message is a form object
   const isFormMessage = (message) => {
-  // Check if it's a form object (has fields that aren't standard message properties)
-  return typeof message === 'object' && message !== null && 
-         !Array.isArray(message) && 
-         Object.keys(message).some(key => 
-           !['id', 'text', 'sender', 'time', 'options'].includes(key)
-         );
-};
+    return typeof message === 'object' && message !== null && 
+           !Array.isArray(message) && typeof message !== 'string';
+  };
 
   return (
     <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
@@ -788,20 +722,13 @@ const getPostData = async () => {
                     {item.sender === "bot" ? (
                       <>
                         {isFormMessage(item.originalMessage) ? (
-                      <FormFieldRenderer 
-  message={item.originalMessage}
-  onFieldUpdate={handleFieldUpdate}
-  onOptionClick={handleOptionClick}
-  onFormSubmit={handleFormSubmit}
-  onFormClose={handleFormClose}
-  getCurrentTime={getCurrentTime}
-  setMessages={setMessages}
-  setIsTyping={setIsTyping}
-  setFormDisabled={setFormDisabled}
-  setApiTimeout={setApiTimeout}
-  clearCurrentTimeout={clearCurrentTimeout}
-  checkEnableForm={checkEnableForm}
-/>
+                          <FormFieldRenderer 
+                            message={item.originalMessage}
+                            onFieldUpdate={handleFieldUpdate}
+                            onOptionClick={handleOptionClick}
+                            onFormSubmit={handleFormSubmit}
+                            onFormClose={handleFormClose}
+                          />
                         ) : (
                           <div
                             className="message-content"
@@ -875,97 +802,3 @@ const getPostData = async () => {
 };
 
 export default Chatbot;
-
-
-
-
-
-
-
-
-
-
-/* Submit button styles */
-.form-submit {
-  background: linear-gradient(135deg, rgb(102, 126, 234), rgb(118, 75, 162));
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 24px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 100%;
-  margin-top: 10px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.form-submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-/* Form Field Styles */
-.form-field {
-  margin-bottom: 20px;
-}
-
-.field-label {
-  display: block;
-  color: rgb(118, 75, 162);
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 14px;
-  text-transform: capitalize;
-}
-
-.input-container {
-  position: relative;
-}
-
-.form-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid rgba(102, 126, 234, 0.3);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #333;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: rgb(102, 126, 234);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.form-input::placeholder {
-  color: rgba(118, 75, 162, 0.5);
-  font-weight: 400;
-}
-
-.close-form-button {
-  background: linear-gradient(135deg, rgb(102, 126, 234), rgb(118, 75, 162));
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.close-form-button:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
