@@ -335,3 +335,99 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+{
+    "chat_history": [
+        {
+            "sender": "Bot",
+            "message": "Hello! Please select from the following options:",
+            "options": [
+                "1.Team Info",
+                "2. Transaction Info",
+                "3. Cache Info",
+                "4. FAR Information",
+                "5.Server Configuration",
+                "6.WorkLoad",
+                "z. Other"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": "far information"
+        },
+        {
+            "sender": "Bot",
+            "message": "select below options:",
+            "options": [
+                "1.Enter FAR ID",
+                "2. Have Multiple Fields",
+                "3.Main Menu"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": "have multiple fields"
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "Subject": "",
+                "Source": "",
+                "Destination": "",
+                "Zone": "",
+                "Port": "",
+                "expiryoptions": [
+                    "before",
+                    "after"
+                ],
+                "expiry": "date",
+                "createdoptions": [
+                    "before",
+                    "after"
+                ],
+                "created": "date"
+            },
+            "options": [
+                "1.Back",
+                "2.main menu"
+            ]
+        }
+    ]
+}
+
+
+
+
+ {
+            "sender": "Bot",
+            "message": "",
+            "options": [
+                "1.Team Info",
+                "2. Transaction Info",
+                "3. Cache Info",
+                "4. FAR Information",
+                "5.Server Configuration",
+                "6.WorkLoad",
+                "z. Other"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": "workload"
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "layer": [],
+                "server": [],
+                "eg": [],
+                "service": []
+            },
+            "options": [
+                "1.main menu"
+            ]
+        }
+    ]
+}
