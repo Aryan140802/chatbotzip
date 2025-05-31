@@ -339,6 +339,15 @@ export default Chatbot;
 
 
 
+33
+: 
+{sender: "You", message: "have multiple fields"}
+message
+: 
+"have multiple fields"
+sender
+: 
+"You"
 34
 : 
 {sender: "Bot",…}
@@ -366,26 +375,24 @@ created
 createdoptions
 : 
 ["before", "after"]
-0
-: 
-"before"
-1
-: 
-"after"
 expiry
 : 
 "date"
 expiryoptions
 : 
 ["before", "after"]
+options
+: 
+["1.Back", "2.main menu"]
 0
 : 
-"before"
+"1.Back"
 1
 : 
-"after"
-
-
+"2.main menu"
+sender
+: 
+"Bot"
 
 
 
