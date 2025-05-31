@@ -335,3 +335,96 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+
+34
+: 
+{sender: "Bot",…}
+message
+: 
+{Subject: "", Source: "", Destination: "", Zone: "", Port: "", expiryoptions: ["before", "after"],…}
+Destination
+: 
+""
+Port
+: 
+""
+Source
+: 
+""
+Subject
+: 
+""
+Zone
+: 
+""
+created
+: 
+"date"
+createdoptions
+: 
+["before", "after"]
+0
+: 
+"before"
+1
+: 
+"after"
+expiry
+: 
+"date"
+expiryoptions
+: 
+["before", "after"]
+0
+: 
+"before"
+1
+: 
+"after"
+
+
+
+
+
+37
+: 
+{sender: "You", message: "workload"}
+message
+: 
+"workload"
+sender
+: 
+"You"
+38
+: 
+{sender: "Bot", message: {layer: [], server: [], eg: [], service: []}, options: ["1.main menu"]}
+message
+: 
+{layer: [], server: [], eg: [], service: []}
+eg
+: 
+[]
+layer
+: 
+[]
+server
+: 
+[]
+service
+: 
+[]
+options
+: 
+["1.main menu"]
+0
+: 
+"1.main menu"
+sender
+: 
+"Bot"
+
+
+https://10.191.171.12:5443/PyPortal/EIS-GINI
