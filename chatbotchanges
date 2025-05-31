@@ -850,3 +850,42 @@ export default Chatbot;
   color: #2196f3;
   font-weight: 500;
 }
+
+
+
+src/components/ChatBot.jsx
+  Line 95:3:    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  Line 214:11:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
+  Line 217:3:   'setMessages' is not defined                                                                                                                                                                 no-undef
+  Line 218:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
+  Line 219:3:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
+  Line 222:5:   'setApiTimeout' is not defined                                                                                                                                                               no-undef
+  Line 224:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
+  Line 232:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
+  Line 236:7:   'setMessages' is not defined                                                                                                                                                                 no-undef
+  Line 237:7:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
+  Line 237:24:  'checkEnableForm' is not defined                                                                                                                                                             no-undef
+  Line 240:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
+  Line 241:5:   'setMessages' is not defined                                                                                                                                                                 no-undef
+  Line 247:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
+  Line 252:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
+  Line 260:11:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
+  Line 263:3:   'setMessages' is not defined                                                                                                                                                                 no-undef
+  Line 264:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
+  Line 265:3:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
+  Line 268:5:   'setApiTimeout' is not defined                                                                                                                                                               no-undef
+  Line 270:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
+  Line 278:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
+  Line 282:7:   'setMessages' is not defined                                                                                                                                                                 no-undef
+  Line 283:7:   'setFormDisabled' is not defined                                                                                                                                                             no-undef
+  Line 283:24:  'checkEnableForm' is not defined                                                                                                                                                             no-undef
+  Line 286:5:   'clearCurrentTimeout' is not defined                                                                                                                                                         no-undef
+  Line 287:5:   'setMessages' is not defined                                                                                                                                                                 no-undef
+  Line 293:15:  'getCurrentTime' is not defined                                                                                                                                                              no-undef
+  Line 298:3:   'setIsTyping' is not defined                                                                                                                                                                 no-undef
+  Line 734:19:  'handleFormSubmit' is not defined                                                                                                                                                            no-undef
+  Line 735:18:  'handleFormClose' is not defined                                                                                                                                                             no-undef
+
+Search for the keywords to learn more about each error.
+
+
