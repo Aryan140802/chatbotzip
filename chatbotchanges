@@ -48,7 +48,20 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
-const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick, onFormSubmit, onFormClose }) => {
+const FormFieldRenderer = ({ 
+  message, 
+  onFieldUpdate, 
+  onOptionClick, 
+  onFormSubmit, 
+  onFormClose,
+  getCurrentTime,
+  setMessages,
+  setIsTyping,
+  setFormDisabled,
+  setApiTimeout,
+  clearCurrentTimeout,
+  checkEnableForm
+}) => {
   const [expandedField, setExpandedField] = useState(null);
   const [formData, setFormData] = useState({});
   
@@ -775,12 +788,19 @@ const getPostData = async () => {
                     {item.sender === "bot" ? (
                       <>
                         {isFormMessage(item.originalMessage) ? (
-                         <FormFieldRenderer 
+                      <FormFieldRenderer 
   message={item.originalMessage}
   onFieldUpdate={handleFieldUpdate}
   onOptionClick={handleOptionClick}
   onFormSubmit={handleFormSubmit}
   onFormClose={handleFormClose}
+  getCurrentTime={getCurrentTime}
+  setMessages={setMessages}
+  setIsTyping={setIsTyping}
+  setFormDisabled={setFormDisabled}
+  setApiTimeout={setApiTimeout}
+  clearCurrentTimeout={clearCurrentTimeout}
+  checkEnableForm={checkEnableForm}
 />
                         ) : (
                           <div
