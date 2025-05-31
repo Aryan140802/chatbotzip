@@ -48,6 +48,198 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
+// Replace your FormFieldRenderer component with this updated version:
+
+const FormFieldRenderer = ({ message, onFieldUpdate, onOptionClick }) => {
+  const [expandedField, setExpandedField] = useState(null);
+  const [inputValues, setInputValues] = useState({});
+  
+  if (typeof message !== 'object' || message === null) {
+    return null;
+  }
+
+  // Extract regular fields and option fields
+  const formFields = {};
+  const optionFields = {};
+  const regularOptions = [];
+
+  Object.keys(message).forEach(key => {
+    if (key === 'options') {
+      regularOptions.push(...message[key]);
+    } else if (key.endsWith('options')) {
+      const fieldName = key.replace('options', '');
+      optionFields[fieldName] = message[key];
+    } else if (key !== 'sender') {
+      formFields[key] = message[key];
+    }
+  });
+
+  // Helper function to check if a field is empty
+  const isFieldEmpty = (fieldValue) => {
+    if (fieldValue === "" || fieldValue === "date") return true;
+    if (Array.isArray(fieldValue) && fieldValue.length === 0) return true;
+    return false;
+  };
+
+  // Helper function to check if field has values to show in dropdown
+  const hasFieldValues = (fieldValue, fieldName) => {
+    if (Array.isArray(fieldValue) && fieldValue.length > 0) return true;
+    if (optionFields[fieldName] && optionFields[fieldName].length > 0) return true;
+    return false;
+  };
+
+  const handleFieldClick = (fieldName) => {
+    const fieldValue = formFields[fieldName];
+    
+    if (isFieldEmpty(fieldValue)) {
+      // If field is empty, focus on input
+      const input = document.getElementById(`field-${fieldName}`);
+      if (input) input.focus();
+    } else if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+      // If field is an array with values, toggle dropdown
+      setExpandedField(expandedField === fieldName ? null : fieldName);
+    } else if (optionFields[fieldName] && optionFields[fieldName].length > 0) {
+      // If field has options, toggle dropdown
+      setExpandedField(expandedField === fieldName ? null : fieldName);
+    }
+  };
+
+  const handleOptionSelect = (fieldName, option) => {
+    onFieldUpdate(fieldName, option);
+    setExpandedField(null);
+  };
+
+  const handleInputChange = (fieldName, value) => {
+    setInputValues(prev => ({ ...prev, [fieldName]: value }));
+  };
+
+  const handleInputSubmit = (fieldName) => {
+    const value = inputValues[fieldName];
+    if (value && value.trim()) {
+      onFieldUpdate(fieldName, value.trim());
+      setInputValues(prev => ({ ...prev, [fieldName]: '' }));
+    }
+  };
+
+  const handleKeyPress = (e, fieldName) => {
+    if (e.key === 'Enter') {
+      handleInputSubmit(fieldName);
+    }
+  };
+
+  const getDisplayValue = (fieldValue) => {
+    if (Array.isArray(fieldValue)) {
+      return fieldValue.length === 0 ? 'No items selected' : `${fieldValue.length} item(s) selected`;
+    }
+    return fieldValue;
+  };
+
+  const getDropdownOptions = (fieldName, fieldValue) => {
+    // If field is an array with values, show those values
+    if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+      return fieldValue;
+    }
+    // Otherwise, show options from optionFields
+    return optionFields[fieldName] || [];
+  };
+
+  return (
+    <div className="form-container">
+      <h4>Form Fields:</h4>
+      
+      {Object.keys(formFields).map(fieldName => {
+        const fieldValue = formFields[fieldName];
+        const isEmpty = isFieldEmpty(fieldValue);
+        const dropdownOptions = getDropdownOptions(fieldName, fieldValue);
+        const hasDropdownOptions = hasFieldValues(fieldValue, fieldName);
+        
+        return (
+          <div key={fieldName} className="form-field">
+            <label>
+              {fieldName}:
+            </label>
+            
+            {isEmpty ? (
+              <div className="input-container">
+                <input
+                  id={`field-${fieldName}`}
+                  type={fieldValue === "date" ? "date" : "text"}
+                  placeholder={`Enter ${fieldName}...`}
+                  value={inputValues[fieldName] || ''}
+                  onChange={(e) => handleInputChange(fieldName, e.target.value)}
+                  onKeyPress={(e) => handleKeyPress(e, fieldName)}
+                />
+                <button
+                  className="add-button"
+                  onClick={() => handleInputSubmit(fieldName)}
+                  disabled={!inputValues[fieldName]?.trim()}
+                >
+                  Add
+                </button>
+                <span className={`field-status ${Array.isArray(fieldValue) ? 'add-items' : 'required'}`}>
+                  {Array.isArray(fieldValue) ? 'Add items' : 'Required'}
+                </span>
+              </div>
+            ) : (
+              <div className="dropdown-field">
+                <div
+                  className={`dropdown-trigger ${hasDropdownOptions ? 'active' : 'disabled'} ${expandedField === fieldName ? 'active' : ''}`}
+                  onClick={() => handleFieldClick(fieldName)}
+                >
+                  <span className={`display-value ${
+                    Array.isArray(fieldValue) && fieldValue.length === 0 ? 'empty' : 
+                    Array.isArray(fieldValue) && fieldValue.length > 0 ? 'multiple-items' : ''
+                  }`}>
+                    {getDisplayValue(fieldValue)}
+                  </span>
+                  {hasDropdownOptions && (
+                    <span className={`dropdown-arrow ${expandedField === fieldName ? 'expanded' : ''}`}>
+                      ▼
+                    </span>
+                  )}
+                </div>
+                
+                {hasDropdownOptions && expandedField === fieldName && (
+                  <div className="dropdown-menu">
+                    {dropdownOptions.map((option, index) => (
+                      <div
+                        key={index}
+                        className="dropdown-option"
+                        onClick={() => handleOptionSelect(fieldName, option)}
+                      >
+                        {option}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      
+      {regularOptions.length > 0 && (
+        <div className="options-section">
+          <div className="options-list">
+            {regularOptions.map((opt, i) => {
+              const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim();
+              return (
+                <button 
+                  key={i} 
+                  className="option-button" 
+                  onClick={() => onOptionClick(opt)}
+                >
+                  {displayText}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -102,6 +294,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
         time: getCurrentTime(),
         options: item.options || [],
+        originalMessage: item.message // Store original message for form rendering
       }));
 
       setMessages(formattedMessages);
@@ -131,8 +324,57 @@ const Chatbot = ({ setChatbotMinimized }) => {
   }, [messages]);
 
   const checkEnableForm = (text) => {
-    const lowerText = text.toLowerCase();
+    const lowerText = typeof text === 'string' ? text.toLowerCase() : '';
     return lowerText.includes("enter") || lowerText.includes("provide");
+  };
+
+  const handleFieldUpdate = async (fieldName, value) => {
+    // Send field update to API
+    const updateMessage = `${fieldName}: ${value}`;
+    
+    const userMsg = {
+      id: Date.now(),
+      text: updateMessage,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setIsTyping(true);
+    setFormDisabled(true);
+
+    try {
+      setApiTimeout(() => {});
+      const res = await postMessage(updateMessage);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+          originalMessage: latest.message
+        };
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch {
+      clearCurrentTimeout();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
+    }
+
+    setIsTyping(false);
   };
 
   const handleSendMessage = async (e) => {
@@ -164,6 +406,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || [],
+          originalMessage: latest.message
         };
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
@@ -211,6 +454,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
           sender: "bot",
           time: getCurrentTime(),
           options: latest.options || [],
+          originalMessage: latest.message
         };
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
@@ -230,6 +474,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleRestore = () => {
     setIsMinimized(false);
     setChatbotMinimized(false);
+  };
+
+  // Check if message is a form object
+  const isFormMessage = (message) => {
+    return typeof message === 'object' && message !== null && 
+           !Array.isArray(message) && typeof message !== 'string';
   };
 
   return (
@@ -267,14 +517,26 @@ const Chatbot = ({ setChatbotMinimized }) => {
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
                     {item.sender === "bot" ? (
-                      <div
-                        className="message-content"
-                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
-                      />
+                      <>
+                        {isFormMessage(item.originalMessage) ? (
+                          <FormFieldRenderer 
+                            message={item.originalMessage}
+                            onFieldUpdate={handleFieldUpdate}
+                            onOptionClick={handleOptionClick}
+                          />
+                        ) : (
+                          <div
+                            className="message-content"
+                            dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                          />
+                        )}
+                      </>
                     ) : (
                       <div className="message-content">{item.text}</div>
                     )}
-                    {item.options?.length > 0 && (
+                    
+                    {/* Render regular options for non-form messages */}
+                    {!isFormMessage(item.originalMessage) && item.options?.length > 0 && (
                       <div className="options-list">
                         {item.options.map((opt, i) => {
                           const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
@@ -339,99 +601,480 @@ export default Chatbot;
 
 
 
-33
-: 
-{sender: "You", message: "have multiple fields"}
-message
-: 
-"have multiple fields"
-sender
-: 
-"You"
-34
-: 
-{sender: "Bot",…}
-message
-: 
-{Subject: "", Source: "", Destination: "", Zone: "", Port: "", expiryoptions: ["before", "after"],…}
-Destination
-: 
-""
-Port
-: 
-""
-Source
-: 
-""
-Subject
-: 
-""
-Zone
-: 
-""
-created
-: 
-"date"
-createdoptions
-: 
-["before", "after"]
-expiry
-: 
-"date"
-expiryoptions
-: 
-["before", "after"]
-options
-: 
-["1.Back", "2.main menu"]
-0
-: 
-"1.Back"
-1
-: 
-"2.main menu"
-sender
-: 
-"Bot"
 
 
 
-37
-: 
-{sender: "You", message: "workload"}
-message
-: 
-"workload"
-sender
-: 
-"You"
-38
-: 
-{sender: "Bot", message: {layer: [], server: [], eg: [], service: []}, options: ["1.main menu"]}
-message
-: 
-{layer: [], server: [], eg: [], service: []}
-eg
-: 
-[]
-layer
-: 
-[]
-server
-: 
-[]
-service
-: 
-[]
-options
-: 
-["1.main menu"]
-0
-: 
-"1.main menu"
-sender
-: 
-"Bot"
+/* Form Container Styles */
+.form-container {
+  background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+  border: 1px solid #e0e6ed;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 10px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.form-container:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-container h4 {
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e8ecf0;
+  display: flex;
+  align-items: center;
+}
+
+.form-container h4::before {
+  content: "📝";
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+/* Form Field Styles */
+.form-field {
+  margin-bottom: 18px;
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #34495e;
+  font-size: 14px;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+}
+
+.form-field label::after {
+  content: "";
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #007bff, #0056b3);
+  display: block;
+  transition: width 0.3s ease;
+  margin-top: 2px;
+}
+
+.form-field:hover label::after {
+  width: 30px;
+}
+
+/* Input Field Styles */
+.form-field input[type="text"],
+.form-field input[type="date"] {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.form-field input[type="text"]:focus,
+.form-field input[type="date"]:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  background: #f8f9ff;
+}
+
+.form-field input[type="text"]:hover,
+.form-field input[type="date"]:hover {
+  border-color: #b0b8c1;
+}
+
+.form-field input[type="text"]::placeholder {
+  color: #8e9aaf;
+  font-style: italic;
+}
+
+/* Input Container with Button */
+.input-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.input-container input {
+  flex: 1;
+}
+
+/* Add Button Styles */
+.add-button {
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.add-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.add-button:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.add-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Field Status Indicator */
+.field-status {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.field-status.required::before {
+  content: "⚠️";
+  font-size: 14px;
+}
+
+.field-status.add-items::before {
+  content: "➕";
+  font-size: 14px;
+}
+
+/* Dropdown Field Styles */
+.dropdown-field {
+  position: relative;
+}
+
+.dropdown-trigger {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: 8px;
+  background: #f8f9fa;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.dropdown-trigger:hover {
+  background: #e9ecef;
+  border-color: #b0b8c1;
+}
+
+.dropdown-trigger.active {
+  border-color: #007bff;
+  background: #f8f9ff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.dropdown-trigger.disabled {
+  background: #e9ecef;
+  cursor: default;
+  color: #6c757d;
+}
+
+.dropdown-arrow {
+  font-size: 12px;
+  color: #6c757d;
+  transition: transform 0.3s ease;
+  margin-left: 8px;
+}
+
+.dropdown-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Menu Styles */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e0e6ed;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-option {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-option:last-child {
+  border-bottom: none;
+}
+
+.dropdown-option:hover {
+  background: linear-gradient(90deg, #f8f9ff 0%, #e8f0ff 100%);
+  color: #007bff;
+  padding-left: 20px;
+}
+
+.dropdown-option:active {
+  background: #e8f0ff;
+}
+
+/* Options Section */
+.options-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px solid #e8ecf0;
+  position: relative;
+}
+
+.options-section::before {
+  content: "Options";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  background: white;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.options-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Option Button Styles */
+.option-button {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.option-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.option-button:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004494 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.option-button:hover::before {
+  left: 100%;
+}
+
+.option-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 123, 255, 0.2);
+}
+
+/* Plain Text Option Styles */
+.plain-text-option {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  color: #495057;
+  font-size: 14px;
+  font-style: italic;
+  margin: 5px 0;
+}
+
+/* Display Value Styles */
+.display-value {
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.display-value.empty {
+  color: #6c757d;
+  font-style: italic;
+}
+
+.display-value.multiple-items {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.display-value.multiple-items::before {
+  content: "📋 ";
+  margin-right: 4px;
+}
+
+/* Scrollbar Styles for Dropdown */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-container {
+    padding: 15px;
+    margin: 8px 0;
+  }
+  
+  .input-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .add-button {
+    margin-top: 8px;
+    padding: 12px;
+  }
+  
+  .options-list {
+    justify-content: center;
+  }
+  
+  .option-button {
+    flex: 1;
+    min-width: calc(50% - 4px);
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container {
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .option-button {
+    min-width: 100%;
+    margin: 2px 0;
+  }
+  
+  .dropdown-menu {
+    max-height: 150px;
+  }
+}
+
+/* Focus Styles for Accessibility */
+.form-field input:focus,
+.dropdown-trigger:focus,
+.option-button:focus,
+.add-button:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .form-container {
+    border: 2px solid #000;
+  }
+  
+  .form-field input,
+  .dropdown-trigger {
+    border: 2px solid #000;
+  }
+  
+  .option-button {
+    background: #000;
+    color: #fff;
+    border: 1px solid #fff;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 
-https://10.191.171.12:5443/PyPortal/EIS-GINI
