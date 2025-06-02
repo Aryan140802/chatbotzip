@@ -42,7 +42,17 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
           ? data.favourites.split(',').map(item => item.trim()).filter(Boolean)
           : [];
 
-        setFavorites(favArray);
+        const favData = data.favourites;
+let favArray = [];
+
+if (Array.isArray(favData)) {
+  favArray = favData;
+} else if (typeof favData === 'string') {
+  favArray = favData.split(',').map(item => item.trim()).filter(Boolean);
+}
+
+setFavorites(favArray);
+
       } catch (err) {
         console.error('Failed to load favorites:', err);
       }
