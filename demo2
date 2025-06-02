@@ -432,20 +432,24 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return lowerText.includes("enter") || lowerText.includes("provide");
   };
 
-  const sendMessageToBackend = async (messageData) => {
+ const sendMessageToBackend = async (messageData) => {
   try {
     setApiTimeout(() => {});
     
-    // Ensure the payload is in the correct format
+    // Format payload according to API requirements
     let payload;
     if (typeof messageData === 'string') {
-      // For regular text messages
+      // For regular text messages - send as object with message property
       payload = { message: messageData };
     } else if (typeof messageData === 'object' && messageData !== null) {
-      // For form data submissions
-      payload = { message: JSON.stringify(messageData) };
+      // For form data submissions - convert object to fields array
+      const fieldsArray = Object.keys(messageData).map(key => ({
+        fieldName: key,
+        fieldValue: [String(messageData[key])]
+      }));
+      payload = { fields: fieldsArray };
     } else {
-      // Fallback
+      // Fallback - send as object with message property
       payload = { message: String(messageData) };
     }
     
