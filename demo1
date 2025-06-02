@@ -6,55 +6,62 @@ import '../styles/Menu.css';
 const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [favorites, setFavorites] = useState([]);
-  const [userId,setUserId] = useState(null);
-  const [password,setPassword] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [password, setPassword] = useState(null);
+
   const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
-  // Get userId from localStorage on mount
+  // Get userId and password from localStorage on mount
   useEffect(() => {
-    const uid = localStorage.getItem('uidd'); // Ensure this key exists
-    const password = localStorage.getItem('password');
-    if (uid && password) {
-            setUserId(uid);
-            setPassword(password);
+    const uid = localStorage.getItem('uidd');
+    const pwd = localStorage.getItem('password');
+    if (uid && pwd) {
+      setUserId(uid);
+      setPassword(pwd);
+    } else {
+      console.warn('No user credentials found in localStorage');
     }
-    else console.warn('No username found in localStorage');
   }, []);
 
- useEffect(() => {
-  if (!userId || !password) return;
+  // Fetch favorites from backend
+  useEffect(() => {
+    if (!userId || !password) return;
 
-  const fetchFavorites = async () => {
-    try {
-      const res = await fetch('/PyPortal/EISHome/postFavourites/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          password
-        }),
-      });
+    const fetchFavorites = async () => {
+      try {
+        const res = await fetch('/PyPortal/EISHome/postFavourites/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, password }),
+        });
 
-      const data = await res.json();
-      setFavorites(data.favourites);
-    } catch (err) {
-      console.error('Failed to load favorites:', err);
-    }
-  };
+        const data = await res.json();
 
-  fetchFavorites();
-}, [userId, password]);
+        // Convert comma-separated string to array
+        const favArray = data.favourites
+          ? data.favourites.split(',').map(item => item.trim()).filter(Boolean)
+          : [];
 
+        setFavorites(favArray);
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
+      }
+    };
+
+    fetchFavorites();
+  }, [userId, password]);
 
   // Update backend when favorites change
   const updateFavoritesOnBackend = async (updatedFavorites) => {
     try {
-      console.log(updatedFavorites)
       await fetch('/PyPortal/EISHome/postFavourites/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        payload : {'favList':updatedFavorites,'userId':userId,'password':password},
-        body: JSON.stringify({ userId: userId, favList: updatedFavorites,password:password}),
+        body: JSON.stringify({
+          userId,
+          password,
+          favList: updatedFavorites, // Send as array
+        }),
       });
     } catch (error) {
       console.error('Failed to update favorites:', error);
@@ -64,18 +71,15 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
   // Toggle favorite
   const toggleFavorite = (name) => {
     setFavorites((prev) => {
-      console.log("this line was executed and will get the data")
-      console.log(prev)
       const updated = prev.includes(name)
         ? prev.filter((fav) => fav !== name)
         : [...prev, name];
-      console.log(updated)
       updateFavoritesOnBackend(updated);
       return updated;
     });
   };
 
-  // Filter + Sort
+  // Filter and sort links
   const filteredLinks = cardLinks
     .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
