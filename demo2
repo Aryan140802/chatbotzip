@@ -113,6 +113,22 @@ const DynamicForm = ({ fields, onSubmit, onCancel }) => {
     const error = errors[name];
 
     switch (type) {
+      case 'date':
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {label || name} {required && <span className="required">*</span>}
+            </label>
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-input ${error ? 'error' : ''}`}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+
       case 'select':
         return (
           <div key={name} className="form-field">
@@ -236,19 +252,63 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
-  // Check if the response contains form fields
+  // Check if the response contains form fields (object with empty string values and arrays)
   const hasFormFields = (response) => {
-    return response && 
-           typeof response === 'object' && 
-           (response.fields || response.form_fields || response.formFields);
+    if (!response || !response.message || typeof response.message !== 'object') {
+      return false;
+    }
+    
+    const message = response.message;
+    // Check if message is an object with properties that look like form fields
+    const keys = Object.keys(message);
+    return keys.length > 0 && keys.some(key => 
+      typeof message[key] === 'string' || 
+      Array.isArray(message[key]) ||
+      key.toLowerCase().includes('options')
+    );
   };
 
-  // Extract form fields from response
+  // Extract form fields from response message object
   const extractFormFields = (response) => {
-    if (response.fields) return response.fields;
-    if (response.form_fields) return response.form_fields;
-    if (response.formFields) return response.formFields;
-    return null;
+    if (!response || !response.message || typeof response.message !== 'object') {
+      return null;
+    }
+    
+    const message = response.message;
+    const fields = [];
+    
+    Object.keys(message).forEach(key => {
+      const value = message[key];
+      
+      if (key.toLowerCase().includes('options') && Array.isArray(value)) {
+        // This is an options array for another field
+        return;
+      }
+      
+      const field = {
+        name: key,
+        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize first letter
+        required: false
+      };
+      
+      // Check if there's a corresponding options array
+      const optionsKey = key.toLowerCase() + 'options';
+      const optionsArray = message[optionsKey];
+      
+      if (Array.isArray(optionsArray)) {
+        field.type = 'select';
+        field.options = optionsArray;
+      } else if (key.toLowerCase().includes('date') || value === 'date') {
+        field.type = 'date';
+      } else if (typeof value === 'string') {
+        field.type = 'text';
+      }
+      
+      field.defaultValue = typeof value === 'string' ? value : '';
+      fields.push(field);
+    });
+    
+    return fields.length > 0 ? fields : null;
   };
 
   const getPostData = async () => {
@@ -280,6 +340,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         // Check if this message contains form fields
         if (hasFormFields(item)) {
           message.formFields = extractFormFields(item);
+          message.isFormMessage = true;
         }
 
         return message;
@@ -350,6 +411,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         // Check if response contains form fields
         if (hasFormFields(latest)) {
           botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
         }
 
         setMessages((prev) => [...prev, botResponse]);
@@ -403,6 +465,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         // Check if response contains form fields
         if (hasFormFields(latest)) {
           botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
         }
 
         setMessages((prev) => [...prev, botResponse]);
@@ -530,11 +593,15 @@ const Chatbot = ({ setChatbotMinimized }) => {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" ? (
+                    {item.sender === "bot" && !item.isFormMessage ? (
                       <div
                         className="message-content"
                         dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
                       />
+                    ) : item.sender === "bot" && item.isFormMessage ? (
+                      <div className="message-content">
+                        <p>Please fill out the form with the required information:</p>
+                      </div>
                     ) : (
                       <div className="message-content">{item.text}</div>
                     )}
