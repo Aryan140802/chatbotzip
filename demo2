@@ -53,6 +53,7 @@ const formatDynamicMessage = (text) => {
   const cleanedText = text.replace(/:,\s*$/, ":").trim();
   return cleanedText;
 };
+
 // Utility function to check if response is a JSON object
 const isJsonFormData = (data) => {
   return typeof data === 'object' &&
@@ -186,28 +187,19 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
     setSubmitMessage("");
 
     try {
-      const response = await fetch('https://10.191.171.12:5443/PyPortal/EIS-GINI/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-              body: JSON.stringify({"message":{...formValues}})
-      });
-
-      if (response.ok) {
-        console.log(response)
-        setSubmitMessage("Submitted successfully!");
-        setTimeout(() => {
-          onSubmit(formValues);
-        }, 1500);
-      } else {
-        throw new Error('Submission failed');
-      }
+      // Submit the form data directly to the chatbot backend
+      await onSubmit(formValues);
+      setSubmitMessage("Submitted successfully!");
     } catch (error) {
       console.error('Form submission error:', error);
       setSubmitMessage("Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setTimeout(() => {
+        if (submitMessage.includes('success')) {
+          onCancel(); // Close form on success
+        }
+      }, 1500);
     }
   };
 
@@ -286,13 +278,12 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
           </div>
         )}
 
-        <div onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
           {Object.keys(formData).map(key => renderField(key, formData[key]))}
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
             <button
-              type="button"
-              onClick={handleSubmit}
+              type="submit"
               disabled={isSubmitting}
               style={{
                 flex: 1,
@@ -344,7 +335,7 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
               Cancel
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
@@ -441,25 +432,10 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return lowerText.includes("enter") || lowerText.includes("provide");
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (newMessage.trim() === "") return;
-
-    const userMsg = {
-      id: Date.now(),
-      text: newMessage,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setNewMessage("");
-    setIsTyping(true);
-    setFormDisabled(true);
-
+  const sendMessageToBackend = async (messageData) => {
     try {
       setApiTimeout(() => {});
-      const res = await postMessage(newMessage);
+      const res = await postMessage(JSON.stringify(messageData));
       clearCurrentTimeout();
 
       const latest = res.data.chat_history?.slice(-1)[0];
@@ -483,7 +459,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
           setFormDisabled(!checkEnableForm(botResponse.text));
         }
       }
-    } catch {
+    } catch (error) {
       clearCurrentTimeout();
       setMessages((prev) => [
         ...prev,
@@ -495,7 +471,25 @@ const Chatbot = ({ setChatbotMinimized }) => {
         },
       ]);
     }
+  };
 
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (newMessage.trim() === "") return;
+
+    const userMsg = {
+      id: Date.now(),
+      text: newMessage,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setNewMessage("");
+    setIsTyping(true);
+    setFormDisabled(true);
+
+    await sendMessageToBackend(newMessage);
     setIsTyping(false);
   };
 
@@ -513,50 +507,33 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setFormDisabled(true);
     setIsTyping(true);
 
-    try {
-      setApiTimeout(() => {});
-      const res = await postMessage(cleanedOpt);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-          isJsonForm: isJsonFormData(latest.message),
-          formData: isJsonFormData(latest.message) ? latest.message : null
-        };
-        setMessages((prev) => [...prev, botResponse]);
-
-        // Auto-open form if it's JSON data
-        if (botResponse.isJsonForm) {
-          setActiveForm(botResponse.formData);
-          setFormDisabled(true);
-        } else {
-          setFormDisabled(!checkEnableForm(botResponse.text));
-        }
-      }
-    } catch {
-      clearCurrentTimeout();
-    }
-
+    await sendMessageToBackend(cleanedOpt);
     setIsTyping(false);
   };
 
-  const handleFormSubmit = (formData) => {
-    setActiveForm(null);
-    // Add a confirmation message
-    const confirmationMsg = {
-      id: Date.now(),
-
-      sender: "bot",
-      time: getCurrentTime(),
-    };
-    setMessages((prev) => [...prev, confirmationMsg]);
-    setFormDisabled(false);
+  const handleFormSubmit = async (formData) => {
+    try {
+      // Add user message showing form was submitted
+      const userMsg = {
+        id: Date.now(),
+        text: "Form submitted",
+        sender: "user",
+        time: getCurrentTime(),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      
+      setIsTyping(true);
+      setActiveForm(null);
+      
+      // Send form data to backend
+      await sendMessageToBackend(formData);
+      setIsTyping(false);
+      setFormDisabled(false);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setIsTyping(false);
+      setFormDisabled(false);
+    }
   };
 
   const handleFormCancel = () => {
