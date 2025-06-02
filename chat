@@ -1,12 +1,27 @@
-	
-2 requests
-145 kB transferred
-144 kB resources
-{fields: [{fieldName: "message", fieldValue: ["Cache Info"]}]}
-fields
-: 
-[{fieldName: "message", fieldValue: ["Cache Info"]}]
-
+ {
+            "sender": "Bot",
+            "message": {
+                "Subject": "",
+                "Source": "",
+                "Destination": "",
+                "Zone": "",
+                "Port": "",
+                "expiryoptions": [
+                    "before",
+                    "after"
+                ],
+                "expiry": "date",
+                "createdoptions": [
+                    "before",
+                    "after"
+                ],
+                "created": "date"
+            },
+            "options": [
+                "1.Back",
+                "2.main menu"
+            ]
+        }
 
 
 
