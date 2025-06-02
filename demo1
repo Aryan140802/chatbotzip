@@ -36,23 +36,17 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
         });
 
         const data = await res.json();
-
-        // Convert comma-separated string to array
-        const favArray = data.favourites
-          ? data.favourites.split(',').map(item => item.trim()).filter(Boolean)
-          : [];
-
         const favData = data.favourites;
-let favArray = [];
 
-if (Array.isArray(favData)) {
-  favArray = favData;
-} else if (typeof favData === 'string') {
-  favArray = favData.split(',').map(item => item.trim()).filter(Boolean);
-}
+        let favArray = [];
 
-setFavorites(favArray);
+        if (Array.isArray(favData)) {
+          favArray = favData;
+        } else if (typeof favData === 'string') {
+          favArray = favData.split(',').map(item => item.trim()).filter(Boolean);
+        }
 
+        setFavorites(favArray);
       } catch (err) {
         console.error('Failed to load favorites:', err);
       }
