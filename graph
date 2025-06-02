@@ -1,75 +1,52 @@
-#save and get  the favourite of user
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
 @csrf_exempt
 def postFavourites(request):
     try:
         if request.method == 'POST':
-           data_json=json.loads(request.body.decode('utf-8'))
-           favourites=data_json.get("favList")
-           uid=data_json.get("userId")
-           password=data_json.get("password")
-           try:
-             decryptedPassword=decryptor(password)
-             print(decryptedPassword)
-           except Exception as e:
-             return JsonResponse({"message":"user unauthorized","msg":userSession},status=401,safe=False)
-           '''userSession = authenticate(username=uid,password="password")
-           if  not userSession:
-               return JsonResponse({"message":"user unauthorized","msg":userSession},status=401,safe=False)'''
-           if  favourites and  uid and password:
-               try:
-                  print(uid,decryptedPassword)
-                  userdel = Usermaster.objects.get(uid = uid, pwd = decryptedPassword)
+            data_json = json.loads(request.body.decode('utf-8'))
+            favourites = data_json.get("favList")  # This should be a list
+            uid = data_json.get("userId")
+            password = data_json.get("password")
 
-               except Exception as e:
-                  userdel = None
-               if userdel is None:
-                   return JsonResponse({"403 Bad Request":str(decryptedPassword)},status=403,safe=False)
-               #userData=Usermaster.objects.get(uid=uid)
-               try:
-                  user={}
-                  if(UserFavourites.objects.filter(user=userdel).exists()):
-                     print("got the user in the model")
-                     user=UserFavourites.objects.get(user=userdel)
-                  else:
-                     user=None
-                  print(user)
-               except Exception as e:
-                   user=None
-                   print("got an error bro")
+            try:
+                decryptedPassword = decryptor(password)
+            except Exception as e:
+                return JsonResponse({"message": "user unauthorized"}, status=401, safe=False)
 
-               if userdel is not None:
-                  print(favourites)
-                  favStr=""
-                  for i in range (2,len(favourites)):
-                      favStr+=favourites[i]
-                      if i!=(len(favourites)-1):
-                          favStr+=","
-                  user.favouriteOptions=favStr
-                  user.save()
-                  print("executed")
-               else:
-                  userData = Usermaster.objects.get(uid = uid)
-                  UserFavourites.objects.create(favouriteOptions=favourites,user=userData)
-               return JsonResponse({"favourites":user.favouriteOptions})
-           elif uid and password:
-               try:
-                  userdel=Usermaster.objects.get(uid = uid, pwd = decryptedPassword)
-                  if(UserFavourites.objects.filter(user=userdel).exists()):
-                     user=UserFavourites.objects.get(user=userdel)
-                     print("user exist in favourites")
-                     print(type(user.favouriteOptions))
-                     return JsonResponse({"favourites":user.favouriteOptions})
-                  if userdel:
-                     print("user does not exist in favourites")
-                     UserFavourites.objects.create(favouriteOptions=[],user=userdel)
-               except Exception as e:
-                  return JsonResponse({"msg":e},status=403,safe=False)
-                  user=None
-               if userdel is not None:
-                  return JsonResponse({"favourites":""})
-               return JsonResponse({"msg":"403 Bad Request generated"},status=403,safe=False)
-           return JsonResponse({"message":"Data of Favourites updated"},status=200,safe=False)
+            if uid and password:
+                try:
+                    user = Usermaster.objects.get(uid=uid, pwd=decryptedPassword)
+                except Exception as e:
+                    return JsonResponse({"403 Bad Request": str(e)}, status=403, safe=False)
+
+                # Save favorites if provided
+                if favourites is not None:
+                    if not isinstance(favourites, list):
+                        return JsonResponse({"error": "favList must be an array"}, status=400)
+
+                    fav_str = ",".join(favourites)  # Convert list to string
+
+                    fav_obj, created = UserFavourites.objects.get_or_create(user=user)
+                    fav_obj.favouriteOptions = fav_str
+                    fav_obj.save()
+
+                    return JsonResponse({"favourites": favourites})  # 🔁 return as list
+
+                # Just fetch favorites
+                if UserFavourites.objects.filter(user=user).exists():
+                    fav_obj = UserFavourites.objects.get(user=user)
+                    fav_str = fav_obj.favouriteOptions or ""
+                    fav_list = [item.strip() for item in fav_str.split(',') if item.strip()]
+                    return JsonResponse({"favourites": fav_list})  # ✅ return as array
+
+                # If no UserFavourites exists
+                UserFavourites.objects.create(favouriteOptions="", user=user)
+                return JsonResponse({"favourites": []})
+
+        return JsonResponse({"message": "Only POST supported"}, status=405)
+
     except Exception as e:
-        return JsonResponse({"An error occured while saving the data"},status=500,safe=False)
-
-
+        return JsonResponse({"error": str(e)}, status=500)
