@@ -433,46 +433,62 @@ const Chatbot = ({ setChatbotMinimized }) => {
   };
 
   const sendMessageToBackend = async (messageData) => {
-    try {
-      setApiTimeout(() => {});
-      const res = await postMessage(JSON.stringify(messageData));
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-          isJsonForm: isJsonFormData(latest.message),
-          formData: isJsonFormData(latest.message) ? latest.message : null
-        };
-        setMessages((prev) => [...prev, botResponse]);
-
-        // Auto-open form if it's JSON data
-        if (botResponse.isJsonForm) {
-          setActiveForm(botResponse.formData);
-          setFormDisabled(true);
-        } else {
-          setFormDisabled(!checkEnableForm(botResponse.text));
-        }
-      }
-    } catch (error) {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
+  try {
+    setApiTimeout(() => {});
+    
+    // Ensure the payload is in the correct format
+    let payload;
+    if (typeof messageData === 'string') {
+      // For regular text messages
+      payload = { message: messageData };
+    } else if (typeof messageData === 'object' && messageData !== null) {
+      // For form data submissions
+      payload = { message: JSON.stringify(messageData) };
+    } else {
+      // Fallback
+      payload = { message: String(messageData) };
     }
-  };
+    
+    console.log('Sending payload:', payload); // Debug log
+    
+    const res = await postMessage(payload);
+    clearCurrentTimeout();
 
+    const latest = res.data.chat_history?.slice(-1)[0];
+    if (latest) {
+      const botResponse = {
+        id: Date.now(),
+        text: latest.message || "",
+        sender: "bot",
+        time: getCurrentTime(),
+        options: latest.options || [],
+        isJsonForm: isJsonFormData(latest.message),
+        formData: isJsonFormData(latest.message) ? latest.message : null
+      };
+      setMessages((prev) => [...prev, botResponse]);
+
+      // Auto-open form if it's JSON data
+      if (botResponse.isJsonForm) {
+        setActiveForm(botResponse.formData);
+        setFormDisabled(true);
+      } else {
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    }
+  } catch (error) {
+    console.error('API Error:', error); // Debug log
+    clearCurrentTimeout();
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: "An error occurred. Please try again.",
+        sender: "bot",
+        time: getCurrentTime(),
+      },
+    ]);
+  }
+};
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
