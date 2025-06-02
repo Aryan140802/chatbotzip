@@ -1,170 +1,163 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ProfileIcon from './ProfileIcon';
-import logo from '../assets/tcs.png';
+import React, { useEffect, useState } from 'react';
+import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { cardLinks } from '../links';
+import '../styles/Menu.css';
 
-export default function Header({ username, onLogout, showProfileIcon = true }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [env, setEnv] = useState('');
-  const [setup, setSetup] = useState('');
-  const dropdownRef = useRef();
+const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState([]);
+  const [userId,setUserId] = useState(null);
+  const [password,setPassword] = useState(null);
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
-  // Fetch environment info
+  // Get userId from localStorage on mount
   useEffect(() => {
-    const fetchEnvAndSetup = async () => {
-      try {
-        const response = await fetch('https://10.191.171.12:5443/PyPortal/env');
-        const data = await response.json();
-        setEnv(data.Environment);
-        setSetup(data.PRDRSetup);
-      } catch (error) {
-        console.error('Failed to fetch environment:', error);
-        setEnv('');
-      }
-    };
-
-    fetchEnvAndSetup();
+    const uid = localStorage.getItem('uidd'); // Ensure this key exists
+    const password = localStorage.getItem('password');
+    if (uid && password) {
+            setUserId(uid);
+            setPassword(password);
+    }
+    else console.warn('No username found in localStorage');
   }, []);
 
-  // Close menu on outside click
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+ useEffect(() => {
+  if (!userId || !password) return;
 
-  const getMarqueeText = () => {
-    if (env === 'PR' && setup === 'YES') return 'PR is live now!! PR DR SETUP is live';
-    if (env === 'DR' && setup === 'YES') return 'DR is live now!! PR DR SETUP is live';
-    if (env === 'PR') return 'PR is live now!! ';
-    if (env === 'DR') return 'DR is live now!! ';
-    return 'Welcome to EIS INFRA ';
+  const fetchFavorites = async () => {
+    try {
+      const res = await fetch('/PyPortal/EISHome/postFavourites/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          password
+        }),
+      });
+
+      const data = await res.json();
+      setFavorites(data.favourites);
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    }
   };
 
+  fetchFavorites();
+}, [userId, password]);
+
+
+  // Update backend when favorites change
+  const updateFavoritesOnBackend = async (updatedFavorites) => {
+    try {
+      console.log(updatedFavorites)
+      await fetch('/PyPortal/EISHome/postFavourites/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        payload : {'favList':updatedFavorites,'userId':userId,'password':password},
+        body: JSON.stringify({ userId: userId, favList: updatedFavorites,password:password}),
+      });
+    } catch (error) {
+      console.error('Failed to update favorites:', error);
+    }
+  };
+
+  // Toggle favorite
+  const toggleFavorite = (name) => {
+    setFavorites((prev) => {
+      console.log("this line was executed and will get the data")
+      console.log(prev)
+      const updated = prev.includes(name)
+        ? prev.filter((fav) => fav !== name)
+        : [...prev, name];
+      console.log(updated)
+      updateFavoritesOnBackend(updated);
+      return updated;
+    });
+  };
+
+  // Filter + Sort
+  const filteredLinks = cardLinks
+    .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const aFav = favorites.includes(a.name);
+      const bFav = favorites.includes(b.name);
+      return aFav === bFav ? 0 : aFav ? -1 : 1;
+    });
+
   return (
-    <div
-      className="container"
-      style={{
-        paddingTop: '19px',
-        paddingBottom: '19px',
-        position: 'relative',
-        background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        color: '#ffffff',
-        overflow: 'visible'
-      }}
-    >
-      {/* Marquee Background */}
-      <div
-        style={{
-          position: 'absolute',
-          width: '100%',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '100%',
-          display: 'flex',
-          alignItems: 'flex-end',
-          zIndex: 1
-        }}
-      >
-        <marquee
-          behavior="scroll"
-          direction="left"
-          scrollamount="12"
-          style={{
-            backgroundColor: 'transparent',
-            fontWeight: 'bold',
-            opacity: 0.4
-          }}
-        >
-          {Array(1000)
-            .fill(getMarqueeText())
-            .map((text, index) => (
-              <span key={index} style={{ marginRight: '150px' }}>
-                {text}
-              </span>
-            ))}
-        </marquee>
+    <>
+      {!isSidebarOpen && (
+        <button className="sidebar-toggle" onClick={toggleSidebar}>
+          <MenuIcon size={24} />
+        </button>
+      )}
 
-        {/* Optional: Replace <marquee> with modern animation */}
-        {/* <div style={{ whiteSpace: 'nowrap', animation: 'scrollText 20s linear infinite', fontWeight: 'bold', opacity: 0.4 }}>
-          {getMarqueeText().repeat(50)}
-        </div> */}
-      </div>
-
-      {/* Header Content */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          position: 'relative',
-          zIndex: 3,
-          padding: '0 20px'
-        }}
-      >
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <img
-            className="logo"
-            src={logo}
-            alt="TCS Company Logo"
-            style={{ height: '40px', marginRight: '20px' }}
-          />
+      <div className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
+        <div className="sidebar-header">
+          {isSidebarOpen && <h2 className="sidebar-title">Quick Access</h2>}
+          <button
+            className="collapse-btn"
+            onClick={toggleSidebar}
+            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
         </div>
 
-        {/* Title */}
-        <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 2vw, 2.5rem)' }}>
-          EIS INFRA HOME
-        </h1>
+        {isSidebarOpen && (
+          <div className="sidebar-search">
+            <input
+              type="text"
+              placeholder="Search links..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+          </div>
+        )}
 
-        {/* Profile & Dropdown */}
-        <div
-          style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
-          ref={dropdownRef}
-        >
-          {showProfileIcon && username && (
-            <>
-              <div
-                onClick={() => setMenuOpen(!menuOpen)}
-                style={{ cursor: 'pointer', marginLeft: '10px' }}
-                aria-label="Profile menu toggle"
-              >
-                <ProfileIcon sender="user" />
-              </div>
-              {menuOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '50px',
-                    right: 0,
-                    background: '#1e1e1e',
-                    color: '#fff',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                    borderRadius: '6px',
-                    padding: '10px',
-                    zIndex: 9999,
-                    minWidth: '120px'
-                  }}
-                  aria-label="Dropdown menu"
-                >
-                  <div
-                    style={{ padding: '8px 12px', cursor: 'pointer' }}
-                    onClick={onLogout}
-                    aria-label="Logout button"
+        <div className="sidebar-content">
+          <div className="sidebar-section">
+            {filteredLinks.map((link, index) => {
+              const isFavorited = favorites.includes(link.name);
+              return (
+                <div key={index} className="link-card">
+                  <span
+                    className="star-icon"
+                    onClick={() => toggleFavorite(link.name)}
+                    title={isFavorited ? 'Unstar' : 'Star'}
                   >
-                    Logout
-                  </div>
+                    {isFavorited ? (
+                      <Star fill="#facc15" color="#facc15" size={16} />
+                    ) : (
+                      <Star color="#fff" size={16} />
+                    )}
+                  </span>
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link-anchor"
+                  >
+                    {isSidebarOpen ? (
+                      <span>{link.name}</span>
+                    ) : (
+                      <img
+                        src={link.icon}
+                        alt={link.name}
+                        title={link.name}
+                        className="link-icon"
+                      />
+                    )}
+                  </a>
                 </div>
-              )}
-            </>
-          )}
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
-}
+};
+
+export default Sidebar;
