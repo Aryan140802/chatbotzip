@@ -72,6 +72,7 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
     // Initialize form values
     const initialValues = {};
     Object.keys(formData).forEach(key => {
+      // Skip options fields when initializing
       if (!key.endsWith('options')) {
         const value = formData[key];
         if (typeof value === 'string') {
@@ -95,6 +96,7 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
     // Skip options fields
     if (key.endsWith('options')) return null;
 
+    // Check for corresponding options field
     const optionsKey = key + 'options';
     const hasOptions = formData[optionsKey] && Array.isArray(formData[optionsKey]) && formData[optionsKey].length > 0;
 
@@ -118,12 +120,15 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
       fontSize: '14px'
     };
 
+    // Format label text
+    const labelText = key.replace(/([A-Z])/g, ' $1').trim();
+
     if (hasOptions) {
       // Render dropdown for fields with options
       return (
         <div key={key} style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>
-            {key.replace(/([A-Z])/g, ' $1').trim()}
+            {labelText}
           </label>
           <select
             value={formValues[key] || ''}
@@ -134,7 +139,7 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
               cursor: 'pointer'
             }}
           >
-            <option value="">Select {key}</option>
+            <option value="">Select {labelText}</option>
             {formData[optionsKey].map((option, index) => (
               <option key={index} value={option}>{option}</option>
             ))}
@@ -143,35 +148,35 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
       );
     }
 
-    if (typeof value === 'string') {
-      const inputType = value === 'date' ? 'date' : 'text';
+    // Handle date fields
+    if (value === 'date' || key.toLowerCase().includes('date') || key.toLowerCase().includes('expiry') || key.toLowerCase().includes('created')) {
       return (
         <div key={key} style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>
-            {key.replace(/([A-Z])/g, ' $1').trim()}
+            {labelText}
           </label>
           <input
-            type={inputType}
+            type="date"
             value={formValues[key] || ''}
             onChange={(e) => handleInputChange(key, e.target.value)}
-            placeholder={inputType === 'date' ? '' : `Enter ${key.toLowerCase()}`}
             style={baseInputStyle}
           />
         </div>
       );
     }
 
-    if (Array.isArray(value)) {
+    // Handle regular text fields
+    if (typeof value === 'string' || Array.isArray(value)) {
       return (
         <div key={key} style={{ marginBottom: '20px' }}>
           <label style={labelStyle}>
-            {key.replace(/([A-Z])/g, ' $1').trim()}
+            {labelText}
           </label>
           <input
             type="text"
             value={formValues[key] || ''}
             onChange={(e) => handleInputChange(key, e.target.value)}
-            placeholder={`Enter ${key.toLowerCase()}`}
+            placeholder={`Enter ${labelText.toLowerCase()}`}
             style={baseInputStyle}
           />
         </div>
@@ -279,7 +284,9 @@ const DynamicForm = ({ formData, onSubmit, onCancel }) => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {Object.keys(formData).map(key => renderField(key, formData[key]))}
+          {Object.keys(formData)
+            .filter(key => !key.endsWith('options')) // Only render non-option fields
+            .map(key => renderField(key, formData[key]))}
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
             <button
@@ -432,67 +439,64 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return lowerText.includes("enter") || lowerText.includes("provide");
   };
 
- const sendMessageToBackend = async (messageData) => {
-  try {
-    setApiTimeout(() => {});
-    
-    // Format payload according to API requirements
-    let payload;
-    if (typeof messageData === 'string') {
-      // For regular text messages - send as object with message property
-      payload = { message: messageData };
-    } else if (typeof messageData === 'object' && messageData !== null) {
-      // For form data submissions - convert object to fields array
-      const fieldsArray = Object.keys(messageData).map(key => ({
-        fieldName: key,
-        fieldValue: [String(messageData[key])]
-      }));
-      payload = { fields: fieldsArray };
-    } else {
-      // Fallback - send as object with message property
-      payload = { message: String(messageData) };
-    }
-    
-    console.log('Sending payload:', payload); // Debug log
-    
-    const res = await postMessage(payload);
-    clearCurrentTimeout();
-
-    const latest = res.data.chat_history?.slice(-1)[0];
-    if (latest) {
-      const botResponse = {
-        id: Date.now(),
-        text: latest.message || "",
-        sender: "bot",
-        time: getCurrentTime(),
-        options: latest.options || [],
-        isJsonForm: isJsonFormData(latest.message),
-        formData: isJsonFormData(latest.message) ? latest.message : null
-      };
-      setMessages((prev) => [...prev, botResponse]);
-
-      // Auto-open form if it's JSON data
-      if (botResponse.isJsonForm) {
-        setActiveForm(botResponse.formData);
-        setFormDisabled(true);
+  const sendMessageToBackend = async (messageData) => {
+    try {
+      setApiTimeout(() => {});
+      
+      // Ensure the payload is in the correct format
+      let payload;
+      if (typeof messageData === 'string') {
+        // For regular text messages
+        payload = { message: messageData };
+      } else if (typeof messageData === 'object' && messageData !== null) {
+        // For form data submissions
+        payload = { message: JSON.stringify(messageData) };
       } else {
-        setFormDisabled(!checkEnableForm(botResponse.text));
+        // Fallback
+        payload = { message: String(messageData) };
       }
+      
+      console.log('Sending payload:', payload); // Debug log
+      
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+          isJsonForm: isJsonFormData(latest.message),
+          formData: isJsonFormData(latest.message) ? latest.message : null
+        };
+        setMessages((prev) => [...prev, botResponse]);
+
+        // Auto-open form if it's JSON data
+        if (botResponse.isJsonForm) {
+          setActiveForm(botResponse.formData);
+          setFormDisabled(true);
+        } else {
+          setFormDisabled(!checkEnableForm(botResponse.text));
+        }
+      }
+    } catch (error) {
+      console.error('API Error:', error); // Debug log
+      clearCurrentTimeout();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
     }
-  } catch (error) {
-    console.error('API Error:', error); // Debug log
-    clearCurrentTimeout();
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: "An error occurred. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      },
-    ]);
-  }
-};
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (newMessage.trim() === "") return;
@@ -616,7 +620,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
                             color: '#666',
                             fontStyle: 'italic'
                           }}>
-                            Form with {Object.keys(item.formData).length} fields detected
+                            Form with {Object.keys(item.formData).filter(key => !key.endsWith('options')).length} fields detected
                           </div>
                         </div>
                       ) : (
