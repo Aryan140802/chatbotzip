@@ -1,21 +1,45 @@
 import axios from 'axios';
 
+
+// Create axios instance with custom configuration
 const api = axios.create({
   baseURL: 'https://10.191.171.12:5443/PyPortal/',
   timeout: 100000,
   headers: {
     'Content-Type': 'application/json',
-  },
+  }
+
 });
 
-export const getPost = () => {
-  return api.get('EIS-GINI/',{timeout:100000});
+// Modified postMessage to handle both regular messages and form data
+export const postMessage = (data) => {
+  // If data is a string (regular message)
+  if (typeof data === 'string') {
+    return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
+  }
+
+  // If data is form data (array of fields)
+ if (Array.isArray(data)) {
+    return api.post('EIS-GINI/', { "fields": data }, { timeout: 100000 });
+  }
+
+  // If data is an object (form submission)
+  if (typeof data === 'object' && data !== null) {
+    // Convert form data to array format for backend
+    const formData = Object.entries(data).map(([fieldName, fieldValue]) => ({
+      fieldName,
+      fieldValue: Array.isArray(fieldValue) ? fieldValue : [fieldValue]
+    }));
+    return api.post('EIS-GINI/', { "fields": formData }, { timeout: 100000 });
+  }
+
+  // Default case (fallback)
+  return api.post('EIS-GINI/', { "message": JSON.stringify(data) }, { timeout: 100000 });
 };
 
-export const postMessage = (message) => {
- const res =  api.post('EIS-GINI/', { "message":message },{timeout:100000});
-        console.log(res);
-  return res;
+// All other API functions remain unchanged
+export const getPost = () => {
+  return api.get('EIS-GINI/', { timeout: 100000 });
 };
 
 export const getServiceSys = () => {
@@ -34,7 +58,6 @@ export const getIpwiseExp = () => {
   return api.get('EISHome/ipwise_exp/');
 };
 
-
 export const getPortwiseSys = () => {
   return api.get('EISHome/portwise_sys/');
 };
@@ -43,106 +66,127 @@ export const getPortwiseExp = () => {
   return api.get('EISHome/portwise_exp/');
 };
 
-
 export const getServiceWiseExp5 = () => {
-        return api.get('EISHome/servicewise_top5_exp/')
+  return api.get('EISHome/servicewise_top5_exp/');
 };
 
 export const getServiceWiseSys5 = () => {
-        return api.get('EISHome/servicewise_top5_sys/')
+  return api.get('EISHome/servicewise_top5_sys/');
 };
+
 export const getIpWiseExp5 = () => {
-        return api.get('EISHome/ipwise_exp_top5/')
+  return api.get('EISHome/ipwise_exp_top5/');
 };
+
 export const getIpWiseSys5 = () => {
-        return api.get('EISHome/ipwise_sys_top5/')
+  return api.get('EISHome/ipwise_sys_top5/');
 };
+
 export const getPortWiseExp5 = () => {
-        return api.get('EISHome/portwise_top5_exp/')
+  return api.get('EISHome/portwise_top5_exp/');
 };
+
 export const getPortWiseSys5 = () => {
-        return api.get('EISHome/portwise_top5_sys/')
+  return api.get('EISHome/portwise_top5_sys/');
 };
 
+export const getFARExpires = () => {
+  return api.get('EISHome/farExpiresNext5M/');
+};
 
-
-
-//post ai for time wise hits
+// Time-based post functions remain unchanged
 export const postServiceWiseExp5 = async (time) => {
   try {
-    console.log(time)
-    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', { "time":time});
-    console.log(response)
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
     return response;
   } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
+    console.error('Could not fetch error:', error);
+    throw error;
   }
 };
 
-
-//post ai for time wise hits
 export const postServiceWiseSys5 = async (time) => {
   try {
-    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', { "time":time});
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
     return response;
   } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
+    console.error('Could not fetch error:', error);
+    throw error;
   }
 };
 
-
-
-//post ai for time wise hits
 export const postIpWiseExp5 = async (time) => {
   try {
-    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', { "time":time});
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
     return response;
   } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
+    console.error('Could not fetch error:', error);
+    throw error;
   }
 };
 
-
-
-//post ai for time wise hits
 export const postIpWiseSys5 = async (time) => {
   try {
-    console.log(time)
-    const response = await api.post('EISHome/ipwise_top5_FiveM/SYS/', { "time":time});
-    console.log(response)
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/ipwise_top5_FiveM/SYS/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
     return response;
   } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
+    console.error('Could not fetch error:', error);
+    throw error;
   }
 };
 
-
-
-//post ai for time wise hits
 export const postPortWiseExp5 = async (time) => {
   try {
-    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', { "time":time});
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
     return response;
   } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
+    console.error('Could not fetch error:', error);
+    throw error;
   }
 };
 
-
-
-//post ai for time wise hits
 export const postPortWiseSys5 = async (time) => {
   try {
-    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', { "time":time});
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
     return response;
   } catch (error) {
-    console.error('could not  fetch error:', error);
-    throw error; // Re-throw to allow component-level handling
+    console.error('Could not fetch error:', error);
+    throw error;
   }
 };
-
