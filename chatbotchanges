@@ -1,3 +1,26 @@
+if (text.includes("<b>")) {
+  // Match multiple <b>key</b>: value or pre-text: <b>value</b>
+  const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
+  const lines = [];
+  let match;
+  while ((match = pattern.exec(text)) !== null) {
+    const key = (match[1] || match[3] || "").trim();
+    const value = (match[2] || match[4] || "").trim().replace(/\n/g, "<br/>");
+    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+  }
+
+  // If nothing matched, fallback to rendering original <b> content
+  if (lines.length === 0) {
+    return `<div class="formatted-card">${text}</div>`;
+  }
+
+  return `<div class="formatted-card">${lines.join("")}</div>`;
+}
+
+
+
+
+
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
