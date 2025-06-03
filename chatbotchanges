@@ -1,36 +1,3 @@
-{,…}
-fields
-: 
-[{fieldName: "message", fieldValue: [{layer: "ACCOUNT_EXP", server: "", eg: "", service: ""}]}]
-0
-: 
-{fieldName: "message", fieldValue: [{layer: "ACCOUNT_EXP", server: "", eg: "", service: ""}]}
-fieldName
-: 
-"message"
-fieldValue
-: 
-[{layer: "ACCOUNT_EXP", server: "", eg: "", service: ""}]
-0
-: 
-{layer: "ACCOUNT_EXP", server: "", eg: "", service: ""}
-eg
-: 
-""
-layer
-: 
-"ACCOUNT_EXP"
-server
-: 
-""
-service
-: 
-""
-
-
-
-
-
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
@@ -285,23 +252,19 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
-  // Check if the response contains form fields (object with empty string values and arrays)
+  // Simple check for form object structure
   const hasFormFields = (response) => {
     if (!response || !response.message || typeof response.message !== 'object') {
       return false;
     }
     
     const message = response.message;
-    // Check if message is an object with properties that look like form fields
-    const keys = Object.keys(message);
-    return keys.length > 0 && keys.some(key => 
-      typeof message[key] === 'string' || 
-      Array.isArray(message[key]) ||
-      key.toLowerCase().includes('options')
-    );
+    
+    // Check if it's an object with properties (generic check)
+    return Object.keys(message).length > 0;
   };
 
-  // Extract form fields from response message object
+  // Extract form fields directly from object
   const extractFormFields = (response) => {
     if (!response || !response.message || typeof response.message !== 'object') {
       return null;
@@ -310,35 +273,22 @@ const Chatbot = ({ setChatbotMinimized }) => {
     const message = response.message;
     const fields = [];
     
+    // Dynamic field configurations - no predefined data
+    const fieldConfigs = {};
+    
+    // Create form fields from the object properties
     Object.keys(message).forEach(key => {
-      const value = message[key];
-      
-      if (key.toLowerCase().includes('options') && Array.isArray(value)) {
-        // This is an options array for another field
-        return;
-      }
-      
-      const field = {
-        name: key,
-        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize first letter
+      const config = fieldConfigs[key] || {
+        type: 'text',
+        label: key.charAt(0).toUpperCase() + key.slice(1),
         required: false
       };
       
-      // Check if there's a corresponding options array
-      const optionsKey = key.toLowerCase() + 'options';
-      const optionsArray = message[optionsKey];
-      
-      if (Array.isArray(optionsArray)) {
-        field.type = 'select';
-        field.options = optionsArray;
-      } else if (key.toLowerCase().includes('date') || value === 'date') {
-        field.type = 'date';
-      } else if (typeof value === 'string') {
-        field.type = 'text';
-      }
-      
-      field.defaultValue = typeof value === 'string' ? value : '';
-      fields.push(field);
+      fields.push({
+        name: key,
+        ...config,
+        defaultValue: message[key] || ''
+      });
     });
     
     return fields.length > 0 ? fields : null;
@@ -545,35 +495,27 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  // Handle form submission
+  // Updated form submission - sends data directly
   const handleFormSubmit = async (formData) => {
     setActiveForm(null);
     
-    // Create user message showing the submitted data
     const userMessage = {
       id: Date.now(),
       text: `Form submitted: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`,
       sender: "user",
       time: getCurrentTime(),
     };
-
     setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
     setFormDisabled(true);
-
+    
     try {
       setApiTimeout(() => {});
       
-      // Send form data with nested message structure
-      const payload = {
-        message: {
-          ...formData
-        }
-      };
-      
-      const res = await postMessage(payload);
+      // Send form data directly - your API gets: {layer: "ACCOUNT_EXP", server: "myserver", ...}
+      const res = await postMessage(formData);
       clearCurrentTimeout();
-
+      
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest) {
         const botResponse = {
@@ -583,17 +525,18 @@ const Chatbot = ({ setChatbotMinimized }) => {
           time: getCurrentTime(),
           options: latest.options || [],
         };
-
-        // Check if response contains form fields
+        
         if (hasFormFields(latest)) {
           botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
         }
-
+        
         setMessages((prev) => [...prev, botResponse]);
         setFormDisabled(!checkEnableForm(botResponse.text));
       }
-    } catch {
+    } catch (error) {
       clearCurrentTimeout();
+      console.error('Form submission error:', error);
       setMessages((prev) => [
         ...prev,
         {
@@ -604,7 +547,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
         },
       ]);
     }
-
     setIsTyping(false);
   };
 
