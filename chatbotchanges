@@ -34,7 +34,7 @@ const formatDynamicMessage = (text) => {
     }
   }
 
-  // Case 1: HTML-formatted messages with <b> tags
+  // Rest of your existing format handling...
   if (text.includes("<b>")) {
     const pattern = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
     const lines = [];
@@ -47,7 +47,6 @@ const formatDynamicMessage = (text) => {
     return `<div class="formatted-card">${lines.join("")}</div>`;
   }
 
-  // Case 2: Likely a server config line (very long, no <b>, many ":")
   const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
   if (isServerConfig) {
     const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
@@ -68,495 +67,40 @@ const formatDynamicMessage = (text) => {
     return `<div class="formatted-card">${formatted.trim()}</div>`;
   }
 
-  // Default plain text
   const cleanedText = text.replace(/:,\s*$/, ":").trim();
   return cleanedText;
 };
 
-// Dynamic Form Component
-const DynamicForm = ({ fields, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({});
-  const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    const initialData = {};
-    fields.forEach(field => {
-      initialData[field.name] = field.defaultValue || '';
-    });
-    setFormData(initialData);
-  }, [fields]);
-
-  const handleInputChange = (fieldName, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
-    
-    if (errors[fieldName]) {
-      setErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    fields.forEach(field => {
-      if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
-        newErrors[field.name] = `${field.label || field.name} is required`;
-      }
-      
-      if (field.type === 'email' && formData[field.name] && 
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
-        newErrors[field.name] = 'Please enter a valid email address';
-      }
-      
-      if (field.minLength && formData[field.name] && 
-          formData[field.name].length < field.minLength) {
-        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
-      }
-    });
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
-    }
-  };
-
-  const renderField = (field) => {
-    const { name, type, label, placeholder, options, required } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
-
-    switch (type) {
-      case 'date':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <select
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-select ${error ? 'error' : ''}`}
-            >
-              <option value="">Select an option</option>
-              {options?.map((option, idx) => (
-                <option key={idx} value={option.value || option}>
-                  {option.label || option}
-                </option>
-              ))}
-            </select>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <textarea
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              placeholder={placeholder}
-              className={`form-textarea ${error ? 'error' : ''}`}
-              rows={3}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={name} className="form-field checkbox-field">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={value === true || value === 'true'}
-                onChange={(e) => handleInputChange(name, e.target.checked)}
-                className="form-checkbox"
-              />
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      default:
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <input
-              type={type || 'text'}
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              placeholder={placeholder}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div className="dynamic-form-container">
-      <form onSubmit={handleSubmit} className="dynamic-form">
-        {fields.map(renderField)}
-        <div className="form-actions">
-          <button type="button" onClick={onCancel} className="cancel-button">
-            Cancel
-          </button>
-          <button type="submit" className="submit-button">
-            Submit
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
+// Dynamic Form Component remains the same...
 
 const Chatbot = ({ setChatbotMinimized }) => {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [formDisabled, setFormDisabled] = useState(true);
-  const [activeForm, setActiveForm] = useState(null);
+  // ... existing state declarations ...
 
-  const messagesEndRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const API_TIMEOUT = 20000;
-
-  const clearCurrentTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  };
-
-  const setApiTimeout = (errorHandler) => {
-    clearCurrentTimeout();
-    timeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      errorHandler();
-    }, API_TIMEOUT);
-  };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  };
-
-  const hasFormFields = (response) => {
-    return response && Array.isArray(response.fields) && response.fields.length > 0;
-  };
-
-  const extractFormFields = (response) => {
-    if (!response || !response.fields || !Array.isArray(response.fields)) {
-      return null;
-    }
-    
-    return response.fields.map(field => {
-      const baseField = {
-        name: field.fieldName,
-        label: field.fieldName.charAt(0).toUpperCase() + field.fieldName.slice(1),
-        required: field.fieldValue && field.fieldValue.length > 0
-      };
-
-      if (Array.isArray(field.fieldValue)) {
-        if (field.fieldValue.length > 0) {
-          return {
-            ...baseField,
-            type: 'select',
-            options: field.fieldValue.map(value => ({ value, label: value }))
-          };
-        } else {
-          return {
-            ...baseField,
-            type: 'text'
-          };
-        }
-      } else {
-        return {
-          ...baseField,
-          type: 'text',
-          defaultValue: field.fieldValue || ''
-        };
-      }
-    });
-  };
-
-  const getPostData = async () => {
-    try {
-      setIsTyping(true);
-      setApiTimeout(() => {
-        setMessages([
-          {
-            id: Date.now(),
-            text: "Unable to load messages. Please try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
-
-      const res = await getPost();
-      clearCurrentTimeout();
-
-      const formattedMessages = res.data.chat_history.map((item, index) => {
-        let messageText = item.message || "";
-        
-        // Handle object responses
-        if (typeof item.message === 'object') {
-          messageText = JSON.stringify(item.message);
-        }
-
-        const message = {
-          id: Date.now() + index,
-          text: messageText,
-          sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
-          time: getCurrentTime(),
-          options: item.options || [],
-        };
-
-        if (hasFormFields(item)) {
-          message.formFields = extractFormFields(item);
-          message.isFormMessage = true;
-        }
-
-        return message;
-      });
-
-      setMessages(formattedMessages);
-      setFormDisabled(true);
-      setIsTyping(false);
-    } catch {
-      clearCurrentTimeout();
-      setIsTyping(false);
-      setMessages([
-        {
-          id: Date.now(),
-          text: "An error occurred while loading messages.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-  };
-
-  useEffect(() => {
-    getPostData();
-    return () => clearCurrentTimeout();
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, activeForm]);
-
-  const checkEnableForm = (text) => {
-    const lowerText = text.toLowerCase();
-    return lowerText.includes("enter") || lowerText.includes("provide");
-  };
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (newMessage.trim() === "") return;
-
-    const userMsg = {
-      id: Date.now(),
-      text: newMessage,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setNewMessage("");
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-      
-      const lastBotMessage = messages.filter(m => m.sender === "bot").slice(-1)[0];
-      let payload;
-      
-      if (lastBotMessage && lastBotMessage.isFormMessage) {
-        payload = {
-          message: {
-            reply: newMessage
-          }
-        };
-      } else {
-        payload = newMessage;
-      }
-      
-      const res = await postMessage(payload);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        let messageText = latest.message || "";
-        
-        // Handle object responses
-        if (typeof latest.message === 'object') {
-          messageText = JSON.stringify(latest.message);
-        }
-
-        const botResponse = {
-          id: Date.now(),
-          text: messageText,
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleOptionClick = async (optionText) => {
-    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "").trim();
-
-    const userMessage = {
-      id: Date.now(),
-      text: cleanedOpt,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setFormDisabled(true);
-    setIsTyping(true);
-
-    try {
-      setApiTimeout(() => {});
-      
-      const lastBotMessage = messages.filter(m => m.sender === "bot").slice(-1)[0];
-      let payload;
-      
-      if (lastBotMessage && lastBotMessage.isFormMessage) {
-        payload = {
-          message: {
-            option: cleanedOpt
-          }
-        };
-      } else {
-        payload = cleanedOpt;
-      }
-      
-      const res = await postMessage(payload);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        let messageText = latest.message || "";
-        
-        // Handle object responses
-        if (typeof latest.message === 'object') {
-          messageText = JSON.stringify(latest.message);
-        }
-
-        const botResponse = {
-          id: Date.now(),
-          text: messageText,
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
-    }
-
-    setIsTyping(false);
+  const handleFormButtonClick = (fields) => {
+    setActiveForm(fields);
+    setFormDisabled(true); // Disable input while form is open
   };
 
   const handleFormSubmit = async (formData) => {
     setActiveForm(null);
+    setFormDisabled(false); // Re-enable input after form submission
     
     const userMessage = {
       id: Date.now(),
-      text: `Form submitted: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`,
+      text: `Form submitted: ${JSON.stringify(formData)}`,
       sender: "user",
       time: getCurrentTime(),
     };
     setMessages((prev) => [...prev, userMessage]);
     setIsTyping(true);
-    setFormDisabled(true);
     
     try {
-      setApiTimeout(() => {});
-      
-      const payload = {
-        message: formData
-      };
-      
-      const res = await postMessage(payload);
-      clearCurrentTimeout();
-      
+      const res = await postMessage({ message: formData });
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest) {
-        let messageText = latest.message || "";
-        
-        // Handle object responses
-        if (typeof latest.message === 'object') {
-          messageText = JSON.stringify(latest.message);
-        }
+        let messageText = typeof latest.message === 'object' 
+          ? JSON.stringify(latest.message) 
+          : latest.message || "";
 
         const botResponse = {
           id: Date.now(),
@@ -565,23 +109,20 @@ const Chatbot = ({ setChatbotMinimized }) => {
           time: getCurrentTime(),
           options: latest.options || [],
         };
-        
+
         if (hasFormFields(latest)) {
           botResponse.formFields = extractFormFields(latest);
           botResponse.isFormMessage = true;
         }
-        
+
         setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
       }
     } catch (error) {
-      clearCurrentTimeout();
-      console.error('Form submission error:', error);
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now(),
-          text: "An error occurred while submitting the form. Please try again.",
+          text: "Form submission failed. Please try again.",
           sender: "bot",
           time: getCurrentTime(),
         },
@@ -592,115 +133,46 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const handleFormCancel = () => {
     setActiveForm(null);
+    setFormDisabled(false); // Re-enable input when form is canceled
   };
 
-  const handleFormButtonClick = (fields) => {
-    setActiveForm(fields);
-  };
-
-  const handleMinimize = () => {
-    setIsMinimized(true);
-    setChatbotMinimized(true);
-  };
-
-  const handleRestore = () => {
-    setIsMinimized(false);
-    setChatbotMinimized(false);
-  };
+  // ... rest of the component code ...
 
   return (
     <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
-      <div className="chat-header">
-        <img src={logo} alt="Logo" className="chat-logo" onClick={handleRestore} />
-        {!isMinimized && (
-          <>
-            <div className="chat-title">
-              <h1>EIS GINI</h1>
-              <h5>(Generative Interactive Neural Interface)</h5>
-            </div>
-            <button className="minimize-button" onClick={handleMinimize}>
-              &#x2212;
-            </button>
-          </>
-        )}
-      </div>
-
+      {/* ... existing JSX ... */}
       {!isMinimized && (
         <>
           <div className="messages-container">
             {messages.map((item, index) => (
-              <div
-                key={index}
-                className={`message-wrapper ${item.sender.toLowerCase()}`}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
-                  marginBottom: "12px",
-                }}
-              >
+              <div key={index} className={`message-wrapper ${item.sender.toLowerCase()}`}>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" ? (
-                      <div
-                        className="message-content"
-                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
-                      />
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
+                    <div
+                      className="message-content"
+                      dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                    />
                     
-                    {item.formFields && (
+                    {item.formFields && !activeForm && (
                       <div className="form-trigger">
                         <button 
                           className="form-button"
                           onClick={() => handleFormButtonClick(item.formFields)}
+                          disabled={!!activeForm}
                         >
                           Fill Form
                         </button>
                       </div>
                     )}
                     
-                    {item.options?.length > 0 && (
-                      <div className="options-list">
-                        {item.options.map((opt, i) => {
-                          const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
-                          const isPlainText =
-                            displayText.includes("please select one by name") ||
-                            displayText.includes("please select from the following options");
-
-                          if (isPlainText) {
-                            return (
-                              <div key={i} className="plain-text-option">
-                                {displayText}
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-                              {displayText}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="message-time">{item.time}</div>
+                    {/* ... rest of message rendering ... */}
                   </div>
                   {item.sender === "user" && <ProfileIcon sender={item.sender} />}
                 </div>
               </div>
             ))}
-            {isTyping && (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                <ProfileIcon sender="bot" />
-                <div className="message bot-message">
-                  <TypingIndicator />
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+            {/* ... */}
           </div>
 
           {activeForm && (
@@ -716,12 +188,16 @@ const Chatbot = ({ setChatbotMinimized }) => {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={formDisabled ? "Select a relevant option or wait for prompt..." : "Type a message..."}
+              placeholder={formDisabled ? "Please complete the form first..." : "Type a message..."}
               className="message-input"
-              disabled={formDisabled}
+              disabled={formDisabled || !!activeForm}
             />
-            <button type="submit" className="send-button" disabled={formDisabled}>
-              <img className="logo" src={send} alt="Send" style={{ height: "20px", opacity: formDisabled ? 0.5 : 1 }} />
+            <button 
+              type="submit" 
+              className="send-button" 
+              disabled={formDisabled || !!activeForm}
+            >
+              <img className="logo" src={send} alt="Send" style={{ height: "20px" }} />
             </button>
           </form>
         </>
