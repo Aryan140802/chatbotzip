@@ -541,61 +541,64 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  // Updated form submission - sends data directly
-  const handleFormSubmit = async (formData) => {
-    setActiveForm(null);
-    
-    const userMessage = {
-      id: Date.now(),
-      text: `Form submitted: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsTyping(true);
-    setFormDisabled(true);
-    
-    try {
-      setApiTimeout(() => {});
-      
-      // Send form data directly - your API gets: {layer: "ACCOUNT_EXP", server: "myserver", ...}
-      const res = await postMessage(formData);
-      clearCurrentTimeout();
-      
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-        
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
-        }
-        
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch (error) {
-      clearCurrentTimeout();
-      console.error('Form submission error:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred while submitting the form. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-    setIsTyping(false);
+ // Updated form submission - sends data in flat object format
+const handleFormSubmit = async (formData) => {
+  setActiveForm(null);
+  
+  const userMessage = {
+    id: Date.now(),
+    text: `Form submitted: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`,
+    sender: "user",
+    time: getCurrentTime(),
   };
-
+  setMessages((prev) => [...prev, userMessage]);
+  setIsTyping(true);
+  setFormDisabled(true);
+  
+  try {
+    setApiTimeout(() => {});
+    
+    // Send form data in flat object format
+    const payload = {
+      message: formData  // Direct assignment of form data object
+    };
+    
+    const res = await postMessage(payload);
+    clearCurrentTimeout();
+    
+    const latest = res.data.chat_history?.slice(-1)[0];
+    if (latest) {
+      const botResponse = {
+        id: Date.now(),
+        text: latest.message || "",
+        sender: "bot",
+        time: getCurrentTime(),
+        options: latest.options || [],
+      };
+      
+      if (hasFormFields(latest)) {
+        botResponse.formFields = extractFormFields(latest);
+        botResponse.isFormMessage = true;
+      }
+      
+      setMessages((prev) => [...prev, botResponse]);
+      setFormDisabled(!checkEnableForm(botResponse.text));
+    }
+  } catch (error) {
+    clearCurrentTimeout();
+    console.error('Form submission error:', error);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: "An error occurred while submitting the form. Please try again.",
+        sender: "bot",
+        time: getCurrentTime(),
+      },
+    ]);
+  }
+  setIsTyping(false);
+};
   // Handle form cancellation
   const handleFormCancel = () => {
     setActiveForm(null);
