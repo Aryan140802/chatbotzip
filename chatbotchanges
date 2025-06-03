@@ -252,117 +252,53 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
   };
 
-const hasFormFields = (response) => {
-  if (!response || !response.message) return false;
-  
-  // Check if message is an object and not an array
-  return typeof response.message === 'object' && 
-         !Array.isArray(response.message) &&
-         Object.keys(response.message).length > 0;
-};
-
-const extractFormFields = (response) => {
-  if (!hasFormFields(response)) return null;
-  
-  return Object.entries(response.message).map(([name, value]) => {
-    const baseField = {
-      name,
-      label: name.charAt(0).toUpperCase() + name.slice(1),
-      defaultValue: value || '',
-      required: false // Set based on your requirements
-    };
-
-    // You can add logic here to determine field type based on name or value
-    return {
-      ...baseField,
-      type: 'text' // Default to text input, modify as needed
-    };
-  });
-};
+  const hasFormFields = (response) => {
+    if (!response || !response.message) return false;
     
-    return response.fields.map(field => {
+    // Check if message is an object and not an array
+    return typeof response.message === 'object' && 
+           !Array.isArray(response.message) &&
+           Object.keys(response.message).length > 0;
+  };
+
+  const extractFormFields = (response) => {
+    if (!hasFormFields(response)) return null;
+    
+    return Object.entries(response.message).map(([name, value]) => {
       const baseField = {
-        name: field.fieldName,
-        label: field.fieldName.charAt(0).toUpperCase() + field.fieldName.slice(1),
-        required: field.fieldValue && field.fieldValue.length > 0
+        name,
+        label: name.charAt(0).toUpperCase() + name.slice(1),
+        defaultValue: value || '',
+        required: false // Set based on your requirements
       };
 
-      if (Array.isArray(field.fieldValue)) {
-        if (field.fieldValue.length > 0) {
-          return {
-            ...baseField,
-            type: 'select',
-            options: field.fieldValue.map(value => ({ value, label: value }))
-          };
-        } else {
-          return {
-            ...baseField,
-            type: 'text'
-          };
-        }
-      } else {
-        return {
-          ...baseField,
-          type: 'text',
-          defaultValue: field.fieldValue || ''
-        };
-      }
+      // You can add logic here to determine field type based on name or value
+      return {
+        ...baseField,
+        type: 'text' // Default to text input, modify as needed
+      };
     });
   };
 
-const getPostData = async () => {
-  try {
-    setIsTyping(true);
-    setApiTimeout(() => {
-      setMessages([{
-        id: Date.now(),
-        text: "Unable to load messages. Please try again later.",
-        sender: "bot",
-        time: getCurrentTime(),
-      }]);
-    });
+  const getPostData = async () => {
+    try {
+      setIsTyping(true);
+      setApiTimeout(() => {
+        setMessages([{
+          id: Date.now(),
+          text: "Unable to load messages. Please try again later.",
+          sender: "bot",
+          time: getCurrentTime(),
+        }]);
+      });
 
-    const res = await getPost();
-    clearCurrentTimeout();
-
-    const formattedMessages = res.data.chat_history.map((item, index) => {
-      const message = {
-        id: Date.now() + index,
-        text: typeof item.message === 'string' ? item.message : "",
-        sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
-        time: getCurrentTime(),
-        options: item.options || [],
-      };
-
-      if (hasFormFields(item)) {
-        message.formFields = extractFormFields(item);
-        message.isFormMessage = true;
-      }
-
-      return message;
-    });
-
-    setMessages(formattedMessages);
-    setFormDisabled(true);
-    setIsTyping(false);
-  } catch {
-    clearCurrentTimeout();
-    setIsTyping(false);
-    setMessages([{
-      id: Date.now(),
-      text: "An error occurred while loading messages.",
-      sender: "bot",
-      time: getCurrentTime(),
-    }]);
-  }
-};
       const res = await getPost();
       clearCurrentTimeout();
 
       const formattedMessages = res.data.chat_history.map((item, index) => {
         const message = {
           id: Date.now() + index,
-          text: item.message || "",
+          text: typeof item.message === 'string' ? item.message : "",
           sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
           time: getCurrentTime(),
           options: item.options || [],
@@ -382,14 +318,12 @@ const getPostData = async () => {
     } catch {
       clearCurrentTimeout();
       setIsTyping(false);
-      setMessages([
-        {
-          id: Date.now(),
-          text: "An error occurred while loading messages.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
+      setMessages([{
+        id: Date.now(),
+        text: "An error occurred while loading messages.",
+        sender: "bot",
+        time: getCurrentTime(),
+      }]);
     }
   };
 
@@ -534,64 +468,65 @@ const getPostData = async () => {
     setIsTyping(false);
   };
 
- const handleFormSubmit = async (formData) => {
-  setActiveForm(null);
-  
-  const userMessage = {
-    id: Date.now(),
-    text: `Form submitted: ${JSON.stringify(formData)}`,
-    sender: "user",
-    time: getCurrentTime(),
-  };
-  
-  setMessages((prev) => [...prev, userMessage]);
-  setIsTyping(true);
-  setFormDisabled(true);
-  
-  try {
-    setApiTimeout(() => {});
+  const handleFormSubmit = async (formData) => {
+    setActiveForm(null);
     
-    // Send the form data directly as the message object
-    const payload = {
-      message: formData
+    const userMessage = {
+      id: Date.now(),
+      text: `Form submitted: ${JSON.stringify(formData)}`,
+      sender: "user",
+      time: getCurrentTime(),
     };
     
-    const res = await postMessage(payload);
-    clearCurrentTimeout();
+    setMessages((prev) => [...prev, userMessage]);
+    setIsTyping(true);
+    setFormDisabled(true);
     
-    const latest = res.data.chat_history?.slice(-1)[0];
-    if (latest) {
-      const botResponse = {
-        id: Date.now(),
-        text: typeof latest.message === 'string' ? latest.message : "",
-        sender: "bot",
-        time: getCurrentTime(),
-        options: latest.options || [],
+    try {
+      setApiTimeout(() => {});
+      
+      // Send the form data directly as the message object
+      const payload = {
+        message: formData
       };
       
-      if (hasFormFields(latest)) {
-        botResponse.formFields = extractFormFields(latest);
-        botResponse.isFormMessage = true;
-      }
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
       
-      setMessages((prev) => [...prev, botResponse]);
-      setFormDisabled(!checkEnableForm(botResponse.text));
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: typeof latest.message === 'string' ? latest.message : "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+        };
+        
+        if (hasFormFields(latest)) {
+          botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
+        }
+        
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      console.error('Form submission error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred while submitting the form. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
     }
-  } catch (error) {
-    clearCurrentTimeout();
-    console.error('Form submission error:', error);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: "An error occurred while submitting the form. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      },
-    ]);
-  }
-  setIsTyping(false);
-};
+    setIsTyping(false);
+  };
+
   const handleFormCancel = () => {
     setActiveForm(null);
   };
