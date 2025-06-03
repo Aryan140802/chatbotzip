@@ -1,3 +1,49 @@
+
+fields
+: 
+[{fieldName: "layer", fieldValue: ["ACCOUNT_EXP"]}, {fieldName: "server", fieldValue: []},…]
+0
+: 
+{fieldName: "layer", fieldValue: ["ACCOUNT_EXP"]}
+fieldName
+: 
+"layer"
+fieldValue
+: 
+["ACCOUNT_EXP"]
+0
+: 
+"ACCOUNT_EXP"
+1
+: 
+{fieldName: "server", fieldValue: []}
+fieldName
+: 
+"server"
+fieldValue
+: 
+[]
+2
+: 
+{fieldName: "eg", fieldValue: []}
+fieldName
+: 
+"eg"
+fieldValue
+: 
+[]
+3
+: 
+{fieldName: "service", fieldValue: []}
+fieldName
+: 
+"service"
+fieldValue
+: 
+[]
+
+
+
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
