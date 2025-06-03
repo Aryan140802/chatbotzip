@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 // Create axios instance with custom configuration
 const api = axios.create({
   baseURL: 'https://10.191.171.12:5443/PyPortal/',
@@ -8,33 +7,33 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   }
-
 });
 
-// Modified postMessage to handle both regular messages and form data
+// Modified postMessage to always send data under "message"
 export const postMessage = (data) => {
   // If data is a string (regular message)
   if (typeof data === 'string') {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
 
-  // If data is form data (array of fields)
- if (Array.isArray(data)) {
-    return api.post('EIS-GINI/', { "fields": data }, { timeout: 100000 });
+  // If data is an array, send it under message
+  if (Array.isArray(data)) {
+    return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
 
-  // If data is an object (form submission)
+  // If data is an object, check if it has a 'message' property
   if (typeof data === 'object' && data !== null) {
-    // Convert form data to array format for backend
-    const formData = Object.entries(data).map(([fieldName, fieldValue]) => ({
-      fieldName,
-      fieldValue: Array.isArray(fieldValue) ? fieldValue : [fieldValue]
-    }));
-    return api.post('EIS-GINI/', { "fields": formData }, { timeout: 100000 });
+    // If it's already in the format { message: {...} }, send it directly
+    if (data.hasOwnProperty('message')) {
+      return api.post('EIS-GINI/', data, { timeout: 100000 });
+    }
+    
+    // If it's just form data without message wrapper, wrap it under message
+    return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
 
   // Default case (fallback)
-  return api.post('EIS-GINI/', { "message": JSON.stringify(data) }, { timeout: 100000 });
+  return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
 };
 
 // All other API functions remain unchanged
