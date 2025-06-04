@@ -632,76 +632,85 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleFormSubmit = async (formData, originalFields) => {
-    setActiveForm(null);
-    setCurrentFormType(null);
+ const handleFormSubmit = async (formData, originalFields) => {
+  setActiveForm(null);
+  setCurrentFormType(null);
 
-    // Ensure all original fields are included in the data sent to backend
-    const completeFormData = {};
+  let completeFormData = {};
+  
+  // For workload form, only send fields that have values
+  if (currentFormType === 'workload') {
+    // Only include fields that have actual values (not empty strings)
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value && value.trim() !== '') {
+        completeFormData[key] = value;
+      }
+    });
+  } else {
+    // For other forms, include all fields (existing behavior)
     originalFields.forEach(field => {
-      // If user provided value, use it; otherwise use empty string
       completeFormData[field.name] = formData[field.name] || '';
     });
+  }
 
-    // FIXED: Format form data for display (workload shows only service field)
-    const formattedText = formatFormDataToSentence(completeFormData, originalFields, currentFormType);
+  // Format form data for display (workload shows only service field)
+  const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
 
-    const userMessage = {
-      id: Date.now(),
-      text: formattedText,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-
-      // Send ALL form data to backend (including empty fields)
-      const payload = {
-        message: completeFormData
-      };
-
-      const res = await postMessage(payload);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: typeof latest.message === 'string' ? latest.message : "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch (error) {
-      clearCurrentTimeout();
-      console.error('Form submission error:', error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred while submitting the form. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-    setIsTyping(false);
+  const userMessage = {
+    id: Date.now(),
+    text: formattedText,
+    sender: "user",
+    time: getCurrentTime(),
   };
 
+  setMessages((prev) => [...prev, userMessage]);
+  setIsTyping(true);
+  setFormDisabled(true);
+
+  try {
+    setApiTimeout(() => {});
+
+    // Send the appropriate form data to backend
+    const payload = {
+      message: completeFormData
+    };
+
+    const res = await postMessage(payload);
+    clearCurrentTimeout();
+
+    const latest = res.data.chat_history?.slice(-1)[0];
+    if (latest) {
+      const botResponse = {
+        id: Date.now(),
+        text: typeof latest.message === 'string' ? latest.message : "",
+        sender: "bot",
+        time: getCurrentTime(),
+        options: latest.options || [],
+      };
+
+      if (hasFormFields(latest)) {
+        botResponse.formFields = extractFormFields(latest);
+        botResponse.isFormMessage = true;
+      }
+
+      setMessages((prev) => [...prev, botResponse]);
+      setFormDisabled(!checkEnableForm(botResponse.text));
+    }
+  } catch (error) {
+    clearCurrentTimeout();
+    console.error('Form submission error:', error);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        text: "An error occurred while submitting the form. Please try again.",
+        sender: "bot",
+        time: getCurrentTime(),
+      },
+    ]);
+  }
+  setIsTyping(false);
+};
   const handleFormCancel = () => {
     setActiveForm(null);
     setCurrentFormType(null);
