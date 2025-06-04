@@ -61,11 +61,11 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // Initialize form data with empty values or default values from fields
+    // Initialize form data with empty values - FIXED: No more "date" default values
     const initialData = {};
     fields.forEach(field => {
-      // For date fields, initialize as empty string instead of "date"
-      initialData[field.name] = field.type === 'date' ? '' : (field.defaultValue || '');
+      // Initialize all fields as empty string, including date fields
+      initialData[field.name] = field.defaultValue || '';
     });
     setFormData(initialData);
   }, [fields]);
@@ -116,11 +116,11 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // Clean up form data before submission - remove empty date fields
+      // Clean up form data before submission - remove empty values
       const cleanedFormData = {};
       Object.keys(formData).forEach(key => {
         const value = formData[key];
-        // Only include non-empty values, or for date fields, only include if they have actual dates
+        // Only include non-empty values
         if (value !== '' && value !== null && value !== undefined) {
           cleanedFormData[key] = value;
         }
@@ -134,11 +134,11 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     const value = formData[name] || '';
     const error = errors[name];
 
-    // Add asterisk to label for required fields
+    // FIXED: Better asterisk styling for required fields
     const fieldLabel = (
       <>
         {label || name}
-        {required && <span className="required"> *</span>}
+        {required && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
       </>
     );
 
@@ -357,7 +357,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const baseField = {
         name,
         label: name.charAt(0).toUpperCase() + name.slice(1),
-        defaultValue: value || '',
+        defaultValue: value && value !== 'date' ? value : '', // FIXED: Don't use "date" as default
         required: false // Set based on your requirements
       };
 
