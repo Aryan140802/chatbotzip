@@ -1,430 +1,761 @@
- {
-            "sender": "Bot",
-            "message": {
-                "Subject": "",
-                "Source": "",
-                "Destination": "",
-                "Zone": "",
-                "Port": "",
-                "expiryoptions": [
-                    "before",
-                    "after"
-                ],
-                "expiry": "date",
-                "createdoptions": [
-                    "before",
-                    "after"
-                ],
-                "created": "date"
-            },
-            "options": [
-                "1.Back",
-                "2.main menu"
-            ]
+import '../styles/GraphCarousel.css';
+
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
+
+import Download from '../assets/down-arrow.png';
+import {
+  getServiceWiseExp5,
+  getServiceWiseSys5,
+  getIpWiseExp5,
+  getIpWiseSys5,
+  getPortWiseExp5,
+  getPortWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5,
+  postIpWiseSys5,
+  postIpWiseExp5,
+  postServiceWiseExp5,
+  postServiceWiseSys5,
+  getFARExpires
+} from "../api/PostApi";
+
+import { useState, useEffect, useRef } from "react";
+
+// Format large numbers
+const formatHits = (value) => {
+  if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
+  if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
+  if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
+  return value;
+};
+
+// Format percentage for the pie chart
+const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
+
+// Utility function to wait/delay
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const ThreeDBar = (props) => {
+  const { x, y, width, height, fill } = props;
+  const depth = 6;
+
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} fill={fill} style={{ transition: "all 0.3s ease" }} className="custom-bar" />
+      <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`} fill="#ffffff33" />
+      <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill="#00000033" />
+    </g>
+  );
+};
+
+const GraphCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [charts, setCharts] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
+  const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
+  const [farData, setFarData] = useState([]);
+  const [farTotal, setFarTotal] = useState(0);
+
+  const calendarRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  // Colors for the pie chart
+  const COLORS = [
+    '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
+    '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
+    '#33FF8C', '#FF33BD', '#338CFF'
+  ];
+
+  const timeOptions = [
+    { label: "5 min", value: "5min" },
+    { label: "15 min", value: "15min" },
+    { label: "30 min", value: "30min" },
+    { label: "1 hour", value: "1hour" },
+    { label: "Till now", value: "tillnow" },
+    { label: "Yesterday", value: "yesterday" },
+    { label: "Custom date", value: "custom" },
+  ];
+
+  const baseTitles = [
+    'Service-wise Exp Data',
+    'Service-wise Sys Data',
+    'IP-wise Exp Data',
+    'IP-wise Sys Data',
+    'Port-wise Exp Data',
+    'Port-wise Sys Data',
+    'Monthly FAR Expiry Distribution'
+  ];
+
+  const formatDate = (date) =>
+    date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  // Check if all chart data arrays are empty (excluding FAR chart)
+  const isAllChartDataEmpty = (chartData) => {
+    if (!chartData || chartData.length === 0) return true;
+
+    // Check the first 6 charts (excluding FAR chart at index 6)
+    const dataCharts = chartData.slice(0, 6);
+    return dataCharts.every(chart => !chart.data || chart.data.length === 0);
+  };
+
+  // Fetch FAR data
+  const fetchFARData = async () => {
+    try {
+      const response = await getFARExpires();
+
+      const formattedData = [];
+      let total = 0;
+
+      response.data.MonthlyFarCount.forEach(monthData => {
+        const [month, value] = Object.entries(monthData)[0];
+        if (value > 0) {  // Only include non-zero values
+          formattedData.push({
+            name: month,
+            value: value
+          });
+          total += value;
+        }
+      });
+
+      setFarData(formattedData);
+      setFarTotal(total);
+
+      return formattedData;
+    } catch (error) {
+      console.error("Error fetching FAR data:", error);
+      return [];
+    }
+  };
+
+  const updateChartTitles = (timeDisplay) => {
+    if (charts.length === 0) return;
+
+    const updatedCharts = charts.map((chart, index) => ({
+      ...chart,
+      title: index === 6 ? baseTitles[6] : `${baseTitles[index]} of ${timeDisplay}`
+    }));
+
+    setCharts(updatedCharts);
+
+    if (currentIndex >= 0 && currentIndex < charts.length) {
+      if (currentIndex === 6) { // For the FAR chart
+        setCurrentDisplayTitle(baseTitles[6]);
+      } else {
+        setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
+      }
+    }
+  };
+
+  const fetchFilteredData = async (timeRange, timeLabel, attemptNumber = 1) => {
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2 seconds
+
+    try {
+      console.log(`Fetching data for time range: ${timeRange} (Attempt ${attemptNumber}/${maxRetries})`);
+
+      const [
+        serviceExp,
+        serviceSys,
+        ipExp,
+        ipSys,
+        portExp,
+        portSys
+      ] = await Promise.all([
+        postServiceWiseExp5(timeRange),
+        postServiceWiseSys5(timeRange),
+        postIpWiseExp5(timeRange),
+        postIpWiseSys5(timeRange),
+        postPortWiseExp5(timeRange),
+        postPortWiseSys5(timeRange)
+      ]);
+
+      // Fetch FAR data
+      const farChartData = await fetchFARData();
+
+      const formatData = (data, key) => {
+        if (!data || !Array.isArray(data)) {
+          console.error('Invalid data format received:', data);
+          return [];
         }
 
+        return data.map(item => ({
+          ...item,
+          [key]: item[key]?.toString().trim() || '',
+          Hits: Number(item.Hits || 0),
+          logVal: Number(item.logVal || 0)
+        }));
+      };
 
+      // Use the provided timeLabel for display, or generate one for custom dates
+      const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
+        ? `Custom: ${formatDate(selectedDate)}`
+        : timeLabel || selectedTimeLabel;
 
+      const chartData = [
+        {
+          data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
+          dataKeyX: 'Service_name',
+          baseTitle: baseTitles[0]
+        },
+        {
+          data: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
+          dataKeyX: 'Service_name',
+          baseTitle: baseTitles[1]
+        },
+        {
+          data: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
+          dataKeyX: 'Ip',
+          baseTitle: baseTitles[2]
+        },
+        {
+          data: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
+          dataKeyX: 'Ip',
+          baseTitle: baseTitles[3]
+        },
+        {
+          data: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
+          dataKeyX: 'Port',
+          baseTitle: baseTitles[4]
+        },
+        {
+          data: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
+          dataKeyX: 'Port',
+          baseTitle: baseTitles[5]
+        },
+        {
+          data: farChartData,
+          dataKeyX: 'name',
+          baseTitle: baseTitles[6]
+        }
+      ];
 
+      // Check if all chart data arrays are empty and retry if needed
+      if (isAllChartDataEmpty(chartData) && attemptNumber < maxRetries) {
+        console.warn(`All chart data arrays are empty. Retrying in ${retryDelay/1000} seconds... (Attempt ${attemptNumber}/${maxRetries})`);
+        setRetryCount(attemptNumber);
 
-from django.shortcuts import render
-from django.http import JsonResponse
-import nltk
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import WordPunctTokenizer
-import re
-from .User_Info import *
-from .Server_data import *
-import random
-from .training_data import TRAINING_DATA
-from .FAR_Info import get_far_info,get_far_db
-#import csrf_exempt
-from .models import FarDetailsAll
-from .forms import FarForm
-import json
-from django.views.decorators.csrf import csrf_exempt
+        // Wait for the specified delay
+        await wait(retryDelay);
 
-nltk.data.path.append('/var/www/cgi-bin/djangovenv/venv/nltk_data')  # Update this path as needed
-stop_words = set(stopwords.words("english"))
-lemmatizer = WordNetLemmatizer()
-tokenizer = WordPunctTokenizer()
+        // Retry the fetch
+        return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
+      }
 
+      // Reset retry count on successful fetch (or after max retries)
+      setRetryCount(0);
 
+      if (isAllChartDataEmpty(chartData) && attemptNumber >= maxRetries) {
+        console.error(`All retries exhausted. Chart data is still empty after ${maxRetries} attempts.`);
+      }
 
-def preprocess_input(user_input):
-    user_input = re.sub(r"[^\w\s]", "", user_input.lower())  # Remove punctuation
-    tokens = word_tokenize(user_input)
-    pos_tags=nltk.pos_tag(tokens)
-    tokens=[ word for word,pos in pos_tags if pos in ('NNP','NN','NNPS','NNS')]
-    return tokens
+      return chartData.map(({ data, dataKeyX, baseTitle }) => {
+        // Create different chart components based on chart type
+        let chartComponent;
 
-def extract_keyword(tokens):
-    if len(tokens) > 0:
-        return [token  for token in tokens if token.isalpha() or token.isdigit() or token.isalnum()]
+        if (baseTitle === baseTitles[6]) {
+          // Pie chart for FAR data
+          chartComponent = (
+            <ResponsiveContainer>
+              <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine
+                  outerRadius={130}
+                  innerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+                >
+                  {data.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
 
-    return []
+                <Tooltip
+                  formatter={(value) => [`${value}`, 'Count']}
+                  contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#f285c1' }}
+                />
+                <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+              </PieChart>
+            </ResponsiveContainer>
+          );
+        } else {
+          // Bar chart for other data
+          chartComponent = (
+            <ResponsiveContainer>
+              <BarChart
+                data={data}
+                margin={{ top: 30, right: 30, left: 30, bottom: 60 }}
+                barCategoryGap={10}
+                key={`${baseTitle}-${timeRange}-chart`}
+              >
+                <defs>
+  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+    {baseTitle.includes('Exp') ? (
+      <>
+        <stop offset="0%" stopColor="#6a11cb" />
+        <stop offset="100%" stopColor="#2575fc" />
+      </>
+    ) : (
+      <>
+        <stop offset="0%" stopColor="#ff6a00" />
+        <stop offset="100%" stopColor="#ee0979" />
+      </>
+    )}
+  </linearGradient>
+</defs>
 
-def table_to_text(request,status,user_message):
-    if(isinstance(status,list) and len(status)> 0):
-        request.session["status"] = status
-        success_or_fail=[i[0] for i in status ]
-        success_or_fail_code=[i[6] if i[1] == 'Y' else i[4] for i in status ]
-        if( '1' not in success_or_fail):
-            bot_response = "transaction is successful!!!\n"
-        else:
-            if( len(set(success_or_fail_code)) == 1):
-                bot_response = f"transaction is failed with Error Code :{ success_or_fail_code[0]} !!! \n "
-            else:
-                bot_response = f"transaction is failed with {success_or_fail_code} !!!"," \n "
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
+                <XAxis
+                  dataKey={dataKeyX}
+                  stroke="#f7f7f7"
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={60}
+                  tick={{ fontSize: 13, fill: '#f7f7f7' }}
+                />
+                <YAxis
+                  tick={{ fill: '#f7f7f7' }}
+                  axisLine
+                  showLine
+                  tickFormatter={formatHits}
+                  domain={[0, (dataMax) => Math.ceil(dataMax * 1.1)]}
+                />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#f285c1' }}
+                  formatter={(value, name, props) => {
+                    if (name === 'Hits') {
+                      const formattedHits = formatHits(props.payload.Hits);
+                      return [`${formattedHits} (${props.payload.Hits})`, 'Hits'];
+                    }
+                    return value;
+                  }}
+                  labelFormatter={(label) => `${dataKeyX}: ${label}`}
+                />
+               <Bar
+  dataKey="Hits"
+  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
+  shape={ThreeDBar}
+  barSize={50}
+/>
 
-        request.session["conversation_state"] = "awaiting_details"
-        option_button="do you want more details?:\n1.YES\n2.No"
-    else:
-        bot_response = str(tables(request,user_message))+"\n\n"
-        if "valid" in bot_response:
-            option_button="1.main menu "
-            print(request.session.get("user_selected_option"))
-            #request.session["conversation_state"] = "awaiting_id"
-            #request.session["user_selected_option"] = "2"
-        else:
-            option_button=options
-            request.session["conversation_state"] = "awaiting_selection"
-            request.session["user_selected_option"] = None
-    return (bot_response,option_button)
+              </BarChart>
+            </ResponsiveContainer>
+          );
+        }
 
-@csrf_exempt
-def chatbot_ui(request):
-    print("API HIT")
-    options="1.Team Info\n2. Transaction Info\n3. Cache Info\n4. FAR Information\n5. Other"
-    conversation_state=request.session.get("conversation_state", "start")
-    if 'chat_history' not in request.session:
-       # option_statement=options.split(":")
-       # option_state=option_statement[0]
-        option_button=options.split("\n")
-       # option_button=[option_state]+option_statement[1].split('\n')[1:]
+        return {
+          baseTitle,
+          title: baseTitle === baseTitles[6]
+            ? baseTitle
+            : `${baseTitle} of ${timeDisplay}`,
+          rawData: data,
+          chart: chartComponent
+        };
+      });
+    } catch (error) {
+      console.error(`Error fetching data (Attempt ${attemptNumber}/${maxRetries}):`, error);
 
+      // Retry on error if we haven't exhausted all attempts
+      if (attemptNumber < maxRetries) {
+        console.warn(`Retrying in ${retryDelay/1000} seconds due to error... (Attempt ${attemptNumber}/${maxRetries})`);
+        setRetryCount(attemptNumber);
 
-        request.session['chat_history']=[{"sender": "Bot", "message": "Hello! Please select from the following options:","options":option_button}]
-        conversation_state = request.session.get("conversation_state", "awaiting_selection")
-    status=""
-    option_button=""
-    conversation_state = request.session.get("conversation_state", "awaiting_selection")
-    user_selected_option = request.session.get("user_selected_option", None)
-    user_back_options=request.session.get("user_back_options", [])
-    hits_choice=request.session.get("hits_choice",None)
-    print(request.session.get("user_selected_option"))
-    if request.method == "POST":
-        chat_map={}
-        print(request.POST)
-        '''body_unicode=request.body.decode('utf-8')
-        body_data=json.loads(body_unicode)
-        user_m=body_data.get('message').strip() '''
-        user_m = request.POST.get("message", "").strip()
-        if( not user_m):
-            return JsonResponse({"chat_history":"not found!!!!!!!!!!!!!"})
-        try:
-            user_message=json.loads(user_m)
-        except:
-            user_message=user_m
-        print(type(user_message),user_message)
-        chat_history = request.session['chat_history']
-        #greeting_response = process_greeting(user_message)
-        bot_response =""
-        user_choices = request.session.get("users_multiple_list", [])
-        '''if conversation_state == "start":
-            bot_response = greeting_response
-            request.session["conversation_state"] = "awaiting_selection"
-        elif greeting_response:
-            bot_response = greeting_response
-            request.session["conversation_state"] = "awaiting_selection"'''
-        if conversation_state == "awaiting_selection":
-            print("message",user_message)
-            print(user_message)
-            option_button=""
-            if  "Team Info".lower() in user_message.lower():
-                bot_response = 'Please provide the name or ID of the user.'
-                request.session["conversation_state"] = "awaiting_id"
-                request.session["user_selected_option"] = user_message.lower()
-            elif  "Transaction Info".lower() in user_message.lower():
-                request.session["conversation_state"] ="awaiting_user_choice"
-                bot_response = 'Select from Below Options:'
-                option_button="1.Hits\n2. Transaction Flow"
-                request.session["users_multiple_list"]=option_button
-                request.session["user_selected_option"] = user_message.lower()
-                request.session["user_back_options"]=user_message.lower()
-            elif  "Cache Info".lower() in user_message.lower():
-                print("cache")
-                request.session["conversation_state"] ="awaiting_user_choice"
-                bot_response = 'Select from Below Options:'
-                option_button="1.Total Cache fields\n2. Cache Value\nA.Back\nB. Main Menu"
-                request.session["users_multiple_list"]=option_button
-                request.session["user_selected_option"] = user_message.lower()
+        // Wait for the specified delay
+        await wait(retryDelay);
 
-            elif  "FAR Information".lower() in user_message.lower():
-                request.session["conversation_state"] = "awaiting_user_choice"
-                bot_response = 'select below options:'
-                option_button="1.Enter FAR ID\n2. Have Multiple Fields"
-                request.session["users_multiple_list"]=option_button
-                request.session["user_selected_option"] = user_message.lower()
-                request.session["user_back_options"].append(user_message.lower())
-            elif  "other" in user_message.lower():
-                bot_response = "Okay, ask whatever you want."
-                request.session["conversation_state"] = "awaiting_question"
-                request.session["user_selected_option"] = user_message.lower()
-                request.session["user_back_options"].append(user_message.lower())
-            elif user_message.lower() == "main menu":
-                print("user")
-                bot_response=""
-                option_button=options
-                request.session["conversation_state"] = "awaiting_selection"
-                request.session["user_selected_option"] = None
-                if option_button == "":
-                    option_button="1.main menu"
-            elif "Back" == user_message:
-                bot_response = 'Select from Below Options:'
-                option_button =user_choices
-                request.session["conversation_state"] ="awaiting_user_choice"
-            else:
-                bot_response = "I don't understand the question."
-            if option_button == "":
-                    option_button="1.main menu"
-        elif conversation_state == "awaiting_id":
-            bot_response = ""
-            user_choices = request.session.get("users_multiple_list", [])
-            if user_message == "main menu":
-                bot_response=""
-                option_button=options
-                request.session["conversation_state"] = "awaiting_selection"
-                request.session["user_selected_option"] = None
-            elif "Back" == user_message:
-                bot_response = 'Select from Below Options:'
-                option_button =user_choices
-                request.session["conversation_state"] ="awaiting_user_choice"
-            else:
-                print("under awaiting_id",request.session["user_selected_option"])
-                if(request.session["user_selected_option"] == "Team Info".lower() ):
-                    bot_response,option_button = user_info(request,[user_message])
-                    request.session["users_multiple_list"]=option_button
-                if(request.session["user_selected_option"] == "Transaction Flow".lower() ):
-                    print("under trans")
-                    status=tables(request,user_message)
-                    print("status",status)
-                    bot_response,option_button=table_to_text(request,status,user_message)
-                    request.session["users_multiple_list"]=option_button
-                if(request.session["user_selected_option"] == "Cache Info".lower() ):
-                    bot_response=Cache_Info("Cache Info",user_message.strip())
-                    option_button = "1.Back\n2.main menu"
-                    request.session["conversation_state"] = "awaiting_selection"
-                if(request.session["user_selected_option"] == "FAR Information".lower() ):
-                    user_dict=request.session.get("status")
-                    if user_message == "YES":
-                        bot_response = get_far_info(request,user_dict)
-                        option_button = options
-                    elif user_message == "NO":
-                        option_button = options
-                        bot_response="ok\n"
-                        request.session["conversation_state"] = "awaiting_selection"
-                    elif(isinstance(user_message,dict)):
-                        user_dict=user_message
-                        bot_response,option_button = get_far_db(request,user_dict)
-                    else:
-                        user_dict={"Far_Id":user_message}
-                        user_dict=request.session.get("status")
-                        bot_response,option_button = get_far_db(request,user_dict)
-                    request.session["conversation_state"] = "awaiting_details"
-                    option_button="do you want more details?:\n1.YES\n2.No"
-                    bot_response,option_button = get_far_db(request,user_dict)
-                    request.session["conversation_state"] = "awaiting_details"
-                    request.session["user_selected_option"] = None
-                request.session["users_multiple_list"]=option_button
+        // Retry the fetch
+        return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
+      }
 
-        elif conversation_state == "awaiting_details":
-            if(user_message.lower() == "yes" or user_message.lower() == "y"):
-                print("awaiting_details",request.session["user_selected_option"])
-                if(request.session["user_selected_option"] == "Transaction Flow".lower()):
-                    status=request.session["status"]
-                    response_map={}
-                    request_map={}
-                    time_diff={}
-                    error_codes={}
-                    child_urn={}
-                    if(len(status) == 1):
-                        request_time=status[0][16]
-                        response_time=status[0][17]
-                        Difference_in_request_response_time=time_to_string(status[0][18])
-                        error_code=status[0][4]
-                        if status[0][0] != '0':
-                            bot_response = f"transaction is <b>failed</b> with Error Code has <b>{error_code}</b>  \n API NAME <b> {status[0][11]}</b>!!! \n backend request_time:<b> { request_time}</b> \n backend response_time:<b> { response_time}</b> \n Time difference b/n Request and Response was :<b> { Difference_in_request_response_time}</b>\n\n "
-                        else:
-                            bot_response = f" transaction is <b>Successful</b> \n API NAME <b>{status[0][11]}</b> \n  backend request_time: <b>{request_time}</b> \n backend response_time: <b>{response_time}</b> \n Time difference b/n Request and Response was : <b>{Difference_in_request_response_time}</b> \n\n"
-                    else:
-                        for i in status:
-                            error_codes[i[11]]= i[6]
-                            response_map[i[11]]= i[17]
-                            request_map[i[11]]= i[16]
-                            time_diff[i[11]]= i[18]
-                            child_urn[i[11]]=i[3]
-                        bot_string=""
-                        for i in response_map.keys():
-                            if not error_codes[i]:
-                                bot_string+=f"\n For Child URN <b>{child_urn[i]}</b>,\n transaction is <b>Successful</b> \n API NAME <b>{i}</b> \n  backend request_time: <b>{request_map[i]}</b> \n backend response_time: <b>{response_map[i]}</b> \n Time difference b/n Request and Response was : <b>{time_to_string(time_diff[i])}</b>\n\n"
-                            else:
-                                bot_string+=f"\n For Child URN <b>{child_urn[i]} </b>, \n transaction is <b>failed</b> has Error Code :  <b>{error_codes[i]}</b>!!! \n API NAME <b>{i}</b> \n  backend request_time: <b>{request_map[i]}</b> \n backend response_time: <b>{response_map[i]}</b> \n Time difference b/n Request and Response was : <b>{time_to_string(time_diff[i])}</b>\n\n"
-                        bot_response=bot_string
-                    bot_response = f"Main URN = <b>{status[0][1]}</b>\n"+bot_response
-                    if(status[0][2] == 'Y'):
-                        bot_response="This is Orch API.\n "+bot_response+"\n"
-                        option_button=options
-                    else:
-                        bot_response=bot_response
-                        option_button=options
-                elif(request.session["user_selected_option"] == "FAR Information".lower()):
-                    status=request.session.get("status")
-                    print("FAR details:",status)
-                    if status['Permanent_Rule'].lower() == "yes" :
-                        bot_string = "Since it is Permanent Rule ,it has no Expiry"
-                    else:
-                        bot_string =  f"It will Expire on {status['Expires']}"
-                    bot_response=f"FAR ID <b>{status['Far_Id']}</b>  is raised for <b>{status['Subject']} </b> which is now at <b>{status['Status']}</b>\n with initial Requested Source <b>{status['Requested_Source']}</b> \nand initial Requested Destionation <b>{status['Requested_Destination']}</b> \nfor service/port <b>{status['Requested_Service']}</b> .\nIt's Dependent Department is <b>{status['Dependent_application']}</b> and Zone <b>{status['ZONE']}</b>\n"+bot_string
-                    option_button = options
-            else:
-                option_button = options
-                bot_response="ok\n"
-                request.session["user_selected_option"] = None
-            request.session["conversation_state"] = "awaiting_selection"
-            request.session["user_selected_option"] = None
+      // Reset retry count after all retries are exhausted
+      setRetryCount(0);
+      throw error; // Re-throw error after all retries are exhausted
+    }
+  };
 
+  // Initial data fetch
+  useEffect(() => {
+    const initializeData = async () => {
+      setIsLoading(true);
+      try {
+        const chartData = await fetchFilteredData(selectedTimeValue, selectedTimeLabel);
+        if (chartData && chartData.length > 0) {
+          setCharts(chartData);
+          setCurrentDisplayTitle(chartData[0].title);
+        } else {
+          console.error("No chart data returned from initial fetch");
+        }
+      } catch (error) {
+        console.error("Failed to initialize data after all retries:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        elif conversation_state == "awaiting_question":
-            tokens = preprocess_input(user_message)
-            keyword = extract_keyword(tokens)
-            information,option_button=user_info(request,keyword)
-            if("Sorry" in information):
-                status= tables(request,user_message)
-                information,option_button=table_to_text(request,status,user_message)
-                if("valid" in information):
-                    information="I don't have any information about what you have asked kindly contact admin..."
-            bot_response = information
-            if user_message.lower() == "main menu":
-                bot_response=""
-                option_button=options
-                request.session["conversation_state"] = "awaiting_selection"
-                request.session["user_selected_option"] = None
-        elif conversation_state == "awaiting_user_choice":
-            print("awaiting_user_choice user_selected_option",user_selected_option)
-            print("awaiting_user_choice conversation_state",request.session.get("conversation_state"))
-            choices = request.session.get("pending_user_choice", [])
-            user_choices = request.session.get("users_multiple_list", [])
-            if user_message.lower() == "main menu":
-                bot_response=""
-                option_button=options
-                request.session["conversation_state"] = "awaiting_selection"
-                request.session["user_selected_option"] = None
-            if user_selected_option == "Team Info".lower():
-                try:
-                    if user_message.isdigit():
-                        bot_response = "Invalid choice. Please try again."
-                        option_button=user_choices
-                    else:
-                        user=[user_message.lower().strip()]
-                        bot_response,option_button = user_info(request,user)
-                except:
-                    bot_response = "Invalid choice. Please try again."
-                    option_button = user_choices
-            elif user_selected_option == "Cache Info".lower():
-                bot_response=""
-                if "main menu" == user_message:
-                    option_button = options
-                    request.session["conversation_state"] = "awaiting_selection"
-                    request.session["user_selected_option"] = None
-                elif "Back" == user_message:
-                    option_button =user_choices
-                elif user_message.strip() == "Cache Value":
-                    request.session["conversation_state"] = "awaiting_id"
-                    bot_response = 'Enter Field Name...'
-                    option_button = "1.Back\n2.main menu"
-                else:
-                    bot_response=Cache_Info(user_message)
-                    option_button = "1.Back\n2.main menu"
-            elif user_selected_option == "Transaction Info".lower():
-                print("user_selected_option",user_selected_option)
-                bot_response=""
-                if "main menu" == user_message:
-                    option_button = options
-                    request.session["conversation_state"] = "awaiting_selection"
-                    request.session["user_selected_option"] = None
-                elif "Back" == user_message:
-                    option_button =user_choices
-                elif user_message.strip() == "Transaction Flow":
-                    request.session["conversation_state"] = "awaiting_id"
-                    bot_response = 'Enter REFERENCE NUMBER/URN...'
-                    request.session["user_selected_option"] = user_message.lower()
-                    option_button = "1.Back\n2.main menu"
-                elif  user_message.strip() == "Hits":
-                    bot_response = 'Select from Below Options:'
-                    option_button="1.Time wise Hits\n2. Port wise Hits\n3.Service wise Hits\n4.IP wise Hits\n5.Back\n6.main menu"
-                    request.session["users_multiple_list"]=option_button
-                                        request.session["user_selected_option"] = user_message.lower()
-                elif user_message.strip() == "Port wise Hits" or user_message.strip() == "Service wise Hits" or user_message.strip() == "IP wise Hits" or user_message.strip() == "Time wise Hits":
-                    request.session["hits_choice"]=user_message.strip()
-                    bot_response = 'Select from Below Options:'
-                    option_button="1.30 Min \n2. 1 Hour\n3. Today(Till Now)"
-                    request.session["users_multiple_list"]=option_button+"\n5.Back\n6.Main menu"
-                elif user_message.strip() == "30 Min":
-                    bot_response=Hits(user_message.strip(),hits_choice)
-                    print(bot_response)
-                    option_button = "1.Back\n2.main menu"
-                elif user_message.strip() == "1 Hour":
-                    bot_response=Hits(user_message.strip(),hits_choice)
-                    option_button = "1.Back\n2.main menu"
-                elif "Today" in user_message.strip() :
-                    bot_response=Hits(user_message.strip(),hits_choice)
-                    option_button = "1.Back\n2.main menu"
-            elif user_selected_option == "FAR Information".lower():
-                bot_response=""
-                if "main menu" == user_message:
-                    option_button = options
-                    request.session["conversation_state"] = "awaiting_selection"
-                    request.session["user_selected_option"] = None
-                elif "Back" == user_message:
-                    option_button =user_choices
-                elif user_message.strip() == "Enter FAR ID":
-                    request.session["conversation_state"] = "awaiting_id"
-                    bot_response = 'Enter FAR ID ...'
-                    option_button = "1.Back\n2.main menu"
-                else:
-                    bot_response="FORM"
-                    request.session["conversation_state"] = "awaiting_id"
-                    option_button = "1.Back\n2.main menu"
+    initializeData();
 
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
-        else:
-            bot_response = "An error occurred. Let's start over."
-            request.session["conversation_state"] = "start"
-            option_button = options
-        if(option_button):
-            option_button=option_button.split('\n')
-            if(option_button[0]==''):
-                option_button=option_button[1:]
-            else:
-                option_button=option_button
-        print("option_button:",option_button)
-        print("bot_response:",bot_response)
-        print("user_message:",user_message)
-        print("conversation_state:",request.session.get("conversation_state"))
-        print("user_back_options:",request.session.get("user_back_options"))
-        chat_history=request.session['chat_history']
-        chat_history.append({"sender": "You", "message": user_message})
-        chat_history.append({"sender": "Bot", "message": bot_response,"options":option_button})
-        request.session['chat_history']=chat_history
-   #return render(request, "eischatbot/chat.html", {"chat_history": request.session.get('chat_history',[])})
-    return JsonResponse({"chat_history": request.session.get('chat_history',[])})
-    return JsonResponse({"chat_history": chat_history})
+  // Update display title when currentIndex changes
+  useEffect(() => {
+    if (charts.length > 0 && currentIndex >= 0 && currentIndex < charts.length) {
+      setCurrentDisplayTitle(charts[currentIndex].title);
+    }
+  }, [currentIndex, charts]);
 
-#@csrf_exempt
-def flush_session(request):
-    if request.method == "POST":
-        request.session.flush()
-        return JsonResponse({'status':'session flushed'})
+  // Set up carousel auto-rotation
+  useEffect(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    // Only create new interval if not paused and we have charts
+    if (!paused && charts.length > 0) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev === charts.length - 1 ? 0 : prev + 1));
+      }, 5000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [paused, charts.length]);
+
+  // Sync chart titles with dropdown label
+  useEffect(() => {
+    if (charts.length > 0) {
+      updateChartTitles(selectedTimeLabel);
+    }
+  }, [selectedTimeLabel, charts.length]);
+
+  const handleTimeChange = async (option) => {
+    // Skip time change for FAR chart
+    if (currentIndex === 6) return;
+
+    // Handle custom date selection
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+
+    console.log(`Time option selected: ${option.label} (${option.value})`);
+
+    // Update state
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
+    setDropdownOpen(false);
+    setCalendarOpen(false);
+
+    // Pause carousel during loading and show loading state
+    setPaused(true);
+    setIsLoading(true);
+    setRetryCount(0); // Reset retry count
+
+    try {
+      // Update title to show loading state for current chart
+      if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+        setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
+      }
+
+      // Fetch updated data
+      const updatedCharts = await fetchFilteredData(option.value, option.label);
+
+      if (updatedCharts && updatedCharts.length > 0) {
+        setCharts(updatedCharts);
+        setCurrentDisplayTitle(updatedCharts[0].title);
+      } else {
+        console.error("No chart data returned from time change fetch");
+      }
+    } catch (error) {
+      console.error("Error in handleTimeChange:", error);
+    } finally {
+      setIsLoading(false);
+      setPaused(false); // Resume carousel
+    }
+  };
+
+  const handleDateSelect = async (date) => {
+    // Skip date select for FAR chart
+    if (currentIndex === 6) return;
+
+    if (!date) return;
+
+    const formattedDate = formatDate(date);
+    const dateValue = `custom_${date.toISOString().split('T')[0]}`;
+    const timeLabel = `Custom: ${formattedDate}`;
+
+    // Update state
+    setSelectedDate(date);
+    setSelectedTimeLabel(timeLabel);
+    setSelectedTimeValue(dateValue);
+    setCalendarOpen(false);
+
+    // Pause carousel during loading and show loading state
+    setPaused(true);
+    setIsLoading(true);
+    setRetryCount(0); // Reset retry count
+
+    try {
+      // Update title to show loading state for current chart
+      if (currentIndex >= 0 && currentIndex < baseTitles.length) {
+        setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeLabel}`);
+      }
+
+      // Fetch updated data
+      const updatedCharts = await fetchFilteredData(dateValue, timeLabel);
+
+      if (updatedCharts && updatedCharts.length > 0) {
+        setCharts(updatedCharts);
+        setCurrentDisplayTitle(updatedCharts[0].title);
+      } else {
+        console.error("No chart data returned from date select fetch");
+      }
+    } catch (error) {
+      console.error("Error in handleDateSelect:", error);
+    } finally {
+      setIsLoading(false);
+      setPaused(false); // Resume carousel
+    }
+  };
+
+  const generateCalendarDays = () => {
+    const today = new Date();
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    weekdays.forEach(day => days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>));
+
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
+    const firstDayOfWeek = startDate.getDay();
+
+    // Add empty cells for days before the start date
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
+    }
+
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
+    // Add calendar days
+    for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
+      const date = new Date(today.getFullYear(), today.getMonth(), day);
+      const isDisabled = date > today || date < sevenDaysAgo;
+      const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+
+      days.push(
+        <div
+          key={`day-${day}`}
+          className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
+          onClick={() => !isDisabled && handleDateSelect(date)}
+        >
+          {day}
+        </div>
+      );
+    }
+
+    return days;
+  };
+
+  const downloadCSV = (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) {
+      console.warn("No data available to download");
+      return;
+    }
+
+    const keys = Object.keys(data[0]);
+    const csvContent = [
+      keys.join(','),
+      ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url); // Clean up
+  };
+
+  const goToSlide = (index) => {
+    if (index < 0 || index >= charts.length) return;
+
+    setCurrentIndex(index);
+
+    if (charts.length > 0 && index >= 0 && index < charts.length) {
+      setCurrentDisplayTitle(charts[index].title);
+    }
+  };
+
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+    setCalendarOpen(false);
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    if (!dropdownOpen && !calendarOpen) return;
+
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
+        setDropdownOpen(false);
+        setCalendarOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [dropdownOpen, calendarOpen]);
+
+  if (!charts.length) return (
+    <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <div>Loading charts...</div>
+      {retryCount > 0 && (
+        <div style={{ marginTop: '10px', fontSize: '14px', color: '#888' }}>
+          Retrying... (Attempt {retryCount}/3)
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="carousel-container">
+      <div className="carousel-header">
+        {currentIndex !== 6 && (
+          <div className="timeline-selector">
+            <div className="dropdown" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={toggleDropdown}
+              >
+                {selectedTimeLabel}
+              </button>
+              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
+                {timeOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleTimeChange(option)}
+                    className={option.value === selectedTimeValue ? 'selected' : ''}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+              {calendarOpen && (
+                <div className="calendar-container" ref={calendarRef}>
+                  <div className="calendar-header">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="calendar">{generateCalendarDays()}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <h2>
+          {isLoading ? `Loading ${charts[currentIndex]?.baseTitle || ''}...` : currentDisplayTitle}
+          {retryCount > 0 && (
+            <span style={{ fontSize: '14px', color: '#888', marginLeft: '10px' }}>
+              (Retrying... {retryCount}/3)
+            </span>
+          )}
+        </h2>
+
+        <div className="download-button-wrapper">
+          <button
+            className="download-button"
+            onClick={() => downloadCSV(charts[currentIndex]?.rawData, `${currentDisplayTitle}.csv`)}
+            disabled={isLoading || !charts[currentIndex]?.rawData}
+          >
+            <div className="logo-wrapper">
+              <img
+                className="logo"
+                src={Download}
+                alt="Download Icon"
+                style={{ height: '36px', marginRight: '3px' }}
+              />
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="carousel-graph"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+      >
+        {isLoading ? (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div>Loading data...</div>
+            {retryCount > 0 && (
+              <div style={{ marginTop: '10px', fontSize: '14px', color: '#888' }}>
+                Retrying... (Attempt {retryCount}/3)
+              </div>
+            )}
+          </div>
+        ) : (
+          charts.map((item, index) => (
+            <div
+              key={`chart-container-${index}-${selectedTimeValue}`}
+              className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
+              style={{ display: index === currentIndex ? 'block' : 'none' }}
+            >
+              {item.chart}
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="carousel-dots">
+        {charts.map((_, index) => (
+          <span
+            key={`dot-${index}`}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+            onClick={() => goToSlide(index)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default GraphCarousel;
