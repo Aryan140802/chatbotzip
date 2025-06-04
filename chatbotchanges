@@ -16,7 +16,43 @@ const formatDynamicMessage = (text) => {
 
   // Case 1: HTML-formatted messages with <b> tags
   if (text.includes("<b>")) {
-    // Match multiple <b>key</b>: value or pre-text: <b>value</b>
+    // NEW CASE: Handle messages with <b>Field</b>: Value pattern on separate lines
+    // Check if it's the employee info format with header and field-value pairs
+    const hasHeaderAndFields = text.includes("Here is the information for") && 
+                               text.includes("<b>Name</b>:") && 
+                               text.includes("<b>Email</b>:");
+    
+    if (hasHeaderAndFields) {
+      // Split by lines and process each line
+      const lines = text.split('\n').filter(line => line.trim());
+      const formattedLines = [];
+      
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+        
+        // Check if line contains header info (like "Here is the information for...")
+        if (trimmedLine.includes("Here is the information for")) {
+          formattedLines.push(`<div class="info-header">${trimmedLine}</div>`);
+        }
+        // Check if line has the pattern <b>Field</b>: Value
+        else if (trimmedLine.includes("<b>") && trimmedLine.includes("</b>:")) {
+          const fieldMatch = trimmedLine.match(/<b>(.*?)<\/b>:\s*(.*)/);
+          if (fieldMatch) {
+            const fieldName = fieldMatch[1].trim();
+            const fieldValue = fieldMatch[2].trim() || "Not provided";
+            formattedLines.push(`<div class="info-field"><strong>${fieldName}:</strong> ${fieldValue}</div>`);
+          }
+        }
+        // Handle any other content
+        else if (trimmedLine && !trimmedLine.match(/^\s*$/)) {
+          formattedLines.push(`<div>${trimmedLine}</div>`);
+        }
+      });
+      
+      return `<div class="formatted-card employee-info">${formattedLines.join('')}</div>`;
+    }
+
+    // EXISTING CASE: Match multiple <b>key</b>: value or pre-text: <b>value</b>
     const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
     const lines = [];
     let match;
