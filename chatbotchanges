@@ -173,47 +173,77 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     }
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-    fields.forEach(field => {
-      // Custom validation for workload form - make 'service' field mandatory
-      if (formType === 'workload' && field.name.toLowerCase() === 'service') {
-        if (!formData[field.name] || formData[field.name].trim() === '') {
-          newErrors[field.name] = 'Service field is required';
-        }
-      } else if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
-        newErrors[field.name] = `${field.label || field.name} is required`;
-      }
-
-      // Add other validation rules as needed
-      if (field.type === 'email' && formData[field.name] &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
-        newErrors[field.name] = 'Please enter a valid email address';
-      }
-
-      if (field.minLength && formData[field.name] &&
-          formData[field.name].length < field.minLength) {
-        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
-      }
+// Updated validateForm function with better logging
+const validateForm = () => {
+  console.log('Validating form...', { formData, formType, fields });
+  
+  const newErrors = {};
+  fields.forEach(field => {
+    console.log(`Checking field: ${field.name}`, {
+      value: formData[field.name],
+      required: field.required,
+      formType: formType
     });
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      // Pass both cleaned form data and original fields for proper formatting
-      const cleanedFormData = {};
-      Object.keys(formData).forEach(key => {
-        const value = formData[key];
-        // Include all values, even empty ones, for proper sentence formatting
-        cleanedFormData[key] = value;
-      });
-      onSubmit(cleanedFormData, fields);
+    // Custom validation for workload form - make 'service' field mandatory
+    if (formType === 'workload' && field.name.toLowerCase() === 'service') {
+      if (!formData[field.name] || formData[field.name].trim() === '') {
+        newErrors[field.name] = 'Service field is required';
+        console.log(`Service field validation failed for field: ${field.name}`);
+      }
+    } else if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
+      newErrors[field.name] = `${field.label || field.name} is required`;
+      console.log(`Required field validation failed for field: ${field.name}`);
     }
-  };
+
+    // Add other validation rules as needed
+    if (field.type === 'email' && formData[field.name] &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
+      newErrors[field.name] = 'Please enter a valid email address';
+    }
+
+    if (field.minLength && formData[field.name] &&
+        formData[field.name].length < field.minLength) {
+      newErrors[field.name] = `Minimum ${field.minLength} characters required`;
+    }
+  });
+
+  console.log('Validation result:', { newErrors, isValid: Object.keys(newErrors).length === 0 });
+  setErrors(newErrors);
+  return Object.keys(newErrors).length === 0;
+};
+
+// Updated handleSubmit function with better logging
+const handleSubmit = (e) => {
+  console.log('Form submit triggered', { formData, formType });
+  e.preventDefault();
+  
+  if (validateForm()) {
+    console.log('Form validation passed, submitting...');
+    // Pass both cleaned form data and original fields for proper formatting
+    const cleanedFormData = {};
+    Object.keys(formData).forEach(key => {
+      const value = formData[key];
+      // Include all values, even empty ones, for proper sentence formatting
+      cleanedFormData[key] = value;
+    });
+    console.log('Calling onSubmit with:', { cleanedFormData, fields });
+    onSubmit(cleanedFormData, fields);
+  } else {
+    console.log('Form validation failed, not submitting');
+  }
+};
+
+// Alternative simplified handleSubmit if the above doesn't work
+const handleSubmitSimplified = (e) => {
+  e.preventDefault();
+  console.log('Simple submit triggered', formData);
+  
+  // Skip validation temporarily for debugging
+  const cleanedFormData = { ...formData };
+  console.log('Submitting without validation:', cleanedFormData);
+  onSubmit(cleanedFormData, fields);
+};
 
   const renderField = (field) => {
     const { name, type, label, placeholder, options, required } = field;
