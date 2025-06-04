@@ -55,19 +55,15 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
-// Dynamic Form Component
-const DynamicForm = ({ fields, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({});
+// Multiple Fields Form Component
+const MultipleFieldsForm = ({ onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState({
+    expiryOption: '',
+    expiryDate: '',
+    createdOption: '',
+    createdDate: ''
+  });
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    // Initialize form data with empty values or default values from fields
-    const initialData = {};
-    fields.forEach(field => {
-      initialData[field.name] = field.defaultValue || '';
-    });
-    setFormData(initialData);
-  }, [fields]);
 
   const handleInputChange = (fieldName, value) => {
     setFormData(prev => ({
@@ -86,22 +82,19 @@ const DynamicForm = ({ fields, onSubmit, onCancel }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    fields.forEach(field => {
-      if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
-        newErrors[field.name] = `${field.label || field.name} is required`;
-      }
-
-      // Add other validation rules as needed
-      if (field.type === 'email' && formData[field.name] &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
-        newErrors[field.name] = 'Please enter a valid email address';
-      }
-
-      if (field.minLength && formData[field.name] &&
-          formData[field.name].length < field.minLength) {
-        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
-      }
-    });
+    
+    if (!formData.expiryOption) {
+      newErrors.expiryOption = 'Expiry option is required';
+    }
+    if (!formData.expiryDate) {
+      newErrors.expiryDate = 'Expiry date is required';
+    }
+    if (!formData.createdOption) {
+      newErrors.createdOption = 'Created option is required';
+    }
+    if (!formData.createdDate) {
+      newErrors.createdDate = 'Created date is required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -114,106 +107,182 @@ const DynamicForm = ({ fields, onSubmit, onCancel }) => {
     }
   };
 
-  const renderField = (field) => {
-    const { name, type, label, placeholder, options, required } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
+  return (
+    <div className="dynamic-form-container">
+      <form onSubmit={handleSubmit} className="dynamic-form">
+        <div className="form-field">
+          <label className="form-label">
+            Expiry Option <span className="required">*</span>
+          </label>
+          <select
+            value={formData.expiryOption}
+            onChange={(e) => handleInputChange('expiryOption', e.target.value)}
+            className={`form-select ${errors.expiryOption ? 'error' : ''}`}
+          >
+            <option value="">Select option</option>
+            <option value="before">Before</option>
+            <option value="after">After</option>
+          </select>
+          {errors.expiryOption && <span className="error-message">{errors.expiryOption}</span>}
+        </div>
 
-    switch (type) {
-      case 'date':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+        <div className="form-field">
+          <label className="form-label">
+            Expiry Date <span className="required">*</span>
+          </label>
+          <input
+            type="date"
+            value={formData.expiryDate}
+            onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+            className={`form-input ${errors.expiryDate ? 'error' : ''}`}
+          />
+          {errors.expiryDate && <span className="error-message">{errors.expiryDate}</span>}
+        </div>
 
-      case 'select':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <select
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-select ${error ? 'error' : ''}`}
-            >
-              <option value="">Select an option</option>
-              {options?.map((option, idx) => (
-                <option key={idx} value={option.value || option}>
-                  {option.label || option}
-                </option>
-              ))}
-            </select>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+        <div className="form-field">
+          <label className="form-label">
+            Created Option <span className="required">*</span>
+          </label>
+          <select
+            value={formData.createdOption}
+            onChange={(e) => handleInputChange('createdOption', e.target.value)}
+            className={`form-select ${errors.createdOption ? 'error' : ''}`}
+          >
+            <option value="">Select option</option>
+            <option value="before">Before</option>
+            <option value="after">After</option>
+          </select>
+          {errors.createdOption && <span className="error-message">{errors.createdOption}</span>}
+        </div>
 
-      case 'textarea':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <textarea
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              placeholder={placeholder}
-              className={`form-textarea ${error ? 'error' : ''}`}
-              rows={3}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+        <div className="form-field">
+          <label className="form-label">
+            Created Date <span className="required">*</span>
+          </label>
+          <input
+            type="date"
+            value={formData.createdDate}
+            onChange={(e) => handleInputChange('createdDate', e.target.value)}
+            className={`form-input ${errors.createdDate ? 'error' : ''}`}
+          />
+          {errors.createdDate && <span className="error-message">{errors.createdDate}</span>}
+        </div>
 
-      case 'checkbox':
-        return (
-          <div key={name} className="form-field checkbox-field">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={value === true || value === 'true'}
-                onChange={(e) => handleInputChange(name, e.target.checked)}
-                className="form-checkbox"
-              />
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+        <div className="form-actions">
+          <button type="button" onClick={onCancel} className="cancel-button">
+            Cancel
+          </button>
+          <button type="submit" className="submit-button">
+            Submit
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
-      default:
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <input
-              type={type || 'text'}
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              placeholder={placeholder}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+// Workload Form Component
+const WorkloadForm = ({ onSubmit, onCancel, workloadData }) => {
+  const [formData, setFormData] = useState({
+    service: ''
+  });
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    // Initialize form data if workloadData is provided
+    if (workloadData) {
+      setFormData(workloadData);
     }
+  }, [workloadData]);
+
+  const handleInputChange = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+
+    // Clear error for this field when user starts typing
+    if (errors[fieldName]) {
+      setErrors(prev => ({
+        ...prev,
+        [fieldName]: null
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.service || formData.service.trim() === '') {
+      newErrors.service = 'Service is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(formData);
+    }
+  };
+
+  const renderWorkloadFields = () => {
+    if (!workloadData) return null;
+
+    return Object.entries(workloadData).map(([key, value]) => {
+      if (key === 'service') {
+        return (
+          <div key={key} className="form-field">
+            <label className="form-label">
+              Service <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData[key] || ''}
+              onChange={(e) => handleInputChange(key, e.target.value)}
+              className={`form-input ${errors[key] ? 'error' : ''}`}
+            />
+            {errors[key] && <span className="error-message">{errors[key]}</span>}
+          </div>
+        );
+      }
+
+      return (
+        <div key={key} className="form-field">
+          <label className="form-label">
+            {key.charAt(0).toUpperCase() + key.slice(1)}
+          </label>
+          <input
+            type="text"
+            value={formData[key] || ''}
+            onChange={(e) => handleInputChange(key, e.target.value)}
+            className="form-input"
+          />
+        </div>
+      );
+    });
   };
 
   return (
     <div className="dynamic-form-container">
       <form onSubmit={handleSubmit} className="dynamic-form">
-        {fields.map(renderField)}
+        {workloadData ? renderWorkloadFields() : (
+          <div className="form-field">
+            <label className="form-label">
+              Service <span className="required">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.service}
+              onChange={(e) => handleInputChange('service', e.target.value)}
+              className={`form-input ${errors.service ? 'error' : ''}`}
+            />
+            {errors.service && <span className="error-message">{errors.service}</span>}
+          </div>
+        )}
+
         <div className="form-actions">
           <button type="button" onClick={onCancel} className="cancel-button">
             Cancel
@@ -234,6 +303,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [formDisabled, setFormDisabled] = useState(true);
   const [activeForm, setActiveForm] = useState(null);
+  const [formType, setFormType] = useState(null);
+  const [workloadData, setWorkloadData] = useState(null);
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -268,23 +339,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
            Object.keys(response.message).length > 0;
   };
 
-  const extractFormFields = (response) => {
+  const determineFormType = (response) => {
     if (!hasFormFields(response)) return null;
-
-    return Object.entries(response.message).map(([name, value]) => {
-      const baseField = {
-        name,
-        label: name.charAt(0).toUpperCase() + name.slice(1),
-        defaultValue: value || '',
-        required: false // Set based on your requirements
-      };
-
-      // You can add logic here to determine field type based on name or value
-      return {
-        ...baseField,
-        type: 'text' // Default to text input, modify as needed
-      };
-    });
+    
+    // You can add logic here to determine form type based on response content
+    // For now, returning null to let the user choose or add your own logic
+    return null;
   };
 
   const getPostData = async () => {
@@ -312,8 +372,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(item)) {
-          message.formFields = extractFormFields(item);
-          message.isFormMessage = true;
+          message.hasForm = true;
+          message.formType = determineFormType(item);
+          if (message.formType === 'workload') {
+            setWorkloadData(item.message);
+          }
         }
 
         return message;
@@ -370,7 +433,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const lastBotMessage = messages.filter(m => m.sender === "bot").slice(-1)[0];
       let payload;
 
-      if (lastBotMessage && lastBotMessage.isFormMessage) {
+      if (lastBotMessage && lastBotMessage.hasForm) {
         payload = {
           message: {
             reply: newMessage
@@ -394,8 +457,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
+          botResponse.hasForm = true;
+          botResponse.formType = determineFormType(latest);
+          if (botResponse.formType === 'workload') {
+            setWorkloadData(latest.message);
+          }
         }
 
         setMessages((prev) => [...prev, botResponse]);
@@ -437,7 +503,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const lastBotMessage = messages.filter(m => m.sender === "bot").slice(-1)[0];
       let payload;
 
-      if (lastBotMessage && lastBotMessage.isFormMessage) {
+      if (lastBotMessage && lastBotMessage.hasForm) {
         payload = {
           message: {
             option: cleanedOpt
@@ -461,8 +527,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
+          botResponse.hasForm = true;
+          botResponse.formType = determineFormType(latest);
+          if (botResponse.formType === 'workload') {
+            setWorkloadData(latest.message);
+          }
         }
 
         setMessages((prev) => [...prev, botResponse]);
@@ -477,6 +546,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const handleFormSubmit = async (formData) => {
     setActiveForm(null);
+    setFormType(null);
 
     const userMessage = {
       id: Date.now(),
@@ -511,8 +581,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
+          botResponse.hasForm = true;
+          botResponse.formType = determineFormType(latest);
+          if (botResponse.formType === 'workload') {
+            setWorkloadData(latest.message);
+          }
         }
 
         setMessages((prev) => [...prev, botResponse]);
@@ -536,10 +609,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const handleFormCancel = () => {
     setActiveForm(null);
+    setFormType(null);
   };
 
-  const handleFormButtonClick = (fields) => {
-    setActiveForm(fields);
+  const handleMultipleFieldsClick = () => {
+    setActiveForm(true);
+    setFormType('multipleFields');
+  };
+
+  const handleWorkloadClick = () => {
+    setActiveForm(true);
+    setFormType('workload');
   };
 
   const handleMinimize = () => {
@@ -586,26 +666,32 @@ const Chatbot = ({ setChatbotMinimized }) => {
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
                   {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
                   <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" && !item.isFormMessage ? (
+                    {item.sender === "bot" && !item.hasForm ? (
                       <div
                         className="message-content"
                         dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
                       />
-                    ) : item.sender === "bot" && item.isFormMessage ? (
+                    ) : item.sender === "bot" && item.hasForm ? (
                       <div className="message-content">
-                        <p>Please fill out the form with the required information:</p>
+                        <p>Please select a form to fill out:</p>
                       </div>
                     ) : (
                       <div className="message-content">{item.text}</div>
                     )}
 
-                    {item.formFields && (
+                    {item.hasForm && (
                       <div className="form-trigger">
                         <button
                           className="form-button"
-                          onClick={() => handleFormButtonClick(item.formFields)}
+                          onClick={handleMultipleFieldsClick}
                         >
-                          Fill Form
+                          Multiple Fields Form
+                        </button>
+                        <button
+                          className="form-button"
+                          onClick={handleWorkloadClick}
+                        >
+                          Workload Form
                         </button>
                       </div>
                     )}
@@ -651,11 +737,18 @@ const Chatbot = ({ setChatbotMinimized }) => {
             <div ref={messagesEndRef} />
           </div>
 
-          {activeForm && (
-            <DynamicForm
-              fields={activeForm}
+          {activeForm && formType === 'multipleFields' && (
+            <MultipleFieldsForm
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
+            />
+          )}
+
+          {activeForm && formType === 'workload' && (
+            <WorkloadForm
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormCancel}
+              workloadData={workloadData}
             />
           )}
 
