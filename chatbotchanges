@@ -10,24 +10,24 @@ const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
 
   // Case 1: HTML-formatted messages with <b> tags
-    if (text.includes("<b>")) {
-  // Match multiple <b>key</b>: value or pre-text: <b>value</b>
-  const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
-  const lines = [];
-  let match;
-  while ((match = pattern.exec(text)) !== null) {
-    const key = (match[1] || match[3] || "").trim();
-    const value = (match[2] || match[4] || "").trim().replace(/\n/g, "<br/>");
-    lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
-  }
+  if (text.includes("<b>")) {
+    // Match multiple <b>key</b>: value or pre-text: <b>value</b>
+    const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
+    const lines = [];
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const key = (match[1] || match[3] || "").trim();
+      const value = (match[2] || match[4] || "").trim().replace(/\n/g, "<br/>");
+      lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+    }
 
-  // If nothing matched, fallback to rendering original <b> content
-  if (lines.length === 0) {
-    return `<div class="formatted-card">${text}</div>`;
-  }
+    // If nothing matched, fallback to rendering original <b> content
+    if (lines.length === 0) {
+      return `<div class="formatted-card">${text}</div>`;
+    }
 
-  return `<div class="formatted-card">${lines.join("")}</div>`;
-}
+    return `<div class="formatted-card">${lines.join("")}</div>`;
+  }
 
   // Case 2: Likely a server config line (very long, no <b>, many ":")
   const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
@@ -134,12 +134,6 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     const value = formData[name] || '';
     const error = errors[name];
 
-    // Determine if field should be marked as required
- const renderField = (field) => {
-    const { name, type, label, placeholder, options, required } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
-
     // Add asterisk to label for required fields
     const fieldLabel = (
       <>
@@ -228,12 +222,11 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
           </div>
         );
 
-
       case 'textarea':
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             <textarea
               value={value}
@@ -256,7 +249,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
                 onChange={(e) => handleInputChange(name, e.target.checked)}
                 className="form-checkbox"
               />
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             {error && <span className="error-message">{error}</span>}
           </div>
@@ -266,7 +259,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             <input
               type={type || 'text'}
