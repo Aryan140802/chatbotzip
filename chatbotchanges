@@ -61,19 +61,14 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // Initialize form data with empty values (don't set default values for date fields)
+    // Initialize form data with empty values or default values from fields
     const initialData = {};
     fields.forEach(field => {
-      // For date fields, start with empty string instead of default value
-      if (field.type === 'date' || 
-          (formType === 'multiple' && (field.name.toLowerCase().includes('expiry') || field.name.toLowerCase().includes('created')))) {
-        initialData[field.name] = '';
-      } else {
-        initialData[field.name] = field.defaultValue || '';
-      }
+      // For date fields, initialize as empty string instead of "date"
+      initialData[field.name] = field.type === 'date' ? '' : (field.defaultValue || '');
     });
     setFormData(initialData);
-  }, [fields, formType]);
+  }, [fields]);
 
   const handleInputChange = (fieldName, value) => {
     setFormData(prev => ({
@@ -140,9 +135,18 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     const error = errors[name];
 
     // Determine if field should be marked as required
-    const isRequired = required || 
-      (formType === 'workload' && name.toLowerCase() === 'service') ||
-      field.required;
+ const renderField = (field) => {
+    const { name, type, label, placeholder, options, required } = field;
+    const value = formData[name] || '';
+    const error = errors[name];
+
+    // Add asterisk to label for required fields
+    const fieldLabel = (
+      <>
+        {label || name}
+        {required && <span className="required"> *</span>}
+      </>
+    );
 
     // Custom logic for 'have multiple field' form
     if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
@@ -151,7 +155,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             <select
               value={value}
@@ -171,7 +175,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             <input
               type="date"
@@ -190,7 +194,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             <input
               type="date"
@@ -206,7 +210,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {isRequired && <span className="required">*</span>}
+              {fieldLabel}
             </label>
             <select
               value={value}
@@ -223,6 +227,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
             {error && <span className="error-message">{error}</span>}
           </div>
         );
+
 
       case 'textarea':
         return (
