@@ -1,20 +1,9 @@
-const renderField = (field) => {
-    const { name, type, label, placeholder, options, required } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
+message
+: 
+"Here is the information for <b>Affan Habibuddin MD </b>:\n<b>Name</b>: Affan Habibuddin MD \n<b>Email</b>: None\n<b>Contact No.</b>:9359296919\n<b>AD ID</b>: v1019286 \n<b>Employee ID</b>: 2743582  \n \n "
 
-    // FIXED: For workload form, only show service field
-    if (formType === 'workload' && !name.toLowerCase().includes('service')) {
-      return null; // Don't render non-service fields for workload form
-    }
 
-    // FIXED: Better asterisk styling for required fields
-    const fieldLabel = (
-      <>
-        {label || name}
-        {required && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
-      </>
-    )import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
 import "../styles/Chatbot.css";
