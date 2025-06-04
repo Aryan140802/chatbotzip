@@ -61,13 +61,19 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    // Initialize form data with empty values or default values from fields
+    // Initialize form data with empty values (don't set default values for date fields)
     const initialData = {};
     fields.forEach(field => {
-      initialData[field.name] = field.defaultValue || '';
+      // For date fields, start with empty string instead of default value
+      if (field.type === 'date' || 
+          (formType === 'multiple' && (field.name.toLowerCase().includes('expiry') || field.name.toLowerCase().includes('created')))) {
+        initialData[field.name] = '';
+      } else {
+        initialData[field.name] = field.defaultValue || '';
+      }
     });
     setFormData(initialData);
-  }, [fields]);
+  }, [fields, formType]);
 
   const handleInputChange = (fieldName, value) => {
     setFormData(prev => ({
@@ -115,7 +121,16 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      // Clean up form data before submission - remove empty date fields
+      const cleanedFormData = {};
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        // Only include non-empty values, or for date fields, only include if they have actual dates
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanedFormData[key] = value;
+        }
+      });
+      onSubmit(cleanedFormData);
     }
   };
 
@@ -124,6 +139,11 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     const value = formData[name] || '';
     const error = errors[name];
 
+    // Determine if field should be marked as required
+    const isRequired = required || 
+      (formType === 'workload' && name.toLowerCase() === 'service') ||
+      field.required;
+
     // Custom logic for 'have multiple field' form
     if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
       // For expiry option and created option fields - add dropdown with before/after
@@ -131,7 +151,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             <select
               value={value}
@@ -151,7 +171,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             <input
               type="date"
@@ -170,7 +190,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             <input
               type="date"
@@ -186,7 +206,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             <select
               value={value}
@@ -208,7 +228,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             <textarea
               value={value}
@@ -231,7 +251,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
                 onChange={(e) => handleInputChange(name, e.target.checked)}
                 className="form-checkbox"
               />
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             {error && <span className="error-message">{error}</span>}
           </div>
@@ -241,7 +261,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         return (
           <div key={name} className="form-field">
             <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
+              {label || name} {isRequired && <span className="required">*</span>}
             </label>
             <input
               type={type || 'text'}
@@ -343,10 +363,18 @@ const Chatbot = ({ setChatbotMinimized }) => {
         required: false // Set based on your requirements
       };
 
-      // You can add logic here to determine field type based on name or value
+      // Determine field type based on name
+      let fieldType = 'text';
+      if (name.toLowerCase().includes('date') || 
+          name.toLowerCase().includes('expiry') || 
+          name.toLowerCase().includes('created')) {
+        fieldType = 'date';
+      }
+
+      // You can add more logic here to determine field type based on name or value
       return {
         ...baseField,
-        type: 'text' // Default to text input, modify as needed
+        type: fieldType
       };
     });
   };
