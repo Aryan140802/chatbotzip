@@ -1,4 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+const renderField = (field) => {
+    const { name, type, label, placeholder, options, required } = field;
+    const value = formData[name] || '';
+    const error = errors[name];
+
+    // FIXED: For workload form, only show service field
+    if (formType === 'workload' && !name.toLowerCase().includes('service')) {
+      return null; // Don't render non-service fields for workload form
+    }
+
+    // FIXED: Better asterisk styling for required fields
+    const fieldLabel = (
+      <>
+        {label || name}
+        {required && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
+      </>
+    )import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
 import "../styles/Chatbot.css";
@@ -53,6 +69,53 @@ const formatDynamicMessage = (text) => {
   // Default plain text
   const cleanedText = text.replace(/:,\s*$/, ":").trim();
   return cleanedText;
+};
+
+// Function to format form data into proper sentences
+const formatFormDataToSentence = (formData, originalFields, formType = null) => {
+  if (!formData || Object.keys(formData).length === 0) {
+    return "No form data provided";
+  }
+
+  const sentences = [];
+  
+  // Create a map of field names to their labels for better formatting
+  const fieldLabelsMap = {};
+  if (originalFields) {
+    originalFields.forEach(field => {
+      fieldLabelsMap[field.name] = field.label || field.name;
+    });
+  }
+
+  // For workload form, only show service field in user message
+  if (formType === 'workload') {
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key.toLowerCase().includes('service')) {
+        const fieldLabel = fieldLabelsMap[key] || key;
+        const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
+        
+        if (value === null || value === undefined || value === '') {
+          sentences.push(`${formattedLabel}: No value given`);
+        } else {
+          sentences.push(`${formattedLabel}: "${value}"`);
+        }
+      }
+    });
+  } else {
+    // For other forms, show all fields
+    Object.entries(formData).forEach(([key, value]) => {
+      const fieldLabel = fieldLabelsMap[key] || key;
+      const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
+      
+      if (value === null || value === undefined || value === '') {
+        sentences.push(`${formattedLabel}: No value given`);
+      } else {
+        sentences.push(`${formattedLabel}: "${value}"`);
+      }
+    });
+  }
+
+  return sentences.length > 0 ? sentences.join(', ') : "No values provided";
 };
 
 // Dynamic Form Component
@@ -116,16 +179,14 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
-      // Clean up form data before submission - remove empty values
+      // Pass both cleaned form data and original fields for proper formatting
       const cleanedFormData = {};
       Object.keys(formData).forEach(key => {
         const value = formData[key];
-        // Only include non-empty values
-        if (value !== '' && value !== null && value !== undefined) {
-          cleanedFormData[key] = value;
-        }
+        // Include all values, even empty ones, for proper sentence formatting
+        cleanedFormData[key] = value;
       });
-      onSubmit(cleanedFormData);
+      onSubmit(cleanedFormData, fields);
     }
   };
 
@@ -299,6 +360,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [formDisabled, setFormDisabled] = useState(true);
   const [activeForm, setActiveForm] = useState(null);
   const [currentFormType, setCurrentFormType] = useState(null);
+  const [currentFormFields, setCurrentFormFields] = useState(null); // Store original fields for formatting
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -457,18 +519,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
     try {
       setApiTimeout(() => {});
 
-      const lastBotMessage = messages.filter(m => m.sender === "bot").slice(-1)[0];
-      let payload;
-
-      if (lastBotMessage && lastBotMessage.isFormMessage) {
-        payload = {
-          message: {
-            reply: newMessage
-          }
-        };
-      } else {
-        payload = newMessage;
-      }
+      // FIXED: Send regular messages as simple strings, not as objects
+      const payload = newMessage;
 
       const res = await postMessage(payload);
       clearCurrentTimeout();
@@ -524,18 +576,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
     try {
       setApiTimeout(() => {});
 
-      const lastBotMessage = messages.filter(m => m.sender === "bot").slice(-1)[0];
-      let payload;
-
-      if (lastBotMessage && lastBotMessage.isFormMessage) {
-        payload = {
-          message: {
-            option: cleanedOpt
-          }
-        };
-      } else {
-        payload = cleanedOpt;
-      }
+      // FIXED: Send options as regular messages, not as special payload
+      const payload = cleanedOpt;
 
       const res = await postMessage(payload);
       clearCurrentTimeout();
@@ -565,13 +607,23 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  const handleFormSubmit = async (formData) => {
+  const handleFormSubmit = async (formData, originalFields) => {
     setActiveForm(null);
     setCurrentFormType(null);
 
+    // Ensure all original fields are included in the data sent to backend
+    const completeFormData = {};
+    originalFields.forEach(field => {
+      // If user provided value, use it; otherwise use empty string
+      completeFormData[field.name] = formData[field.name] || '';
+    });
+
+    // FIXED: Format form data for display (workload shows only service field)
+    const formattedText = formatFormDataToSentence(completeFormData, originalFields, currentFormType);
+
     const userMessage = {
       id: Date.now(),
-      text: `Form submitted: ${JSON.stringify(formData)}`,
+      text: formattedText,
       sender: "user",
       time: getCurrentTime(),
     };
@@ -583,9 +635,9 @@ const Chatbot = ({ setChatbotMinimized }) => {
     try {
       setApiTimeout(() => {});
 
-      // Send the form data directly as the message object
+      // Send ALL form data to backend (including empty fields)
       const payload = {
-        message: formData
+        message: completeFormData
       };
 
       const res = await postMessage(payload);
@@ -628,11 +680,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleFormCancel = () => {
     setActiveForm(null);
     setCurrentFormType(null);
+    setCurrentFormFields(null);
   };
 
   const handleFormButtonClick = (fields) => {
     const formType = determineFormType(fields);
     setCurrentFormType(formType);
+    setCurrentFormFields(fields); // Store original fields
     setActiveForm(fields);
   };
 
