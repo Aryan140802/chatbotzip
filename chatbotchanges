@@ -238,217 +238,219 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
     setFormData(initialData);
   }, [dynamicFields]);
 
-  // Handle dynamic field updates
-  const handleDynamicFieldUpdate = async (fieldName, value) => {
-    if (formType !== 'workload') return;
+  // Updated handleDynamicFieldUpdate function
+const handleDynamicFieldUpdate = async (fieldName, value) => {
+  if (formType !== 'workload') return;
 
-    setIsLoadingFields(true);
-    try {
-      // Create payload with ONLY filled fields (cascading behavior)
-      const currentData = {
-        ...formData,
-        [fieldName]: value
-      };
-
-      // Filter to only include fields that have values (not empty)
-      const filledData = {};
-      Object.entries(currentData).forEach(([key, val]) => {
-        if (val !== null && val !== undefined && val !== '' && 
-            (typeof val === 'string' ? val.trim() !== '' : true)) {
-          filledData[key] = val;
-        }
-      });
-
-      console.log('Sending dynamic update to backend:', filledData);
-
-      // Send to backend for dynamic field loading
-      const payload = {
-        message: filledData
-      };
-
-      const res = await postMessage(payload);
-      console.log('Backend response:', res.data);
-
-      // Check if response has form fields to update
-      if (res.data.chat_history && res.data.chat_history.length > 0) {
-        const latest = res.data.chat_history[res.data.chat_history.length - 1];
-        if (hasFormFields(latest)) {
-          const newFields = extractFormFields(latest);
-          console.log('New fields from backend:', newFields);
-          setDynamicFields(newFields);
-
-          // Update form data - preserve user inputs and reset dependent fields
-          const updatedData = { ...currentData };
-          newFields.forEach(field => {
-            // If it's a new field, initialize with default value
-            if (!updatedData.hasOwnProperty(field.name)) {
-              updatedData[field.name] = field.defaultValue || '';
-            }
-            // Reset dependent fields when parent field changes (except the field that was just updated)
-            else if (field.name !== fieldName && field.type === 'select') {
-              // Reset fields that come after the updated field in the form flow
-              const existingFieldNames = Object.keys(formData);
-              const updatedFieldIndex = existingFieldNames.indexOf(fieldName);
-              const currentFieldIndex = existingFieldNames.indexOf(field.name);
-              
-              if (currentFieldIndex > updatedFieldIndex) {
-                updatedData[field.name] = '';
-              }
-            }
-          });
-          setFormData(updatedData);
-        }
-      }
-    } catch (error) {
-      console.error('Error updating dynamic fields:', error);
-    } finally {
-      setIsLoadingFields(false);
-    }
-  };
-
-  const handleInputChange = async (fieldName, value) => {
-    console.log('Field changed:', fieldName, 'Value:', value);
-    
-    setFormData(prev => ({
-      ...prev,
+  setIsLoadingFields(true);
+  try {
+    // Create payload with ONLY filled fields (cascading behavior)
+    const currentData = {
+      ...formData,
       [fieldName]: value
-    }));
+    };
 
-    // Clear error for this field when user starts typing
-    if (errors[fieldName]) {
-      setErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
-    }
-  };
-
-  const handleFieldBlur = async (fieldName, value) => {
-    if (formType === 'workload') {
-      await handleDynamicFieldUpdate(fieldName, value);
-    }
-  };
-
-  // Updated validateForm function with better validation
-  const validateForm = () => {
-    console.log('Validating form...', { formData, formType, dynamicFields });
-
-    const newErrors = {};
-    dynamicFields.forEach(field => {
-      const fieldValue = formData[field.name];
-      const isRequired = isFieldRequired(field.name, formType);
-
-      console.log(`Checking field: ${field.name}`, {
-        value: fieldValue,
-        required: isRequired,
-        formType: formType
-      });
-
-      // Check if field is required and empty
-      if (isRequired && (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === ''))) {
-        newErrors[field.name] = `${field.label || field.name} is required`;
-        console.log(`Required field validation failed for field: ${field.name}`);
-      }
-
-      // Additional validation rules
-      if (field.type === 'email' && fieldValue &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValue)) {
-        newErrors[field.name] = 'Please enter a valid email address';
-      }
-
-      if (field.minLength && fieldValue &&
-          fieldValue.length < field.minLength) {
-        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
+    // Filter to only include fields that have values (not empty)
+    const filledData = {};
+    Object.entries(currentData).forEach(([key, val]) => {
+      if (val !== null && val !== undefined && val !== '' && 
+          (typeof val === 'string' ? val.trim() !== '' : true)) {
+        filledData[key] = val;
       }
     });
 
-    console.log('Validation result:', { newErrors, isValid: Object.keys(newErrors).length === 0 });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    console.log('Sending dynamic update to backend:', filledData);
 
-  // Updated handleSubmit function
-  const handleSubmit = (e) => {
-    console.log('Form submit triggered', { formData, formType });
-    e.preventDefault();
-
-    if (validateForm()) {
-      console.log('Form validation passed, submitting...');
-      // Pass both cleaned form data and original fields for proper formatting
-      const cleanedFormData = {};
-      Object.keys(formData).forEach(key => {
-        const value = formData[key];
-        // Ensure we handle all value types properly
-        cleanedFormData[key] = value !== null && value !== undefined ? value : '';
-      });
-      console.log('Calling onSubmit with:', { cleanedFormData, fields });
-      onSubmit(cleanedFormData, fields);
-    } else {
-      console.log('Form validation failed, not submitting');
-    }
-  };
-
-  const handleImmediateSubmit = async (fieldName, value) => {
-    // Don't submit immediately for workload forms - let cascading handle it
-    if (formType === 'workload') return;
-
-    const updatedFormData = {
-      ...formData,
-      [fieldName]: value,
+    // Send to backend for dynamic field loading
+    const payload = {
+      message: filledData
     };
 
-     // Pass both cleaned form data and original fields for proper formatting
-     const cleanedFormData = {};
-     Object.keys(updatedFormData).forEach(key => {
-       const val = updatedFormData[key];
-       // Ensure we handle all value types properly
-       cleanedFormData[key] = val !== null && val !== undefined ? val : '';
-     });
-     console.log('Calling onSubmit with:', { cleanedFormData, fields });
-     onSubmit(cleanedFormData, fields);
+    const res = await postMessage(payload);
+    console.log('Backend response:', res.data);
+
+    // Check if response has form fields to update
+    if (res.data.chat_history && res.data.chat_history.length > 0) {
+      const latest = res.data.chat_history[res.data.chat_history.length - 1];
+      if (hasFormFields(latest)) {
+        const newFields = extractFormFields(latest);
+        console.log('New fields from backend:', newFields);
+        
+        // FIXED: Preserve existing form data and merge with new fields
+        setDynamicFields(prevFields => {
+          // Create a map of existing field names for quick lookup
+          const existingFieldNames = new Set(prevFields.map(field => field.name));
+          const newFieldNames = new Set(newFields.map(field => field.name));
+          
+          // Keep existing fields that are still relevant
+          const preservedFields = prevFields.filter(field => 
+            newFieldNames.has(field.name) || formData[field.name]
+          );
+          
+          // Add new fields that don't exist yet
+          const fieldsToAdd = newFields.filter(field => 
+            !existingFieldNames.has(field.name)
+          );
+          
+          // Merge preserved and new fields, prioritizing new field definitions
+          const mergedFields = [...preservedFields, ...fieldsToAdd];
+          
+          // Remove duplicates, keeping the newest version
+          const uniqueFields = [];
+          const fieldMap = new Map();
+          
+          // First, add all new fields (they take priority)
+          newFields.forEach(field => {
+            fieldMap.set(field.name, field);
+          });
+          
+          // Then add preserved fields only if they're not already in the map
+          preservedFields.forEach(field => {
+            if (!fieldMap.has(field.name)) {
+              fieldMap.set(field.name, field);
+            }
+          });
+          
+          return Array.from(fieldMap.values());
+        });
+
+        // FIXED: Update form data - preserve ALL user inputs, only add new fields
+        setFormData(prevData => {
+          const updatedData = { ...prevData, [fieldName]: value };
+          
+          // Add new fields with their default values, but don't overwrite existing data
+          newFields.forEach(field => {
+            if (!updatedData.hasOwnProperty(field.name)) {
+              updatedData[field.name] = field.defaultValue || '';
+            }
+          });
+          
+          return updatedData;
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error updating dynamic fields:', error);
+  } finally {
+    setIsLoadingFields(false);
+  }
+};
+
+// Updated handleInputChange to send data immediately for workload forms
+const handleInputChange = async (fieldName, value) => {
+  console.log('Field changed:', fieldName, 'Value:', value);
+  
+  setFormData(prev => ({
+    ...prev,
+    [fieldName]: value
+  }));
+
+  // Clear error for this field when user starts typing
+  if (errors[fieldName]) {
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: null
+    }));
   }
 
-  const renderField = (field) => {
-    const { name, label, placeholder, options } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
-    const isRequired = isFieldRequired(name, formType);
-    const fieldType = determineFieldType(name, field.defaultValue);
+  // For workload forms, send accumulated data immediately on any change
+  if (formType === 'workload' && value && value.trim() !== '') {
+    const updatedData = {
+      ...formData,
+      [fieldName]: value
+    };
+    
+    // Filter to only include fields that have values
+    const filledData = {};
+    Object.entries(updatedData).forEach(([key, val]) => {
+      if (val !== null && val !== undefined && val !== '' && 
+          (typeof val === 'string' ? val.trim() !== '' : true)) {
+        filledData[key] = val;
+      }
+    });
+    
+    console.log('Sending accumulated data to backend:', filledData);
+    
+    // Trigger the dynamic update
+    await handleDynamicFieldUpdate(fieldName, value);
+  }
+};
 
-    // Determine label with asterisk for required fields
-    const fieldLabel = (
-      <>
-        {label || name}
-        {isRequired && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
-      </>
-    );
+// Updated select field onChange handler in renderField function
+// This code should replace the existing select field rendering in your renderField function:
 
-    // Handle different field types based on determined type
-    if (field.type === 'select' && (field.options || field.defaultValue)) {
-      const selectOptions = field.options || field.defaultValue || [];
-      return (
-        <div key={name} className="form-field">
-          <label className="form-label">
-            {fieldLabel}
-          </label>
-          <select
-              value={value}
-              onChange={async (e) => {
-                console.log('Select field changed:', name, 'New value:', e.target.value);
-                await handleInputChange(name, e.target.value);
-                
-                // For workload forms, trigger cascading update immediately
-                if (formType === 'workload' && e.target.value && e.target.value.trim() !== '') {
-                  console.log('Triggering cascading update for select:', name);
-                  await handleDynamicFieldUpdate(name, e.target.value);
+/*
+if (field.type === 'select' && (field.options || field.defaultValue)) {
+  const selectOptions = field.options || field.defaultValue || [];
+  return (
+    <div key={name} className="form-field">
+      <label className="form-label">
+        {fieldLabel}
+      </label>
+      <select
+          value={value}
+          onChange={async (e) => {
+            console.log('Select field changed:', name, 'New value:', e.target.value);
+            
+            // Update the form data first
+            const newValue = e.target.value;
+            setFormData(prev => ({
+              ...prev,
+              [name]: newValue
+            }));
+            
+            // For workload forms, send accumulated data immediately
+            if (formType === 'workload' && newValue && newValue.trim() !== '') {
+              const updatedData = {
+                ...formData,
+                [name]: newValue
+              };
+              
+              // Filter to only include fields that have values
+              const filledData = {};
+              Object.entries(updatedData).forEach(([key, val]) => {
+                if (val !== null && val !== undefined && val !== '' && 
+                    (typeof val === 'string' ? val.trim() !== '' : true)) {
+                  filledData[key] = val;
                 }
-                // For non-workload forms, submit immediately
-                else if (formType !== 'workload') {
-                  handleImmediateSubmit(name, e.target.value);
-                }
-              }}
-              className={`form-select ${error ? 'error' : ''}`}
-            >
+              });
+              
+              console.log('Sending select data to backend:', filledData);
+              await handleDynamicFieldUpdate(name, newValue);
+            }
+            // For non-workload forms, submit immediately
+            else if (formType !== 'workload') {
+              handleImmediateSubmit(name, newValue);
+            }
+          }}
+          className={`form-select ${error ? 'error' : ''}`}
+        >
+        <option value="">Select an option</option>
+        {selectOptions.map((option, idx) => (
+          <option key={idx} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      {error && <span className="error-message">{error}</span>}
+    </div>
+  );
+}
+*/
+
+// Updated text input onBlur handler
+<input
+  type="text"
+  value={value}
+  onChange={(e) => handleInputChange(name, e.target.value)}
+  onBlur={async (e) => {
+    // For workload forms, the data is already sent in handleInputChange
+    // No need to send again on blur to avoid duplicate requests
+    console.log('Text field blur - data already sent in onChange');
+  }}
+  placeholder={placeholder}
+  className={`form-input ${error ? 'error' : ''}`}
+/>
             <option value="">Select an option</option>
             {selectOptions.map((option, idx) => (
               <option key={idx} value={option}>
