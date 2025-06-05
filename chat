@@ -20,6 +20,7 @@ import {
   postServiceWiseExp5,
   postServiceWiseSys5,
   getFARExpires
+  getFARDetailsSpecific
 } from "../api/PostApi";
 
 import { useState, useEffect, useRef } from "react";
