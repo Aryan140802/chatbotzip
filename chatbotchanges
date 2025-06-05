@@ -683,7 +683,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
     if (currentFormType === 'workload') {
       // Only include fields that have actual values (not empty strings)
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined && value !== '' && 
+        if (key !== null && key !== undefined && key !== '' && key.trim() !== '' &&
+            value !== null && value !== undefined && value !== '' && 
             (typeof value === 'string' ? value.trim() !== '' : true)) {
           completeFormData[key] = value;
         }
