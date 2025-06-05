@@ -173,12 +173,12 @@ const determineFieldType = (fieldName, fieldValue) => {
     return 'select';
   }
 
-  // If fieldValue is a single string value (not empty), it's a textarea
+  // If fieldValue is a single string value (not empty and not 'date'), it's a textarea
   if (typeof fieldValue === 'string' && fieldValue.trim() !== '' && fieldValue !== 'date') {
     return 'textarea';
   }
 
-  // Default to text input
+  // Default to text input for empty values
   return 'text';
 };
 
@@ -285,9 +285,8 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
       </>
     );
 
-    // Handle different field types based on determined type
-    if (field.type === 'select' && (field.options || field.defaultValue)) {
-      const selectOptions = field.options || field.defaultValue || [];
+    // Handle field types based on determined type from backend data
+    if (fieldType === 'select' && field.options) {
       return (
         <div key={name} className="form-field">
           <label className="form-label">
@@ -299,7 +298,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
             className={`form-select ${error ? 'error' : ''}`}
           >
             <option value="">Select an option</option>
-            {selectOptions.map((option, idx) => (
+            {field.options.map((option, idx) => (
               <option key={idx} value={option}>
                 {option}
               </option>
@@ -534,15 +533,15 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const fieldType = determineFieldType(name, value);
       baseField.type = fieldType;
 
-      // Set appropriate default value based on type
+      // Set appropriate default value and options based on type
       if (fieldType === 'select' && Array.isArray(value)) {
-        baseField.defaultValue = value; // Keep array for dropdown options
-        baseField.options = value; // Also set options for rendering
+        baseField.defaultValue = ''; // Start with empty selection
+        baseField.options = value; // Set options for dropdown
       } else if (fieldType === 'date') {
         baseField.defaultValue = ''; // Empty for date fields
-      } else if (fieldType === 'textarea' && typeof value === 'string') {
+      } else if (fieldType === 'textarea') {
         baseField.defaultValue = ''; // Start empty for textarea
-        baseField.placeholder = value; // Use backend value as placeholder
+        baseField.placeholder = `Enter ${name.toLowerCase()}...`; // Generic placeholder
       } else {
         baseField.defaultValue = value && value !== 'date' ? value : '';
       }
