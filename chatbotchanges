@@ -188,146 +188,185 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldChange }) =>
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    // Initialize form data with empty values
+  // Add useEffect to handle initial form setup
+useEffect(() => {
+  if (activeForm && currentFormType === 'workload') {
+    // Initialize form with any existing values
     const initialData = {};
-    fields.forEach(field => {
-      // Check if field already has a value from previous selections
-      const existingValue = field.value || field.defaultValue || '';
-      initialData[field.name] = existingValue;
+    activeForm.forEach(field => {
+      initialData[field.name] = field.value || '';
     });
     setFormData(initialData);
-  }, [fields]);
+  }
+}, [activeForm, currentFormType]);
 
-  const handleInputChange = async (fieldName, value) => {
-    const newFormData = {
-      ...formData,
-      [fieldName]: value
-    };
-    
-    setFormData(newFormData);
+  // Update handleInputChange in DynamicForm component
+const handleInputChange = async (fieldName, value) => {
+  const newFormData = {
+    ...formData,
+    [fieldName]: value
+  };
+  
+  setFormData(newFormData);
 
-    // Clear error for this field when user starts typing
-    if (errors[fieldName]) {
-      setErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
+  // Clear error for this field when user starts typing
+  if (errors[fieldName]) {
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: null
+    }));
+  }
+
+  // For cascading forms (like workload), send all current field values to backend
+  if (formType === 'workload' && value && value.trim() !== '') {
+    setIsSubmitting(true);
+    try {
+      // Send all current form data to get next field options
+      await onFieldChange(newFormData, fieldName);
+    } catch (error) {
+      console.error('Error sending field data:', error);
+    } finally {
+      setIsSubmitting(false);
     }
+  }
+};
 
-    // For cascading forms (like workload), send field value to backend immediately
-    if (formType === 'workload' && value && value.trim() !== '') {
-      setIsSubmitting(true);
-      try {
-        // Send only the current field data to get next field options
-        const fieldData = {
-          [fieldName]: value
+// Update handleFieldChange in Chatbot component
+const handleFieldChange = async (fieldData, changedFieldName) => {
+  try {
+    setIsTyping(true);
+    setApiTimeout(() => {});
+
+    const res = await postMessage({ message: fieldData });
+    clearCurrentTimeout();
+
+    const latest = res.data.chat_history?.slice(-1)[0];
+    if (latest && hasFormFields(latest)) {
+      const updatedFields = extractFormFields(latest);
+      
+      // Preserve already selected values while updating options
+      const mergedFields = updatedFields.map(newField => {
+        const existingField = currentFormFields.find(f => f.name === newField.name) || {};
+        return {
+          ...newField,
+          value: existingField.value || newField.value
         };
-        
-        // Add any previously selected values to maintain context
-        const contextData = {};
-        Object.keys(formData).forEach(key => {
-          if (key !== fieldName && formData[key] && formData[key].trim() !== '') {
-            contextData[key] = formData[key];
-          }
-        });
-
-        const payload = { ...contextData, ...fieldData };
-        
-        await onFieldChange(payload, fieldName);
-      } catch (error) {
-        console.error('Error sending field data:', error);
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  };
-
-  // Updated validateForm function
-  const validateForm = () => {
-    const newErrors = {};
-    fields.forEach(field => {
-      const fieldValue = formData[field.name];
-      const isRequired = isFieldRequired(field.name, formType);
-
-      // Check if field is required and empty
-      if (isRequired && (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === ''))) {
-        newErrors[field.name] = `${field.label || field.name} is required`;
-      }
-
-      // Additional validation rules
-      if (field.type === 'email' && fieldValue &&
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValue)) {
-        newErrors[field.name] = 'Please enter a valid email address';
-      }
-
-      if (field.minLength && fieldValue &&
-          fieldValue.length < field.minLength) {
-        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // Updated handleSubmit function
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (validateForm()) {
-      // Pass cleaned form data
-      const cleanedFormData = {};
-      Object.keys(formData).forEach(key => {
-        const value = formData[key];
-        cleanedFormData[key] = value !== null && value !== undefined ? value : '';
       });
-      
-      onSubmit(cleanedFormData, fields);
+
+      setActiveForm(mergedFields);
+      setCurrentFormFields(mergedFields);
     }
+  } catch (error) {
+    console.error('Error updating form fields:', error);
+  } finally {
+    setIsTyping(false);
+  }
+};
+
+// Update extractFormFields to handle option structures
+const extractFormFields = (response) => {
+  if (!hasFormFields(response)) return null;
+
+  return Object.entries(response.message).map(([name, value]) => {
+    const baseField = {
+      name,
+      label: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
+      required: name === 'service', // Only service is required initially
+      value: Array.isArray(value) ? '' : value
+    };
+
+    if (Array.isArray(value)) {
+      baseField.type = 'select';
+      baseField.options = value;
+    } else if (name === 'service') {
+      baseField.type = 'text';
+    } else {
+      baseField.type = 'select';
+      baseField.options = [];
+    }
+
+    return baseField;
+  });
+};
+
+// Update form submission handler
+const handleFormSubmit = async (formData, originalFields) => {
+  // Validate all required fields are filled
+  const requiredFields = originalFields.filter(f => f.required).map(f => f.name);
+  const missingFields = requiredFields.filter(f => !formData[f]);
+
+  if (missingFields.length > 0) {
+    alert(`Please fill all required fields: ${missingFields.join(', ')}`);
+    return;
+  }
+
+  // Proceed with submission
+  setActiveForm(null);
+  setCurrentFormType(null);
+
+  const userMessage = {
+    id: Date.now(),
+    text: formatFormDataToSentence(formData, originalFields, currentFormType),
+    sender: "user",
+    time: getCurrentTime(),
   };
 
-  const renderField = (field) => {
-    const { name, label, placeholder, options } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
-    const isRequired = isFieldRequired(name, formType);
-    const fieldType = determineFieldType(name, field.defaultValue || field.value);
+  setMessages((prev) => [...prev, userMessage]);
+  setIsTyping(true);
 
-    // Determine label with asterisk for required fields
-    const fieldLabel = (
-      <>
-        {label || name}
-        {isRequired && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
-      </>
-    );
+  try {
+    const res = await postMessage({ message: formData });
+    const latest = res.data.chat_history?.slice(-1)[0];
+    
+    if (latest) {
+      const botResponse = {
+        id: Date.now(),
+        text: latest.message || "",
+        sender: "bot",
+        time: getCurrentTime(),
+        options: latest.options || [],
+      };
 
-    // Handle field types based on determined type from backend data
-    if (fieldType === 'select' && (field.options || Array.isArray(field.value))) {
-      const selectOptions = field.options || field.value || [];
-      
-      return (
-        <div key={name} className="form-field">
-          <label className="form-label">
-            {fieldLabel}
-          </label>
-          <select
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            className={`form-select ${error ? 'error' : ''}`}
-            disabled={isSubmitting}
-          >
-            <option value="">Select an option</option>
-            {selectOptions.map((option, idx) => (
-              <option key={idx} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          {error && <span className="error-message">{error}</span>}
-        </div>
-      );
+      if (hasFormFields(latest)) {
+        botResponse.formFields = extractFormFields(latest);
+        botResponse.isFormMessage = true;
+      }
+
+      setMessages((prev) => [...prev, botResponse]);
     }
+  } catch (error) {
+    console.error('Form submission error:', error);
+  }
+  setIsTyping(false);
+};
+
+// Update DynamicForm rendering for select fields
+const renderField = (field) => {
+  // ... existing code ...
+  
+  if (fieldType === 'select') {
+    return (
+      <div key={name} className="form-field">
+        <label className="form-label">
+          {fieldLabel}
+        </label>
+        <select
+          value={value}
+          onChange={(e) => handleInputChange(name, e.target.value)}
+          className={`form-select ${error ? 'error' : ''}`}
+          disabled={isSubmitting || (field.options && field.options.length === 0)}
+        >
+          <option value="">Select {label.toLowerCase()}</option>
+          {field.options?.map((option, idx) => (
+            <option key={idx} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        {error && <span className="error-message">{error}</span>}
+      </div>
+    );
+  }
 
     // Custom logic for 'multiple' form type
     if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
