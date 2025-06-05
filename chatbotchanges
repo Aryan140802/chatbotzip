@@ -244,15 +244,23 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
 
     setIsLoadingFields(true);
     try {
-      // Create payload with current form data
+      // Create payload with ONLY filled fields (cascading behavior)
       const currentData = {
         ...formData,
         [fieldName]: value
       };
 
+      // Filter to only include fields that have values (not empty)
+      const filledData = {};
+      Object.entries(currentData).forEach(([key, val]) => {
+        if (val !== null && val !== undefined && val !== '' && val.trim() !== '') {
+          filledData[key] = val;
+        }
+      });
+
       // Send to backend for dynamic field loading
       const payload = {
-        message: currentData,
+        message: filledData,
         dynamic_update: true,
         field_updated: fieldName
       };
@@ -266,12 +274,21 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
           const newFields = extractFormFields(latest);
           setDynamicFields(newFields);
 
-          // Update form data with new values while preserving user inputs
+          // Update form data - preserve user inputs and reset dependent fields
           const updatedData = { ...currentData };
           newFields.forEach(field => {
-            // Only update if field doesn't have user input or if it's a new field
-            if (!updatedData.hasOwnProperty(field.name) || updatedData[field.name] === '') {
+            // If it's a new field or the field has new options, reset it
+            if (!updatedData.hasOwnProperty(field.name)) {
               updatedData[field.name] = field.defaultValue || '';
+            }
+            // If it's a select field with new options, reset the value
+            else if (field.type === 'select' && field.options) {
+              // Reset dependent fields when parent field changes
+              const currentFieldIndex = Object.keys(filledData).indexOf(fieldName);
+              const thisFieldIndex = Object.keys(filledData).indexOf(field.name);
+              if (thisFieldIndex > currentFieldIndex) {
+                updatedData[field.name] = '';
+              }
             }
           });
           setFormData(updatedData);
@@ -298,14 +315,13 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
       }));
     }
 
-    // For workload form, send service selection to backend immediately
-    //if (formType === 'workload' && fieldName.toLowerCase().includes('service') && value.trim() !== '') {
-    //  await handleDynamicFieldUpdate(fieldName, value);
-    //}
-    //// For workload form, send other field selections to backend
-    //else if (formType === 'workload' && value.trim() !== '') {
-    //  await handleDynamicFieldUpdate(fieldName, value);
-    //}
+    // For workload form, trigger dynamic updates when user finishes selecting/typing
+    if (formType === 'workload' && value.trim() !== '') {
+      // Immediate update for select fields
+      if (value !== formData[fieldName]) {
+        await handleDynamicFieldUpdate(fieldName, value);
+      }
+    }
   };
 
   const handleFieldBlur = async (fieldName, value) => {
@@ -374,6 +390,9 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
   };
 
   const handleImmediateSubmit = async (fieldName, value) => {
+    // Don't submit immediately for workload forms - let cascading handle it
+    if (formType === 'workload') return;
+
     const updatedFormData = {
       ...formData,
       [fieldName]: value,
@@ -415,9 +434,12 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
           </label>
           <select
               value={value}
-              onChange={(e) => {
-                handleInputChange(name, e.target.value);
-                handleImmediateSubmit(name, e.target.value);
+              onChange={async (e) => {
+                await handleInputChange(name, e.target.value);
+                // For workload forms, cascading is handled in handleInputChange
+                if (formType !== 'workload') {
+                  handleImmediateSubmit(name, e.target.value);
+                }
               }}
               className={`form-select ${error ? 'error' : ''}`}
             >
@@ -562,6 +584,12 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
               type="text"
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
+              onBlur={(e) => {
+                // For workload forms, trigger update on blur (when user finishes typing)
+                if (formType === 'workload' && e.target.value.trim() !== '') {
+                  handleDynamicFieldUpdate(name, e.target.value);
+                }
+              }}
               placeholder={placeholder}
               className={`form-input ${error ? 'error' : ''}`}
             />
