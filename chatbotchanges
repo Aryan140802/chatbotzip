@@ -1,8 +1,3 @@
-message
-: 
-"Here is the information for <b>Affan Habibuddin MD </b>:\n<b>Name</b>: Affan Habibuddin MD \n<b>Email</b>: None\n<b>Contact No.</b>:9359296919\n<b>AD ID</b>: v1019286 \n<b>Employee ID</b>: 2743582  \n \n "
-
-
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
@@ -10,6 +5,9 @@ import "../styles/Chatbot.css";
 import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
+
+
+const REQUIRED_FIELDS = ['service'];
 
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
@@ -97,6 +95,7 @@ const formatDynamicMessage = (text) => {
 };
 
 // Function to format form data into proper sentences
+// Update the formatFormDataToSentence function to handle non-string values
 const formatFormDataToSentence = (formData, originalFields, formType = null) => {
   if (!formData || Object.keys(formData).length === 0) {
     return "No form data provided";
@@ -119,11 +118,14 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
         const fieldLabel = fieldLabelsMap[key] || key;
         const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
         
-        if (value === null || value === undefined || value === '') {
-          sentences.push(`${formattedLabel}: No value given`);
-        } else {
-          sentences.push(`${formattedLabel}: "${value}"`);
-        }
+        // Handle non-string values safely
+        const displayValue = (value === null || value === undefined || value === '') 
+          ? 'No value given' 
+          : typeof value === 'string' 
+            ? `"${value}"` 
+            : JSON.stringify(value);
+            
+        sentences.push(`${formattedLabel}: ${displayValue}`);
       }
     });
   } else {
@@ -132,70 +134,32 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
       const fieldLabel = fieldLabelsMap[key] || key;
       const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
       
-      if (value === null || value === undefined || value === '') {
-        sentences.push(`${formattedLabel}: No value given`);
-      } else {
-        sentences.push(`${formattedLabel}: "${value}"`);
-      }
+      // Handle non-string values safely
+      const displayValue = (value === null || value === undefined || value === '') 
+        ? 'No value given' 
+        : typeof value === 'string' 
+          ? `"${value}"` 
+          : JSON.stringify(value);
+          
+      sentences.push(`${formattedLabel}: ${displayValue}`);
     });
   }
 
   return sentences.length > 0 ? sentences.join(', ') : "No values provided";
 };
 
-// Dynamic Form Component
-const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
-  const [formData, setFormData] = useState({});
-  const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    // Initialize form data with empty values - FIXED: No more "date" default values
-    const initialData = {};
-    fields.forEach(field => {
-      // Initialize all fields as empty string, including date fields
-      initialData[field.name] = field.defaultValue || '';
-    });
-    setFormData(initialData);
-  }, [fields]);
-
-  const handleInputChange = (fieldName, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
-
-    // Clear error for this field when user starts typing
-    if (errors[fieldName]) {
-      setErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
-    }
-  };
-
 // Updated validateForm function with better logging
 const validateForm = () => {
-  console.log('Validating form...', { formData, formType, fields });
-  
   const newErrors = {};
+  
   fields.forEach(field => {
-    console.log(`Checking field: ${field.name}`, {
-      value: formData[field.name],
-      required: field.required,
-      formType: formType
-    });
-
-    // Custom validation for workload form - make 'service' field mandatory
-    if (formType === 'workload' && field.name.toLowerCase() === 'service') {
-      if (!formData[field.name] || formData[field.name].trim() === '') {
-        newErrors[field.name] = 'Service field is required';
-        console.log(`Service field validation failed for field: ${field.name}`);
-      }
-    } else if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
+    // Check if field is in REQUIRED_FIELDS array
+    const isRequired = REQUIRED_FIELDS.includes(field.name.toLowerCase());
+    
+    if (isRequired && (!formData[field.name] || formData[field.name].toString().trim() === '')) {
       newErrors[field.name] = `${field.label || field.name} is required`;
-      console.log(`Required field validation failed for field: ${field.name}`);
     }
-
+    
     // Add other validation rules as needed
     if (field.type === 'email' && formData[field.name] &&
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
@@ -208,115 +172,91 @@ const validateForm = () => {
     }
   });
 
-  console.log('Validation result:', { newErrors, isValid: Object.keys(newErrors).length === 0 });
   setErrors(newErrors);
   return Object.keys(newErrors).length === 0;
 };
 
-// Updated handleSubmit function with better logging
-const handleSubmit = (e) => {
-  console.log('Form submit triggered', { formData, formType });
-  e.preventDefault();
-  
-  if (validateForm()) {
-    console.log('Form validation passed, submitting...');
-    // Pass both cleaned form data and original fields for proper formatting
-    const cleanedFormData = {};
-    Object.keys(formData).forEach(key => {
-      const value = formData[key];
-      // Include all values, even empty ones, for proper sentence formatting
-      cleanedFormData[key] = value;
-    });
-    console.log('Calling onSubmit with:', { cleanedFormData, fields });
-    onSubmit(cleanedFormData, fields);
-  } else {
-    console.log('Form validation failed, not submitting');
-  }
-};
-
-// Alternative simplified handleSubmit if the above doesn't work
-const handleSubmitSimplified = (e) => {
-  e.preventDefault();
-  console.log('Simple submit triggered', formData);
-  
-  // Skip validation temporarily for debugging
-  const cleanedFormData = { ...formData };
-  console.log('Submitting without validation:', cleanedFormData);
-  onSubmit(cleanedFormData, fields);
-};
-
   const renderField = (field) => {
-    const { name, type, label, placeholder, options, required } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
+  const { name, type, label, placeholder, options } = field;
+  const value = formData[name] || '';
+  const error = errors[name];
 
-    // FIXED: Better asterisk styling for required fields
-    const fieldLabel = (
-      <>
-        {label || name}
-        {required && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
-      </>
-    );
+  // Check if field is in REQUIRED_FIELDS array
+  const isRequired = REQUIRED_FIELDS.includes(name.toLowerCase());
+  
+  // Special handling for date fields (name contains 'date' or type is date)
+  const isDateField = name.toLowerCase().includes('date') || type === 'date';
+  const effectiveType = isDateField ? 'date' : type;
 
-    // Custom logic for 'have multiple field' form
-    if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
-      // For expiry option and created option fields - add dropdown with before/after
-      if (name.toLowerCase().includes('option')) {
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {fieldLabel}
-            </label>
-            <select
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-select ${error ? 'error' : ''}`}
-            >
-              <option value="">Select an option</option>
-              <option value="before">Before</option>
-              <option value="after">After</option>
-            </select>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-      }
-      // For expiry and created fields (without 'option' in name) - add date picker
-      else {
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {fieldLabel}
-            </label>
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-      }
+  // Field label with asterisk for required fields
+  const fieldLabel = (
+    <>
+      {label || name}
+      {isRequired && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
+    </>
+  );
+
+  // Custom logic for 'have multiple field' form
+  if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
+    // For expiry option and created option fields - add dropdown with before/after
+    if (name.toLowerCase().includes('option')) {
+      return (
+        <div key={name} className="form-field">
+          <label className="form-label">
+            {fieldLabel}
+          </label>
+          <select
+            value={value}
+            onChange={(e) => handleInputChange(name, e.target.value)}
+            className={`form-select ${error ? 'error' : ''}`}
+          >
+            <option value="">Select an option</option>
+            <option value="before">Before</option>
+            <option value="after">After</option>
+          </select>
+          {error && <span className="error-message">{error}</span>}
+        </div>
+      );
     }
+    // For expiry and created fields (without 'option' in name) - add date picker
+    else {
+      return (
+        <div key={name} className="form-field">
+          <label className="form-label">
+            {fieldLabel}
+          </label>
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => handleInputChange(name, e.target.value)}
+            className={`form-input ${error ? 'error' : ''}`}
+          />
+          {error && <span className="error-message">{error}</span>}
+        </div>
+      );
+    }
+  }
 
-    switch (type) {
-      case 'date':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {fieldLabel}
-            </label>
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+  switch (effectiveType) {
+    case 'date':
+      return (
+        <div key={name} className="form-field">
+          <label className="form-label">
+            {fieldLabel}
+          </label>
+          <input
+            type="date"
+            value={value}
+            onChange={(e) => handleInputChange(name, e.target.value)}
+            className={`form-input ${error ? 'error' : ''}`}
+          />
+          {error && <span className="error-message">{error}</span>}
+        </div>
+      );
 
-      case 'select':
+    // ... rest of your switch cases remain the same ...
+
+    case 'select':
         return (
           <div key={name} className="form-field">
             <label className="form-label">
@@ -387,8 +327,9 @@ const handleSubmitSimplified = (e) => {
             {error && <span className="error-message">{error}</span>}
           </div>
         );
-    }
-  };
+  }
+};
+
 
   return (
     <div className="dynamic-form-container">
