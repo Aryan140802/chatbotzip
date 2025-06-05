@@ -274,6 +274,30 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
       </>
     );
 
+    // For workload form, check if field.defaultValue is an array (multiple values from backend)
+    if (formType === 'workload' && Array.isArray(field.defaultValue) && field.defaultValue.length > 0) {
+      return (
+        <div key={name} className="form-field">
+          <label className="form-label">
+            {fieldLabel}
+          </label>
+          <select
+            value={value}
+            onChange={(e) => handleInputChange(name, e.target.value)}
+            className={`form-select ${error ? 'error' : ''}`}
+          >
+            <option value="">Select an option</option>
+            {field.defaultValue.map((option, idx) => (
+              <option key={idx} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          {error && <span className="error-message">{error}</span>}
+        </div>
+      );
+    }
+
     // Custom logic for 'multiple' form type
     if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
       // For expiry option and created option fields - add dropdown with before/after
@@ -495,13 +519,17 @@ const Chatbot = ({ setChatbotMinimized }) => {
         required: false // This will be determined by the configuration
       };
 
-      // Determine field type based on name and value
-      const fieldType = determineFieldType(name, value);
+      // For arrays, keep them as arrays to be used as dropdown options
+      if (Array.isArray(value)) {
+        baseField.defaultValue = value;
+        baseField.type = 'select';
+      } else {
+        // Determine field type based on name and value
+        const fieldType = determineFieldType(name, value);
+        baseField.type = fieldType;
+      }
 
-      return {
-        ...baseField,
-        type: fieldType
-      };
+      return baseField;
     });
   };
 
@@ -681,13 +709,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     // For workload form, only send fields that have values
     if (currentFormType === 'workload') {
-      // Only include fields that have actual values (not empty strings or arrays)
+      // Only include fields that have actual values (not empty strings)
       Object.entries(formData).forEach(([key, value]) => {
         // Check if value has actual content
         const hasValue = value !== null && 
                         value !== undefined && 
                         value !== '' && 
-                        !(Array.isArray(value) && value.length === 0) &&
                         (typeof value === 'string' ? value.trim() !== '' : true);
 
         if (hasValue) {
