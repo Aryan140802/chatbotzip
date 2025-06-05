@@ -1,3 +1,39 @@
+{chat_history: [{sender: "Bot", message: "Hello! Please select from the following options:",…},…]}
+chat_history
+: 
+[{sender: "Bot", message: "Hello! Please select from the following options:",…},…]
+0
+: 
+{sender: "Bot", message: "Hello! Please select from the following options:",…}
+1
+: 
+{sender: "You", message: "workload"}
+2
+: 
+{sender: "Bot", message: {service: "", layer: [], server: [], eg: []}, options: ["1.main menu"]}
+3
+: 
+{sender: "You", message: {service: "Dynatrace_Logger"}}
+4
+: 
+{sender: "Bot", message: {service: "Dynatrace_Logger",…}, options: ["y.Back", "z.Main Menu"]}
+message
+: 
+{service: "Dynatrace_Logger",…}
+eg
+: 
+["Misc_E_01", "Payment_E_01", "AADHAR_EXP_01", "GCC_E_01", "Account_E_01", "IVR_E_01",…]
+layer
+: 
+["IVR_EXP", "ACCOUNT_EXP", "AADHAR_EXP", "PAYMENT_EXP", "AADHAR_SYS", "CUSTOMER_EXP", "MISC_EXP"]
+server
+: 
+["24_194", "24_196", "25_34", "25_73", "24_73", "24_65", "24_66", "24_12", "25_14", "25_191", "24_14",…]
+service
+: 
+"Dynatrace_Logger"
+
+
 
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
