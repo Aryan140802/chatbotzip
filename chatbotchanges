@@ -4,7 +4,7 @@ import TypingIndicator from "./TypingIndicator";
 import "../styles/Chatbot.css";
 import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
-import { getPost, postMessage } from "../api/PostApi";
+import { getPost, postMessage } from "../api/postNewApi";
 
 const hasFormFields = (response) => {
   if (!response || !response.message) return false;
