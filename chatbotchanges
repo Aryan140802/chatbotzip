@@ -1,40 +1,3 @@
-{chat_history: [{sender: "Bot", message: "Hello! Please select from the following options:",…},…]}
-chat_history
-: 
-[{sender: "Bot", message: "Hello! Please select from the following options:",…},…]
-0
-: 
-{sender: "Bot", message: "Hello! Please select from the following options:",…}
-1
-: 
-{sender: "You", message: "workload"}
-2
-: 
-{sender: "Bot", message: {service: "", layer: [], server: [], eg: []}, options: ["1.main menu"]}
-3
-: 
-{sender: "You", message: {service: "Dynatrace_Logger"}}
-4
-: 
-{sender: "Bot", message: {service: "Dynatrace_Logger",…}, options: ["y.Back", "z.Main Menu"]}
-message
-: 
-{service: "Dynatrace_Logger",…}
-eg
-: 
-["Misc_E_01", "Payment_E_01", "AADHAR_EXP_01", "GCC_E_01", "Account_E_01", "IVR_E_01",…]
-layer
-: 
-["IVR_EXP", "ACCOUNT_EXP", "AADHAR_EXP", "PAYMENT_EXP", "AADHAR_SYS", "CUSTOMER_EXP", "MISC_EXP"]
-server
-: 
-["24_194", "24_196", "25_34", "25_73", "24_73", "24_65", "24_66", "24_12", "25_14", "25_191", "24_14",…]
-service
-: 
-"Dynatrace_Logger"
-
-
-
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
@@ -219,25 +182,30 @@ const determineFieldType = (fieldName, fieldValue) => {
   return 'text';
 };
 
-// Dynamic Form Component
-const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
+// Dynamic Form Component - MODIFIED for cascading behavior
+const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldChange }) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Initialize form data with empty values
     const initialData = {};
     fields.forEach(field => {
-      initialData[field.name] = field.defaultValue || '';
+      // Check if field already has a value from previous selections
+      const existingValue = field.value || field.defaultValue || '';
+      initialData[field.name] = existingValue;
     });
     setFormData(initialData);
   }, [fields]);
 
-  const handleInputChange = (fieldName, value) => {
-    setFormData(prev => ({
-      ...prev,
+  const handleInputChange = async (fieldName, value) => {
+    const newFormData = {
+      ...formData,
       [fieldName]: value
-    }));
+    };
+    
+    setFormData(newFormData);
 
     // Clear error for this field when user starts typing
     if (errors[fieldName]) {
@@ -246,27 +214,45 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         [fieldName]: null
       }));
     }
+
+    // For cascading forms (like workload), send field value to backend immediately
+    if (formType === 'workload' && value && value.trim() !== '') {
+      setIsSubmitting(true);
+      try {
+        // Send only the current field data to get next field options
+        const fieldData = {
+          [fieldName]: value
+        };
+        
+        // Add any previously selected values to maintain context
+        const contextData = {};
+        Object.keys(formData).forEach(key => {
+          if (key !== fieldName && formData[key] && formData[key].trim() !== '') {
+            contextData[key] = formData[key];
+          }
+        });
+
+        const payload = { ...contextData, ...fieldData };
+        
+        await onFieldChange(payload, fieldName);
+      } catch (error) {
+        console.error('Error sending field data:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
   };
 
-  // Updated validateForm function with better validation
+  // Updated validateForm function
   const validateForm = () => {
-    console.log('Validating form...', { formData, formType, fields });
-
     const newErrors = {};
     fields.forEach(field => {
       const fieldValue = formData[field.name];
       const isRequired = isFieldRequired(field.name, formType);
 
-      console.log(`Checking field: ${field.name}`, {
-        value: fieldValue,
-        required: isRequired,
-        formType: formType
-      });
-
       // Check if field is required and empty
       if (isRequired && (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === ''))) {
         newErrors[field.name] = `${field.label || field.name} is required`;
-        console.log(`Required field validation failed for field: ${field.name}`);
       }
 
       // Additional validation rules
@@ -281,29 +267,23 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
       }
     });
 
-    console.log('Validation result:', { newErrors, isValid: Object.keys(newErrors).length === 0 });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   // Updated handleSubmit function
   const handleSubmit = (e) => {
-    console.log('Form submit triggered', { formData, formType });
     e.preventDefault();
 
     if (validateForm()) {
-      console.log('Form validation passed, submitting...');
-      // Pass both cleaned form data and original fields for proper formatting
+      // Pass cleaned form data
       const cleanedFormData = {};
       Object.keys(formData).forEach(key => {
         const value = formData[key];
-        // Ensure we handle all value types properly
         cleanedFormData[key] = value !== null && value !== undefined ? value : '';
       });
-      console.log('Calling onSubmit with:', { cleanedFormData, fields });
+      
       onSubmit(cleanedFormData, fields);
-    } else {
-      console.log('Form validation failed, not submitting');
     }
   };
 
@@ -312,7 +292,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     const value = formData[name] || '';
     const error = errors[name];
     const isRequired = isFieldRequired(name, formType);
-    const fieldType = determineFieldType(name, field.defaultValue);
+    const fieldType = determineFieldType(name, field.defaultValue || field.value);
 
     // Determine label with asterisk for required fields
     const fieldLabel = (
@@ -323,7 +303,9 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
     );
 
     // Handle field types based on determined type from backend data
-    if (fieldType === 'select' && field.options) {
+    if (fieldType === 'select' && (field.options || Array.isArray(field.value))) {
+      const selectOptions = field.options || field.value || [];
+      
       return (
         <div key={name} className="form-field">
           <label className="form-label">
@@ -333,9 +315,10 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
             value={value}
             onChange={(e) => handleInputChange(name, e.target.value)}
             className={`form-select ${error ? 'error' : ''}`}
+            disabled={isSubmitting}
           >
             <option value="">Select an option</option>
-            {field.options.map((option, idx) => (
+            {selectOptions.map((option, idx) => (
               <option key={idx} value={option}>
                 {option}
               </option>
@@ -359,6 +342,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
               className={`form-select ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
             >
               <option value="">Select an option</option>
               <option value="before">Before</option>
@@ -380,6 +364,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
               className={`form-input ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
             />
             {error && <span className="error-message">{error}</span>}
           </div>
@@ -400,12 +385,14 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
               className={`form-input ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
             />
             {error && <span className="error-message">{error}</span>}
           </div>
         );
 
       case 'select':
+        const selectOptions = field.options || [];
         return (
           <div key={name} className="form-field">
             <label className="form-label">
@@ -415,9 +402,10 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
               className={`form-select ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
             >
               <option value="">Select an option</option>
-              {options?.map((option, idx) => (
+              {selectOptions.map((option, idx) => (
                 <option key={idx} value={option.value || option}>
                   {option.label || option}
                 </option>
@@ -439,6 +427,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
               placeholder={placeholder}
               className={`form-textarea ${error ? 'error' : ''}`}
               rows={3}
+              disabled={isSubmitting}
             />
             {error && <span className="error-message">{error}</span>}
           </div>
@@ -453,6 +442,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
                 checked={value === true || value === 'true'}
                 onChange={(e) => handleInputChange(name, e.target.checked)}
                 className="form-checkbox"
+                disabled={isSubmitting}
               />
               {fieldLabel}
             </label>
@@ -472,6 +462,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
               onChange={(e) => handleInputChange(name, e.target.value)}
               placeholder={placeholder}
               className={`form-input ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
             />
             {error && <span className="error-message">{error}</span>}
           </div>
@@ -484,11 +475,11 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
       <form onSubmit={handleSubmit} className="dynamic-form">
         {fields.map(renderField)}
         <div className="form-actions">
-          <button type="button" onClick={onCancel} className="cancel-button">
+          <button type="button" onClick={onCancel} className="cancel-button" disabled={isSubmitting}>
             Cancel
           </button>
-          <button type="submit" className="submit-button">
-            Submit
+          <button type="submit" className="submit-button" disabled={isSubmitting}>
+            {isSubmitting ? 'Processing...' : 'Submit'}
           </button>
         </div>
       </form>
@@ -563,7 +554,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const baseField = {
         name,
         label: name.charAt(0).toUpperCase() + name.slice(1),
-        required: false // This will be determined by the configuration
+        required: false,
+        value: value // Store the current value/options
       };
 
       // Determine field type based on name and value
@@ -755,6 +747,36 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
+  // NEW: Handle individual field changes for cascading forms
+  const handleFieldChange = async (fieldData, changedFieldName) => {
+    try {
+      setIsTyping(true);
+      setApiTimeout(() => {});
+
+      const payload = {
+        message: fieldData
+      };
+
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest && hasFormFields(latest)) {
+        // Extract updated form fields
+        const updatedFields = extractFormFields(latest);
+        
+        // Update the active form with new field options
+        setActiveForm(updatedFields);
+        setCurrentFormFields(updatedFields);
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      console.error('Error updating form fields:', error);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
   const handleFormSubmit = async (formData, originalFields) => {
     setActiveForm(null);
     setCurrentFormType(null);
@@ -872,7 +894,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
             </button>
           </>
         )}
-      </div>
+</div>
 
       {!isMinimized && (
         <>
