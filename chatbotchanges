@@ -6,6 +6,75 @@ import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 
+const hasFormFields = (response) => {
+  if (!response || !response.message) return false;
+
+  // Check if message is an object and not an array
+  return typeof response.message === 'object' &&
+         !Array.isArray(response.message) &&
+         Object.keys(response.message).length > 0;
+};
+
+// Helper function to determine field type
+const determineFieldType = (fieldName, fieldValue) => {
+  const lowerName = fieldName.toLowerCase();
+
+  // Check if field name contains date-related keywords or value indicates date
+  if (lowerName.includes('date') || 
+      lowerName.includes('expiry') || 
+      lowerName.includes('created') ||
+      lowerName.includes('expire') ||
+      lowerName.includes('start') ||
+      lowerName.includes('end') ||
+      fieldValue === 'date') {
+    return 'date';
+  }
+
+  // If fieldValue is an array with multiple values, it's a select dropdown
+  if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+    return 'select';
+  }
+
+  // If fieldValue is a single string value (not empty), it's a textarea
+  if (typeof fieldValue === 'string' && fieldValue.trim() !== '' && fieldValue !== 'date') {
+    return 'textarea';
+  }
+
+  // Default to text input
+  return 'text';
+};
+
+const extractFormFields = (response) => {
+  if (!hasFormFields(response)) return null;
+
+  return Object.entries(response.message).map(([name, value]) => {
+    const baseField = {
+      name,
+      label: name.charAt(0).toUpperCase() + name.slice(1),
+      required: false // This will be determined by the configuration
+    };
+
+    // Determine field type based on name and value
+    const fieldType = determineFieldType(name, value);
+    baseField.type = fieldType;
+
+    // Set appropriate default value and options based on type
+    if (fieldType === 'select' && Array.isArray(value)) {
+      baseField.defaultValue = ''; // Start with empty selection
+      baseField.options = value; // Set options for dropdown
+    } else if (fieldType === 'date') {
+      baseField.defaultValue = ''; // Empty for date fields
+    } else if (fieldType === 'textarea') {
+      baseField.defaultValue = ''; // Start empty for textarea
+      baseField.placeholder = `Enter ${name.toLowerCase()}...`; // Generic placeholder
+    } else {
+      baseField.defaultValue = value && value !== 'date' ? value : '';
+    }
+
+    return baseField;
+  });
+};
+
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
 
