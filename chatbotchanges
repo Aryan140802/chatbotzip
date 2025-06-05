@@ -373,6 +373,23 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
     }
   };
 
+  const handleImmediateSubmit = async (fieldName, value) => {
+    const updatedFormData = {
+      ...formData,
+      [fieldName]: value,
+    };
+
+     // Pass both cleaned form data and original fields for proper formatting
+     const cleanedFormData = {};
+     Object.keys(updatedFormData).forEach(key => {
+       const val = updatedFormData[key];
+       // Ensure we handle all value types properly
+       cleanedFormData[key] = val !== null && val !== undefined ? val : '';
+     });
+     console.log('Calling onSubmit with:', { cleanedFormData, fields });
+     onSubmit(cleanedFormData, fields);
+  }
+
   const renderField = (field) => {
     const { name, label, placeholder, options } = field;
     const value = formData[name] || '';
@@ -397,10 +414,13 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
             {fieldLabel}
           </label>
           <select
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            className={`form-select ${error ? 'error' : ''}`}
-          >
+              value={value}
+              onChange={(e) => {
+                handleInputChange(name, e.target.value);
+                handleImmediateSubmit(name, e.target.value);
+              }}
+              className={`form-select ${error ? 'error' : ''}`}
+            >
             <option value="">Select an option</option>
             {selectOptions.map((option, idx) => (
               <option key={idx} value={option}>
@@ -482,7 +502,10 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
             </label>
             <select
               value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
+              onChange={(e) => {
+                handleInputChange(name, e.target.value);
+                handleImmediateSubmit(name, e.target.value);
+              }}
               className={`form-select ${error ? 'error' : ''}`}
             >
               <option value="">Select an option</option>
