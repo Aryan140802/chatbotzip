@@ -157,17 +157,28 @@ const isFieldRequired = (fieldName, formType) => {
 const determineFieldType = (fieldName, fieldValue) => {
   const lowerName = fieldName.toLowerCase();
 
-  // Check if field name contains date-related keywords
+  // Check if field name contains date-related keywords or value indicates date
   if (lowerName.includes('date') || 
       lowerName.includes('expiry') || 
       lowerName.includes('created') ||
       lowerName.includes('expire') ||
       lowerName.includes('start') ||
-      lowerName.includes('end')) {
+      lowerName.includes('end') ||
+      fieldValue === 'date') {
     return 'date';
   }
 
-  // Add more type detection logic here if needed
+  // If fieldValue is an array with multiple values, it's a select dropdown
+  if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+    return 'select';
+  }
+
+  // If fieldValue is a single string value (not empty), it's a textarea
+  if (typeof fieldValue === 'string' && fieldValue.trim() !== '' && fieldValue !== 'date') {
+    return 'textarea';
+  }
+
+  // Default to text input
   return 'text';
 };
 
@@ -274,8 +285,9 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
       </>
     );
 
-    // For workload form, check if field.defaultValue is an array (multiple values from backend)
-    if (formType === 'workload' && Array.isArray(field.defaultValue) && field.defaultValue.length > 0) {
+    // Handle different field types based on determined type
+    if (field.type === 'select' && (field.options || field.defaultValue)) {
+      const selectOptions = field.options || field.defaultValue || [];
       return (
         <div key={name} className="form-field">
           <label className="form-label">
@@ -287,7 +299,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
             className={`form-select ${error ? 'error' : ''}`}
           >
             <option value="">Select an option</option>
-            {field.defaultValue.map((option, idx) => (
+            {selectOptions.map((option, idx) => (
               <option key={idx} value={option}>
                 {option}
               </option>
@@ -515,18 +527,24 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const baseField = {
         name,
         label: name.charAt(0).toUpperCase() + name.slice(1),
-        defaultValue: value && value !== 'date' ? value : '',
         required: false // This will be determined by the configuration
       };
 
-      // For arrays, keep them as arrays to be used as dropdown options
-      if (Array.isArray(value)) {
-        baseField.defaultValue = value;
-        baseField.type = 'select';
+      // Determine field type based on name and value
+      const fieldType = determineFieldType(name, value);
+      baseField.type = fieldType;
+
+      // Set appropriate default value based on type
+      if (fieldType === 'select' && Array.isArray(value)) {
+        baseField.defaultValue = value; // Keep array for dropdown options
+        baseField.options = value; // Also set options for rendering
+      } else if (fieldType === 'date') {
+        baseField.defaultValue = ''; // Empty for date fields
+      } else if (fieldType === 'textarea' && typeof value === 'string') {
+        baseField.defaultValue = ''; // Start empty for textarea
+        baseField.placeholder = value; // Use backend value as placeholder
       } else {
-        // Determine field type based on name and value
-        const fieldType = determineFieldType(name, value);
-        baseField.type = fieldType;
+        baseField.defaultValue = value && value !== 'date' ? value : '';
       }
 
       return baseField;
@@ -707,26 +725,18 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     let completeFormData = {};
 
-    // For workload form, only send fields that have values
-    if (currentFormType === 'workload') {
-      // Only include fields that have actual values (not empty strings)
-      Object.entries(formData).forEach(([key, value]) => {
-        // Check if value has actual content
-        const hasValue = value !== null && 
-                        value !== undefined && 
-                        value !== '' && 
-                        (typeof value === 'string' ? value.trim() !== '' : true);
+    // Only send fields that have values for all form types
+    Object.entries(formData).forEach(([key, value]) => {
+      // Check if value has actual content
+      const hasValue = value !== null && 
+                      value !== undefined && 
+                      value !== '' && 
+                      (typeof value === 'string' ? value.trim() !== '' : true);
 
-        if (hasValue) {
-          completeFormData[key] = value;
-        }
-      });
-    } else {
-      // For other forms, include all fields (existing behavior)
-      originalFields.forEach(field => {
-        completeFormData[field.name] = formData[field.name] || '';
-      });
-    }
+      if (hasValue) {
+        completeFormData[key] = value;
+      }
+    });
 
     // Format form data for display (workload shows only service field)
     const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
