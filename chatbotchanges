@@ -222,35 +222,6 @@ const isFieldRequired = (fieldName, formType) => {
   );
 };
 
-// Helper function to determine field type
-const determineFieldType = (fieldName, fieldValue) => {
-  const lowerName = fieldName.toLowerCase();
-
-  // Check if field name contains date-related keywords or value indicates date
-  if (lowerName.includes('date') || 
-      lowerName.includes('expiry') || 
-      lowerName.includes('created') ||
-      lowerName.includes('expire') ||
-      lowerName.includes('start') ||
-      lowerName.includes('end') ||
-      fieldValue === 'date') {
-    return 'date';
-  }
-
-  // If fieldValue is an array with multiple values, it's a select dropdown
-  if (Array.isArray(fieldValue) && fieldValue.length > 0) {
-    return 'select';
-  }
-
-  // If fieldValue is a single string value (not empty), it's a textarea
-  if (typeof fieldValue === 'string' && fieldValue.trim() !== '' && fieldValue !== 'date') {
-    return 'textarea';
-  }
-
-  // Default to text input
-  return 'text';
-};
-
 // Dynamic Form Component
 const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) => {
   const [formData, setFormData] = useState({});
