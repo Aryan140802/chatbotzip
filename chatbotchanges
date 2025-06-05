@@ -6,9 +6,6 @@ import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 
-
-const REQUIRED_FIELDS = ['service'];
-
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
 
@@ -94,8 +91,14 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
+// Configuration for required fields by form type
+const REQUIRED_FIELDS_CONFIG = {
+  workload: ['service'], // Fields that should have asterisks for workload form
+  multiple: [], // Add field names that should be required for multiple form
+  default: [] // Default required fields for other forms
+};
+
 // Function to format form data into proper sentences
-// Update the formatFormDataToSentence function to handle non-string values
 const formatFormDataToSentence = (formData, originalFields, formType = null) => {
   if (!formData || Object.keys(formData).length === 0) {
     return "No form data provided";
@@ -118,14 +121,11 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
         const fieldLabel = fieldLabelsMap[key] || key;
         const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
         
-        // Handle non-string values safely
-        const displayValue = (value === null || value === undefined || value === '') 
-          ? 'No value given' 
-          : typeof value === 'string' 
-            ? `"${value}"` 
-            : JSON.stringify(value);
-            
-        sentences.push(`${formattedLabel}: ${displayValue}`);
+        if (value === null || value === undefined || value === '') {
+          sentences.push(`${formattedLabel}: No value given`);
+        } else {
+          sentences.push(`${formattedLabel}: "${value}"`);
+        }
       }
     });
   } else {
@@ -134,129 +134,206 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
       const fieldLabel = fieldLabelsMap[key] || key;
       const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
       
-      // Handle non-string values safely
-      const displayValue = (value === null || value === undefined || value === '') 
-        ? 'No value given' 
-        : typeof value === 'string' 
-          ? `"${value}"` 
-          : JSON.stringify(value);
-          
-      sentences.push(`${formattedLabel}: ${displayValue}`);
+      if (value === null || value === undefined || value === '') {
+        sentences.push(`${formattedLabel}: No value given`);
+      } else {
+        sentences.push(`${formattedLabel}: "${value}"`);
+      }
     });
   }
 
   return sentences.length > 0 ? sentences.join(', ') : "No values provided";
 };
 
-// Updated validateForm function with better logging
-const validateForm = () => {
-  const newErrors = {};
-  
-  fields.forEach(field => {
-    // Check if field is in REQUIRED_FIELDS array
-    const isRequired = REQUIRED_FIELDS.includes(field.name.toLowerCase());
-    
-    if (isRequired && (!formData[field.name] || formData[field.name].toString().trim() === '')) {
-      newErrors[field.name] = `${field.label || field.name} is required`;
-    }
-    
-    // Add other validation rules as needed
-    if (field.type === 'email' && formData[field.name] &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
-      newErrors[field.name] = 'Please enter a valid email address';
-    }
-
-    if (field.minLength && formData[field.name] &&
-        formData[field.name].length < field.minLength) {
-      newErrors[field.name] = `Minimum ${field.minLength} characters required`;
-    }
-  });
-
-  setErrors(newErrors);
-  return Object.keys(newErrors).length === 0;
+// Helper function to check if field should be required
+const isFieldRequired = (fieldName, formType) => {
+  const requiredFields = REQUIRED_FIELDS_CONFIG[formType] || REQUIRED_FIELDS_CONFIG.default;
+  return requiredFields.some(reqField => 
+    fieldName.toLowerCase().includes(reqField.toLowerCase())
+  );
 };
 
-  const renderField = (field) => {
-  const { name, type, label, placeholder, options } = field;
-  const value = formData[name] || '';
-  const error = errors[name];
-
-  // Check if field is in REQUIRED_FIELDS array
-  const isRequired = REQUIRED_FIELDS.includes(name.toLowerCase());
+// Helper function to determine field type
+const determineFieldType = (fieldName, fieldValue) => {
+  const lowerName = fieldName.toLowerCase();
   
-  // Special handling for date fields (name contains 'date' or type is date)
-  const isDateField = name.toLowerCase().includes('date') || type === 'date';
-  const effectiveType = isDateField ? 'date' : type;
-
-  // Field label with asterisk for required fields
-  const fieldLabel = (
-    <>
-      {label || name}
-      {isRequired && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
-    </>
-  );
-
-  // Custom logic for 'have multiple field' form
-  if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
-    // For expiry option and created option fields - add dropdown with before/after
-    if (name.toLowerCase().includes('option')) {
-      return (
-        <div key={name} className="form-field">
-          <label className="form-label">
-            {fieldLabel}
-          </label>
-          <select
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            className={`form-select ${error ? 'error' : ''}`}
-          >
-            <option value="">Select an option</option>
-            <option value="before">Before</option>
-            <option value="after">After</option>
-          </select>
-          {error && <span className="error-message">{error}</span>}
-        </div>
-      );
-    }
-    // For expiry and created fields (without 'option' in name) - add date picker
-    else {
-      return (
-        <div key={name} className="form-field">
-          <label className="form-label">
-            {fieldLabel}
-          </label>
-          <input
-            type="date"
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            className={`form-input ${error ? 'error' : ''}`}
-          />
-          {error && <span className="error-message">{error}</span>}
-        </div>
-      );
-    }
+  // Check if field name contains date-related keywords
+  if (lowerName.includes('date') || 
+      lowerName.includes('expiry') || 
+      lowerName.includes('created') ||
+      lowerName.includes('expire') ||
+      lowerName.includes('start') ||
+      lowerName.includes('end')) {
+    return 'date';
   }
+  
+  // Add more type detection logic here if needed
+  return 'text';
+};
 
-  switch (effectiveType) {
-    case 'date':
-      return (
-        <div key={name} className="form-field">
-          <label className="form-label">
-            {fieldLabel}
-          </label>
-          <input
-            type="date"
-            value={value}
-            onChange={(e) => handleInputChange(name, e.target.value)}
-            className={`form-input ${error ? 'error' : ''}`}
-          />
-          {error && <span className="error-message">{error}</span>}
-        </div>
-      );
+// Dynamic Form Component
+const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
+  const [formData, setFormData] = useState({});
+  const [errors, setErrors] = useState({});
 
-    // ... rest of your switch cases remain the same ...
+  useEffect(() => {
+    // Initialize form data with empty values
+    const initialData = {};
+    fields.forEach(field => {
+      initialData[field.name] = field.defaultValue || '';
+    });
+    setFormData(initialData);
+  }, [fields]);
 
-    case 'select':
+  const handleInputChange = (fieldName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+
+    // Clear error for this field when user starts typing
+    if (errors[fieldName]) {
+      setErrors(prev => ({
+        ...prev,
+        [fieldName]: null
+      }));
+    }
+  };
+
+  // Updated validateForm function with better validation
+  const validateForm = () => {
+    console.log('Validating form...', { formData, formType, fields });
+    
+    const newErrors = {};
+    fields.forEach(field => {
+      const fieldValue = formData[field.name];
+      const isRequired = isFieldRequired(field.name, formType);
+      
+      console.log(`Checking field: ${field.name}`, {
+        value: fieldValue,
+        required: isRequired,
+        formType: formType
+      });
+
+      // Check if field is required and empty
+      if (isRequired && (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim() === ''))) {
+        newErrors[field.name] = `${field.label || field.name} is required`;
+        console.log(`Required field validation failed for field: ${field.name}`);
+      }
+
+      // Additional validation rules
+      if (field.type === 'email' && fieldValue &&
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fieldValue)) {
+        newErrors[field.name] = 'Please enter a valid email address';
+      }
+
+      if (field.minLength && fieldValue &&
+          fieldValue.length < field.minLength) {
+        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
+      }
+    });
+
+    console.log('Validation result:', { newErrors, isValid: Object.keys(newErrors).length === 0 });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Updated handleSubmit function
+  const handleSubmit = (e) => {
+    console.log('Form submit triggered', { formData, formType });
+    e.preventDefault();
+    
+    if (validateForm()) {
+      console.log('Form validation passed, submitting...');
+      // Pass both cleaned form data and original fields for proper formatting
+      const cleanedFormData = {};
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        // Ensure we handle all value types properly
+        cleanedFormData[key] = value !== null && value !== undefined ? value : '';
+      });
+      console.log('Calling onSubmit with:', { cleanedFormData, fields });
+      onSubmit(cleanedFormData, fields);
+    } else {
+      console.log('Form validation failed, not submitting');
+    }
+  };
+
+  const renderField = (field) => {
+    const { name, label, placeholder, options } = field;
+    const value = formData[name] || '';
+    const error = errors[name];
+    const isRequired = isFieldRequired(name, formType);
+    const fieldType = determineFieldType(name, field.defaultValue);
+
+    // Determine label with asterisk for required fields
+    const fieldLabel = (
+      <>
+        {label || name}
+        {isRequired && <span style={{ color: 'red', marginLeft: '2px' }}>*</span>}
+      </>
+    );
+
+    // Custom logic for 'multiple' form type
+    if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
+      // For expiry option and created option fields - add dropdown with before/after
+      if (name.toLowerCase().includes('option')) {
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <select
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-select ${error ? 'error' : ''}`}
+            >
+              <option value="">Select an option</option>
+              <option value="before">Before</option>
+              <option value="after">After</option>
+            </select>
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+      }
+      // For expiry and created fields (without 'option' in name) - add date picker
+      else {
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-input ${error ? 'error' : ''}`}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+      }
+    }
+
+    // Render based on determined field type
+    switch (fieldType) {
+      case 'date':
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-input ${error ? 'error' : ''}`}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+
+      case 'select':
         return (
           <div key={name} className="form-field">
             <label className="form-label">
@@ -318,7 +395,7 @@ const validateForm = () => {
               {fieldLabel}
             </label>
             <input
-              type={type || 'text'}
+              type="text"
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
               placeholder={placeholder}
@@ -327,9 +404,8 @@ const validateForm = () => {
             {error && <span className="error-message">{error}</span>}
           </div>
         );
-  }
-};
-
+    }
+  };
 
   return (
     <div className="dynamic-form-container">
@@ -356,7 +432,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const [formDisabled, setFormDisabled] = useState(true);
   const [activeForm, setActiveForm] = useState(null);
   const [currentFormType, setCurrentFormType] = useState(null);
-  const [currentFormFields, setCurrentFormFields] = useState(null); // Store original fields for formatting
+  const [currentFormFields, setCurrentFormFields] = useState(null);
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -415,19 +491,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
       const baseField = {
         name,
         label: name.charAt(0).toUpperCase() + name.slice(1),
-        defaultValue: value && value !== 'date' ? value : '', // FIXED: Don't use "date" as default
-        required: false // Set based on your requirements
+        defaultValue: value && value !== 'date' ? value : '',
+        required: false // This will be determined by the configuration
       };
 
-      // Determine field type based on name
-      let fieldType = 'text';
-      if (name.toLowerCase().includes('date') || 
-          name.toLowerCase().includes('expiry') || 
-          name.toLowerCase().includes('created')) {
-        fieldType = 'date';
-      }
+      // Determine field type based on name and value
+      const fieldType = determineFieldType(name, value);
 
-      // You can add more logic here to determine field type based on name or value
       return {
         ...baseField,
         type: fieldType
@@ -515,7 +585,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     try {
       setApiTimeout(() => {});
 
-      // FIXED: Send regular messages as simple strings, not as objects
+      // Send regular messages as simple strings
       const payload = newMessage;
 
       const res = await postMessage(payload);
@@ -572,7 +642,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     try {
       setApiTimeout(() => {});
 
-      // FIXED: Send options as regular messages, not as special payload
+      // Send options as regular messages
       const payload = cleanedOpt;
 
       const res = await postMessage(payload);
@@ -603,85 +673,88 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
- const handleFormSubmit = async (formData, originalFields) => {
-  setActiveForm(null);
-  setCurrentFormType(null);
+  const handleFormSubmit = async (formData, originalFields) => {
+    setActiveForm(null);
+    setCurrentFormType(null);
 
-  let completeFormData = {};
-  
-  // For workload form, only send fields that have values
-  if (currentFormType === 'workload') {
-    // Only include fields that have actual values (not empty strings)
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value && value.trim() !== '') {
-        completeFormData[key] = value;
-      }
-    });
-  } else {
-    // For other forms, include all fields (existing behavior)
-    originalFields.forEach(field => {
-      completeFormData[field.name] = formData[field.name] || '';
-    });
-  }
+    let completeFormData = {};
+    
+    // For workload form, only send fields that have values
+    if (currentFormType === 'workload') {
+      // Only include fields that have actual values (not empty strings)
+      Object.entries(formData).forEach(([key, value]) => {
+        // Fixed: Properly check for non-empty values
+        if (value !== null && value !== undefined && 
+            (typeof value === 'string' ? value.trim() !== '' : true)) {
+          completeFormData[key] = value;
+        }
+      });
+    } else {
+      // For other forms, include all fields (existing behavior)
+      originalFields.forEach(field => {
+        completeFormData[field.name] = formData[field.name] || '';
+      });
+    }
 
-  // Format form data for display (workload shows only service field)
-  const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
+    // Format form data for display (workload shows only service field)
+    const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
 
-  const userMessage = {
-    id: Date.now(),
-    text: formattedText,
-    sender: "user",
-    time: getCurrentTime(),
-  };
-
-  setMessages((prev) => [...prev, userMessage]);
-  setIsTyping(true);
-  setFormDisabled(true);
-
-  try {
-    setApiTimeout(() => {});
-
-    // Send the appropriate form data to backend
-    const payload = {
-      message: completeFormData
+    const userMessage = {
+      id: Date.now(),
+      text: formattedText,
+      sender: "user",
+      time: getCurrentTime(),
     };
 
-    const res = await postMessage(payload);
-    clearCurrentTimeout();
+    setMessages((prev) => [...prev, userMessage]);
+    setIsTyping(true);
+    setFormDisabled(true);
 
-    const latest = res.data.chat_history?.slice(-1)[0];
-    if (latest) {
-      const botResponse = {
-        id: Date.now(),
-        text: typeof latest.message === 'string' ? latest.message : "",
-        sender: "bot",
-        time: getCurrentTime(),
-        options: latest.options || [],
+    try {
+      setApiTimeout(() => {});
+
+      // Send the appropriate form data to backend
+      const payload = {
+        message: completeFormData
       };
 
-      if (hasFormFields(latest)) {
-        botResponse.formFields = extractFormFields(latest);
-        botResponse.isFormMessage = true;
-      }
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
 
-      setMessages((prev) => [...prev, botResponse]);
-      setFormDisabled(!checkEnableForm(botResponse.text));
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: typeof latest.message === 'string' ? latest.message : "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+        };
+
+        if (hasFormFields(latest)) {
+          botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
+        }
+
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      console.error('Form submission error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred while submitting the form. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
     }
-  } catch (error) {
-    clearCurrentTimeout();
-    console.error('Form submission error:', error);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        text: "An error occurred while submitting the form. Please try again.",
-        sender: "bot",
-        time: getCurrentTime(),
-      },
-    ]);
-  }
-  setIsTyping(false);
-};
+    setIsTyping(false);
+  };
+
   const handleFormCancel = () => {
     setActiveForm(null);
     setCurrentFormType(null);
@@ -691,7 +764,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleFormButtonClick = (fields) => {
     const formType = determineFormType(fields);
     setCurrentFormType(formType);
-    setCurrentFormFields(fields); // Store original fields
+    setCurrentFormFields(fields);
     setActiveForm(fields);
   };
 
