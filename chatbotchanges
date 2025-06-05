@@ -241,7 +241,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
   // Handle dynamic field updates
   const handleDynamicFieldUpdate = async (fieldName, value) => {
     if (formType !== 'workload') return;
-    
+
     setIsLoadingFields(true);
     try {
       // Create payload with current form data
@@ -258,14 +258,14 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
       };
 
       const res = await postMessage(payload);
-      
+
       // Check if response has form fields to update
       if (res.data.chat_history && res.data.chat_history.length > 0) {
         const latest = res.data.chat_history[res.data.chat_history.length - 1];
         if (hasFormFields(latest)) {
           const newFields = extractFormFields(latest);
           setDynamicFields(newFields);
-          
+
           // Update form data with new values while preserving user inputs
           const updatedData = { ...currentData };
           newFields.forEach(field => {
@@ -299,11 +299,17 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
     }
 
     // For workload form, send service selection to backend immediately
-    if (formType === 'workload' && fieldName.toLowerCase().includes('service') && value.trim() !== '') {
-      await handleDynamicFieldUpdate(fieldName, value);
-    }
-    // For workload form, send other field selections to backend
-    else if (formType === 'workload' && value.trim() !== '') {
+    //if (formType === 'workload' && fieldName.toLowerCase().includes('service') && value.trim() !== '') {
+    //  await handleDynamicFieldUpdate(fieldName, value);
+    //}
+    //// For workload form, send other field selections to backend
+    //else if (formType === 'workload' && value.trim() !== '') {
+    //  await handleDynamicFieldUpdate(fieldName, value);
+    //}
+  };
+
+  const handleFieldBlur = async (fieldName, value) => {
+    if (formType === 'workload') {
       await handleDynamicFieldUpdate(fieldName, value);
     }
   };
@@ -440,6 +446,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
               type="date"
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
+              onBlur={(e) => handleFieldBlur(name, e.target.value)}
               className={`form-input ${error ? 'error' : ''}`}
             />
             {error && <span className="error-message">{error}</span>}
@@ -460,6 +467,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) =>
               type="date"
               value={value}
               onChange={(e) => handleInputChange(name, e.target.value)}
+              onBlur={(e) => handleFieldBlur(name, e.target.value)}
               className={`form-input ${error ? 'error' : ''}`}
             />
             {error && <span className="error-message">{error}</span>}
@@ -615,7 +623,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
       };
 
       const res = await postMessage(payload);
-      
+
       // Return updated fields if available
       if (res.data.chat_history && res.data.chat_history.length > 0) {
         const latest = res.data.chat_history[res.data.chat_history.length - 1];
