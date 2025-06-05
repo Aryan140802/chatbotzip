@@ -16,15 +16,15 @@ const formatDynamicMessage = (text) => {
     const hasHeaderAndFields = text.includes("Here is the information for") && 
                                text.includes("<b>Name</b>:") && 
                                text.includes("<b>Email</b>:");
-    
+
     if (hasHeaderAndFields) {
       // Split by lines and process each line
       const lines = text.split('\n').filter(line => line.trim());
       const formattedLines = [];
-      
+
       lines.forEach(line => {
         const trimmedLine = line.trim();
-        
+
         // Check if line contains header info (like "Here is the information for...")
         if (trimmedLine.includes("Here is the information for")) {
           formattedLines.push(`<div class="info-header">${trimmedLine}</div>`);
@@ -43,7 +43,7 @@ const formatDynamicMessage = (text) => {
           formattedLines.push(`<div>${trimmedLine}</div>`);
         }
       });
-      
+
       return `<div class="formatted-card employee-info">${formattedLines.join('')}</div>`;
     }
 
@@ -105,7 +105,7 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
   }
 
   const sentences = [];
-  
+
   // Create a map of field names to their labels for better formatting
   const fieldLabelsMap = {};
   if (originalFields) {
@@ -120,7 +120,7 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
       if (key.toLowerCase().includes('service')) {
         const fieldLabel = fieldLabelsMap[key] || key;
         const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
-        
+
         if (value === null || value === undefined || value === '') {
           sentences.push(`${formattedLabel}: No value given`);
         } else {
@@ -133,7 +133,7 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
     Object.entries(formData).forEach(([key, value]) => {
       const fieldLabel = fieldLabelsMap[key] || key;
       const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
-      
+
       if (value === null || value === undefined || value === '') {
         sentences.push(`${formattedLabel}: No value given`);
       } else {
@@ -156,7 +156,7 @@ const isFieldRequired = (fieldName, formType) => {
 // Helper function to determine field type
 const determineFieldType = (fieldName, fieldValue) => {
   const lowerName = fieldName.toLowerCase();
-  
+
   // Check if field name contains date-related keywords
   if (lowerName.includes('date') || 
       lowerName.includes('expiry') || 
@@ -166,7 +166,7 @@ const determineFieldType = (fieldName, fieldValue) => {
       lowerName.includes('end')) {
     return 'date';
   }
-  
+
   // Add more type detection logic here if needed
   return 'text';
 };
@@ -203,12 +203,12 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   // Updated validateForm function with better validation
   const validateForm = () => {
     console.log('Validating form...', { formData, formType, fields });
-    
+
     const newErrors = {};
     fields.forEach(field => {
       const fieldValue = formData[field.name];
       const isRequired = isFieldRequired(field.name, formType);
-      
+
       console.log(`Checking field: ${field.name}`, {
         value: fieldValue,
         required: isRequired,
@@ -242,7 +242,7 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   const handleSubmit = (e) => {
     console.log('Form submit triggered', { formData, formType });
     e.preventDefault();
-    
+
     if (validateForm()) {
       console.log('Form validation passed, submitting...');
       // Pass both cleaned form data and original fields for proper formatting
@@ -472,13 +472,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
     const hasServiceField = fields.some(field => 
       field.name.toLowerCase().includes('service')
     );
-    
+
     // Check if any field name contains 'expiry' or 'created' for multiple form
     const hasExpiryOrCreatedField = fields.some(field => 
       field.name.toLowerCase().includes('expiry') || 
       field.name.toLowerCase().includes('created')
     );
-    
+
     if (hasServiceField) return 'workload';
     if (hasExpiryOrCreatedField) return 'multiple';
     return 'default';
@@ -678,13 +678,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setCurrentFormType(null);
 
     let completeFormData = {};
-    
+
     // For workload form, only send fields that have values
     if (currentFormType === 'workload') {
       // Only include fields that have actual values (not empty strings)
       Object.entries(formData).forEach(([key, value]) => {
-        // Fixed: Properly check for non-empty values
-        if (value !== null && value !== undefined && 
+        if (value !== null && value !== undefined && value !== '' && 
             (typeof value === 'string' ? value.trim() !== '' : true)) {
           completeFormData[key] = value;
         }
