@@ -725,12 +725,13 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     let completeFormData = {};
 
-    // Only send fields that have values for all form types
+    // For all form types, only send fields that have values
     Object.entries(formData).forEach(([key, value]) => {
       // Check if value has actual content
       const hasValue = value !== null && 
                       value !== undefined && 
                       value !== '' && 
+                      !(Array.isArray(value) && value.length === 0) &&
                       (typeof value === 'string' ? value.trim() !== '' : true);
 
       if (hasValue) {
