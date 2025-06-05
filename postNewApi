@@ -98,8 +98,8 @@ export const getFARDetailsSpecific = async (dataFilter) => {
   try {
     const userId = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    
-    const response = await api.post('EISHome/farDetailsSpecific/', {
+
+    const response = await api.post('EISHome/farSpecificAll/', {
       "data_filter": dataFilter,
       "userId": userId,
       "password": password
