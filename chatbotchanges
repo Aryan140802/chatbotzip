@@ -183,20 +183,68 @@ const determineFieldType = (fieldName, fieldValue) => {
 };
 
 // Dynamic Form Component
-const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
+const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldUpdate }) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+  const [dynamicFields, setDynamicFields] = useState(fields);
+  const [isLoadingFields, setIsLoadingFields] = useState(false);
 
   useEffect(() => {
     // Initialize form data with empty values
     const initialData = {};
-    fields.forEach(field => {
+    dynamicFields.forEach(field => {
       initialData[field.name] = field.defaultValue || '';
     });
     setFormData(initialData);
-  }, [fields]);
+  }, [dynamicFields]);
 
-  const handleInputChange = (fieldName, value) => {
+  // Handle dynamic field updates
+  const handleDynamicFieldUpdate = async (fieldName, value) => {
+    if (formType !== 'workload') return;
+    
+    setIsLoadingFields(true);
+    try {
+      // Create payload with current form data
+      const currentData = {
+        ...formData,
+        [fieldName]: value
+      };
+
+      // Send to backend for dynamic field loading
+      const payload = {
+        message: currentData,
+        dynamic_update: true,
+        field_updated: fieldName
+      };
+
+      const res = await postMessage(payload);
+      
+      // Check if response has form fields to update
+      if (res.data.chat_history && res.data.chat_history.length > 0) {
+        const latest = res.data.chat_history[res.data.chat_history.length - 1];
+        if (hasFormFields(latest)) {
+          const newFields = extractFormFields(latest);
+          setDynamicFields(newFields);
+          
+          // Update form data with new values while preserving user inputs
+          const updatedData = { ...currentData };
+          newFields.forEach(field => {
+            // Only update if field doesn't have user input or if it's a new field
+            if (!updatedData.hasOwnProperty(field.name) || updatedData[field.name] === '') {
+              updatedData[field.name] = field.defaultValue || '';
+            }
+          });
+          setFormData(updatedData);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating dynamic fields:', error);
+    } finally {
+      setIsLoadingFields(false);
+    }
+  };
+
+  const handleInputChange = async (fieldName, value) => {
     setFormData(prev => ({
       ...prev,
       [fieldName]: value
@@ -209,14 +257,23 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
         [fieldName]: null
       }));
     }
+
+    // For workload form, send service selection to backend immediately
+    if (formType === 'workload' && fieldName.toLowerCase().includes('service') && value.trim() !== '') {
+      await handleDynamicFieldUpdate(fieldName, value);
+    }
+    // For workload form, send other field selections to backend
+    else if (formType === 'workload' && value.trim() !== '') {
+      await handleDynamicFieldUpdate(fieldName, value);
+    }
   };
 
   // Updated validateForm function with better validation
   const validateForm = () => {
-    console.log('Validating form...', { formData, formType, fields });
+    console.log('Validating form...', { formData, formType, dynamicFields });
 
     const newErrors = {};
-    fields.forEach(field => {
+    dynamicFields.forEach(field => {
       const fieldValue = formData[field.name];
       const isRequired = isFieldRequired(field.name, formType);
 
@@ -446,12 +503,17 @@ const DynamicForm = ({ fields, onSubmit, onCancel, formType }) => {
   return (
     <div className="dynamic-form-container">
       <form onSubmit={handleSubmit} className="dynamic-form">
-        {fields.map(renderField)}
+        {isLoadingFields && (
+          <div className="loading-fields">
+            <p>Loading form fields...</p>
+          </div>
+        )}
+        {dynamicFields.map(renderField)}
         <div className="form-actions">
           <button type="button" onClick={onCancel} className="cancel-button">
             Cancel
           </button>
-          <button type="submit" className="submit-button">
+          <button type="submit" className="submit-button" disabled={isLoadingFields}>
             Submit
           </button>
         </div>
@@ -501,6 +563,31 @@ const Chatbot = ({ setChatbotMinimized }) => {
     return typeof response.message === 'object' &&
            !Array.isArray(response.message) &&
            Object.keys(response.message).length > 0;
+  };
+
+  const handleDynamicFormUpdate = async (fieldName, value, currentFormData) => {
+    try {
+      // Create payload for dynamic update
+      const payload = {
+        message: currentFormData,
+        dynamic_update: true,
+        field_updated: fieldName
+      };
+
+      const res = await postMessage(payload);
+      
+      // Return updated fields if available
+      if (res.data.chat_history && res.data.chat_history.length > 0) {
+        const latest = res.data.chat_history[res.data.chat_history.length - 1];
+        if (hasFormFields(latest)) {
+          return extractFormFields(latest);
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error in dynamic form update:', error);
+      return null;
+    }
   };
 
   const determineFormType = (fields) => {
@@ -926,6 +1013,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
               formType={currentFormType}
+              onFieldUpdate={handleDynamicFormUpdate}
             />
           )}
 
