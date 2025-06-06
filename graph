@@ -1,4 +1,4 @@
-import '../styles/GraphCarousel.css';
+import '../styles/graph.css';
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -21,7 +21,7 @@ import {
   postServiceWiseSys5,
   getFARExpires,
   getFARDetailsSpecific
-} from "../api/PostApi"; // adjust import if needed
+} from "../api/postNewApi"; // adjust import if needed
 
 import { useState, useEffect, useRef } from "react";
 
@@ -66,6 +66,7 @@ const GraphCarousel = () => {
   const [selectedMonthData, setSelectedMonthData] = useState(null);
   const [farDetails, setFarDetails] = useState([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [farDetailsSearch, setFarDetailsSearch] = useState('');
 
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
@@ -103,6 +104,7 @@ const GraphCarousel = () => {
     setSelectedMonthData(data);
     setIsLoadingDetails(true);
     setShowFarDetails(true);
+    setFarDetailsSearch('');
     try {
       const response = await getFARDetailsSpecific(data.name);
       setFarDetails((response.data && response.data.MonthlyDetails) || []);
@@ -127,12 +129,12 @@ const GraphCarousel = () => {
     try {
       const response = await getFARExpires();
       const formattedData = [];
-      let total = 0;
       response.data.MonthlyFarCount.forEach(monthData => {
         const [month, value] = Object.entries(monthData)[0];
+        // Remove any dash between month and year, e.g. 'April -2026' => 'April 2026'
+        const cleanMonth = month.replace(/\s*-\s*/, ' ');
         if (value > 0) {
-          formattedData.push({ name: month, value: value });
-          total += value;
+          formattedData.push({ name: cleanMonth, value: value });
         }
       });
       return formattedData;
@@ -244,7 +246,7 @@ const GraphCarousel = () => {
                   dataKey="value"
                   nameKey="name"
                   label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
-                  onClick={handlePieClick} // <-- correct event signature for Recharts Pie
+                  onClick={handlePieClick}
                   style={{ cursor: 'pointer' }}
                 >
                   {data.map((entry, index) => (
@@ -537,6 +539,15 @@ const GraphCarousel = () => {
     </div>
   );
 
+  // Filtering for FAR search
+  const filteredFarDetails = Array.isArray(farDetails)
+    ? farDetails.filter(detail =>
+        farDetailsSearch.trim() === '' ||
+        (detail.Far_Id && detail.Far_Id.toString().toLowerCase().includes(farDetailsSearch.toLowerCase())) ||
+        (detail.Subject && detail.Subject.toLowerCase().includes(farDetailsSearch.toLowerCase()))
+      )
+    : [];
+
   return (
     <div className="carousel-container">
       <div className="carousel-header">
@@ -662,6 +673,19 @@ const GraphCarousel = () => {
                   </div>
                 ) : (
                   <div className="far-details-table">
+                    <input
+                      type="text"
+                      placeholder="Search FAR ID or Subject"
+                      value={farDetailsSearch}
+                      onChange={e => setFarDetailsSearch(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        marginBottom: '12px',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc'
+                      }}
+                    />
                     <table>
                       <thead>
                         <tr>
@@ -670,8 +694,8 @@ const GraphCarousel = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {Array.isArray(farDetails) && farDetails.length > 0 ? (
-                          farDetails.map((detail, index) => (
+                        {filteredFarDetails.length > 0 ? (
+                          filteredFarDetails.map((detail, index) => (
                             <tr key={index}>
                               <td>{detail.Far_Id || 'N/A'}</td>
                               <td>{detail.Subject || 'N/A'}</td>
@@ -680,7 +704,7 @@ const GraphCarousel = () => {
                         ) : (
                           <tr>
                             <td colSpan={2} style={{ textAlign: 'center' }}>
-                              No FAR details available for this month
+                              No FAR details found
                             </td>
                           </tr>
                         )}
