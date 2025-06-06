@@ -1,3 +1,15 @@
+Memory Utilisation: None % CPU
+Utilisation: None %
+Note: Below Information is updated on
+fileSystem :Below Threshold
+UPTime : 1 day 7 hours 8 minutes
+MQ Version :
+FIREWALL : inactive
+DSAgent : DSrunning
+SPLUNK : SPLnotrunning
+addmitam Expiry: May 19 2026
+
+
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
