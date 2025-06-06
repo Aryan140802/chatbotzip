@@ -138,6 +138,7 @@ const filterNonEmptyFields = (obj) =>
       ([, value]) =>
         value !== null &&
         value !== undefined &&
+        value !== "date" && // <-- extra guard: don't send "date" string value
         !(typeof value === "string" && value.trim() === "") &&
         !(Array.isArray(value) && value.length === 0)
     )
@@ -151,17 +152,29 @@ const extractFormFields = (response, currentValues = {}) => {
     let displayLabel = name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
     displayLabel = isService ? `* ${displayLabel}` : displayLabel;
     const options = Array.isArray(value) ? value : [];
+    const fieldType = options.length > 0
+      ? 'select'
+      : isService
+        ? 'text'
+        : determineFieldType(name, value);
+
+    let initialValue;
+    if (typeof currentValues[name] !== "undefined") {
+      initialValue = currentValues[name];
+    } else if (fieldType === "date" && value === "date") {
+      initialValue = ""; // <-- fix: treat "date" as empty string for date fields
+    } else if (Array.isArray(value)) {
+      initialValue = "";
+    } else {
+      initialValue = value;
+    }
+
     return {
       name,
       label: displayLabel,
       required: isService,
-      value: typeof currentValues[name] !== "undefined"
-        ? currentValues[name]
-        : (Array.isArray(value) ? "" : value),
-      // Always keep type 'select' if options exist, even if value is a string
-      type: options.length > 0 ? 'select'
-        : isService ? 'text'
-        : determineFieldType(name, value),
+      value: initialValue,
+      type: fieldType,
       options,
     };
   });
