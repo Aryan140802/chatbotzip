@@ -1,4 +1,4 @@
-import '../styles/GraphCarousel.css';
+import '../styles/graph.css';
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -21,11 +21,10 @@ import {
   postServiceWiseSys5,
   getFARExpires,
   getFARDetailsSpecific
-} from "../api/PostApi";
+} from "../api/postNewApi"; // adjust import if needed
 
 import { useState, useEffect, useRef } from "react";
 
-// Format large numbers
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -33,16 +32,12 @@ const formatHits = (value) => {
   return value;
 };
 
-// Format percentage for the pie chart
 const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
-
-// Utility function to wait/delay
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const ThreeDBar = (props) => {
   const { x, y, width, height, fill } = props;
   const depth = 6;
-
   return (
     <g>
       <rect x={x} y={y} width={width} height={height} fill={fill} style={{ transition: "all 0.3s ease" }} className="custom-bar" />
@@ -65,8 +60,6 @@ const GraphCarousel = () => {
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
-  const [farData, setFarData] = useState([]);
-  const [farTotal, setFarTotal] = useState(0);
 
   // FAR Modal State
   const [showFarDetails, setShowFarDetails] = useState(false);
@@ -77,7 +70,6 @@ const GraphCarousel = () => {
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Colors for the pie chart
   const COLORS = [
     '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
     '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
@@ -104,9 +96,10 @@ const GraphCarousel = () => {
     'Monthly FAR Expiry Distribution'
   ];
 
-  // ------------------ FAR Modal Handler ------------------
-  const handlePieClick = async (data) => {
-    if (currentIndex !== 6) return; // Only FAR chart
+  // ---- FAR Modal Handler ----
+  const handlePieClick = async (data, index) => {
+    // Recharts Pie passes (data, index)
+    if (!data || !data.name) return;
     setSelectedMonthData(data);
     setIsLoadingDetails(true);
     setShowFarDetails(true);
@@ -119,7 +112,6 @@ const GraphCarousel = () => {
       setIsLoadingDetails(false);
     }
   };
-  // -------------------------------------------------------
 
   const formatDate = (date) =>
     date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -143,11 +135,8 @@ const GraphCarousel = () => {
           total += value;
         }
       });
-      setFarData(formattedData);
-      setFarTotal(total);
       return formattedData;
     } catch (error) {
-      console.error("Error fetching FAR data:", error);
       return [];
     }
   };
@@ -182,9 +171,7 @@ const GraphCarousel = () => {
         postPortWiseExp5(timeRange),
         postPortWiseSys5(timeRange)
       ]);
-      // Fetch FAR data
       const farChartData = await fetchFARData();
-
       const formatData = (data, key) => {
         if (!data || !Array.isArray(data)) return [];
         return data.map(item => ({
@@ -194,11 +181,9 @@ const GraphCarousel = () => {
           logVal: Number(item.logVal || 0)
         }));
       };
-
       const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
         ? `Custom: ${formatDate(selectedDate)}`
         : timeLabel || selectedTimeLabel;
-
       const chartData = [
         {
           data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
@@ -236,16 +221,12 @@ const GraphCarousel = () => {
           baseTitle: baseTitles[6]
         }
       ];
-
       if (isAllChartDataEmpty(chartData) && attemptNumber < maxRetries) {
         setRetryCount(attemptNumber);
         await wait(retryDelay);
         return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
       }
       setRetryCount(0);
-      if (isAllChartDataEmpty(chartData) && attemptNumber >= maxRetries) {
-        console.error(`All retries exhausted. Chart data is still empty after ${maxRetries} attempts.`);
-      }
       return chartData.map(({ data, dataKeyX, baseTitle }) => {
         let chartComponent;
         if (baseTitle === baseTitles[6]) {
@@ -263,7 +244,7 @@ const GraphCarousel = () => {
                   dataKey="value"
                   nameKey="name"
                   label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
-                  onClick={handlePieClick}
+                  onClick={handlePieClick} // <-- correct event signature for Recharts Pie
                   style={{ cursor: 'pointer' }}
                 >
                   {data.map((entry, index) => (
@@ -370,7 +351,6 @@ const GraphCarousel = () => {
     }
   };
 
-  // Initial data fetch
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
@@ -533,7 +513,6 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
   };
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     if (!dropdownOpen && !calendarOpen) return;
     const handleClickOutside = (event) => {
