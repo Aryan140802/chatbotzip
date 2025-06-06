@@ -1,0 +1,1071 @@
+import { useState, useEffect, useRef } from "react";
+import ProfileIcon from "./ProfileIcon";
+import TypingIndicator from "./TypingIndicator";
+import "../styles/Chatbot.css";
+import send from "../assets/Send.png";
+import logo from "../assets/logobot.jpg";
+import { getPost, postMessage } from "../api/PostApi";
+
+const formatDynamicMessage = (text) => {
+  if (!text || typeof text !== "string") return text;
+
+  // Case 1: HTML-formatted messages with <b> tags
+  if (text.includes("<b>")) {
+    // NEW CASE: Handle messages with <b>Field</b>: Value pattern on separate lines
+    // Check if it's the employee info format with header and field-value pairs
+    const hasHeaderAndFields = text.includes("Here is the information for") && 
+                               text.includes("<b>Name</b>:") && 
+                               text.includes("<b>Email</b>:");
+
+    if (hasHeaderAndFields) {
+      // Split by lines and process each line
+      const lines = text.split('\n').filter(line => line.trim());
+      const formattedLines = [];
+
+      lines.forEach(line => {
+        const trimmedLine = line.trim();
+
+        // Check if line contains header info (like "Here is the information for...")
+        if (trimmedLine.includes("Here is the information for")) {
+          formattedLines.push(`<div class="info-header">${trimmedLine}</div>`);
+        }
+        // Check if line has the pattern <b>Field</b>: Value
+        else if (trimmedLine.includes("<b>") && trimmedLine.includes("</b>:")) {
+          const fieldMatch = trimmedLine.match(/<b>(.*?)<\/b>:\s*(.*)/);
+          if (fieldMatch) {
+            const fieldName = fieldMatch[1].trim();
+            const fieldValue = fieldMatch[2].trim() || "Not provided";
+            formattedLines.push(`<div class="info-field"><strong>${fieldName}:</strong> ${fieldValue}</div>`);
+          }
+        }
+        // Handle any other content
+        else if (trimmedLine && !trimmedLine.match(/^\s*$/)) {
+          formattedLines.push(`<div>${trimmedLine}</div>`);
+        }
+      });
+
+      return `<div class="formatted-card employee-info">${formattedLines.join('')}</div>`;
+    }
+
+    // EXISTING CASE: Match multiple <b>key</b>: value or pre-text: <b>value</b>
+    const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
+    const lines = [];
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const key = (match[1] || match[3] || "").trim();
+      const value = (match[2] || match[4] || "").trim().replace(/\n/g, "<br/>");
+      lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
+    }
+
+    // If nothing matched, fallback to rendering original <b> content
+    if (lines.length === 0) {
+      return `<div class="formatted-card">${text}</div>`;
+    }
+
+    return `<div class="formatted-card">${lines.join("")}</div>`;
+  }
+
+  // Case 2: Likely a server config line (very long, no <b>, many ":")
+  const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
+  if (isServerConfig) {
+    const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
+    let formatted = "";
+    let index = 0;
+
+    const introMatch = text.match(/^(.*?OS Version.*?\))\s*/);
+    if (introMatch) {
+      formatted += introMatch[1] + "<br/>";
+      text = text.slice(introMatch[0].length);
+    }
+
+    const kvPairs = [...text.matchAll(pattern)];
+    kvPairs.forEach((m) => {
+      formatted += m[1].trim() + "<br/>";
+    });
+
+    return `<div class="formatted-card">${formatted.trim()}</div>`;
+  }
+
+  // Default plain text
+  const cleanedText = text.replace(/:,\s*$/, ":").trim();
+  return cleanedText;
+};
+
+// Configuration for required fields by form type
+const REQUIRED_FIELDS_CONFIG = {
+  workload: ['service'], // Fields that should have asterisks for workload form
+  multiple: [], // Add field names that should be required for multiple form
+  default: [] // Default required fields for other forms
+};
+
+// Function to format form data into proper sentences
+const formatFormDataToSentence = (formData, originalFields, formType = null) => {
+  if (!formData || Object.keys(formData).length === 0) {
+    return "No form data provided";
+  }
+
+  const sentences = [];
+
+  // Create a map of field names to their labels for better formatting
+  const fieldLabelsMap = {};
+  if (originalFields) {
+    originalFields.forEach(field => {
+      fieldLabelsMap[field.name] = field.label || field.name;
+    });
+  }
+
+  // For workload form, only show service field in user message
+  if (formType === 'workload') {
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key.toLowerCase().includes('service')) {
+        const fieldLabel = fieldLabelsMap[key] || key;
+        const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
+
+        if (value === null || value === undefined || value === '') {
+          sentences.push(`${formattedLabel}: No value given`);
+        } else {
+          sentences.push(`${formattedLabel}: "${value}"`);
+        }
+      }
+    });
+  } else {
+    // For other forms, show all fields
+    Object.entries(formData).forEach(([key, value]) => {
+      const fieldLabel = fieldLabelsMap[key] || key;
+      const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
+
+      if (value === null || value === undefined || value === '') {
+        sentences.push(`${formattedLabel}: No value given`);
+      } else {
+        sentences.push(`${formattedLabel}: "${value}"`);
+      }
+    });
+  }
+
+  return sentences.length > 0 ? sentences.join(', ') : "No values provided";
+};
+
+// Helper function to check if field should be required
+const isFieldRequired = (fieldName, formType) => {
+  const requiredFields = REQUIRED_FIELDS_CONFIG[formType] || REQUIRED_FIELDS_CONFIG.default;
+  return requiredFields.some(reqField => 
+    fieldName.toLowerCase().includes(reqField.toLowerCase())
+  );
+};
+
+// Helper function to determine field type
+const determineFieldType = (fieldName, fieldValue) => {
+  const lowerName = fieldName.toLowerCase();
+
+  // Check if field name contains date-related keywords or value indicates date
+  if (lowerName.includes('date') || 
+      lowerName.includes('expiry') || 
+      lowerName.includes('created') ||
+      lowerName.includes('expire') ||
+      lowerName.includes('start') ||
+      lowerName.includes('end') ||
+      fieldValue === 'date') {
+    return 'date';
+  }
+
+  // If fieldValue is an array with multiple values, it's a select dropdown
+  if (Array.isArray(fieldValue) && fieldValue.length > 0) {
+    return 'select';
+  }
+
+  // If fieldValue is a single string value (not empty and not 'date'), it's a textarea
+  if (typeof fieldValue === 'string' && fieldValue.trim() !== '' && fieldValue !== 'date') {
+    return 'textarea';
+  }
+
+  // Default to text input for empty values
+  return 'text';
+};
+
+// Dynamic Form Component - MODIFIED for cascading behavior
+const DynamicForm = ({ fields, onSubmit, onCancel, formType, onFieldChange }) => {
+  const [formData, setFormData] = useState({});
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add useEffect to handle initial form setup
+useEffect(() => {
+  if (activeForm && currentFormType === 'workload') {
+    // Initialize form with any existing values
+    const initialData = {};
+    activeForm.forEach(field => {
+      initialData[field.name] = field.value || '';
+    });
+    setFormData(initialData);
+  }
+}, [activeForm, currentFormType]);
+
+ // Fixed handleInputChange function
+const handleInputChange = async (fieldName, value) => {
+  const newFormData = {
+    ...formData,
+    [fieldName]: value
+  };
+  
+  // ✅ Update local state immediately
+  setFormData(newFormData);
+
+  // Clear dependent fields when parent field changes
+  if (fieldName === 'service') {
+    newFormData.layer = '';
+    newFormData.server = '';
+    newFormData.eg = '';
+  } else if (fieldName === 'layer') {
+    newFormData.server = '';
+    newFormData.eg = '';
+  } else if (fieldName === 'server') {
+    newFormData.eg = '';
+  }
+
+  // Clear error for this field
+  if (errors[fieldName]) {
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: null
+    }));
+  }
+
+  // ✅ Trigger cascading update with cumulative data
+  if (formType === 'workload' && value && value.trim() !== '') {
+    await handleFieldChange(newFormData, fieldName);
+  }
+};
+
+// Fixed handleFieldChange function
+const handleFieldChange = async (fieldData, changedFieldName) => {
+  try {
+    setIsTyping(true);
+    
+    // ✅ Consistent payload structure with all required info
+    const payload = {
+      message: fieldData,
+      form_type: currentFormType || "workload",
+      changed_field: changedFieldName,
+      action: "get_dependent_options"
+    };
+
+    const res = await postMessage(payload);
+    
+    // Backend should return updated field options
+    const latest = res.data.chat_history?.slice(-1)[0];
+    if (latest && hasFormFields(latest)) {
+      const updatedFields = extractFormFields(latest);
+      
+      // ✅ Preserve user selections while updating available options
+      const mergedFields = updatedFields.map(newField => {
+        const existingValue = fieldData[newField.name];
+        return {
+          ...newField,
+          value: existingValue || newField.value || ''
+        };
+      });
+
+      // ✅ Update both form fields and current form data
+      setActiveForm(mergedFields);
+      setCurrentFormFields(mergedFields);
+      
+      // ✅ IMPORTANT: Update form data state with preserved values
+      const preservedData = {};
+      mergedFields.forEach(field => {
+        if (fieldData[field.name] !== undefined) {
+          preservedData[field.name] = fieldData[field.name];
+        }
+      });
+      setFormData(preservedData);
+    }
+  } catch (error) {
+    console.error('Error updating form fields:', error);
+  } finally {
+    setIsTyping(false);
+  }
+};
+
+
+// Update extractFormFields to handle option structures
+const extractFormFields = (response) => {
+  if (!hasFormFields(response)) return null;
+
+  return Object.entries(response.message).map(([name, value]) => {
+    const baseField = {
+      name,
+      label: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
+      required: name === 'service', // Only service is required initially
+      value: Array.isArray(value) ? '' : value
+    };
+
+    if (Array.isArray(value)) {
+      baseField.type = 'select';
+      baseField.options = value;
+    } else if (name === 'service') {
+      baseField.type = 'text';
+    } else {
+      baseField.type = 'select';
+      baseField.options = [];
+    }
+
+    return baseField;
+  });
+};
+
+// Update form submission handler
+const handleFormSubmit = async (formData, originalFields) => {
+  // Validate all required fields are filled
+  const requiredFields = originalFields.filter(f => f.required).map(f => f.name);
+  const missingFields = requiredFields.filter(f => !formData[f]);
+
+  if (missingFields.length > 0) {
+    alert(`Please fill all required fields: ${missingFields.join(', ')}`);
+    return;
+  }
+
+  // Proceed with submission
+  setActiveForm(null);
+  setCurrentFormType(null);
+
+  const userMessage = {
+    id: Date.now(),
+    text: formatFormDataToSentence(formData, originalFields, currentFormType),
+    sender: "user",
+    time: getCurrentTime(),
+  };
+
+  setMessages((prev) => [...prev, userMessage]);
+  setIsTyping(true);
+
+  try {
+    const res = await postMessage({ message: formData });
+    const latest = res.data.chat_history?.slice(-1)[0];
+    
+    if (latest) {
+      const botResponse = {
+        id: Date.now(),
+        text: latest.message || "",
+        sender: "bot",
+        time: getCurrentTime(),
+        options: latest.options || [],
+      };
+
+      if (hasFormFields(latest)) {
+        botResponse.formFields = extractFormFields(latest);
+        botResponse.isFormMessage = true;
+      }
+
+      setMessages((prev) => [...prev, botResponse]);
+    }
+  } catch (error) {
+    console.error('Form submission error:', error);
+  }
+  setIsTyping(false);
+};
+
+// Update DynamicForm rendering for select fields
+const renderField = (field) => {
+  // ... existing code ...
+  
+  if (fieldType === 'select') {
+    return (
+      <div key={name} className="form-field">
+        <label className="form-label">
+          {fieldLabel}
+        </label>
+        <select
+          value={value}
+          onChange={(e) => handleInputChange(name, e.target.value)}
+          className={`form-select ${error ? 'error' : ''}`}
+          disabled={isSubmitting || (field.options && field.options.length === 0)}
+        >
+          <option value="">Select {label.toLowerCase()}</option>
+          {field.options?.map((option, idx) => (
+            <option key={idx} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        {error && <span className="error-message">{error}</span>}
+      </div>
+    );
+  }
+
+    // Custom logic for 'multiple' form type
+    if (formType === 'multiple' && (name.toLowerCase().includes('expiry') || name.toLowerCase().includes('created'))) {
+      // For expiry option and created option fields - add dropdown with before/after
+      if (name.toLowerCase().includes('option')) {
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <select
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-select ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
+            >
+              <option value="">Select an option</option>
+              <option value="before">Before</option>
+              <option value="after">After</option>
+            </select>
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+      }
+      // For expiry and created fields (without 'option' in name) - add date picker
+      else {
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-input ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+      }
+    }
+
+    // Render based on determined field type
+    switch (fieldType) {
+      case 'date':
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-input ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+
+      case 'select':
+        const selectOptions = field.options || [];
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <select
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              className={`form-select ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
+            >
+              <option value="">Select an option</option>
+              {selectOptions.map((option, idx) => (
+                <option key={idx} value={option.value || option}>
+                  {option.label || option}
+                </option>
+              ))}
+            </select>
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+
+      case 'textarea':
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <textarea
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              placeholder={placeholder}
+              className={`form-textarea ${error ? 'error' : ''}`}
+              rows={3}
+              disabled={isSubmitting}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+
+      case 'checkbox':
+        return (
+          <div key={name} className="form-field checkbox-field">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={value === true || value === 'true'}
+                onChange={(e) => handleInputChange(name, e.target.checked)}
+                className="form-checkbox"
+                disabled={isSubmitting}
+              />
+              {fieldLabel}
+            </label>
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+
+      default:
+        return (
+          <div key={name} className="form-field">
+            <label className="form-label">
+              {fieldLabel}
+            </label>
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => handleInputChange(name, e.target.value)}
+              placeholder={placeholder}
+              className={`form-input ${error ? 'error' : ''}`}
+              disabled={isSubmitting}
+            />
+            {error && <span className="error-message">{error}</span>}
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className="dynamic-form-container">
+      <form onSubmit={handleSubmit} className="dynamic-form">
+        {fields.map(renderField)}
+        <div className="form-actions">
+          <button type="button" onClick={onCancel} className="cancel-button" disabled={isSubmitting}>
+            Cancel
+          </button>
+          <button type="submit" className="submit-button" disabled={isSubmitting}>
+            {isSubmitting ? 'Processing...' : 'Submit'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const Chatbot = ({ setChatbotMinimized }) => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [formDisabled, setFormDisabled] = useState(true);
+  const [activeForm, setActiveForm] = useState(null);
+  const [currentFormType, setCurrentFormType] = useState(null);
+  const [currentFormFields, setCurrentFormFields] = useState(null);
+
+  const messagesEndRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const API_TIMEOUT = 20000;
+
+  const clearCurrentTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const setApiTimeout = (errorHandler) => {
+    clearCurrentTimeout();
+    timeoutRef.current = setTimeout(() => {
+      setIsTyping(false);
+      errorHandler();
+    }, API_TIMEOUT);
+  };
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
+  };
+
+  const hasFormFields = (response) => {
+    if (!response || !response.message) return false;
+
+    // Check if message is an object and not an array
+    return typeof response.message === 'object' &&
+           !Array.isArray(response.message) &&
+           Object.keys(response.message).length > 0;
+  };
+
+  const determineFormType = (fields) => {
+    // Check if any field name contains 'service' for workload form
+    const hasServiceField = fields.some(field => 
+      field.name.toLowerCase().includes('service')
+    );
+
+    // Check if any field name contains 'expiry' or 'created' for multiple form
+    const hasExpiryOrCreatedField = fields.some(field => 
+      field.name.toLowerCase().includes('expiry') || 
+      field.name.toLowerCase().includes('created')
+    );
+
+    if (hasServiceField) return 'workload';
+    if (hasExpiryOrCreatedField) return 'multiple';
+    return 'default';
+  };
+
+  const extractFormFields = (response) => {
+    if (!hasFormFields(response)) return null;
+
+    return Object.entries(response.message).map(([name, value]) => {
+      const baseField = {
+        name,
+        label: name.charAt(0).toUpperCase() + name.slice(1),
+        required: false,
+        value: value // Store the current value/options
+      };
+
+      // Determine field type based on name and value
+      const fieldType = determineFieldType(name, value);
+      baseField.type = fieldType;
+
+      // Set appropriate default value and options based on type
+      if (fieldType === 'select' && Array.isArray(value)) {
+        baseField.defaultValue = ''; // Start with empty selection
+        baseField.options = value; // Set options for dropdown
+      } else if (fieldType === 'date') {
+        baseField.defaultValue = ''; // Empty for date fields
+      } else if (fieldType === 'textarea') {
+        baseField.defaultValue = ''; // Start empty for textarea
+        baseField.placeholder = `Enter ${name.toLowerCase()}...`; // Generic placeholder
+      } else {
+        baseField.defaultValue = value && value !== 'date' ? value : '';
+      }
+
+      return baseField;
+    });
+  };
+
+  const getPostData = async () => {
+    try {
+      setIsTyping(true);
+      setApiTimeout(() => {
+        setMessages([{
+          id: Date.now(),
+          text: "Unable to load messages. Please try again later.",
+          sender: "bot",
+          time: getCurrentTime(),
+        }]);
+      });
+
+      const res = await getPost();
+      clearCurrentTimeout();
+
+      const formattedMessages = res.data.chat_history.map((item, index) => {
+        const message = {
+          id: Date.now() + index,
+          text: typeof item.message === 'string' ? item.message : "",
+          sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
+          time: getCurrentTime(),
+          options: item.options || [],
+        };
+
+        if (hasFormFields(item)) {
+          message.formFields = extractFormFields(item);
+          message.isFormMessage = true;
+        }
+
+        return message;
+      });
+
+      setMessages(formattedMessages);
+      setFormDisabled(true);
+      setIsTyping(false);
+    } catch {
+      clearCurrentTimeout();
+      setIsTyping(false);
+      setMessages([{
+        id: Date.now(),
+        text: "An error occurred while loading messages.",
+        sender: "bot",
+        time: getCurrentTime(),
+      }]);
+    }
+  };
+
+  useEffect(() => {
+    getPostData();
+    return () => clearCurrentTimeout();
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, activeForm]);
+
+  const checkEnableForm = (text) => {
+    const lowerText = text.toLowerCase();
+    return lowerText.includes("enter") || lowerText.includes("provide");
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (newMessage.trim() === "") return;
+
+    const userMsg = {
+      id: Date.now(),
+      text: newMessage,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setNewMessage("");
+    setIsTyping(true);
+    setFormDisabled(true);
+
+    try {
+      setApiTimeout(() => {});
+
+      // Send regular messages as simple strings
+      const payload = newMessage;
+
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+        };
+
+        if (hasFormFields(latest)) {
+          botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
+        }
+
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch {
+      clearCurrentTimeout();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
+    }
+
+    setIsTyping(false);
+  };
+
+  const handleOptionClick = async (optionText) => {
+    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "").trim();
+
+    const userMessage = {
+      id: Date.now(),
+      text: cleanedOpt,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setFormDisabled(true);
+    setIsTyping(true);
+
+    try {
+      setApiTimeout(() => {});
+
+      // Send options as regular messages
+      const payload = cleanedOpt;
+
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: latest.message || "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+        };
+
+        if (hasFormFields(latest)) {
+          botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
+        }
+
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch {
+      clearCurrentTimeout();
+    }
+
+    setIsTyping(false);
+  };
+
+  // NEW: Handle individual field changes for cascading forms
+  const handleFieldChange = async (fieldData, changedFieldName) => {
+    try {
+      setIsTyping(true);
+      setApiTimeout(() => {});
+
+      const payload = {
+        message: fieldData
+      };
+
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest && hasFormFields(latest)) {
+        // Extract updated form fields
+        const updatedFields = extractFormFields(latest);
+        
+        // Update the active form with new field options
+        setActiveForm(updatedFields);
+        setCurrentFormFields(updatedFields);
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      console.error('Error updating form fields:', error);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleFormSubmit = async (formData, originalFields) => {
+    setActiveForm(null);
+    setCurrentFormType(null);
+
+    let completeFormData = {};
+
+    // For all form types, only send fields that have values
+    Object.entries(formData).forEach(([key, value]) => {
+      // Check if value has actual content
+      const hasValue = value !== null && 
+                      value !== undefined && 
+                      value !== '' && 
+                      !(Array.isArray(value) && value.length === 0) &&
+                      (typeof value === 'string' ? value.trim() !== '' : true);
+
+      if (hasValue) {
+        completeFormData[key] = value;
+      }
+    });
+
+    // Format form data for display (workload shows only service field)
+    const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
+
+    const userMessage = {
+      id: Date.now(),
+      text: formattedText,
+      sender: "user",
+      time: getCurrentTime(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsTyping(true);
+    setFormDisabled(true);
+
+    try {
+      setApiTimeout(() => {});
+
+      // Send the appropriate form data to backend
+      const payload = {
+        message: completeFormData
+      };
+
+      const res = await postMessage(payload);
+      clearCurrentTimeout();
+
+      const latest = res.data.chat_history?.slice(-1)[0];
+      if (latest) {
+        const botResponse = {
+          id: Date.now(),
+          text: typeof latest.message === 'string' ? latest.message : "",
+          sender: "bot",
+          time: getCurrentTime(),
+          options: latest.options || [],
+        };
+
+        if (hasFormFields(latest)) {
+          botResponse.formFields = extractFormFields(latest);
+          botResponse.isFormMessage = true;
+        }
+
+        setMessages((prev) => [...prev, botResponse]);
+        setFormDisabled(!checkEnableForm(botResponse.text));
+      }
+    } catch (error) {
+      clearCurrentTimeout();
+      console.error('Form submission error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred while submitting the form. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
+    }
+    setIsTyping(false);
+  };
+
+  const handleFormCancel = () => {
+    setActiveForm(null);
+    setCurrentFormType(null);
+    setCurrentFormFields(null);
+  };
+
+  const handleFormButtonClick = (fields) => {
+    const formType = determineFormType(fields);
+    setCurrentFormType(formType);
+    setCurrentFormFields(fields);
+    setActiveForm(fields);
+  };
+
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setChatbotMinimized(true);
+  };
+
+  const handleRestore = () => {
+    setIsMinimized(false);
+    setChatbotMinimized(false);
+  };
+
+  return (
+    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
+      <div className="chat-header">
+        <img src={logo} alt="Logo" className="chat-logo" onClick={handleRestore} />
+        {!isMinimized && (
+          <>
+            <div className="chat-title">
+              <h1>EIS GINI</h1>
+              <h5>(Generative Interactive Neural Interface)</h5>
+            </div>
+            <button className="minimize-button" onClick={handleMinimize}>
+              &#x2212;
+            </button>
+          </>
+        )}
+</div>
+
+      {!isMinimized && (
+        <>
+          <div className="messages-container">
+            {messages.map((item, index) => (
+              <div
+                key={index}
+                className={`message-wrapper ${item.sender.toLowerCase()}`}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
+                  marginBottom: "12px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
+                  <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
+                    {item.sender === "bot" && !item.isFormMessage ? (
+                      <div
+                        className="message-content"
+                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
+                      />
+                    ) : item.sender === "bot" && item.isFormMessage ? (
+                      <div className="message-content">
+                        <p>Please fill out the form with the required information:</p>
+                      </div>
+                    ) : (
+                      <div className="message-content">{item.text}</div>
+                    )}
+
+                    {item.formFields && (
+                      <div className="form-trigger">
+                        <button
+                          className="form-button"
+                          onClick={() => handleFormButtonClick(item.formFields)}
+                        >
+                          Fill Form
+                        </button>
+                      </div>
+                    )}
+
+                    {item.options?.length > 0 && (
+                      <div className="options-list">
+                        {item.options.map((opt, i) => {
+                          const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
+                          const isPlainText =
+                            displayText.includes("please select one by name") ||
+                            displayText.includes("please select from the following options");
+
+                          if (isPlainText) {
+                            return (
+                              <div key={i} className="plain-text-option">
+                                {displayText}
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
+                              {displayText}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="message-time">{item.time}</div>
+                  </div>
+                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
+                <ProfileIcon sender="bot" />
+                <div className="message bot-message">
+                  <TypingIndicator />
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {activeForm && (
+            <DynamicForm
+              fields={activeForm}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormCancel}
+              formType={currentFormType}
+            />
+          )}
+
+          <form className="message-form" onSubmit={handleSendMessage}>
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder={formDisabled ? "Select a relevant option or wait for prompt..." : "Type a message..."}
+              className="message-input"
+              disabled={formDisabled}
+            />
+            <button type="submit" className="send-button" disabled={formDisabled}>
+              <img className="logo" src={send} alt="Send" style={{ height: "20px", opacity: formDisabled ? 0.5 : 1 }} />
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Chatbot;
