@@ -12,7 +12,6 @@ const formatDynamicMessage = (text) => {
 
   // Case 1: HTML-formatted messages with <b> tags
   if (text.includes("<b>")) {
-    // NEW CASE: Handle messages with <b>Field</b>: Value pattern on separate lines
     const hasHeaderAndFields = text.includes("Here is the information for") &&
       text.includes("<b>Name</b>:") &&
       text.includes("<b>Email</b>:");
@@ -160,28 +159,6 @@ const determineFormType = (fields) => {
   return 'default';
 };
 
-const extractFormFields = (response) => {
-  if (!hasFormFields(response)) return null;
-  return Object.entries(response.message).map(([name, value]) => {
-    const baseField = {
-      name,
-      label: name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' '),
-      required: name === 'service',
-      value: Array.isArray(value) ? '' : value,
-    };
-    if (Array.isArray(value)) {
-      baseField.type = 'select';
-      baseField.options = value;
-    } else if (name === 'service') {
-      baseField.type = 'text';
-    } else {
-      baseField.type = determineFieldType(name, value);
-      baseField.options = [];
-    }
-    return baseField;
-  });
-};
-
 // Utility: Remove empty fields before sending
 const filterNonEmptyFields = (obj) =>
   Object.fromEntries(
@@ -193,6 +170,45 @@ const filterNonEmptyFields = (obj) =>
         !(Array.isArray(value) && value.length === 0)
     )
   );
+
+// Utility: Extract form fields from server response (for Chatbot use)
+// Always merges given currentValues into the field's value!
+const extractFormFields = (response, currentValues = {}) => {
+  if (!hasFormFields(response)) return null;
+  return Object.entries(response.message).map(([name, value]) => {
+    const isService = name === 'service';
+    const label =
+      isService
+        ? <span style={{ color: "red" }}>* </span>
+        : null;
+
+    let displayLabel =
+      name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
+
+    // If rendering directly in the component (JSX), you can do:
+    // <label>{isService && <span style={{color:'red'}}>*</span>} Service</label>
+    // But for label in field data, just mark it with asterisk:
+    displayLabel = isService ? `* ${displayLabel}` : displayLabel;
+
+    return {
+      name,
+      label: displayLabel,
+      required: isService,
+      value:
+        currentValues && Object.prototype.hasOwnProperty.call(currentValues, name)
+          ? currentValues[name]
+          : Array.isArray(value)
+          ? ''
+          : value,
+      type: Array.isArray(value)
+        ? 'select'
+        : isService
+        ? 'text'
+        : determineFieldType(name, value),
+      options: Array.isArray(value) ? value : [],
+    };
+  });
+};
 
 // --- DynamicForm Subcomponent ---
 const DynamicForm = ({
@@ -283,19 +299,20 @@ const DynamicForm = ({
     } = field;
     const value = formData[name] || "";
     const error = errors[name];
+    const isService = name === "service";
 
     switch (type) {
       case "select":
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{label}</label>
+            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
             <select
               value={value}
               onChange={e => handleSelectChange(name, e.target.value)}
               className={`form-select${error ? " error" : ""}`}
               disabled={isSubmitting || isSubmittingFromParent || options.length === 0}
             >
-              <option value="">Select {label.toLowerCase()}</option>
+              <option value="">Select {label.replace('* ', '').toLowerCase()}</option>
               {options.map((opt, idx) => (
                 <option key={idx} value={opt.value || opt}>
                   {opt.label || opt}
@@ -308,7 +325,7 @@ const DynamicForm = ({
       case "date":
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{label}</label>
+            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
             <input
               type="date"
               value={value}
@@ -322,7 +339,7 @@ const DynamicForm = ({
       case "textarea":
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{label}</label>
+            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
             <textarea
               value={value}
               onChange={e => handleInputChange(name, e.target.value)}
@@ -337,7 +354,7 @@ const DynamicForm = ({
       default:
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{label}</label>
+            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
             <input
               type="text"
               value={value}
@@ -435,7 +452,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(item)) {
-          message.formFields = extractFormFields(item);
+          message.formFields = extractFormFields(item, {});
           message.isFormMessage = true;
         }
 
@@ -499,7 +516,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
+          botResponse.formFields = extractFormFields(latest, {});
           botResponse.isFormMessage = true;
         }
 
@@ -552,7 +569,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
+          botResponse.formFields = extractFormFields(latest, {});
           botResponse.isFormMessage = true;
         }
 
@@ -570,7 +587,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleFieldChange = async (fieldData, changedFieldName) => {
     try {
       setIsTyping(true);
-      setApiTimeout(() => { });
+      setApiTimeout(() => {});
 
       const filteredData = filterNonEmptyFields(fieldData);
       if (Object.keys(filteredData).length === 0) {
@@ -584,13 +601,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest && hasFormFields(latest)) {
-        const updatedFields = extractFormFields(latest);
+        const updatedFields = extractFormFields(latest, fieldData); // always merge with local state!
         setActiveForm(updatedFields);
         setCurrentFormFields(updatedFields);
       }
     } catch (error) {
       clearCurrentTimeout();
-      // Optional: show error message
     } finally {
       setIsTyping(false);
     }
@@ -634,7 +650,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
         };
 
         if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
+          botResponse.formFields = extractFormFields(latest, completeFormData);
           botResponse.isFormMessage = true;
         }
 
