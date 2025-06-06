@@ -17,23 +17,54 @@ function App() {
   // Check for existing login session on app load
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-      setIsLoggedIn(true);
+    const storedLoginTime = localStorage.getItem('loginTime');
+    if (storedUsername && storedLoginTime) {
+      // Check if session has expired
+      const loginTime = parseInt(storedLoginTime, 10);
+      if (loginTime && Date.now() - loginTime < 60 * 60 * 1000) {
+        setUsername(storedUsername);
+        setIsLoggedIn(true);
+      } else {
+        handleLogout();
+      }
     }
   }, []);
 
+  // Set login timestamp on login
   const handleLogin = (user) => {
+    const now = Date.now();
     setUsername(user);
     setIsLoggedIn(true);
     localStorage.setItem('username', user);
+    localStorage.setItem('loginTime', now.toString());
+    sessionStorage.setItem('loginTime', now.toString());
   };
 
+  // Logout and flush session storage
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUsername('');
     localStorage.removeItem('username');
+    localStorage.removeItem('loginTime');
+    sessionStorage.clear(); // Flush entire session storage
   };
+
+  // Auto logout after 1 hour
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const checkAutoLogout = () => {
+      const loginTime = parseInt(localStorage.getItem('loginTime'), 10);
+      if (loginTime && Date.now() - loginTime > 60 * 60 * 1000) {
+        handleLogout();
+      }
+    };
+
+    const interval = setInterval(checkAutoLogout, 60 * 1000); // Check every minute
+    checkAutoLogout();
+
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const clearCache = () => {
@@ -54,7 +85,9 @@ function App() {
 
   return (
     <div>
-      <Header darkMode={darkMode} setDarkMode={setDarkMode}
+      <Header
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
         username={username}
         onLogout={handleLogout}
       />
