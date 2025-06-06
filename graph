@@ -67,6 +67,8 @@ const GraphCarousel = () => {
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
   const [farData, setFarData] = useState([]);
   const [farTotal, setFarTotal] = useState(0);
+
+  // FAR Modal State
   const [showFarDetails, setShowFarDetails] = useState(false);
   const [selectedMonthData, setSelectedMonthData] = useState(null);
   const [farDetails, setFarDetails] = useState([]);
@@ -102,35 +104,28 @@ const GraphCarousel = () => {
     'Monthly FAR Expiry Distribution'
   ];
 
-
+  // ------------------ FAR Modal Handler ------------------
   const handlePieClick = async (data) => {
-  if (currentIndex !== 6) return; // Only handle clicks on FAR chart
-
-  try {
-    setIsLoadingDetails(true);
+    if (currentIndex !== 6) return; // Only FAR chart
     setSelectedMonthData(data);
-
-    // Fetch details from backend
-    const response = await getFARDetailsSpecific(data.name);
-
-    setFarDetails(response.data || []);
+    setIsLoadingDetails(true);
     setShowFarDetails(true);
-  } catch (error) {
-    console.error('Error fetching FAR details:', error);
-    // Handle error (maybe show a toast notification)
-  } finally {
-    setIsLoadingDetails(false);
-  }
-};
+    try {
+      const response = await getFARDetailsSpecific(data.name);
+      setFarDetails(response.data || []);
+    } catch (err) {
+      setFarDetails([]);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+  // -------------------------------------------------------
 
   const formatDate = (date) =>
     date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  // Check if all chart data arrays are empty (excluding FAR chart)
   const isAllChartDataEmpty = (chartData) => {
     if (!chartData || chartData.length === 0) return true;
-
-    // Check the first 6 charts (excluding FAR chart at index 6)
     const dataCharts = chartData.slice(0, 6);
     return dataCharts.every(chart => !chart.data || chart.data.length === 0);
   };
@@ -139,24 +134,17 @@ const GraphCarousel = () => {
   const fetchFARData = async () => {
     try {
       const response = await getFARExpires();
-
       const formattedData = [];
       let total = 0;
-
       response.data.MonthlyFarCount.forEach(monthData => {
         const [month, value] = Object.entries(monthData)[0];
-        if (value > 0) {  // Only include non-zero values
-          formattedData.push({
-            name: month,
-            value: value
-          });
+        if (value > 0) {
+          formattedData.push({ name: month, value: value });
           total += value;
         }
       });
-
       setFarData(formattedData);
       setFarTotal(total);
-
       return formattedData;
     } catch (error) {
       console.error("Error fetching FAR data:", error);
@@ -166,16 +154,13 @@ const GraphCarousel = () => {
 
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
-
     const updatedCharts = charts.map((chart, index) => ({
       ...chart,
       title: index === 6 ? baseTitles[6] : `${baseTitles[index]} of ${timeDisplay}`
     }));
-
     setCharts(updatedCharts);
-
     if (currentIndex >= 0 && currentIndex < charts.length) {
-      if (currentIndex === 6) { // For the FAR chart
+      if (currentIndex === 6) {
         setCurrentDisplayTitle(baseTitles[6]);
       } else {
         setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
@@ -185,18 +170,10 @@ const GraphCarousel = () => {
 
   const fetchFilteredData = async (timeRange, timeLabel, attemptNumber = 1) => {
     const maxRetries = 3;
-    const retryDelay = 2000; // 2 seconds
-
+    const retryDelay = 2000;
     try {
-      console.log(`Fetching data for time range: ${timeRange} (Attempt ${attemptNumber}/${maxRetries})`);
-
       const [
-        serviceExp,
-        serviceSys,
-        ipExp,
-        ipSys,
-        portExp,
-        portSys
+        serviceExp, serviceSys, ipExp, ipSys, portExp, portSys
       ] = await Promise.all([
         postServiceWiseExp5(timeRange),
         postServiceWiseSys5(timeRange),
@@ -205,16 +182,11 @@ const GraphCarousel = () => {
         postPortWiseExp5(timeRange),
         postPortWiseSys5(timeRange)
       ]);
-
       // Fetch FAR data
       const farChartData = await fetchFARData();
 
       const formatData = (data, key) => {
-        if (!data || !Array.isArray(data)) {
-          console.error('Invalid data format received:', data);
-          return [];
-        }
-
+        if (!data || !Array.isArray(data)) return [];
         return data.map(item => ({
           ...item,
           [key]: item[key]?.toString().trim() || '',
@@ -223,7 +195,6 @@ const GraphCarousel = () => {
         }));
       };
 
-      // Use the provided timeLabel for display, or generate one for custom dates
       const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
         ? `Custom: ${formatDate(selectedDate)}`
         : timeLabel || selectedTimeLabel;
@@ -266,71 +237,56 @@ const GraphCarousel = () => {
         }
       ];
 
-      // Check if all chart data arrays are empty and retry if needed
       if (isAllChartDataEmpty(chartData) && attemptNumber < maxRetries) {
-        console.warn(`All chart data arrays are empty. Retrying in ${retryDelay/1000} seconds... (Attempt ${attemptNumber}/${maxRetries})`);
         setRetryCount(attemptNumber);
-
-        // Wait for the specified delay
         await wait(retryDelay);
-
-        // Retry the fetch
         return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
       }
-
-      // Reset retry count on successful fetch (or after max retries)
       setRetryCount(0);
-
       if (isAllChartDataEmpty(chartData) && attemptNumber >= maxRetries) {
         console.error(`All retries exhausted. Chart data is still empty after ${maxRetries} attempts.`);
       }
-
       return chartData.map(({ data, dataKeyX, baseTitle }) => {
-        // Create different chart components based on chart type
         let chartComponent;
-
         if (baseTitle === baseTitles[6]) {
-          // Pie chart for FAR data
           chartComponent = (
             <ResponsiveContainer>
               <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
                 <Pie
-  data={data}
-  cx="50%"
-  cy="50%"
-  labelLine
-  outerRadius={130}
-  innerRadius={60}
-  fill="#8884d8"
-  dataKey="value"
-  nameKey="name"
-  label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
-  onClick={handlePieClick}
-  style={{ cursor: 'pointer' }}
->
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine
+                  outerRadius={130}
+                  innerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                  nameKey="name"
+                  label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+                  onClick={handlePieClick}
+                  style={{ cursor: 'pointer' }}
+                >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-
-               <Tooltip
-  formatter={(value) => [`${value}`, 'Count']}
-  contentStyle={{
-    backgroundColor: '#2e1a3b',
-    borderColor: '#f285c1',
-    color: '#fff',
-    borderRadius: '8px',
-    cursor: 'pointer'
-  }}
-  itemStyle={{ color: '#fff' }}
-  labelStyle={{ color: '#f285c1' }}
-/>
+                <Tooltip
+                  formatter={(value) => [`${value}`, 'Count']}
+                  contentStyle={{
+                    backgroundColor: '#2e1a3b',
+                    borderColor: '#f285c1',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                  itemStyle={{ color: '#fff' }}
+                  labelStyle={{ color: '#f285c1' }}
+                />
                 <Legend layout="horizontal" verticalAlign="bottom" align="center" />
               </PieChart>
             </ResponsiveContainer>
           );
         } else {
-          // Bar chart for other data
           chartComponent = (
             <ResponsiveContainer>
               <BarChart
@@ -340,21 +296,20 @@ const GraphCarousel = () => {
                 key={`${baseTitle}-${timeRange}-chart`}
               >
                 <defs>
-  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-    {baseTitle.includes('Exp') ? (
-      <>
-        <stop offset="0%" stopColor="#6a11cb" />
-        <stop offset="100%" stopColor="#2575fc" />
-      </>
-    ) : (
-      <>
-        <stop offset="0%" stopColor="#ff6a00" />
-        <stop offset="100%" stopColor="#ee0979" />
-      </>
-    )}
-  </linearGradient>
-</defs>
-
+                  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                    {baseTitle.includes('Exp') ? (
+                      <>
+                        <stop offset="0%" stopColor="#6a11cb" />
+                        <stop offset="100%" stopColor="#2575fc" />
+                      </>
+                    ) : (
+                      <>
+                        <stop offset="0%" stopColor="#ff6a00" />
+                        <stop offset="100%" stopColor="#ee0979" />
+                      </>
+                    )}
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
                 <XAxis
                   dataKey={dataKeyX}
@@ -385,18 +340,16 @@ const GraphCarousel = () => {
                   }}
                   labelFormatter={(label) => `${dataKeyX}: ${label}`}
                 />
-               <Bar
-  dataKey="Hits"
-  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
-  shape={ThreeDBar}
-  barSize={50}
-/>
-
+                <Bar
+                  dataKey="Hits"
+                  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
+                  shape={ThreeDBar}
+                  barSize={50}
+                />
               </BarChart>
             </ResponsiveContainer>
           );
         }
-
         return {
           baseTitle,
           title: baseTitle === baseTitles[6]
@@ -407,23 +360,13 @@ const GraphCarousel = () => {
         };
       });
     } catch (error) {
-      console.error(`Error fetching data (Attempt ${attemptNumber}/${maxRetries}):`, error);
-
-      // Retry on error if we haven't exhausted all attempts
       if (attemptNumber < maxRetries) {
-        console.warn(`Retrying in ${retryDelay/1000} seconds due to error... (Attempt ${attemptNumber}/${maxRetries})`);
         setRetryCount(attemptNumber);
-
-        // Wait for the specified delay
         await wait(retryDelay);
-
-        // Retry the fetch
         return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
       }
-
-      // Reset retry count after all retries are exhausted
       setRetryCount(0);
-      throw error; // Re-throw error after all retries are exhausted
+      throw error;
     }
   };
 
@@ -436,56 +379,35 @@ const GraphCarousel = () => {
         if (chartData && chartData.length > 0) {
           setCharts(chartData);
           setCurrentDisplayTitle(chartData[0].title);
-        } else {
-          console.error("No chart data returned from initial fetch");
         }
-      } catch (error) {
-        console.error("Failed to initialize data after all retries:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
     initializeData();
-
-    // Cleanup function
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  // Update display title when currentIndex changes
   useEffect(() => {
     if (charts.length > 0 && currentIndex >= 0 && currentIndex < charts.length) {
       setCurrentDisplayTitle(charts[currentIndex].title);
     }
   }, [currentIndex, charts]);
 
-  // Set up carousel auto-rotation
   useEffect(() => {
-    // Clear any existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    // Only create new interval if not paused and we have charts
+    if (intervalRef.current) clearInterval(intervalRef.current);
     if (!paused && charts.length > 0) {
       intervalRef.current = setInterval(() => {
         setCurrentIndex(prev => (prev === charts.length - 1 ? 0 : prev + 1));
       }, 5000);
     }
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [paused, charts.length]);
 
-  // Sync chart titles with dropdown label
   useEffect(() => {
     if (charts.length > 0) {
       updateChartTitles(selectedTimeLabel);
@@ -493,93 +415,59 @@ const GraphCarousel = () => {
   }, [selectedTimeLabel, charts.length]);
 
   const handleTimeChange = async (option) => {
-    // Skip time change for FAR chart
     if (currentIndex === 6) return;
-
-    // Handle custom date selection
     if (option.value === "custom") {
       setDropdownOpen(false);
       setCalendarOpen(true);
       return;
     }
-
-    console.log(`Time option selected: ${option.label} (${option.value})`);
-
-    // Update state
     setSelectedTimeLabel(option.label);
     setSelectedTimeValue(option.value);
     setDropdownOpen(false);
     setCalendarOpen(false);
-
-    // Pause carousel during loading and show loading state
     setPaused(true);
     setIsLoading(true);
-    setRetryCount(0); // Reset retry count
-
+    setRetryCount(0);
     try {
-      // Update title to show loading state for current chart
       if (currentIndex >= 0 && currentIndex < baseTitles.length) {
         setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
       }
-
-      // Fetch updated data
       const updatedCharts = await fetchFilteredData(option.value, option.label);
-
       if (updatedCharts && updatedCharts.length > 0) {
         setCharts(updatedCharts);
         setCurrentDisplayTitle(updatedCharts[0].title);
-      } else {
-        console.error("No chart data returned from time change fetch");
       }
-    } catch (error) {
-      console.error("Error in handleTimeChange:", error);
     } finally {
       setIsLoading(false);
-      setPaused(false); // Resume carousel
+      setPaused(false);
     }
   };
 
   const handleDateSelect = async (date) => {
-    // Skip date select for FAR chart
     if (currentIndex === 6) return;
-
     if (!date) return;
-
     const formattedDate = formatDate(date);
     const dateValue = `custom_${date.toISOString().split('T')[0]}`;
     const timeLabel = `Custom: ${formattedDate}`;
-
-    // Update state
     setSelectedDate(date);
     setSelectedTimeLabel(timeLabel);
     setSelectedTimeValue(dateValue);
     setCalendarOpen(false);
-
-    // Pause carousel during loading and show loading state
     setPaused(true);
     setIsLoading(true);
-    setRetryCount(0); // Reset retry count
-
+    setRetryCount(0);
     try {
-      // Update title to show loading state for current chart
       if (currentIndex >= 0 && currentIndex < baseTitles.length) {
         setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeLabel}`);
       }
-
-      // Fetch updated data
       const updatedCharts = await fetchFilteredData(dateValue, timeLabel);
-
       if (updatedCharts && updatedCharts.length > 0) {
         setCharts(updatedCharts);
         setCurrentDisplayTitle(updatedCharts[0].title);
-      } else {
-        console.error("No chart data returned from date select fetch");
       }
-    } catch (error) {
-      console.error("Error in handleDateSelect:", error);
     } finally {
       setIsLoading(false);
-      setPaused(false); // Resume carousel
+      setPaused(false);
     }
   };
 
@@ -587,29 +475,20 @@ const GraphCarousel = () => {
     const today = new Date();
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
     weekdays.forEach(day => days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>));
-
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(today.getDate() - 6);
-
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
     const firstDayOfWeek = startDate.getDay();
-
-    // Add empty cells for days before the start date
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
     }
-
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-
-    // Add calendar days
     for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const isDisabled = date > today || date < sevenDaysAgo;
       const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-
       days.push(
         <div
           key={`day-${day}`}
@@ -620,22 +499,16 @@ const GraphCarousel = () => {
         </div>
       );
     }
-
     return days;
   };
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
-    if (!data || !data.length) {
-      console.warn("No data available to download");
-      return;
-    }
-
+    if (!data || !data.length) return;
     const keys = Object.keys(data[0]);
     const csvContent = [
       keys.join(','),
       ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
     ].join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -644,14 +517,12 @@ const GraphCarousel = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url); // Clean up
+    URL.revokeObjectURL(url);
   };
 
   const goToSlide = (index) => {
     if (index < 0 || index >= charts.length) return;
-
     setCurrentIndex(index);
-
     if (charts.length > 0 && index >= 0 && index < charts.length) {
       setCurrentDisplayTitle(charts[index].title);
     }
@@ -665,14 +536,12 @@ const GraphCarousel = () => {
   // Close dropdowns when clicking outside
   useEffect(() => {
     if (!dropdownOpen && !calendarOpen) return;
-
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
         setDropdownOpen(false);
         setCalendarOpen(false);
       }
     };
-
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [dropdownOpen, calendarOpen]);
@@ -732,7 +601,6 @@ const GraphCarousel = () => {
             </span>
           )}
         </h2>
-
         <div className="download-button-wrapper">
           <button
             className="download-button"
@@ -788,102 +656,62 @@ const GraphCarousel = () => {
           />
         ))}
 
-      {showFarDetails && (
-  <div className="far-details-modal" style={{
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000
-  }}>
-    <div className="modal-content" style={{
-      backgroundColor: '#2e1a3b',
-      borderRadius: '8px',
-      width: '80%',
-      maxWidth: '800px',
-      maxHeight: '80%',
-      overflow: 'hidden',
-      border: '2px solid #f285c1'
-    }}>
-      <div className="modal-header" style={{
-        padding: '20px',
-        borderBottom: '1px solid #f285c1',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <h3 style={{ color: '#fff', margin: 0 }}>FAR Details for {selectedMonthData?.name}</h3>
-        <button
-          onClick={() => setShowFarDetails(false)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#f285c1',
-            fontSize: '24px',
-            cursor: 'pointer',
-            padding: '5px',
-            borderRadius: '4px'
-          }}
-        >×</button>
-      </div>
-      <div className="modal-body" style={{
-        padding: '20px',
-        maxHeight: '500px',
-        overflowY: 'auto'
-      }}>
-        {isLoadingDetails ? (
-          <div style={{ textAlign: 'center', color: '#fff' }}>
-            <div className="loading-spinner"></div>
-            <p>Loading FAR details...</p>
-          </div>
-        ) : (
-          <div className="far-details-table">
-            <table style={{
-              width: '100%',
-              borderCollapse: 'collapse',
-              color: '#fff'
-            }}>
-              <thead>
-                <tr style={{ backgroundColor: '#1a0d26' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #f285c1' }}>IP</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #f285c1' }}>Port</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #f285c1' }}>Service</th>
-                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '1px solid #f285c1' }}>Expiry Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {farDetails.map((detail, index) => (
-                  <tr key={index} style={{
-                    backgroundColor: index % 2 === 0 ? '#2e1a3b' : '#3d2749',
-                    borderBottom: '1px solid #444'
-                  }}>
-                    <td style={{ padding: '10px' }}>{detail.ip || 'N/A'}</td>
-                    <td style={{ padding: '10px' }}>{detail.port || 'N/A'}</td>
-                    <td style={{ padding: '10px' }}>{detail.service || 'N/A'}</td>
-                    <td style={{ padding: '10px' }}>{detail.expiry_date || 'N/A'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {farDetails.length === 0 && (
-              <div style={{
-                textAlign: 'center',
-                color: '#888',
-                padding: '40px',
-                fontSize: '16px'
-              }}>No FAR details available for this month</div>
-            )}
+        {/* FAR Details Modal */}
+        {showFarDetails && (
+          <div className="far-details-modal">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>FAR Details for {selectedMonthData?.name}</h3>
+                <button
+                  onClick={() => setShowFarDetails(false)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f285c1',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    padding: '5px',
+                    borderRadius: '4px'
+                  }}
+                >×</button>
+              </div>
+              <div className="modal-body" style={{ padding: '20px', maxHeight: '500px', overflowY: 'auto' }}>
+                {isLoadingDetails ? (
+                  <div style={{ textAlign: 'center', color: '#fff' }}>
+                    <div className="loading-spinner"></div>
+                    <p>Loading FAR details...</p>
+                  </div>
+                ) : (
+                  <div className="far-details-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>IP</th>
+                          <th>Port</th>
+                          <th>Service</th>
+                          <th>Expiry Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {farDetails.map((detail, index) => (
+                          <tr key={index}>
+                            <td>{detail.ip || 'N/A'}</td>
+                            <td>{detail.port || 'N/A'}</td>
+                            <td>{detail.service || 'N/A'}</td>
+                            <td>{detail.expiry_date || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {farDetails.length === 0 && (
+                      <div className="no-data">No FAR details available for this month</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
-      </div>
-    </div>
-  </div>
-)}
       </div>
     </div>
   );
