@@ -9,8 +9,6 @@ import { getPost, postMessage } from "../api/PostApi";
 // Utility: Format dynamic bot message (safe HTML for <b> etc.)
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
-
-  // If the message contains <b> tags, try to format them in a readable way
   if (text.includes("<b>")) {
     const hasHeaderAndFields = text.includes("Here is the information for") &&
       text.includes("<b>Name</b>:") &&
@@ -37,7 +35,6 @@ const formatDynamicMessage = (text) => {
       });
       return `<div class="formatted-card employee-info">${formattedLines.join('')}</div>`;
     }
-    // Generic bold field formatting
     const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
     const lines = [];
     let match;
@@ -51,18 +48,16 @@ const formatDynamicMessage = (text) => {
     }
     return `<div class="formatted-card">${lines.join("")}</div>`;
   }
-
-  // Detect "server config" or log-style messages by number of colons
+  // Detect "server config" style messages by number of colons
   const isServerConfig = (text.match(/:/g) || []).length > 2;
   if (isServerConfig) {
-    // Split on newlines and wrap each line in a div for clarity
     const lines = text.split('\n').map(line => `<div>${line.trim()}</div>`);
     return `<div class="formatted-card">${lines.join('')}</div>`;
   }
-
-  // Default: Replace all newlines with <br/> so nothing is lost
+  // Always convert newlines to <br/> in default case
   return text.replace(/\n/g, "<br/>");
 };
+
 const formatFormDataToSentence = (formData, originalFields, formType = null) => {
   if (!formData || Object.keys(formData).length === 0) {
     return "No form data provided";
@@ -148,27 +143,26 @@ const filterNonEmptyFields = (obj) =>
     )
   );
 
-// Always merges in currentValues for option selection retention and ensures new fields are present
+// --- FIXED: Always use backend options to determine select fields! ---
 const extractFormFields = (response, currentValues = {}) => {
   if (!hasFormFields(response)) return null;
-  // Always add all fields present in backend response, using user's value if available
   return Object.entries(response.message).map(([name, value]) => {
     const isService = name === 'service';
     let displayLabel = name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
     displayLabel = isService ? `* ${displayLabel}` : displayLabel;
+    const options = Array.isArray(value) ? value : [];
     return {
       name,
       label: displayLabel,
       required: isService,
-      value: (typeof currentValues[name] !== "undefined")
+      value: typeof currentValues[name] !== "undefined"
         ? currentValues[name]
         : (Array.isArray(value) ? "" : value),
-      type: Array.isArray(value)
-        ? 'select'
-        : isService
-        ? 'text'
+      // Always keep type 'select' if options exist, even if value is a string
+      type: options.length > 0 ? 'select'
+        : isService ? 'text'
         : determineFieldType(name, value),
-      options: Array.isArray(value) ? value : [],
+      options,
     };
   });
 };
@@ -189,13 +183,11 @@ const DynamicForm = ({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // --- ROBUST MERGING LOGIC FIX ---
   useEffect(() => {
     setFieldDefs(fields);
     setFormData(current => {
       const merged = {};
       fields.forEach(f => {
-        // Always prefer user input (current), unless backend gives a new, non-empty value
         if (
           typeof current[f.name] !== "undefined" &&
           current[f.name] !== "" &&
@@ -266,6 +258,11 @@ const DynamicForm = ({
     await onSubmit(formData, fieldDefs);
     setIsSubmitting(false);
   };
+
+  // Check if all required fields are filled (for workload form, used to disable submit)
+  const allRequiredFilled = fieldDefs
+    .filter(f => f.required)
+    .every(f => !!formData[f.name]);
 
   const renderField = (field) => {
     const {
@@ -355,7 +352,15 @@ const DynamicForm = ({
           <button type="button" onClick={onCancel} className="cancel-button" disabled={isSubmitting}>
             Cancel
           </button>
-          <button type="submit" className="submit-button" disabled={isSubmitting || isSubmittingFromParent}>
+          <button
+            type="submit"
+            className="submit-button"
+            disabled={
+              isSubmitting ||
+              isSubmittingFromParent ||
+              (formType === "workload" && !allRequiredFilled)
+            }
+          >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
         </div>
@@ -577,7 +582,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
       const latest = res.data.chat_history?.slice(-1)[0];
       if (latest && hasFormFields(latest)) {
-        // critical: always use fieldData, not just filteredData, so all user-selected values are preserved
         const updatedFields = extractFormFields(latest, fieldData);
         setActiveForm(updatedFields);
         setCurrentFormFields(updatedFields);
@@ -594,7 +598,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setActiveForm(null);
     setCurrentFormType(null);
 
-    // Only send non-empty fields
     const completeFormData = filterNonEmptyFields(formData);
 
     const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
