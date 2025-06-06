@@ -1,15 +1,3 @@
-Memory Utilisation: None % CPU
-Utilisation: None %
-Note: Below Information is updated on
-fileSystem :Below Threshold
-UPTime : 1 day 7 hours 8 minutes
-MQ Version :
-FIREWALL : inactive
-DSAgent : DSrunning
-SPLUNK : SPLnotrunning
-addmitam Expiry: May 19 2026
-
-
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
@@ -21,6 +9,8 @@ import { getPost, postMessage } from "../api/PostApi";
 // Utility: Format dynamic bot message (safe HTML for <b> etc.)
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
+
+  // If the message contains <b> tags, try to format them in a readable way
   if (text.includes("<b>")) {
     const hasHeaderAndFields = text.includes("Here is the information for") &&
       text.includes("<b>Name</b>:") &&
@@ -47,6 +37,7 @@ const formatDynamicMessage = (text) => {
       });
       return `<div class="formatted-card employee-info">${formattedLines.join('')}</div>`;
     }
+    // Generic bold field formatting
     const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
     const lines = [];
     let match;
@@ -56,29 +47,22 @@ const formatDynamicMessage = (text) => {
       lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
     }
     if (lines.length === 0) {
-      return `<div class="formatted-card">${text}</div>`;
+      return `<div class="formatted-card">${text.replace(/\n/g, "<br/>")}</div>`;
     }
     return `<div class="formatted-card">${lines.join("")}</div>`;
   }
-  const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
-  if (isServerConfig) {
-    const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
-    let formatted = "";
-    const introMatch = text.match(/^(.*?OS Version.*?\))\s*/);
-    if (introMatch) {
-      formatted += introMatch[1] + "<br/>";
-      text = text.slice(introMatch[0].length);
-    }
-    const kvPairs = [...text.matchAll(pattern)];
-    kvPairs.forEach((m) => {
-      formatted += m[1].trim() + "<br/>";
-    });
-    return `<div class="formatted-card">${formatted.trim()}</div>`;
-  }
-  const cleanedText = text.replace(/:,\s*$/, ":").trim();
-  return cleanedText;
-};
 
+  // Detect "server config" or log-style messages by number of colons
+  const isServerConfig = (text.match(/:/g) || []).length > 2;
+  if (isServerConfig) {
+    // Split on newlines and wrap each line in a div for clarity
+    const lines = text.split('\n').map(line => `<div>${line.trim()}</div>`);
+    return `<div class="formatted-card">${lines.join('')}</div>`;
+  }
+
+  // Default: Replace all newlines with <br/> so nothing is lost
+  return text.replace(/\n/g, "<br/>");
+};
 const formatFormDataToSentence = (formData, originalFields, formType = null) => {
   if (!formData || Object.keys(formData).length === 0) {
     return "No form data provided";
