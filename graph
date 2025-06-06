@@ -1,3 +1,281 @@
+    "MonthlyDetails": [
+        {
+            "Far_Id": 221176,
+            "Subject": "Temporary communication from SBICAPS DR to EIS PR/DR"
+        },
+        {
+            "Far_Id": 264546,
+            "Subject": "Permanent FAR between EIS ST/UAT Server to DCMS UAT servers for Migration of DCMS Services to EIS"
+        },
+        {
+            "Far_Id": 283105,
+            "Subject": "UAT connectivity between EIS and OPL for the project Jan Suraskha Part 2"
+        },
+        {
+            "Far_Id": 283271,
+            "Subject": "Permanent FAR for communication EIS NEW UAT DPG DMZ severs To Digi Locker"
+        },
+        {
+            "Far_Id": 285784,
+            "Subject": "Permanent FAR from EIS NON prod servers to RLMS"
+        },
+        {
+            "Far_Id": 285787,
+            "Subject": "Permanent FAR from EIS NON-PROD servers to  Trade Finance"
+        },
+        {
+            "Far_Id": 285794,
+            "Subject": "Permanent FAR from EIS NON-PROD servers to IFAMS"
+        },
+        {
+            "Far_Id": 285823,
+            "Subject": "Permanent FAR from EIS NON-PROD servers to IT PSG"
+        },
+        {
+            "Far_Id": 285825,
+            "Subject": "Permanent FAR from EIS NON-PROD servers to CPPC, SP3"
+        },
+        {
+            "Far_Id": 285827,
+            "Subject": "Permanent FAR from EIS NON-PROD servers to  IT TSS"
+        },
+        {
+            "Far_Id": 285882,
+            "Subject": "FAR from EIS Non-Prod servers to SME/LLMS,SME/EMUDRA (EGSS),SME/BRE UAT,SME/CLP UAT"
+        },
+        {
+            "Far_Id": 285913,
+            "Subject": "Permanent FAR communication from EIS new UAT to  Agri Tech/LOS UAT"
+        },
+        {
+            "Far_Id": 286547,
+            "Subject": "Recertify Change Request #221176 (Temporary communication from SBICAPS DR to EIS PR/DR)"
+        },
+        {
+            "Far_Id": 289241,
+            "Subject": "Permanent FAR from New UAT to NPCI   for Aadhar Seeding Deseeding"
+        },
+        {
+            "Far_Id": 289381,
+            "Subject": "Temporary FAR for communication EIS UAT to Mobile banking UAT for UPI blocking service for contact centre IVR"
+        },
+        {
+            "Far_Id": 289794,
+            "Subject": "Permeant FAR from EIS NEW UAT TO CB Tech Ops image D"
+        },
+        {
+            "Far_Id": 289797,
+            "Subject": "Permanent FAR from EIS NEW UAT TO PERFIOS UAT"
+        },
+        {
+            "Far_Id": 289921,
+            "Subject": "Permanent FAR from EIS UAT new servers to AMLOCKESS"
+        },
+        {
+            "Far_Id": 290113,
+            "Subject": "Temporary FAR from EIS NEW UAT TO YONO UAT"
+        },
+        {
+            "Far_Id": 290286,
+            "Subject": "Temporary FAR FROM EIS NEW UAT TO IT-ATM UAT"
+        },
+        {
+            "Far_Id": 290778,
+            "Subject": "Permanent FAR from EIS NON-PROD servers to VPS"
+        },
+        {
+            "Far_Id": 290780,
+            "Subject": "Temporary FAR from EIS NON-PROD servers to VPS"
+        },
+        {
+            "Far_Id": 290815,
+            "Subject": "Temporary communication From  EIS NEW UAT TO PCMS"
+        },
+        {
+            "Far_Id": 291230,
+            "Subject": "Permanent FAR for SBI DMZ Source to Destination Entity (SBI Life) communication"
+        },
+        {
+            "Far_Id": 291525,
+            "Subject": "Temporary FAR FROM EIS NEW UAT to DIGILOCKER UAT, JANSAMARTH UAT, EDISHA UAT"
+        },
+        {
+            "Far_Id": 291725,
+            "Subject": "Temporary  FAR for communication EIS NEW UAT DPG DMZ severs To PAN"
+        },
+        {
+            "Far_Id": 291996,
+            "Subject": "Temporary FAR FROM EIS NEW UAT TO EXTERNAL PARTY"
+        },
+        {
+            "Far_Id": 316388,
+            "Subject": "Temporary EIS non-prod to IT-PRM UAT (For API development) Far"
+        },
+        {
+            "Far_Id": 316563,
+            "Subject": "Recertify Change Request #288828 (Permanent FAR From EIS UAT Sys servers to GBSS UAT and ST Servers)"
+        },
+        {
+            "Far_Id": 332822,
+            "Subject": "Permanent Communication between EIS Prod and IMPS Prod"
+        },
+        {
+            "Far_Id": 333363,
+            "Subject": "Permanent communication FAR from EIS DMZ DPG PR and DR to DM2025028638 PMVLP(CANARA BANK VLP) and  RAAS integration"
+        },
+        {
+            "Far_Id": 344311,
+            "Subject": "Recertify Change Request #289241 (Permanent FAR from New UAT to NPCI   for Aadhar Seeding Deseeding)"
+        },
+        {
+            "Far_Id": 344459,
+            "Subject": "Recertify Change Request #285827 (Permanent FAR from EIS NON-PROD servers to  IT TSS)"
+        },
+        {
+            "Far_Id": 344460,
+            "Subject": "Recertify Change Request #285882 (FAR from EIS Non-Prod servers to SME/LLMS,SME/EMUDRA (EGSS),SME/BRE UAT,SME/CLP UAT)"
+        },
+        {
+            "Far_Id": 344466,
+            "Subject": "Recertify Change Request #285913 (Permanent FAR communication from EIS new UAT to  Agri Tech/LOS UAT)"
+        },
+        {
+            "Far_Id": 344471,
+            "Subject": "Recertify Change Request #289794 (Permeant FAR from EIS NEW UAT TO CB Tech Ops image D)"
+        },
+        {
+            "Far_Id": 344472,
+            "Subject": "Recertify Change Request #289921 (Permanent FAR from EIS UAT new servers to AMLOCKESS)"
+        },
+        {
+            "Far_Id": 344474,
+            "Subject": "Recertify Change Request #333363 (Permanent communication FAR from EIS DMZ DPG PR and DR to DM2025028638 PMVLP(CANARA BANK VLP) and  RAAS integration)"
+        },
+        {
+            "Far_Id": 344476,
+            "Subject": "Recertify Change Request #285784 (Permanent FAR from EIS NON prod servers to RLMS)"
+        },
+        {
+            "Far_Id": 344477,
+            "Subject": "Recertify Change Request #285787 (Permanent FAR from EIS NON-PROD servers to  Trade Finance)"
+        },
+        {
+            "Far_Id": 344478,
+            "Subject": "Recertify Change Request #285794 (Permanent FAR from EIS NON-PROD servers to IFAMS)"
+        },
+        {
+            "Far_Id": 344480,
+            "Subject": "Recertify Change Request #285823 (Permanent FAR from EIS NON-PROD servers to IT PSG)"
+        },
+        {
+            "Far_Id": 344481,
+            "Subject": "Recertify Change Request #285825 (Permanent FAR from EIS NON-PROD servers to CPPC, SP3)"
+        },
+        {
+            "Far_Id": 344483,
+            "Subject": "Recertify Change Request #289797 (Permanent FAR from EIS NEW UAT TO PERFIOS UAT)"
+        },
+        {
+            "Far_Id": 344484,
+            "Subject": "Recertify Change Request #290113 (Temporary FAR from EIS NEW UAT TO YONO UAT)"
+        },
+        {
+            "Far_Id": 344486,
+            "Subject": "Recertify Change Request #290286 (Temporary FAR FROM EIS NEW UAT TO IT-ATM UAT)"
+        },
+        {
+            "Far_Id": 344488,
+            "Subject": "Recertify Change Request #290780 (Temporary FAR from EIS NON-PROD servers to VPS)"
+        },
+        {
+            "Far_Id": 344489,
+            "Subject": "Recertify Change Request #290815 (Temporary communication From  EIS NEW UAT TO PCMS)"
+        },
+        {
+            "Far_Id": 344490,
+            "Subject": "Recertify Change Request #291525 (Temporary FAR FROM EIS NEW UAT to DIGILOCKER UAT, JANSAMARTH UAT, EDISHA UAT)"
+        },
+        {
+            "Far_Id": 344492,
+            "Subject": "Recertify Change Request #291996 (Temporary FAR FROM EIS NEW UAT TO EXTERNAL PARTY)"
+        },
+        {
+            "Far_Id": 344494,
+            "Subject": "Recertify Change Request #316388 (Temporary EIS non-prod to IT-PRM UAT (For API development) Far)"
+        },
+        {
+            "Far_Id": 344497,
+            "Subject": "Recertify Change Request #289381 (Temporary FAR for communication EIS UAT to Mobile banking UAT for UPI blocking service for contact centre IVR)"
+        },
+        {
+            "Far_Id": 344519,
+            "Subject": "Recertify Change Request #291725 (Temporary  FAR for communication EIS NEW UAT DPG DMZ severs To PAN)"
+        },
+        {
+            "Far_Id": 344532,
+            "Subject": "Temporary FAR for Integration with IT-TSS for fetching MFX Journal Number"
+        },
+        {
+            "Far_Id": 344570,
+            "Subject": "Permanent FAR for  DM2024116897- CDM-GRC Communication through EIS, Integration between EIS and GRX"
+        },
+        {
+            "Far_Id": 344608,
+            "Subject": "Temporary FAR from EIS  UAT servers  to CB Tech Ops and CB Dev for  Image migration to new Server"
+        },
+        {
+            "Far_Id": 344609,
+            "Subject": "Recertify Change Request #283271 (Permanent FAR for communication EIS NEW UAT DPG DMZ severs To Digi Locker)"
+        },
+        {
+            "Far_Id": 344610,
+            "Subject": "Recertify Change Request #264546 (Permanent FAR between EIS ST/UAT Server to DCMS UAT servers for Migration of DCMS Services to EIS)"
+        },
+        {
+            "Far_Id": 344686,
+            "Subject": "FAR for EIS UAT DMZ to connect with Jan Suraksha pre-prod setup"
+        },
+        {
+            "Far_Id": 345172,
+            "Subject": "Temporary FAR Access from SBI InnoHub to EIS PROD DR DMZ LB"
+        },
+        {
+            "Far_Id": 345292,
+            "Subject": "Temporary Communication between EIS UAT Servers and IT SP-1 Servers for Easy Collect Application"
+        },
+        {
+            "Far_Id": 346521,
+            "Subject": "Temporary FAR from EIS UAT to SP2 AMLOCK OTSS Application in UAT"
+        },
+        {
+            "Far_Id": 346690,
+            "Subject": "Temporary FAR from EIS UAT to SP2 UAT for Cash less card deposit API"
+        },
+        {
+            "Far_Id": 347286,
+            "Subject": "Recertify Change Request #332822 (Permanent Communication between EIS Prod and IMPS Prod)"
+        },
+        {
+            "Far_Id": 347592,
+            "Subject": "Temporary FAR from EIS UAT TO CINB UAT FOR MCXCCL API"
+        },
+        {
+            "Far_Id": 347785,
+            "Subject": "Recertify Change Request #291230 (Permanent FAR for SBI DMZ Source to Destination Entity (SBI Life) communication)"
+        },
+        {
+            "Far_Id": 347799,
+            "Subject": "Recertify Change Request #283105 (UAT connectivity between EIS and OPL for the project Jan Suraskha Part 2)"
+        },
+        {
+            "Far_Id": 347800,
+            "Subject": "Recertify Change Request #290778 (Permanent FAR from EIS NON-PROD servers to VPS)"
+        }
+    ]
+}
+
+
+
 import '../styles/graph.css';
 
 import {
