@@ -13,9 +13,9 @@ const formatDynamicMessage = (text) => {
   // Case 1: HTML-formatted messages with <b> tags
   if (text.includes("<b>")) {
     // NEW CASE: Handle messages with <b>Field</b>: Value pattern on separate lines
-    const hasHeaderAndFields = text.includes("Here is the information for") && 
-                               text.includes("<b>Name</b>:") && 
-                               text.includes("<b>Email</b>:");
+    const hasHeaderAndFields = text.includes("Here is the information for") &&
+      text.includes("<b>Name</b>:") &&
+      text.includes("<b>Email</b>:");
 
     if (hasHeaderAndFields) {
       const lines = text.split('\n').filter(line => line.trim());
@@ -129,16 +129,16 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
 const hasFormFields = (response) => {
   if (!response || !response.message) return false;
   return typeof response.message === 'object' &&
-         !Array.isArray(response.message) &&
-         Object.keys(response.message).length > 0;
+    !Array.isArray(response.message) &&
+    Object.keys(response.message).length > 0;
 };
 
 // Utility: Determine field type for forms
 const determineFieldType = (fieldName, fieldValue) => {
   const lowerName = fieldName.toLowerCase();
   if (
-    lowerName.includes('date') || 
-    lowerName.includes('expiry') || 
+    lowerName.includes('date') ||
+    lowerName.includes('expiry') ||
     lowerName.includes('created') ||
     lowerName.includes('expire') ||
     lowerName.includes('start') ||
@@ -188,6 +188,18 @@ const extractFormFields = (response) => {
   });
 };
 
+// Utility: Remove empty fields before sending
+const filterNonEmptyFields = (obj) =>
+  Object.fromEntries(
+    Object.entries(obj).filter(
+      ([, value]) =>
+        value !== null &&
+        value !== undefined &&
+        !(typeof value === "string" && value.trim() === "") &&
+        !(Array.isArray(value) && value.length === 0)
+    )
+  );
+
 // --- DynamicForm Subcomponent ---
 const DynamicForm = ({
   fields,
@@ -209,10 +221,10 @@ const DynamicForm = ({
     setFormData(initialData);
   }, [fields]);
 
-  // handleInputChange and cascading logic
-  const handleInputChange = async (name, value) => {
+  const handleInputChange = (name, value) => {
     const updated = { ...formData, [name]: value };
 
+    // Cascading logic for workload
     if (formType === "workload") {
       if (name === "service") {
         updated.layer = "";
@@ -228,8 +240,28 @@ const DynamicForm = ({
 
     setFormData(updated);
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+  };
 
-    if (onFieldChange) await onFieldChange(updated, name);
+  // Only send "service" to backend on blur
+  const handleBlur = async (name) => {
+    if (formType === "workload" && name === "service" && onFieldChange) {
+      // Only send non-empty value
+      const filtered = filterNonEmptyFields({ service: formData["service"] });
+      if (Object.keys(filtered).length > 0) {
+        await onFieldChange(filtered, "service");
+      }
+    }
+  };
+
+  // For select fields, send chosen value immediately to backend
+  const handleSelectChange = async (name, value) => {
+    handleInputChange(name, value);
+    if (onFieldChange) {
+      const filtered = filterNonEmptyFields({ [name]: value });
+      if (Object.keys(filtered).length > 0) {
+        await onFieldChange(filtered, name);
+      }
+    }
   };
 
   const handleSubmit = async e => {
@@ -265,7 +297,7 @@ const DynamicForm = ({
             <label className="form-label">{label}</label>
             <select
               value={value}
-              onChange={e => handleInputChange(name, e.target.value)}
+              onChange={e => handleSelectChange(name, e.target.value)}
               className={`form-select${error ? " error" : ""}`}
               disabled={isSubmitting || isSubmittingFromParent || options.length === 0}
             >
@@ -316,6 +348,7 @@ const DynamicForm = ({
               type="text"
               value={value}
               onChange={e => handleInputChange(name, e.target.value)}
+              onBlur={() => handleBlur(name)}
               placeholder={placeholder || ""}
               className={`form-input${error ? " error" : ""}`}
               disabled={isSubmitting || isSubmittingFromParent}
@@ -457,7 +490,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setFormDisabled(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => { });
       const res = await postMessage(newMessage);
       clearCurrentTimeout();
 
@@ -510,7 +543,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => { });
       const res = await postMessage(cleanedOpt);
       clearCurrentTimeout();
 
@@ -543,9 +576,15 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const handleFieldChange = async (fieldData, changedFieldName) => {
     try {
       setIsTyping(true);
-      setApiTimeout(() => {});
+      setApiTimeout(() => { });
 
-      const payload = { message: fieldData };
+      const filteredData = filterNonEmptyFields(fieldData);
+      if (Object.keys(filteredData).length === 0) {
+        setIsTyping(false);
+        return;
+      }
+
+      const payload = { message: filteredData };
       const res = await postMessage(payload);
       clearCurrentTimeout();
 
@@ -568,18 +607,8 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setActiveForm(null);
     setCurrentFormType(null);
 
-    let completeFormData = {};
-    Object.entries(formData).forEach(([key, value]) => {
-      const hasValue = value !== null && 
-                      value !== undefined && 
-                      value !== '' && 
-                      !(Array.isArray(value) && value.length === 0) &&
-                      (typeof value === 'string' ? value.trim() !== '' : true);
-
-      if (hasValue) {
-        completeFormData[key] = value;
-      }
-    });
+    // Only send non-empty fields
+    const completeFormData = filterNonEmptyFields(formData);
 
     const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
 
@@ -595,7 +624,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setFormDisabled(true);
 
     try {
-      setApiTimeout(() => {});
+      setApiTimeout(() => { });
       const payload = { message: completeFormData };
       const res = await postMessage(payload);
       clearCurrentTimeout();
