@@ -1,32 +1,4 @@
-GraphCarousel.jsx:677 Uncaught TypeError: _.map is not a function
-    at FS (GraphCarousel.jsx:677:37)
-
-
-{
-    "MonthlyDetails": [
-        {
-            "Far_Id": 333692,
-            "Subject": "Permanent FAR from - DM2024094995 - End to end digital account opening with Mashreq Bank UAE and SBI Integration Between EIS & SF"
-        },
-        {
-            "Far_Id": 334052,
-            "Subject": "FAR for New Demand DM2023121290 from UAT to Data Warehouse"
-        },
-        {
-            "Far_Id": 334131,
-            "Subject": "FAR for EIS Yono2.0 Monitoring"
-        },
-        {
-            "Far_Id": 335877,
-            "Subject": "Temporary FAR from EIS Non Prod to IT-RLMS for conversion of physical register to E registers-CPC"
-        },
-        {
-            "Far_Id": 336605,
-            "Subject": "Temporary Far from EIS Nonprod(UAT) servers to SP-III \u00a0(workflow Web servers)"
-        }
-    ]
-}
-import '../styles/graph.css';
+import '../styles/GraphCarousel.css';
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -49,7 +21,7 @@ import {
   postServiceWiseSys5,
   getFARExpires,
   getFARDetailsSpecific
-} from "../api/postNewApi"; // adjust import if needed
+} from "../api/PostApi"; // adjust import if needed
 
 import { useState, useEffect, useRef } from "react";
 
@@ -133,7 +105,7 @@ const GraphCarousel = () => {
     setShowFarDetails(true);
     try {
       const response = await getFARDetailsSpecific(data.name);
-      setFarDetails(response.data || []);
+      setFarDetails((response.data && response.data.MonthlyDetails) || []);
     } catch (err) {
       setFarDetails([]);
     } finally {
@@ -693,26 +665,27 @@ const GraphCarousel = () => {
                     <table>
                       <thead>
                         <tr>
-                          <th>IP</th>
-                          <th>Port</th>
-                          <th>Service</th>
-                          <th>Expiry Date</th>
+                          <th>FAR ID</th>
+                          <th>Subject</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {farDetails.map((detail, index) => (
-                          <tr key={index}>
-                            <td>{detail.ip || 'N/A'}</td>
-                            <td>{detail.port || 'N/A'}</td>
-                            <td>{detail.service || 'N/A'}</td>
-                            <td>{detail.expiry_date || 'N/A'}</td>
+                        {Array.isArray(farDetails) && farDetails.length > 0 ? (
+                          farDetails.map((detail, index) => (
+                            <tr key={index}>
+                              <td>{detail.Far_Id || 'N/A'}</td>
+                              <td>{detail.Subject || 'N/A'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={2} style={{ textAlign: 'center' }}>
+                              No FAR details available for this month
+                            </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                     </table>
-                    {farDetails.length === 0 && (
-                      <div className="no-data">No FAR details available for this month</div>
-                    )}
                   </div>
                 )}
               </div>
