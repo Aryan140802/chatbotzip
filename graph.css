@@ -1,3 +1,499 @@
+.carousel-container {
+ /* background:rgba(20,20,40,0.6);*/
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  margin: 0.3rem auto;
+  width: 110%;
+  max-width: 1000px;
+  color: var(--text-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: background 0.3s ease, color 0.3s ease;
+  height: 716px;
+}
+
+/* Glass-style active chart background */
+.chart-fade.active {
+  border-radius: 12px;
+  transition: all 0.3s ease-in-out;
+  opacity: 1;
+  transform: translateX(0);
+  position: relative;
+}
+
+.chart-fade {
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+/* Header */
+.carousel-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+
+.carousel-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.carousel-header h2 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: #fff;
+  text-align: center;
+  flex: 1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Carousel navigation */
+.carousel-buttons {
+  position: absolute;
+  top: 50%;
+  height: 30px;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.carousel-buttons.left {
+  left: 10px;
+}
+
+.carousel-buttons.right {
+  right: 10px;
+}
+
+.carousel-buttons button {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 12px 18px;
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.carousel-buttons button:hover {
+  background: var(--secondary-color);
+  color: rgb(0, 0, 0);
+}
+
+.carousel-buttons.left,
+.carousel-buttons.right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Graph container */
+.carousel-graph {
+  margin-top: 19px;
+  width:97%;
+  height: 639px;
+}
+
+/* Dots (slide indicators) */
+.carousel-dots {
+  text-align: center;
+  margin-top: 2px;
+  position: relative;
+}
+
+.dot {
+  position: relative;
+  height: 12px;
+  width: 12px;
+  margin: 0 6px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: inline-block;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  opacity: 0.6;
+  border: 2px solid #f285c1;
+  box-shadow: 0 0 6px #f285c1;
+}
+
+.dot.active {
+  background-color: #f285c1;
+  transform: scale(1.2);
+  opacity: 1;
+}
+
+.dot.paused {
+  opacity: 1;
+}
+
+/* Responsive adjustments */
+@media only screen and (max-height: 800px) {
+  .carousel-container {
+    width: 75%;
+    height: 350px;
+  }
+
+  .carousel-graph {
+    margin-top: 20px;
+    height: 260px;
+  }
+}
+
+/* Download button styles */
+.download-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease;
+  margin-bottom: 0.2rem;
+}
+
+.download-button:hover {
+  transform: scale(1.15);
+}
+
+.logo {
+  filter: invert(1);
+  transition: transform 0.3s ease;
+  display: block;
+  z-index: 2;
+  position: relative;
+}
+
+.logo-wrapper {
+  position: relative;
+  display: inline-block;
+  overflow: visible;
+}
+
+/* Ripple animation */
+.logo-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 45%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.772);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.logo-wrapper:hover::after {
+  animation: water-drop 0.6s ease-out;
+}
+
+@keyframes water-drop {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    width: 100px;
+    height: 100px;
+    opacity: 0;
+  }
+}
+
+
+
+.custom-bar:hover {
+  transform: scale(1.05);
+  transform-origin: center;
+  filter: drop-shadow(0 0 8px #f285c1);
+}
+
+
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  background-color: #1f1c1c;
+  color: #f7f7f7;
+  border: 1px solid #f285c1;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 120px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #1f1c1c;
+  border: 1px solid #f285c1;
+  border-radius: 4px;
+  width: 100%;
+  margin-top: 5px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.dropdown-menu.show {
+  max-height: 300px;
+  opacity: 1;
+  overflow-y: auto;
+}
+
+.dropdown-menu li {
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  list-style-type: none;
+}
+
+.dropdown-menu li:hover {
+  background-color: #3e2a4b;
+}
+
+.dropdown-menu li.selected {
+  background-color: #4e3a5b;
+  font-weight: bold;
+}
+
+.calendar-container {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 20;
+  background-color: #2e1a3b;
+  border: 1px solid #f285c1;
+  border-radius: 4px;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.calendar-header {
+  grid-column: span 7;
+  text-align: center;
+  margin-bottom: 10px;
+  color: #f7f7f7;
+  font-weight: bold;
+}
+
+.calendar-day {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  color: #f7f7f7;
+}
+
+.calendar-day:hover:not(.disabled) {
+  background-color: #f285c166;
+}
+
+.calendar-day.selected {
+  background-color: #f285c1;
+  color: #2e1a3b;
+  font-weight: bold;
+}
+
+.calendar-day.disabled {
+  color: #6c6c6c;
+  cursor: not-allowed;
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  color: #f285c1;
+  padding: 5px 0;
+  grid-column: span 1;
+}
+
+/* Loading spinners and overlays */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  width: 100%;
+  color: #f7f7f7;
+  font-size: 1.2rem;
+  background-color: rgba(46, 26, 59, 0.8);
+  border-radius: 8px;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(46, 26, 59, 0.8);
+  color: #f7f7f7;
+  font-size: 1.2rem;
+  z-index: 10;
+  border-radius: 8px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(242, 133, 193, 0.3);
+  border-radius: 50%;
+  border-top-color: #f285c1;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Improved transitions for chart changes */
+.chart-fade {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.chart-fade.active {
+  opacity: 1;
+}
+
+/* Better interactive states for buttons and controls */
+.dropdown-toggle:hover {
+  background-color: #8e2b90;
+}
+
+.dropdown-toggle:active {
+  background-color: #7a2580;
+}
+
+.download-button {
+  transition: all 0.2s ease;
+}
+
+.download-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.download-button:active {
+  transform: translateY(0);
+}
+
+.download-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Better visualization of the carousel's active state */
+.dot {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.dot.active {
+  transform: scale(1.3);
+  box-shadow: 0 0 8px #f285c1;
+}
+
+.dot.active::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background-color: #f285c1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Pause animation when user interacts with carousel */
+@keyframes pause {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.dot.paused.active::after {
+  animation: none;
+}
+
+/* Improved calendar styling */
+.calendar-container {
+  border: 1px solid #f285c1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-day {
+  transition: all 0.2s ease;
+}
+
+.calendar-day:not(.disabled):hover {
+  background-color: #f285c155;
+  color: white;
+  transform: scale(1.1);
+}
+
+.calendar-day.selected {
+  background-color: #f285c1;
+  color: #2e1a3b;
+  font-weight: bold;
+}
+
 /* FAR Details Modal */
 .far-details-modal {
   position: fixed;
