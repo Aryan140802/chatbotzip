@@ -1,3 +1,5 @@
+  "message": " Memory Utilisation: None %  CPU Utilisation: None % \n Note: Below Information is updated on 03:00:00 PM \n Information for 10.188.24.100 \n This is PR LINUX  Server with OS Version 9.5(Plow) \n fileSystem :Below Threshold \n UPTime : 1 day 7 hours 8 minutes \n RAM: 64 \n CPU core:8 \n Kernal Version : 5.14.0-503.40.1.el9_5.x86_64\n ACE Version : 12.0.12.0 \n MQ Version :  \n FIREWALL : inactive \n DSAgent : DSrunning \n SPLUNK : SPLnotrunning \n RAgent : undefined \n eisuser Expiry :  Aug 09 2025\n root Expiry:  Aug 13 2025\n addmitam Expiry:  May 19 2026 ",
+
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
