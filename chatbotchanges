@@ -63,7 +63,6 @@ const formatDynamicMessage = (text) => {
   if (isServerConfig) {
     const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
     let formatted = "";
-    let index = 0;
 
     const introMatch = text.match(/^(.*?OS Version.*?\))\s*/);
     if (introMatch) {
@@ -84,7 +83,6 @@ const formatDynamicMessage = (text) => {
   return cleanedText;
 };
 
-// Utility: Format form data to sentence for user display
 const formatFormDataToSentence = (formData, originalFields, formType = null) => {
   if (!formData || Object.keys(formData).length === 0) {
     return "No form data provided";
@@ -125,7 +123,6 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
   return sentences.length > 0 ? sentences.join(', ') : "No values provided";
 };
 
-// Utility: Check if a response has form fields
 const hasFormFields = (response) => {
   if (!response || !response.message) return false;
   return typeof response.message === 'object' &&
@@ -133,7 +130,6 @@ const hasFormFields = (response) => {
     Object.keys(response.message).length > 0;
 };
 
-// Utility: Determine field type for forms
 const determineFieldType = (fieldName, fieldValue) => {
   const lowerName = fieldName.toLowerCase();
   if (
@@ -156,7 +152,6 @@ const determineFieldType = (fieldName, fieldValue) => {
   return 'text';
 };
 
-// Utility: Determine form type
 const determineFormType = (fields) => {
   const hasServiceField = fields.some(field => field.name.toLowerCase().includes('service'));
   const hasExpiryOrCreatedField = fields.some(field => field.name.toLowerCase().includes('expiry') || field.name.toLowerCase().includes('created'));
@@ -165,7 +160,6 @@ const determineFormType = (fields) => {
   return 'default';
 };
 
-// Utility: Extract form fields from server response (for Chatbot use)
 const extractFormFields = (response) => {
   if (!hasFormFields(response)) return null;
   return Object.entries(response.message).map(([name, value]) => {
@@ -221,10 +215,8 @@ const DynamicForm = ({
     setFormData(initialData);
   }, [fields]);
 
-  const handleInputChange = (name, value) => {
-    const updated = { ...formData, [name]: value };
-
-    // Cascading logic for workload
+  // Used in both input and select
+  const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
       if (name === "service") {
         updated.layer = "";
@@ -237,30 +229,32 @@ const DynamicForm = ({
         updated.eg = "";
       }
     }
+    return updated;
+  };
 
+  const handleInputChange = (name, value) => {
+    let updated = { ...formData, [name]: value };
+    updated = applyCascadingLogic(updated, name);
     setFormData(updated);
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
-  // Only send "service" to backend on blur
+  // Always send all non-empty fields on blur (for service)
   const handleBlur = async (name) => {
-    if (formType === "workload" && name === "service" && onFieldChange) {
-      // Only send non-empty value
-      const filtered = filterNonEmptyFields({ service: formData["service"] });
-      if (Object.keys(filtered).length > 0) {
-        await onFieldChange(filtered, "service");
-      }
+    if (onFieldChange) {
+      const filtered = filterNonEmptyFields(formData);
+      await onFieldChange(filtered, name);
     }
   };
 
-  // For select fields, send chosen value immediately to backend
+  // Always send all non-empty fields on select change
   const handleSelectChange = async (name, value) => {
-    handleInputChange(name, value);
+    let updated = { ...formData, [name]: value };
+    updated = applyCascadingLogic(updated, name);
+    setFormData(updated);
     if (onFieldChange) {
-      const filtered = filterNonEmptyFields({ [name]: value });
-      if (Object.keys(filtered).length > 0) {
-        await onFieldChange(filtered, name);
-      }
+      const filtered = filterNonEmptyFields(updated);
+      await onFieldChange(filtered, name);
     }
   };
 
