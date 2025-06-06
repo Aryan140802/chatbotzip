@@ -1,19 +1,75 @@
-useEffect(() => {
-  const convertToCSV = (jsonData, sortBy = 'usage') => {
-    if (!jsonData || !jsonData.length) return '';
+import React, { useState, useEffect } from 'react';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer';
+import Menu from './components/Menu';
+import Dashboard from './components/Dashboard';
+import Chatbot from './components/ChatBot';
+import Login from './components/Login';
+import './App.css';
 
-    // Sort data in descending order
-    const sortedData = [...jsonData].sort((a, b) => b[sortBy] - a[sortBy]);
+function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [chatbotMinimized, setChatbotMinimized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [username, setUsername] = useState('');
 
-    const headers = Object.keys(sortedData[0]);
-    const csvRows = [
-      headers.join(','), // header row
-      ...sortedData.map(row => headers.map(field => `"${row[field]}"`).join(','))
-    ];
+  // Check for existing login session on app load
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setUsername(storedUsername);
+      setIsLoggedIn(true);
+    }
+  }, []);
 
-    return csvRows.join('\n');
+  const handleLogin = (user) => {
+    setUsername(user);
+    setIsLoggedIn(true);
+    localStorage.setItem('username', user);
   };
 
-  const csv = convertToCSV(data, 'usage'); // change 'usage' to 'apiCalls' if needed
-  console.log(csv);
-}, []);
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername('');
+    localStorage.removeItem('username');
+  };
+
+  useEffect(() => {
+    const clearCache = () => {
+      if ('caches' in window) {
+        caches.keys().then((names) => {
+          for (let name of names) {
+            caches.delete(name);
+          }
+        });
+      }
+    };
+    clearCache();
+  }, []);
+
+  if (!isLoggedIn) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return (
+    <div>
+      <Header darkMode={darkMode} setDarkMode={setDarkMode}
+        username={username}
+        onLogout={handleLogout}
+      />
+      {!chatbotMinimized && <div className="app-background" />}
+      <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
+        <Menu
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
+        <Dashboard isSidebarOpen={isSidebarOpen} />
+        <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
