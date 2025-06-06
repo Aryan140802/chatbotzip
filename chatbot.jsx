@@ -160,7 +160,6 @@ const extractFormFields = (response, currentValues = {}) => {
     const isService = name === 'service';
     let displayLabel = name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, ' ');
     displayLabel = isService ? `* ${displayLabel}` : displayLabel;
-    // This ensures for new fields (like "server") we use backend value if present, else "".
     return {
       name,
       label: displayLabel,
@@ -187,7 +186,6 @@ const DynamicForm = ({
   onFieldChange,
   isSubmittingFromParent,
 }) => {
-  // Definitions (with options) and values separated
   const [fieldDefs, setFieldDefs] = useState(fields);
   const [formData, setFormData] = useState(() =>
     Object.fromEntries(fields.map(f => [f.name, f.value || ""]))
@@ -195,16 +193,21 @@ const DynamicForm = ({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // On backend update: always merge all backend fields in, preserving user's values where possible
+  // --- ROBUST MERGING LOGIC FIX ---
   useEffect(() => {
     setFieldDefs(fields);
     setFormData(current => {
       const merged = {};
       fields.forEach(f => {
-        if (typeof f.value !== "undefined" && f.value !== null) {
-          merged[f.name] = f.value;
-        } else if (typeof current[f.name] !== "undefined") {
+        // Always prefer user input (current), unless backend gives a new, non-empty value
+        if (
+          typeof current[f.name] !== "undefined" &&
+          current[f.name] !== "" &&
+          (typeof f.value === "undefined" || f.value === null || f.value === "")
+        ) {
           merged[f.name] = current[f.name];
+        } else if (typeof f.value !== "undefined" && f.value !== null) {
+          merged[f.name] = f.value;
         } else {
           merged[f.name] = "";
         }
@@ -268,7 +271,6 @@ const DynamicForm = ({
     setIsSubmitting(false);
   };
 
-  // Always render options from fieldDefs, value from formData
   const renderField = (field) => {
     const {
       name,
