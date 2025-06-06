@@ -200,16 +200,29 @@ useEffect(() => {
   }
 }, [activeForm, currentFormType]);
 
-  // Update handleInputChange in DynamicForm component
+ // Fixed handleInputChange function
 const handleInputChange = async (fieldName, value) => {
   const newFormData = {
     ...formData,
     [fieldName]: value
   };
   
+  // ✅ Update local state immediately
   setFormData(newFormData);
 
-  // Clear error for this field when user starts typing
+  // Clear dependent fields when parent field changes
+  if (fieldName === 'service') {
+    newFormData.layer = '';
+    newFormData.server = '';
+    newFormData.eg = '';
+  } else if (fieldName === 'layer') {
+    newFormData.server = '';
+    newFormData.eg = '';
+  } else if (fieldName === 'server') {
+    newFormData.eg = '';
+  }
+
+  // Clear error for this field
   if (errors[fieldName]) {
     setErrors(prev => ({
       ...prev,
@@ -217,44 +230,53 @@ const handleInputChange = async (fieldName, value) => {
     }));
   }
 
-  // For cascading forms (like workload), send all current field values to backend
+  // ✅ Trigger cascading update with cumulative data
   if (formType === 'workload' && value && value.trim() !== '') {
-    setIsSubmitting(true);
-    try {
-      // Send all current form data to get next field options
-      await onFieldChange(newFormData, fieldName);
-    } catch (error) {
-      console.error('Error sending field data:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleFieldChange(newFormData, fieldName);
   }
 };
 
-// Update handleFieldChange in Chatbot component
+// Fixed handleFieldChange function
 const handleFieldChange = async (fieldData, changedFieldName) => {
   try {
     setIsTyping(true);
-    setApiTimeout(() => {});
+    
+    // ✅ Consistent payload structure with all required info
+    const payload = {
+      message: fieldData,
+      form_type: currentFormType || "workload",
+      changed_field: changedFieldName,
+      action: "get_dependent_options"
+    };
 
-    const res = await postMessage({ message: fieldData });
-    clearCurrentTimeout();
-
+    const res = await postMessage(payload);
+    
+    // Backend should return updated field options
     const latest = res.data.chat_history?.slice(-1)[0];
     if (latest && hasFormFields(latest)) {
       const updatedFields = extractFormFields(latest);
       
-      // Preserve already selected values while updating options
+      // ✅ Preserve user selections while updating available options
       const mergedFields = updatedFields.map(newField => {
-        const existingField = currentFormFields.find(f => f.name === newField.name) || {};
+        const existingValue = fieldData[newField.name];
         return {
           ...newField,
-          value: existingField.value || newField.value
+          value: existingValue || newField.value || ''
         };
       });
 
+      // ✅ Update both form fields and current form data
       setActiveForm(mergedFields);
       setCurrentFormFields(mergedFields);
+      
+      // ✅ IMPORTANT: Update form data state with preserved values
+      const preservedData = {};
+      mergedFields.forEach(field => {
+        if (fieldData[field.name] !== undefined) {
+          preservedData[field.name] = fieldData[field.name];
+        }
+      });
+      setFormData(preservedData);
     }
   } catch (error) {
     console.error('Error updating form fields:', error);
@@ -262,6 +284,7 @@ const handleFieldChange = async (fieldData, changedFieldName) => {
     setIsTyping(false);
   }
 };
+
 
 // Update extractFormFields to handle option structures
 const extractFormFields = (response) => {
