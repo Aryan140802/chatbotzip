@@ -1,4 +1,4 @@
-import '../styles/graph.css';
+import '../styles/GraphCarousel.css';
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -21,7 +21,7 @@ import {
   postServiceWiseSys5,
   getFARExpires,
   getFARDetailsSpecific
-} from "../api/postNewApi"; // adjust import if needed
+} from "../api/PostApi"; // adjust import if needed
 
 import { useState, useEffect, useRef } from "react";
 
@@ -672,8 +672,8 @@ const GraphCarousel = () => {
                     <p>Loading FAR details...</p>
                   </div>
                 ) : (
-                  <div className="far-details-table">
-                    <input
+                        <div className="far-Search">
+                         <input
                       type="text"
                       placeholder="Search FAR ID or Subject"
                       value={farDetailsSearch}
@@ -686,6 +686,10 @@ const GraphCarousel = () => {
                         border: '1px solid #ccc'
                       }}
                     />
+
+                        </div>
+                  <div className="far-details-table">
+
                     <table>
                       <thead>
                         <tr>
