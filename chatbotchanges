@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import ProfileIcon from "./ProfileIcon";
 import TypingIndicator from "./TypingIndicator";
@@ -126,17 +127,17 @@ const determineFieldType = (fieldName, fieldValue) => {
 
 const determineFormType = (fields) => {
   const hasServiceField = fields.some(field => field.name.toLowerCase().includes('service'));
-  const hasExpiryOrCreatedField = fields.some(field => 
-    field.name.toLowerCase().includes('expiry') || 
+  const hasExpiryOrCreatedField = fields.some(field =>
+    field.name.toLowerCase().includes('expiry') ||
     field.name.toLowerCase().includes('created')
   );
-  
+
   // Check if this is a filter form
-  const isFilterForm = fields.some(field => 
-    field.name.toLowerCase().includes('filter') && 
+  const isFilterForm = fields.some(field =>
+    field.name.toLowerCase().includes('filter') &&
     Array.isArray(field.options)
   );
-  
+
   if (hasServiceField) return 'workload';
   if (isFilterForm) return 'filter';
   if (hasExpiryOrCreatedField) return 'multiple';
@@ -232,8 +233,8 @@ const DynamicForm = ({
       const newSelectedFilter = formData.filter.toLowerCase();
       if (newSelectedFilter !== selectedFilter) {
         setSelectedFilter(newSelectedFilter);
-        
-        setFieldDefs(prevFields => 
+
+        setFieldDefs(prevFields =>
           prevFields.map(field => {
             if (field.name.toLowerCase() === 'expires') {
               return {
@@ -286,17 +287,17 @@ const DynamicForm = ({
 
   const handleSelectChange = async (name, value) => {
     let updated = { ...formData, [name]: value };
-    
+
     if (formType === 'filter' && name.toLowerCase() === 'filter') {
       updated = applyCascadingLogic(updated, name);
       setSelectedFilter(value.toLowerCase());
     } else {
       updated = applyCascadingLogic(updated, name);
     }
-    
+
     setFormData(updated);
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
-    
+
     if (onFieldChange) {
       const filtered = filterNonEmptyFields(updated);
       await onFieldChange(filtered, name);
@@ -305,7 +306,7 @@ const DynamicForm = ({
 
   const handleSubmit = async e => {
     e.preventDefault();
-    
+
     const missing = fieldDefs.filter(f => {
       if (formType === 'filter' && selectedFilter) {
         if (selectedFilter.includes('filterexpired')) {
@@ -358,7 +359,7 @@ const DynamicForm = ({
     const error = errors[name];
     const isService = name === "service";
     const isRequiredField = field.required;
-    
+
     switch (type) {
       case "select":
         return (
@@ -832,7 +833,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
                           const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
                           const isPlainText =
                             displayText.includes("please select one by name") ||
-                            displayText.includes("please select from the following options");
+                             displayText.includes("please select from following options")||
+                            displayText === "DO YOU WANT MORE DETAILS?:" ||
+                            displayText === "do you want more details?" ||
+                            displayText === "do you want more details" ||
+                            displayText === "do you want more details?:" ;
 
                           if (isPlainText) {
                             return (
