@@ -18,9 +18,9 @@ import {
   postServiceWiseExp5,
   postServiceWiseSys5,
   getFARExpires,
-  getFARDetailsSpecific
+  getFARDetailsSpecific,
+  postGraphDownload // <-- Import here
 } from "../api/PostApi";
-import { postMessage } from "../api/PostApi"; // <-- ADD THIS LINE
 import { useState, useEffect, useRef } from "react";
 
 const formatHits = (value) => {
@@ -43,6 +43,37 @@ const ThreeDBar = (props) => {
       <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill="#00000033" />
     </g>
   );
+};
+
+// Maps chart index to API path
+function getDownloadPathForChart(index) {
+  switch (index) {
+    case 0: return "EISHome/servicewise_top5_FiveM/EXP/";
+    case 1: return "EISHome/servicewise_top5_FiveM/SYS/";
+    case 2: return "EISHome/ipwise_top5_FiveM/EXP/";
+    case 3: return "EISHome/ipwise_top5_FiveM/SYS/";
+    case 4: return "EISHome/portwise_top5_FiveM/EXP/";
+    case 5: return "EISHome/portwise_top5_FiveM/SYS/";
+    default: return null;
+  }
+}
+
+const downloadCSV = (data, filename = 'chart-data.csv') => {
+  if (!data || !data.length) return;
+  const keys = Object.keys(data[0]);
+  const csvContent = [
+    keys.join(','),
+    ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
+  ].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 const GraphCarousel = () => {
@@ -477,54 +508,6 @@ const GraphCarousel = () => {
     return days;
   };
 
-  // UPDATED: Add context and call postMessage({download: true, ...context})
-  const downloadCSV = (data, filename = 'chart-data.csv', context = {}) => {
-    if (!data || !data.length) return;
-
-    // Send download event payload
-    postMessage({ download: true, ...context });
-
-    const keys = Object.keys(data[0]);
-    const csvContent = [
-      keys.join(','),
-      ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
-    ].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const goToSlide = (index) => {
-    if (index < 0 || index >= charts.length) return;
-    setCurrentIndex(index);
-    if (charts.length > 0 && index >= 0 && index < charts.length) {
-      setCurrentDisplayTitle(charts[index].title);
-    }
-  };
-
-  const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-    setCalendarOpen(false);
-  };
-
-  useEffect(() => {
-    if (!dropdownOpen && !calendarOpen) return;
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
-        setDropdownOpen(false);
-        setCalendarOpen(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [dropdownOpen, calendarOpen]);
-
   if (!charts.length) return (
     <div className="loading-container">
       <div className="loading-spinner"></div>
@@ -553,7 +536,10 @@ const GraphCarousel = () => {
             <div className="dropdown" onClick={(e) => e.stopPropagation()}>
               <button
                 className="dropdown-toggle"
-                onClick={toggleDropdown}
+                onClick={() => {
+                  setDropdownOpen(!dropdownOpen);
+                  setCalendarOpen(false);
+                }}
               >
                 {selectedTimeLabel}
               </button>
@@ -591,13 +577,23 @@ const GraphCarousel = () => {
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={() =>
+            onClick={async () => {
               downloadCSV(
                 charts[currentIndex]?.rawData,
-                `${currentDisplayTitle}.csv`,
-                { chartTitle: charts[currentIndex]?.title, chartIndex: currentIndex }
-              )
-            }
+                `${currentDisplayTitle}.csv`
+              );
+              const path = getDownloadPathForChart(currentIndex);
+              if (path) {
+                try {
+                  await postGraphDownload({
+                    path,
+                    time: selectedTimeValue
+                  });
+                } catch (e) {
+                  console.error("Download logging failed", e);
+                }
+              }
+            }}
             disabled={isLoading || !charts[currentIndex]?.rawData}
           >
             <div className="logo-wrapper">
@@ -645,7 +641,7 @@ const GraphCarousel = () => {
           <span
             key={`dot-${index}`}
             className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
-            onClick={() => goToSlide(index)}
+            onClick={() => setCurrentIndex(index)}
           />
         ))}
 
@@ -674,13 +670,10 @@ const GraphCarousel = () => {
               <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
                 <button
                   className="download-button"
-                  onClick={() =>
-                    downloadCSV(
-                      filteredFarDetails,
-                      `FAR_Details_${selectedMonthData?.name}.csv`,
-                      { chartTitle: `FAR Details for ${selectedMonthData?.name}`, farMonth: selectedMonthData?.name }
-                    )
-                  }
+                  onClick={() => downloadCSV(
+                    filteredFarDetails,
+                    `FAR_Details_${selectedMonthData?.name}.csv`
+                  )}
                   disabled={isLoadingDetails || !filteredFarDetails.length}
                   title="Download FAR Details"
                 >
