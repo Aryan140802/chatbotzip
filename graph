@@ -22,8 +22,6 @@ import {
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
-
-
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -137,72 +135,6 @@ const GraphCarousel = () => {
     }
   };
 
-const handleChartDownload = async () => {
-  let apiFn;
-  let params = {};
-
-  // Use uid and password from the current session
-  // (Assume you have these available, e.g., from context, state, or props)
-
-  switch (currentIndex) {
-    case 0:
-      apiFn = postServiceWiseExp5;
-      break;
-    case 1:
-      apiFn = postServiceWiseSys5;
-      break;
-    case 2:
-      apiFn = postIpWiseExp5;
-      break;
-    case 3:
-      apiFn = postIpWiseSys5;
-      break;
-    case 4:
-      apiFn = postPortWiseExp5;
-      break;
-    case 5:
-      apiFn = postPortWiseSys5;
-      break;
-    case 6:
-      apiFn = getFARExpires;
-      break;
-    default:
-      return;
-  }
-
-  // All params are top-level, use 'time' key (except FAR Expiry)
-  params = {
-    password: password, // from session
-    uid: uid,           // from session
-    download: true
-  };
-  if (currentIndex !== 6) {
-    params.time = selectedTimeValue;
-  }
-
-  try {
-    const response = await apiFn(params);
-    const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-
-    let filename = currentDisplayTitle.replace(/\s+/g, '_') + '.csv';
-    const contentDisposition = response.headers['content-disposition'];
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="?([^"]+)"?/);
-      if (match) filename = match[1];
-    }
-
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    alert("Failed to download file. Please try again.");
-  }
-};
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
     const updatedCharts = charts.map((chart, index) => ({
@@ -652,10 +584,10 @@ const handleChartDownload = async () => {
         </h2>
         <div className="download-button-wrapper">
           <button
-  className="download-button"
-  onClick={handleChartDownload}
-  disabled={isLoading}
->
+            className="download-button"
+            onClick={() => downloadCSV(charts[currentIndex]?.rawData, `${currentDisplayTitle}.csv`)}
+            disabled={isLoading || !charts[currentIndex]?.rawData}
+          >
             <div className="logo-wrapper">
               <img
                 className="logo"
