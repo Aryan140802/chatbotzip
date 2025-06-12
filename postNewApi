@@ -41,7 +41,57 @@ export const getPost = () => {
   return api.get('EIS-GINI/', { timeout: 100000 });
 };
 
+export const getServiceSys = () => {
+  return api.get('EISHome/servicewise_sys/');
+};
 
+export const getServiceExp = () => {
+  return api.get('EISHome/servicewise_exp/');
+};
+
+export const getIpwiseSys = () => {
+  return api.get('EISHome/ipwise_sys/');
+};
+
+export const getIpwiseExp = () => {
+  return api.get('EISHome/ipwise_exp/');
+};
+
+export const getPortwiseSys = () => {
+  return api.get('EISHome/portwise_sys/');
+};
+
+export const getPortwiseExp = () => {
+  return api.get('EISHome/portwise_exp/');
+};
+
+export const getServiceWiseExp5 = () => {
+  return api.get('EISHome/servicewise_top5_exp/');
+};
+
+export const getServiceWiseSys5 = () => {
+  return api.get('EISHome/servicewise_top5_sys/');
+};
+
+export const getIpWiseExp5 = () => {
+  return api.get('EISHome/ipwise_exp_top5/');
+};
+
+export const getIpWiseSys5 = () => {
+  return api.get('EISHome/ipwise_sys_top5/');
+};
+
+export const getPortWiseExp5 = () => {
+  return api.get('EISHome/portwise_top5_exp/');
+};
+
+export const getPortWiseSys5 = () => {
+  return api.get('EISHome/portwise_top5_sys/');
+};
+
+export const getFARExpires = () => {
+  return api.get('EISHome/farExpiresNext5M/');
+};
 
 // NEW: Add the FAR details specific API function
 export const getFARDetailsSpecific = async (dataFilter) => {
