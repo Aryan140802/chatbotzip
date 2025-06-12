@@ -111,6 +111,27 @@ export const getFARDetailsSpecific = async (dataFilter) => {
   }
 };
 
+
+export const postGraphDownload = async ({ path, time }) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    // payload includes download: true
+    const payload = {
+      uid,
+      password,
+      time,
+      download: true
+    };
+    // POST to the dynamic path
+    const response = await api.post(path, payload);
+    return response;
+  } catch (error) {
+    console.error("Error in postGraphDownload:", error);
+    throw error;
+  }
+};
+
 // Time-based post functions remain unchanged
 export const postServiceWiseExp5 = async (time) => {
   try {
