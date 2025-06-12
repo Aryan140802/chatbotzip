@@ -23,71 +23,6 @@ import {
 import { useState, useEffect, useRef } from "react";
 
 
-const handleChartDownload = async () => {
-  let apiFn;
-  let params = {};
-
-  // Detect the current chart and set the correct API function and parameters
-  switch (currentIndex) {
-    case 0:
-      apiFn = postServiceWiseExp5;
-      params = { timeRange: selectedTimeValue, download: true };
-      break;
-    case 1:
-      apiFn = postServiceWiseSys5;
-      params = { timeRange: selectedTimeValue, download: true };
-      break;
-    case 2:
-      apiFn = postIpWiseExp5;
-      params = { timeRange: selectedTimeValue, download: true };
-      break;
-    case 3:
-      apiFn = postIpWiseSys5;
-      params = { timeRange: selectedTimeValue, download: true };
-      break;
-    case 4:
-      apiFn = postPortWiseExp5;
-      params = { timeRange: selectedTimeValue, download: true };
-      break;
-    case 5:
-      apiFn = postPortWiseSys5;
-      params = { timeRange: selectedTimeValue, download: true };
-      break;
-    case 6:
-      // For monthly FAR expiry, if a POST endpoint is available for download
-      apiFn = getFARExpires; // or a dedicated download endpoint if available
-      params = { download: true };
-      break;
-    default:
-      return;
-  }
-
-  try {
-    const response = await apiFn(params);
-    // If the backend returns a file blob (CSV, Excel, etc.)
-    const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-
-    // Derive a filename according to chart
-    let filename = currentDisplayTitle.replace(/\s+/g, '_') + '.csv';
-    // If backend sends Content-Disposition header, use it
-    const contentDisposition = response.headers['content-disposition'];
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename="?([^"]+)"?/);
-      if (match) filename = match[1];
-    }
-
-    link.setAttribute('download', filename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    alert("Failed to download file. Please try again.");
-  }
-};
 
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
@@ -201,6 +136,73 @@ const GraphCarousel = () => {
       return [];
     }
   };
+
+const handleChartDownload = async () => {
+  let apiFn;
+  let params = {};
+
+  // Detect the current chart and set the correct API function and parameters
+  switch (currentIndex) {
+    case 0:
+      apiFn = postServiceWiseExp5;
+      params = { timeRange: selectedTimeValue, download: true };
+      break;
+    case 1:
+      apiFn = postServiceWiseSys5;
+      params = { timeRange: selectedTimeValue, download: true };
+      break;
+    case 2:
+      apiFn = postIpWiseExp5;
+      params = { timeRange: selectedTimeValue, download: true };
+      break;
+    case 3:
+      apiFn = postIpWiseSys5;
+      params = { timeRange: selectedTimeValue, download: true };
+      break;
+    case 4:
+      apiFn = postPortWiseExp5;
+      params = { timeRange: selectedTimeValue, download: true };
+      break;
+    case 5:
+      apiFn = postPortWiseSys5;
+      params = { timeRange: selectedTimeValue, download: true };
+      break;
+    case 6:
+      // For monthly FAR expiry, if a POST endpoint is available for download
+      apiFn = getFARExpires; // or a dedicated download endpoint if available
+      params = { download: true };
+      break;
+    default:
+      return;
+  }
+
+  try {
+    const response = await apiFn(params);
+    // If the backend returns a file blob (CSV, Excel, etc.)
+    const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/octet-stream' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Derive a filename according to chart
+    let filename = currentDisplayTitle.replace(/\s+/g, '_') + '.csv';
+    // If backend sends Content-Disposition header, use it
+    const contentDisposition = response.headers['content-disposition'];
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?([^"]+)"?/);
+      if (match) filename = match[1];
+    }
+
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    alert("Failed to download file. Please try again.");
+  }
+};
+
 
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
