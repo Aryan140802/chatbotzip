@@ -19,9 +19,31 @@ import {
   postServiceWiseSys5,
   getFARExpires,
   getFARDetailsSpecific,
-  postGraphDownload // <-- Import here
+  postGraphDownload
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
+
+function getDownloadPathForChart(index) {
+  switch (index) {
+    case 0: return "EISHome/servicewise_top5_FiveM/EXP/";
+    case 1: return "EISHome/servicewise_top5_FiveM/SYS/";
+    case 2: return "EISHome/ipwise_top5_FiveM/EXP/";
+    case 3: return "EISHome/ipwise_top5_FiveM/SYS/";
+    case 4: return "EISHome/portwise_top5_FiveM/EXP/";
+    case 5: return "EISHome/portwise_top5_FiveM/SYS/";
+    default: return null;
+  }
+}
+
+function convertToCSV(data) {
+  if (!data || !Array.isArray(data) || !data.length) return '';
+  const keys = Object.keys(data[0]);
+  const csvRows = [keys.join(',')];
+  data.forEach(row => {
+    csvRows.push(keys.map(key => `"${row[key] ?? ''}"`).join(','));
+  });
+  return csvRows.join('\n');
+}
 
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
@@ -43,37 +65,6 @@ const ThreeDBar = (props) => {
       <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill="#00000033" />
     </g>
   );
-};
-
-// Maps chart index to API path
-function getDownloadPathForChart(index) {
-  switch (index) {
-    case 0: return "EISHome/servicewise_top5_FiveM/EXP/";
-    case 1: return "EISHome/servicewise_top5_FiveM/SYS/";
-    case 2: return "EISHome/ipwise_top5_FiveM/EXP/";
-    case 3: return "EISHome/ipwise_top5_FiveM/SYS/";
-    case 4: return "EISHome/portwise_top5_FiveM/EXP/";
-    case 5: return "EISHome/portwise_top5_FiveM/SYS/";
-    default: return null;
-  }
-}
-
-const downloadCSV = (data, filename = 'chart-data.csv') => {
-  if (!data || !data.length) return;
-  const keys = Object.keys(data[0]);
-  const csvContent = [
-    keys.join(','),
-    ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
-  ].join('\n');
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 };
 
 const GraphCarousel = () => {
@@ -129,7 +120,7 @@ const GraphCarousel = () => {
     setIsLoadingDetails(true);
     setShowFarDetails(true);
     setFarDetailsSearch('');
-    setPaused(true); // Pause carousel when modal opens
+    setPaused(true);
 
     try {
       const response = await getFARDetailsSpecific(data.name);
@@ -508,6 +499,54 @@ const GraphCarousel = () => {
     return days;
   };
 
+  // DOWNLOAD HANDLER for bar charts
+  const handleDownloadClick = async () => {
+    const path = getDownloadPathForChart(currentIndex);
+    if (path) {
+      try {
+        setIsLoading(true);
+        const response = await postGraphDownload({
+          path,
+          time: selectedTimeValue
+        });
+        // Adjust this line if your backend returns data in a different field!
+        const data = response.data?.result || response.data?.data || response.data;
+        if (!data || !Array.isArray(data) || !data.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(data);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${currentDisplayTitle}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+        console.error("Download failed", e);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!dropdownOpen && !calendarOpen) return;
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
+        setDropdownOpen(false);
+        setCalendarOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [dropdownOpen, calendarOpen]);
+
   if (!charts.length) return (
     <div className="loading-container">
       <div className="loading-spinner"></div>
@@ -577,24 +616,8 @@ const GraphCarousel = () => {
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={async () => {
-              downloadCSV(
-                charts[currentIndex]?.rawData,
-                `${currentDisplayTitle}.csv`
-              );
-              const path = getDownloadPathForChart(currentIndex);
-              if (path) {
-                try {
-                  await postGraphDownload({
-                    path,
-                    time: selectedTimeValue
-                  });
-                } catch (e) {
-                  console.error("Download logging failed", e);
-                }
-              }
-            }}
-            disabled={isLoading || !charts[currentIndex]?.rawData}
+            onClick={handleDownloadClick}
+            disabled={isLoading || getDownloadPathForChart(currentIndex) === null}
           >
             <div className="logo-wrapper">
               <img
@@ -654,7 +677,7 @@ const GraphCarousel = () => {
                 <button
                   onClick={() => {
                     setShowFarDetails(false);
-                    setPaused(false); // Resume auto-sliding when modal is closed
+                    setPaused(false);
                   }}
                   style={{
                     background: 'none',
@@ -670,10 +693,19 @@ const GraphCarousel = () => {
               <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
                 <button
                   className="download-button"
-                  onClick={() => downloadCSV(
-                    filteredFarDetails,
-                    `FAR_Details_${selectedMonthData?.name}.csv`
-                  )}
+                  onClick={() => {
+                    if (!filteredFarDetails.length) return;
+                    const csv = convertToCSV(filteredFarDetails);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `FAR_Details_${selectedMonthData?.name}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                  }}
                   disabled={isLoadingDetails || !filteredFarDetails.length}
                   title="Download FAR Details"
                 >
