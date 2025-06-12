@@ -22,28 +22,6 @@ import {
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
-// CSV download utility
-function convertToCSV(data) {
-  if (!Array.isArray(data) || data.length === 0) return '';
-  const keys = Object.keys(data[0]);
-  const csvRows = [
-    keys.join(','),
-    ...data.map(row => keys.map(key => `"${row[key] ?? ''}"`).join(','))
-  ];
-  return csvRows.join('\n');
-}
-function triggerCSVDownload(csvContent, filename) {
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -119,7 +97,7 @@ const GraphCarousel = () => {
     setIsLoadingDetails(true);
     setShowFarDetails(true);
     setFarDetailsSearch('');
-    setPaused(true);
+    setPaused(true); // Pause carousel when modal opens
 
     try {
       const response = await getFARDetailsSpecific(data.name);
@@ -498,49 +476,22 @@ const GraphCarousel = () => {
     return days;
   };
 
-  // --- NEW: Backend download handler ---
-  const handleBackendDownload = async () => {
-    let apiFunction;
-    switch (currentIndex) {
-      case 0: apiFunction = postServiceWiseExp5; break;
-      case 1: apiFunction = postServiceWiseSys5; break;
-      case 2: apiFunction = postIpWiseExp5; break;
-      case 3: apiFunction = postIpWiseSys5; break;
-      case 4: apiFunction = postPortWiseExp5; break;
-      case 5: apiFunction = postPortWiseSys5; break;
-      default:
-        alert('Download not supported for this chart.');
-        return;
-    }
-    // Your usual payload for that chart (edit as needed if you use more/different parameters)
-    let params;
-    if (typeof selectedTimeValue === 'object') {
-      params = { ...selectedTimeValue };
-    } else {
-      params = { time: selectedTimeValue };
-    }
-    // If you need to add uid/password/etc, do it here how you do for your actual API!
-    // params.uid = ...; params.password = ...; etc.
-    // Now, add download: true
-    params.download = True;
-    try {
-      const response = await apiFunction(params);
-      let data = response.data;
-      if (Array.isArray(data)) {
-        const csv = convertToCSV(data);
-        triggerCSVDownload(csv, `${currentDisplayTitle}.csv`);
-      } else if (data && typeof data === 'object' && data.data && Array.isArray(data.data)) {
-        const csv = convertToCSV(data.data);
-        triggerCSVDownload(csv, `${currentDisplayTitle}.csv`);
-      } else if (typeof data === 'string') {
-        // Already CSV string
-        triggerCSVDownload(data, `${currentDisplayTitle}.csv`);
-      } else {
-        alert('No CSV data to download.');
-      }
-    } catch (e) {
-      alert('Download failed!');
-    }
+  const downloadCSV = (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) return;
+    const keys = Object.keys(data[0]);
+    const csvContent = [
+      keys.join(','),
+      ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
+    ].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const goToSlide = (index) => {
@@ -634,8 +585,8 @@ const GraphCarousel = () => {
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={handleBackendDownload}
-            disabled={isLoading}
+            onClick={() => downloadCSV(charts[currentIndex]?.rawData, `${currentDisplayTitle}.csv`)}
+            disabled={isLoading || !charts[currentIndex]?.rawData}
           >
             <div className="logo-wrapper">
               <img
@@ -695,7 +646,7 @@ const GraphCarousel = () => {
                 <button
                   onClick={() => {
                     setShowFarDetails(false);
-                    setPaused(false);
+                    setPaused(false); // Resume auto-sliding when modal is closed
                   }}
                   style={{
                     background: 'none',
@@ -711,7 +662,7 @@ const GraphCarousel = () => {
              <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
   <button
     className="download-button"
-    onClick={() => triggerCSVDownload(convertToCSV(filteredFarDetails), `FAR_Details_${selectedMonthData?.name}.csv`)}
+    onClick={() => downloadCSV(filteredFarDetails, `FAR_Details_${selectedMonthData?.name}.csv`)}
     disabled={isLoadingDetails || !filteredFarDetails.length}
     title="Download FAR Details"
   >
