@@ -62,14 +62,14 @@ export const getFARDetailsSpecific = async (dataFilter) => {
 };
 
 // Time-based post functions remain unchanged
-export const postServiceWiseExp5 = async (time) => {
+export const postServiceWiseExp5 = async (data) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', {
-      "time": time,
-      "uid": uid,
-      "password": password
+      ...data,
+      uid: uid,
+      password: password
     });
     return response;
   } catch (error) {
@@ -78,14 +78,14 @@ export const postServiceWiseExp5 = async (time) => {
   }
 };
 
-export const postServiceWiseSys5 = async (time) => {
+export const postServiceWiseSys5 = async (data) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', {
-      "time": time,
-      "uid": uid,
-      "password": password
+      ...data,
+      uid: uid,
+      password: password
     });
     return response;
   } catch (error) {
@@ -94,14 +94,14 @@ export const postServiceWiseSys5 = async (time) => {
   }
 };
 
-export const postIpWiseExp5 = async (time) => {
+export const postIpWiseExp5 = async (data) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', {
-      "time": time,
-      "uid": uid,
-      "password": password
+      ...data,
+      uid: uid,
+      password: password
     });
     return response;
   } catch (error) {
@@ -110,14 +110,14 @@ export const postIpWiseExp5 = async (time) => {
   }
 };
 
-export const postIpWiseSys5 = async (time) => {
+export const postIpWiseSys5 = async (data) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/ipwise_top5_FiveM/SYS/', {
-      "time": time,
-      "uid": uid,
-      "password": password
+      ...data,
+      uid: uid,
+      password: password
     });
     return response;
   } catch (error) {
@@ -126,14 +126,14 @@ export const postIpWiseSys5 = async (time) => {
   }
 };
 
-export const postPortWiseExp5 = async (time) => {
+export const postPortWiseExp5 = async (data) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', {
-      "time": time,
-      "uid": uid,
-      "password": password
+      ...data,
+      uid: uid,
+      password: password
     });
     return response;
   } catch (error) {
@@ -142,14 +142,14 @@ export const postPortWiseExp5 = async (time) => {
   }
 };
 
-export const postPortWiseSys5 = async (time) => {
+export const postPortWiseSys5 = async (data) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', {
-      "time": time,
-      "uid": uid,
-      "password": password
+      ...data,
+      uid: uid,
+      password: password
     });
     return response;
   } catch (error) {
@@ -157,3 +157,4 @@ export const postPortWiseSys5 = async (time) => {
     throw error;
   }
 };
+
