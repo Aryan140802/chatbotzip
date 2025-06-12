@@ -20,6 +20,7 @@ import {
   getFARExpires,
   getFARDetailsSpecific
 } from "../api/PostApi";
+import { postMessage } from "../api/PostApi"; // <-- ADD THIS LINE
 import { useState, useEffect, useRef } from "react";
 
 const formatHits = (value) => {
@@ -53,7 +54,7 @@ const GraphCarousel = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
-  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
   const [showFarDetails, setShowFarDetails] = useState(false);
@@ -476,8 +477,13 @@ const GraphCarousel = () => {
     return days;
   };
 
-  const downloadCSV = (data, filename = 'chart-data.csv') => {
+  // UPDATED: Add context and call postMessage({download: true, ...context})
+  const downloadCSV = (data, filename = 'chart-data.csv', context = {}) => {
     if (!data || !data.length) return;
+
+    // Send download event payload
+    postMessage({ download: true, ...context });
+
     const keys = Object.keys(data[0]);
     const csvContent = [
       keys.join(','),
@@ -585,7 +591,13 @@ const GraphCarousel = () => {
         <div className="download-button-wrapper">
           <button
             className="download-button"
-            onClick={() => downloadCSV(charts[currentIndex]?.rawData, `${currentDisplayTitle}.csv`)}
+            onClick={() =>
+              downloadCSV(
+                charts[currentIndex]?.rawData,
+                `${currentDisplayTitle}.csv`,
+                { chartTitle: charts[currentIndex]?.title, chartIndex: currentIndex }
+              )
+            }
             disabled={isLoading || !charts[currentIndex]?.rawData}
           >
             <div className="logo-wrapper">
@@ -659,24 +671,30 @@ const GraphCarousel = () => {
                   }}
                 >×</button>
               </div>
-             <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
-  <button
-    className="download-button"
-    onClick={() => downloadCSV(filteredFarDetails, `FAR_Details_${selectedMonthData?.name}.csv`)}
-    disabled={isLoadingDetails || !filteredFarDetails.length}
-    title="Download FAR Details"
-  >
-    <div className="logo-wrapper">
-      <img
-        className="logo"
-        src={Download}
-        alt="Download Icon"
-        style={{ height: '28px', marginRight: '4px' }}
-      />
-    </div>
-    Download
-  </button>
-</div>
+              <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
+                <button
+                  className="download-button"
+                  onClick={() =>
+                    downloadCSV(
+                      filteredFarDetails,
+                      `FAR_Details_${selectedMonthData?.name}.csv`,
+                      { chartTitle: `FAR Details for ${selectedMonthData?.name}`, farMonth: selectedMonthData?.name }
+                    )
+                  }
+                  disabled={isLoadingDetails || !filteredFarDetails.length}
+                  title="Download FAR Details"
+                >
+                  <div className="logo-wrapper">
+                    <img
+                      className="logo"
+                      src={Download}
+                      alt="Download Icon"
+                      style={{ height: '28px', marginRight: '4px' }}
+                    />
+                  </div>
+                  Download
+                </button>
+              </div>
 
               <div className="modal-body" style={{
                 padding: '20px',
