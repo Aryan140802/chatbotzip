@@ -522,7 +522,7 @@ const GraphCarousel = () => {
     // If you need to add uid/password/etc, do it here how you do for your actual API!
     // params.uid = ...; params.password = ...; etc.
     // Now, add download: true
-    params.download = true;
+    params.download = True;
     try {
       const response = await apiFunction(params);
       let data = response.data;
