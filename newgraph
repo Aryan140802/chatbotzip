@@ -1,10 +1,8 @@
 import '../styles/GraphCarousel.css';
-
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
-
 import Download from '../assets/down-arrow.png';
 import {
   getServiceWiseExp5,
@@ -19,12 +17,11 @@ import {
   postIpWiseExp5,
   postServiceWiseExp5,
   postServiceWiseSys5,
-  getFARExpires
+  getFARExpires,
+  getFARDetailsSpecific
 } from "../api/PostApi";
-
 import { useState, useEffect, useRef } from "react";
 
-// Format large numbers
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -32,16 +29,12 @@ const formatHits = (value) => {
   return value;
 };
 
-// Format percentage for the pie chart
 const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
-
-// Utility function to wait/delay
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const ThreeDBar = (props) => {
   const { x, y, width, height, fill } = props;
   const depth = 6;
-
   return (
     <g>
       <rect x={x} y={y} width={width} height={height} fill={fill} style={{ transition: "all 0.3s ease" }} className="custom-bar" />
@@ -60,17 +53,19 @@ const GraphCarousel = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
-
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
   const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
-  const [farData, setFarData] = useState([]);
-  const [farTotal, setFarTotal] = useState(0);
+  const [showFarDetails, setShowFarDetails] = useState(false);
+  const [selectedMonthData, setSelectedMonthData] = useState(null);
+  const [farDetails, setFarDetails] = useState([]);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [farDetailsSearch, setFarDetailsSearch] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Colors for the pie chart
   const COLORS = [
     '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
     '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
@@ -97,59 +92,140 @@ const GraphCarousel = () => {
     'Monthly FAR Expiry Distribution'
   ];
 
+  const downloadCSV = async (data, filename = 'chart-data.csv') => {
+    if (!data || !data.length) return;
+    setIsDownloading(true);
+    
+    try {
+      // Get the current time range value
+      const timeRange = selectedTimeValue;
+      
+      // Prepare the download request data
+      const downloadRequest = {
+        time: timeRange,
+        download: true
+      };
+
+      // Depending on the current chart type, call the appropriate API
+      let response;
+      switch (currentIndex) {
+        case 0: // Service-wise Exp Data
+          response = await postServiceWiseExp5(downloadRequest);
+          break;
+        case 1: // Service-wise Sys Data
+          response = await postServiceWiseSys5(downloadRequest);
+          break;
+        case 2: // IP-wise Exp Data
+          response = await postIpWiseExp5(downloadRequest);
+          break;
+        case 3: // IP-wise Sys Data
+          response = await postIpWiseSys5(downloadRequest);
+          break;
+        case 4: // Port-wise Exp Data
+          response = await postPortWiseExp5(downloadRequest);
+          break;
+        case 5: // Port-wise Sys Data
+          response = await postPortWiseSys5(downloadRequest);
+          break;
+        case 6: // Monthly FAR Expiry Distribution
+          // For FAR data, we'll just download the existing data
+          break;
+        default:
+          break;
+      }
+
+      // Proceed with the CSV download
+      const keys = Object.keys(data[0]);
+      const csvContent = [
+        keys.join(','),
+        ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
+      ].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+    } catch (error) {
+      console.error('Error during download:', error);
+      // Fallback to client-side download if API fails
+      const keys = Object.keys(data[0]);
+      const csvContent = [
+        keys.join(','),
+        ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
+      ].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+
+  const handlePieClick = async (data, index) => {
+    if (!data || !data.name) return;
+    setSelectedMonthData(data);
+    setIsLoadingDetails(true);
+    setShowFarDetails(true);
+    setFarDetailsSearch('');
+    setPaused(true); // Pause carousel when modal opens
+
+    try {
+      const response = await getFARDetailsSpecific(data.name);
+      setFarDetails((response.data && response.data.MonthlyDetails) || []);
+    } catch (err) {
+      setFarDetails([]);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
   const formatDate = (date) =>
     date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-  // Check if all chart data arrays are empty (excluding FAR chart)
   const isAllChartDataEmpty = (chartData) => {
     if (!chartData || chartData.length === 0) return true;
-    
-    // Check the first 6 charts (excluding FAR chart at index 6)
     const dataCharts = chartData.slice(0, 6);
     return dataCharts.every(chart => !chart.data || chart.data.length === 0);
   };
 
-  // Fetch FAR data
   const fetchFARData = async () => {
     try {
       const response = await getFARExpires();
-
       const formattedData = [];
-      let total = 0;
-
       response.data.MonthlyFarCount.forEach(monthData => {
         const [month, value] = Object.entries(monthData)[0];
-        if (value > 0) {  // Only include non-zero values
-          formattedData.push({
-            name: month,
-            value: value
-          });
-          total += value;
+        const cleanMonth = month.replace(/\s*-\s*/, ' ');
+        if (value > 0) {
+          formattedData.push({ name: cleanMonth, value: value });
         }
       });
-
-      setFarData(formattedData);
-      setFarTotal(total);
-
       return formattedData;
     } catch (error) {
-      console.error("Error fetching FAR data:", error);
       return [];
     }
   };
 
   const updateChartTitles = (timeDisplay) => {
     if (charts.length === 0) return;
-
     const updatedCharts = charts.map((chart, index) => ({
       ...chart,
       title: index === 6 ? baseTitles[6] : `${baseTitles[index]} of ${timeDisplay}`
     }));
-
     setCharts(updatedCharts);
-
     if (currentIndex >= 0 && currentIndex < charts.length) {
-      if (currentIndex === 6) { // For the FAR chart
+      if (currentIndex === 6) {
         setCurrentDisplayTitle(baseTitles[6]);
       } else {
         setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeDisplay}`);
@@ -159,18 +235,10 @@ const GraphCarousel = () => {
 
   const fetchFilteredData = async (timeRange, timeLabel, attemptNumber = 1) => {
     const maxRetries = 3;
-    const retryDelay = 2000; // 2 seconds
-
+    const retryDelay = 2000;
     try {
-      console.log(`Fetching data for time range: ${timeRange} (Attempt ${attemptNumber}/${maxRetries})`);
-
       const [
-        serviceExp,
-        serviceSys,
-        ipExp,
-        ipSys,
-        portExp,
-        portSys
+        serviceExp, serviceSys, ipExp, ipSys, portExp, portSys
       ] = await Promise.all([
         postServiceWiseExp5(timeRange),
         postServiceWiseSys5(timeRange),
@@ -179,16 +247,9 @@ const GraphCarousel = () => {
         postPortWiseExp5(timeRange),
         postPortWiseSys5(timeRange)
       ]);
-
-      // Fetch FAR data
       const farChartData = await fetchFARData();
-
       const formatData = (data, key) => {
-        if (!data || !Array.isArray(data)) {
-          console.error('Invalid data format received:', data);
-          return [];
-        }
-
+        if (!data || !Array.isArray(data)) return [];
         return data.map(item => ({
           ...item,
           [key]: item[key]?.toString().trim() || '',
@@ -196,12 +257,9 @@ const GraphCarousel = () => {
           logVal: Number(item.logVal || 0)
         }));
       };
-
-      // Use the provided timeLabel for display, or generate one for custom dates
       const timeDisplay = timeRange?.startsWith('custom_') && selectedDate
         ? `Custom: ${formatDate(selectedDate)}`
         : timeLabel || selectedTimeLabel;
-
       const chartData = [
         {
           data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
@@ -239,32 +297,15 @@ const GraphCarousel = () => {
           baseTitle: baseTitles[6]
         }
       ];
-
-      // Check if all chart data arrays are empty and retry if needed
       if (isAllChartDataEmpty(chartData) && attemptNumber < maxRetries) {
-        console.warn(`All chart data arrays are empty. Retrying in ${retryDelay/1000} seconds... (Attempt ${attemptNumber}/${maxRetries})`);
         setRetryCount(attemptNumber);
-        
-        // Wait for the specified delay
         await wait(retryDelay);
-        
-        // Retry the fetch
         return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
       }
-
-      // Reset retry count on successful fetch (or after max retries)
       setRetryCount(0);
-
-      if (isAllChartDataEmpty(chartData) && attemptNumber >= maxRetries) {
-        console.error(`All retries exhausted. Chart data is still empty after ${maxRetries} attempts.`);
-      }
-
       return chartData.map(({ data, dataKeyX, baseTitle }) => {
-        // Create different chart components based on chart type
         let chartComponent;
-
         if (baseTitle === baseTitles[6]) {
-          // Pie chart for FAR data
           chartComponent = (
             <ResponsiveContainer>
               <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
@@ -279,15 +320,22 @@ const GraphCarousel = () => {
                   dataKey="value"
                   nameKey="name"
                   label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+                  onClick={handlePieClick}
+                  style={{ cursor: 'pointer' }}
                 >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-
                 <Tooltip
                   formatter={(value) => [`${value}`, 'Count']}
-                  contentStyle={{ backgroundColor: '#2e1a3b', borderColor: '#f285c1', color: '#fff', borderRadius: '8px' }}
+                  contentStyle={{
+                    backgroundColor: '#2e1a3b',
+                    borderColor: '#f285c1',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
                   itemStyle={{ color: '#fff' }}
                   labelStyle={{ color: '#f285c1' }}
                 />
@@ -296,7 +344,6 @@ const GraphCarousel = () => {
             </ResponsiveContainer>
           );
         } else {
-          // Bar chart for other data
           chartComponent = (
             <ResponsiveContainer>
               <BarChart
@@ -306,21 +353,20 @@ const GraphCarousel = () => {
                 key={`${baseTitle}-${timeRange}-chart`}
               >
                 <defs>
-  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
-    {baseTitle.includes('Exp') ? (
-      <>
-        <stop offset="0%" stopColor="#6a11cb" />
-        <stop offset="100%" stopColor="#2575fc" />
-      </>
-    ) : (
-      <>
-        <stop offset="0%" stopColor="#ff6a00" />
-        <stop offset="100%" stopColor="#ee0979" />
-      </>
-    )}
-  </linearGradient>
-</defs>
-
+                  <linearGradient id={`barGradient-${baseTitle.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+                    {baseTitle.includes('Exp') ? (
+                      <>
+                        <stop offset="0%" stopColor="#6a11cb" />
+                        <stop offset="100%" stopColor="#2575fc" />
+                      </>
+                    ) : (
+                      <>
+                        <stop offset="0%" stopColor="#ff6a00" />
+                        <stop offset="100%" stopColor="#ee0979" />
+                      </>
+                    )}
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#ffffff33" />
                 <XAxis
                   dataKey={dataKeyX}
@@ -351,18 +397,16 @@ const GraphCarousel = () => {
                   }}
                   labelFormatter={(label) => `${dataKeyX}: ${label}`}
                 />
-               <Bar
-  dataKey="Hits"
-  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
-  shape={ThreeDBar}
-  barSize={50}
-/>
-
+                <Bar
+                  dataKey="Hits"
+                  fill={`url(#barGradient-${baseTitle.replace(/\s/g, '')})`}
+                  shape={ThreeDBar}
+                  barSize={50}
+                />
               </BarChart>
             </ResponsiveContainer>
           );
         }
-
         return {
           baseTitle,
           title: baseTitle === baseTitles[6]
@@ -373,27 +417,16 @@ const GraphCarousel = () => {
         };
       });
     } catch (error) {
-      console.error(`Error fetching data (Attempt ${attemptNumber}/${maxRetries}):`, error);
-      
-      // Retry on error if we haven't exhausted all attempts
       if (attemptNumber < maxRetries) {
-        console.warn(`Retrying in ${retryDelay/1000} seconds due to error... (Attempt ${attemptNumber}/${maxRetries})`);
         setRetryCount(attemptNumber);
-        
-        // Wait for the specified delay
         await wait(retryDelay);
-        
-        // Retry the fetch
         return await fetchFilteredData(timeRange, timeLabel, attemptNumber + 1);
       }
-      
-      // Reset retry count after all retries are exhausted
       setRetryCount(0);
-      throw error; // Re-throw error after all retries are exhausted
+      throw error;
     }
   };
 
-  // Initial data fetch
   useEffect(() => {
     const initializeData = async () => {
       setIsLoading(true);
@@ -402,56 +435,35 @@ const GraphCarousel = () => {
         if (chartData && chartData.length > 0) {
           setCharts(chartData);
           setCurrentDisplayTitle(chartData[0].title);
-        } else {
-          console.error("No chart data returned from initial fetch");
         }
-      } catch (error) {
-        console.error("Failed to initialize data after all retries:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
     initializeData();
-
-    // Cleanup function
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  // Update display title when currentIndex changes
   useEffect(() => {
     if (charts.length > 0 && currentIndex >= 0 && currentIndex < charts.length) {
       setCurrentDisplayTitle(charts[currentIndex].title);
     }
   }, [currentIndex, charts]);
 
-  // Set up carousel auto-rotation
   useEffect(() => {
-    // Clear any existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    // Only create new interval if not paused and we have charts
-    if (!paused && charts.length > 0) {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!paused && !showFarDetails && charts.length > 0) {
       intervalRef.current = setInterval(() => {
         setCurrentIndex(prev => (prev === charts.length - 1 ? 0 : prev + 1));
       }, 5000);
     }
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [paused, charts.length]);
+  }, [paused, charts.length, showFarDetails]);
 
-  // Sync chart titles with dropdown label
   useEffect(() => {
     if (charts.length > 0) {
       updateChartTitles(selectedTimeLabel);
@@ -459,93 +471,59 @@ const GraphCarousel = () => {
   }, [selectedTimeLabel, charts.length]);
 
   const handleTimeChange = async (option) => {
-    // Skip time change for FAR chart
     if (currentIndex === 6) return;
-
-    // Handle custom date selection
     if (option.value === "custom") {
       setDropdownOpen(false);
       setCalendarOpen(true);
       return;
     }
-
-    console.log(`Time option selected: ${option.label} (${option.value})`);
-
-    // Update state
     setSelectedTimeLabel(option.label);
     setSelectedTimeValue(option.value);
     setDropdownOpen(false);
     setCalendarOpen(false);
-
-    // Pause carousel during loading and show loading state
     setPaused(true);
     setIsLoading(true);
-    setRetryCount(0); // Reset retry count
-
+    setRetryCount(0);
     try {
-      // Update title to show loading state for current chart
       if (currentIndex >= 0 && currentIndex < baseTitles.length) {
         setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${option.label}`);
       }
-
-      // Fetch updated data
       const updatedCharts = await fetchFilteredData(option.value, option.label);
-
       if (updatedCharts && updatedCharts.length > 0) {
         setCharts(updatedCharts);
         setCurrentDisplayTitle(updatedCharts[0].title);
-      } else {
-        console.error("No chart data returned from time change fetch");
       }
-    } catch (error) {
-      console.error("Error in handleTimeChange:", error);
     } finally {
       setIsLoading(false);
-      setPaused(false); // Resume carousel
+      setPaused(false);
     }
   };
 
   const handleDateSelect = async (date) => {
-    // Skip date select for FAR chart
     if (currentIndex === 6) return;
-
     if (!date) return;
-
     const formattedDate = formatDate(date);
     const dateValue = `custom_${date.toISOString().split('T')[0]}`;
     const timeLabel = `Custom: ${formattedDate}`;
-
-    // Update state
     setSelectedDate(date);
     setSelectedTimeLabel(timeLabel);
     setSelectedTimeValue(dateValue);
     setCalendarOpen(false);
-
-    // Pause carousel during loading and show loading state
     setPaused(true);
     setIsLoading(true);
-    setRetryCount(0); // Reset retry count
-
+    setRetryCount(0);
     try {
-      // Update title to show loading state for current chart
       if (currentIndex >= 0 && currentIndex < baseTitles.length) {
         setCurrentDisplayTitle(`${baseTitles[currentIndex]} of ${timeLabel}`);
       }
-
-      // Fetch updated data
       const updatedCharts = await fetchFilteredData(dateValue, timeLabel);
-
       if (updatedCharts && updatedCharts.length > 0) {
         setCharts(updatedCharts);
         setCurrentDisplayTitle(updatedCharts[0].title);
-      } else {
-        console.error("No chart data returned from date select fetch");
       }
-    } catch (error) {
-      console.error("Error in handleDateSelect:", error);
     } finally {
       setIsLoading(false);
-      setPaused(false); // Resume carousel
+      setPaused(false);
     }
   };
 
@@ -553,29 +531,20 @@ const GraphCarousel = () => {
     const today = new Date();
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
     weekdays.forEach(day => days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>));
-
     const sevenDaysAgo = new Date(today);
     sevenDaysAgo.setDate(today.getDate() - 6);
-
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
     const firstDayOfWeek = startDate.getDay();
-
-    // Add empty cells for days before the start date
     for (let i = 0; i < firstDayOfWeek; i++) {
       days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
     }
-
     const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-
-    // Add calendar days
     for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
       const date = new Date(today.getFullYear(), today.getMonth(), day);
       const isDisabled = date > today || date < sevenDaysAgo;
       const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-
       days.push(
         <div
           key={`day-${day}`}
@@ -586,22 +555,16 @@ const GraphCarousel = () => {
         </div>
       );
     }
-
     return days;
   };
 
   const downloadCSV = (data, filename = 'chart-data.csv') => {
-    if (!data || !data.length) {
-      console.warn("No data available to download");
-      return;
-    }
-
+    if (!data || !data.length) return;
     const keys = Object.keys(data[0]);
     const csvContent = [
       keys.join(','),
       ...data.map(row => keys.map(key => `"${row[key] || ''}"`).join(','))
     ].join('\n');
-
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -610,14 +573,12 @@ const GraphCarousel = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url); // Clean up
+    URL.revokeObjectURL(url);
   };
 
   const goToSlide = (index) => {
     if (index < 0 || index >= charts.length) return;
-
     setCurrentIndex(index);
-
     if (charts.length > 0 && index >= 0 && index < charts.length) {
       setCurrentDisplayTitle(charts[index].title);
     }
@@ -628,17 +589,14 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
   };
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
     if (!dropdownOpen && !calendarOpen) return;
-
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown') && !event.target.closest('.calendar-container')) {
         setDropdownOpen(false);
         setCalendarOpen(false);
       }
     };
-
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [dropdownOpen, calendarOpen]);
@@ -654,6 +612,14 @@ const GraphCarousel = () => {
       )}
     </div>
   );
+
+  const filteredFarDetails = Array.isArray(farDetails)
+    ? farDetails.filter(detail =>
+        farDetailsSearch.trim() === '' ||
+        (detail.Far_Id && detail.Far_Id.toString().toLowerCase().includes(farDetailsSearch.toLowerCase())) ||
+        (detail.Subject && detail.Subject.toLowerCase().includes(farDetailsSearch.toLowerCase()))
+      )
+    : [];
 
   return (
     <div className="carousel-container">
@@ -698,12 +664,11 @@ const GraphCarousel = () => {
             </span>
           )}
         </h2>
-
         <div className="download-button-wrapper">
           <button
             className="download-button"
             onClick={() => downloadCSV(charts[currentIndex]?.rawData, `${currentDisplayTitle}.csv`)}
-            disabled={isLoading || !charts[currentIndex]?.rawData}
+            disabled={isLoading || !charts[currentIndex]?.rawData || isDownloading}
           >
             <div className="logo-wrapper">
               <img
@@ -712,10 +677,12 @@ const GraphCarousel = () => {
                 alt="Download Icon"
                 style={{ height: '36px', marginRight: '3px' }}
               />
+              {isDownloading && <span>Downloading...</span>}
             </div>
           </button>
         </div>
       </div>
+
 
       <div
         className="carousel-graph"
@@ -753,6 +720,123 @@ const GraphCarousel = () => {
             onClick={() => goToSlide(index)}
           />
         ))}
+
+        {/* FAR Details Modal */}
+        {showFarDetails && (
+          <div className="far-details-modal">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h3>FAR Details for {selectedMonthData?.name}</h3>
+                <button
+                  onClick={() => {
+                    setShowFarDetails(false);
+                    setPaused(false); // Resume auto-sliding when modal is closed
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f285c1',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    padding: '5px',
+                    borderRadius: '4px'
+                  }}
+                >×</button>
+              </div>
+             <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
+  <button
+    className="download-button"
+    onClick={() => downloadCSV(filteredFarDetails, `FAR_Details_${selectedMonthData?.name}.csv`)}
+    disabled={isLoadingDetails || !filteredFarDetails.length}
+    title="Download FAR Details"
+  >
+    <div className="logo-wrapper">
+      <img
+        className="logo"
+        src={Download}
+        alt="Download Icon"
+        style={{ height: '28px', marginRight: '4px' }}
+      />
+    </div>
+    Download
+  </button>
+</div>
+
+              <div className="modal-body" style={{
+                padding: '20px',
+                maxHeight: '500px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden'
+              }}>
+                {isLoadingDetails ? (
+                  <div style={{ textAlign: 'center', color: '#fff' }}>
+                    <div className="loading-spinner"></div>
+                    <p>Loading FAR details...</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="far-Search" style={{
+                      paddingBottom: '10px',
+                      position: 'sticky',
+                      top: 0,
+                      backgroundColor: '#2e1a3b',
+                      zIndex: 2
+                    }}>
+                      <input
+                        type="text"
+                        placeholder="Search FAR ID or Subject"
+                        value={farDetailsSearch}
+                        onChange={e => setFarDetailsSearch(e.target.value)}
+                        style={{
+                          width: '98%',
+                          padding: '10px',
+                          borderRadius: '4px',
+                          border: '1px solid #ccc'
+                        }}
+                      />
+                    </div>
+                    <div className="far-details-table" style={{
+                      overflowY: 'auto',
+                      flex: 1,
+                      position: 'relative'
+                    }}>
+                      <table style={{ width: '100%' }}>
+                        <thead style={{
+                          position: 'sticky',
+                          top: 0,
+                          backgroundColor: '#2e1a3b',
+                          zIndex: 1
+                        }}>
+                          <tr>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>FAR ID</th>
+                            <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredFarDetails.length > 0 ? (
+                            filteredFarDetails.map((detail, index) => (
+                              <tr key={index} style={{ borderBottom: '1px solid #444' }}>
+                                <td style={{ padding: '8px' }}>{detail.Far_Id || 'N/A'}</td>
+                                <td style={{ padding: '8px' }}>{detail.Subject || 'N/A'}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={2} style={{ textAlign: 'center', padding: '8px' }}>
+                                No FAR details found
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
