@@ -659,6 +659,25 @@ const GraphCarousel = () => {
                   }}
                 >×</button>
               </div>
+             <div className="download-button-wrapper" style={{ marginBottom: '10px', textAlign: 'right' }}>
+  <button
+    className="download-button"
+    onClick={() => downloadCSV(filteredFarDetails, `FAR_Details_${selectedMonthData?.name}.csv`)}
+    disabled={isLoadingDetails || !filteredFarDetails.length}
+    title="Download FAR Details"
+  >
+    <div className="logo-wrapper">
+      <img
+        className="logo"
+        src={Download}
+        alt="Download Icon"
+        style={{ height: '28px', marginRight: '4px' }}
+      />
+    </div>
+    Download
+  </button>
+</div>
+
               <div className="modal-body" style={{
                 padding: '20px',
                 maxHeight: '500px',
