@@ -98,7 +98,7 @@ const GraphCarousel = () => {
     setShowFarDetails(true);
     setFarDetailsSearch('');
     setPaused(true); // Pause carousel when modal opens
-    
+
     try {
       const response = await getFARDetailsSpecific(data.name);
       setFarDetails((response.data && response.data.MonthlyDetails) || []);
@@ -659,10 +659,10 @@ const GraphCarousel = () => {
                   }}
                 >×</button>
               </div>
-              <div className="modal-body" style={{ 
-                padding: '20px', 
-                maxHeight: '500px', 
-                display: 'flex', 
+              <div className="modal-body" style={{
+                padding: '20px',
+                maxHeight: '500px',
+                display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden'
               }}>
@@ -673,7 +673,7 @@ const GraphCarousel = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="far-Search" style={{ 
+                    <div className="far-Search" style={{
                       paddingBottom: '10px',
                       position: 'sticky',
                       top: 0,
@@ -686,20 +686,20 @@ const GraphCarousel = () => {
                         value={farDetailsSearch}
                         onChange={e => setFarDetailsSearch(e.target.value)}
                         style={{
-                          width: '100%',
-                          padding: '8px',
+                          width: '98%',
+                          padding: '10px',
                           borderRadius: '4px',
                           border: '1px solid #ccc'
                         }}
                       />
                     </div>
-                    <div className="far-details-table" style={{ 
+                    <div className="far-details-table" style={{
                       overflowY: 'auto',
                       flex: 1,
                       position: 'relative'
                     }}>
                       <table style={{ width: '100%' }}>
-                        <thead style={{ 
+                        <thead style={{
                           position: 'sticky',
                           top: 0,
                           backgroundColor: '#2e1a3b',
