@@ -37,7 +37,7 @@ function getDownloadPathForChart(index) {
 
 function convertToCSV(data) {
   if (!data || !Array.isArray(data) || !data.length) return '';
-  const keys = Object.keys(data[0]);
+  const keys = Object.keys(data[0]).filter(key => key !== 'logVal');
   const csvRows = [keys.join(',')];
   data.forEach(row => {
     csvRows.push(keys.map(key => `"${row[key] ?? ''}"`).join(','));
@@ -499,42 +499,50 @@ const GraphCarousel = () => {
     return days;
   };
 
-  // DOWNLOAD HANDLER for bar charts
   const handleDownloadClick = async () => {
-    const path = getDownloadPathForChart(currentIndex);
-    if (path) {
-      try {
-        setIsLoading(true);
-        const response = await postGraphDownload({
-          path,
-          time: selectedTimeValue
-        });
-        // Adjust this line if your backend returns data in a different field!
-        const data = response.data?.result || response.data?.data || response.data;
-        if (!data || !Array.isArray(data) || !data.length) {
-          alert("No data received for download.");
-          setIsLoading(false);
-          return;
-        }
-        const csv = convertToCSV(data);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${currentDisplayTitle}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        alert("Download failed.");
-        console.error("Download failed", e);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
+  const path = getDownloadPathForChart(currentIndex);
+  if (path) {
+    try {
+      setIsLoading(true);
+      const response = await postGraphDownload({
+        path,
+        time: selectedTimeValue
+      });
 
+      // Dynamically find the first array property in the response
+      let data = null;
+      if (response.data && typeof response.data === "object") {
+        // Find the first property that is a non-empty array
+        for (const key in response.data) {
+          if (Array.isArray(response.data[key]) && response.data[key].length) {
+            data = response.data[key];
+            break;
+          }
+        }
+      }
+      if (!data || !Array.isArray(data) || !data.length) {
+        alert("No data received for download.");
+        setIsLoading(false);
+        return;
+      }
+      const csv = convertToCSV(data);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${currentDisplayTitle}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Download failed.");
+      console.error("Download failed", e);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+};
   useEffect(() => {
     if (!dropdownOpen && !calendarOpen) return;
     const handleClickOutside = (event) => {
