@@ -23,6 +23,22 @@ import {
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
+/** --- NEW: Robust array extraction utility --- */
+function extractFirstArray(obj) {
+  if (Array.isArray(obj)) return obj;
+  if (obj && typeof obj === 'object') {
+    for (const value of Object.values(obj)) {
+      if (Array.isArray(value)) return value;
+      if (value && typeof value === 'object') {
+        for (const nestedValue of Object.values(value)) {
+          if (Array.isArray(nestedValue)) return nestedValue;
+        }
+      }
+    }
+  }
+  return null;
+}
+
 function getDownloadPathForChart(index) {
   switch (index) {
     case 0: return "EISHome/servicewise_top5_FiveM/EXP/";
@@ -499,7 +515,7 @@ const GraphCarousel = () => {
     return days;
   };
 
-  // DOWNLOAD HANDLER for bar charts
+  // --- UPDATED: Robust download handler ---
   const handleDownloadClick = async () => {
     const path = getDownloadPathForChart(currentIndex);
     if (path) {
@@ -509,8 +525,8 @@ const GraphCarousel = () => {
           path,
           time: selectedTimeValue
         });
-        // Adjust this line if your backend returns data in a different field!
-        const data = response.data?.result || response.data?.data || response.data;
+        // Robustly extract the first array in the response
+        const data = extractFirstArray(response.data);
         if (!data || !Array.isArray(data) || !data.length) {
           alert("No data received for download.");
           setIsLoading(false);
