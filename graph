@@ -23,6 +23,11 @@ import {
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
+// Helper to normalize to midnight (prevents Date comparison bugs)
+function toMidnight(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
 function extractFirstArray(obj) {
   if (Array.isArray(obj)) return obj;
   if (obj && typeof obj === 'object') {
@@ -426,7 +431,7 @@ const GraphCarousel = () => {
     }
   }, [selectedTimeLabel, charts.length]);
 
-  // NEW: Pause carousel when dropdown/calendar is open, resume only when both are closed
+  // Pause carousel when dropdown/calendar is open, resume only when both are closed
   useEffect(() => {
     if (dropdownOpen || calendarOpen) {
       setPaused(true);
@@ -459,7 +464,6 @@ const GraphCarousel = () => {
       }
     } finally {
       setIsLoading(false);
-      // Do not setPaused(false) here: let useEffect handle it!
     }
   };
 
@@ -486,58 +490,60 @@ const GraphCarousel = () => {
       }
     } finally {
       setIsLoading(false);
-      // Do not setPaused(false) here: let useEffect handle it!
     }
   };
 
-const generateCalendarDays = () => {
-  const today = new Date();
-  const days = [];
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  weekdays.forEach(day => days.push(
-    <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
-  ));
+  // === REPLACE YOUR generateCalendarDays FUNCTION WITH THIS ===
+  const generateCalendarDays = () => {
+    const today = toMidnight(new Date());
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    weekdays.forEach(day => days.push(
+      <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
+    ));
 
-  const year = today.getFullYear();
-  const month = today.getMonth();
-  const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-  const firstDayWeekday = firstDayOfMonth.getDay();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay();
 
-  // Fill empty slots for days before the first of the month
-  for (let i = 0; i < firstDayWeekday; i++) {
-    days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
-  }
+    // Empty slots for alignment
+    for (let i = 0; i < firstDayWeekday; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
+    }
 
-  // Only dates from today-7 (exclusive) to yesterday (inclusive) are enabled
-  const maxEnabled = new Date(today);
-  maxEnabled.setDate(today.getDate() - 1);
-  const minEnabled = new Date(today);
-  minEnabled.setDate(today.getDate() - 7);
+    // Only days from today-7 (exclusive) to yesterday (inclusive) are enabled
+    const minEnabled = new Date(today);
+    minEnabled.setDate(today.getDate() - 7);
+    const maxEnabled = new Date(today);
+    maxEnabled.setDate(today.getDate() - 1);
 
-  for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
-    const date = new Date(year, month, day);
-    // date > minEnabled && date <= maxEnabled means: not including today, last 7 days only
-    const isEnabled = date > minEnabled && date <= maxEnabled;
-    const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-    days.push(
-      <div
-        key={`day-${date.toISOString()}`}
-        className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
-        onClick={() => isEnabled && handleDateSelect(date)}
-        style={{
-          cursor: isEnabled ? "pointer" : "not-allowed",
-          color: isEnabled ? undefined : "#ccc",
-          background: isSelected ? "#aaf" : undefined,
-          opacity: isEnabled ? 1 : 0.5,
-        }}
-      >
-        {day}
-      </div>
-    );
-  }
-  return days;
-};
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      const date = new Date(year, month, day);
+      const dateMid = toMidnight(date);
+      const isEnabled = dateMid > minEnabled && dateMid <= maxEnabled;
+      const isSelected = selectedDate && toMidnight(selectedDate).getTime() === dateMid.getTime();
+      days.push(
+        <div
+          key={`day-${dateMid.toISOString()}`}
+          className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
+          // Only trigger onClick for enabled dates
+          onClick={() => isEnabled && handleDateSelect(dateMid)}
+          style={{
+            cursor: isEnabled ? "pointer" : "not-allowed",
+            color: isEnabled ? undefined : "#ccc",
+            background: isSelected ? "#aaf" : undefined,
+            opacity: isEnabled ? 1 : 0.5,
+          }}
+          title={isEnabled ? "Select this date" : "Date not selectable"}
+        >
+          {day}
+        </div>
+      );
+    }
+    return days;
+  };
 
   const handleDownloadClick = async () => {
     const path = getDownloadPathForChart(currentIndex);
@@ -620,7 +626,11 @@ const generateCalendarDays = () => {
               >
                 {selectedTimeLabel}
               </button>
-              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}>
+              {/* === DISABLE POINTER EVENTS ON DROPDOWN MENU WHEN CALENDAR IS OPEN === */}
+              <ul
+                className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}
+                style={{ pointerEvents: calendarOpen ? 'none' : 'auto' }}
+              >
                 {timeOptions.map(option => (
                   <li
                     key={option.value}
