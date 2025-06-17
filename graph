@@ -490,28 +490,54 @@ const GraphCarousel = () => {
     }
   };
 
-  // Only last 7 days (including today)
-  const generateCalendarDays = () => {
-    const today = new Date();
-    const days = [];
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    weekdays.forEach(day => days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>));
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
-      days.push(
-        <div
-          key={`day-${date.toISOString()}`}
-          className={`calendar-day ${isSelected ? 'selected' : ''}`}
-          onClick={() => handleDateSelect(date)}
-        >
-          {date.getDate()}
-        </div>
-      );
-    }
-    return days;
-  };
+const generateCalendarDays = () => {
+  const today = new Date();
+  const days = [];
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  weekdays.forEach(day => days.push(
+    <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
+  ));
+
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+  const firstDayWeekday = firstDayOfMonth.getDay();
+
+  // Fill empty slots for days before the first of the month
+  for (let i = 0; i < firstDayWeekday; i++) {
+    days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
+  }
+
+  // Only dates from today-7 (exclusive) to yesterday (inclusive) are enabled
+  const maxEnabled = new Date(today);
+  maxEnabled.setDate(today.getDate() - 1);
+  const minEnabled = new Date(today);
+  minEnabled.setDate(today.getDate() - 7);
+
+  for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+    const date = new Date(year, month, day);
+    // date > minEnabled && date <= maxEnabled means: not including today, last 7 days only
+    const isEnabled = date > minEnabled && date <= maxEnabled;
+    const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+    days.push(
+      <div
+        key={`day-${date.toISOString()}`}
+        className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
+        onClick={() => isEnabled && handleDateSelect(date)}
+        style={{
+          cursor: isEnabled ? "pointer" : "not-allowed",
+          color: isEnabled ? undefined : "#ccc",
+          background: isSelected ? "#aaf" : undefined,
+          opacity: isEnabled ? 1 : 0.5,
+        }}
+      >
+        {day}
+      </div>
+    );
+  }
+  return days;
+};
 
   const handleDownloadClick = async () => {
     const path = getDownloadPathForChart(currentIndex);
