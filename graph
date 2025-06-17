@@ -23,7 +23,6 @@ import {
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
-/** --- NEW: Robust array extraction utility --- */
 function extractFirstArray(obj) {
   if (Array.isArray(obj)) return obj;
   if (obj && typeof obj === 'object') {
@@ -427,6 +426,15 @@ const GraphCarousel = () => {
     }
   }, [selectedTimeLabel, charts.length]);
 
+  // NEW: Pause carousel when dropdown/calendar is open, resume only when both are closed
+  useEffect(() => {
+    if (dropdownOpen || calendarOpen) {
+      setPaused(true);
+    } else {
+      setPaused(false);
+    }
+  }, [dropdownOpen, calendarOpen]);
+
   const handleTimeChange = async (option) => {
     if (currentIndex === 6) return;
     if (option.value === "custom") {
@@ -438,7 +446,6 @@ const GraphCarousel = () => {
     setSelectedTimeValue(option.value);
     setDropdownOpen(false);
     setCalendarOpen(false);
-    setPaused(true);
     setIsLoading(true);
     setRetryCount(0);
     try {
@@ -452,7 +459,7 @@ const GraphCarousel = () => {
       }
     } finally {
       setIsLoading(false);
-      setPaused(false);
+      // Do not setPaused(false) here: let useEffect handle it!
     }
   };
 
@@ -466,7 +473,6 @@ const GraphCarousel = () => {
     setSelectedTimeLabel(timeLabel);
     setSelectedTimeValue(dateValue);
     setCalendarOpen(false);
-    setPaused(true);
     setIsLoading(true);
     setRetryCount(0);
     try {
@@ -480,42 +486,33 @@ const GraphCarousel = () => {
       }
     } finally {
       setIsLoading(false);
-      setPaused(false);
+      // Do not setPaused(false) here: let useEffect handle it!
     }
   };
 
+  // Only last 7 days (including today)
   const generateCalendarDays = () => {
     const today = new Date();
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     weekdays.forEach(day => days.push(<div key={`weekday-${day}`} className="calendar-weekday">{day}</div>));
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 6);
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const startDate = new Date(Math.max(sevenDaysAgo.getTime(), firstDayOfMonth.getTime()));
-    const firstDayOfWeek = startDate.getDay();
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      days.push(<div key={`empty-start-${i}`} className="calendar-day"></div>);
-    }
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-    for (let day = startDate.getDate(); day <= lastDayOfMonth; day++) {
-      const date = new Date(today.getFullYear(), today.getMonth(), day);
-      const isDisabled = date > today || date < sevenDaysAgo;
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
       const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
       days.push(
         <div
-          key={`day-${day}`}
-          className={`calendar-day ${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
-          onClick={() => !isDisabled && handleDateSelect(date)}
+          key={`day-${date.toISOString()}`}
+          className={`calendar-day ${isSelected ? 'selected' : ''}`}
+          onClick={() => handleDateSelect(date)}
         >
-          {day}
+          {date.getDate()}
         </div>
       );
     }
     return days;
   };
 
-  // --- UPDATED: Robust download handler ---
   const handleDownloadClick = async () => {
     const path = getDownloadPathForChart(currentIndex);
     if (path) {
@@ -525,7 +522,6 @@ const GraphCarousel = () => {
           path,
           time: selectedTimeValue
         });
-        // Robustly extract the first array in the response
         const data = extractFirstArray(response.data);
         if (!data || !Array.isArray(data) || !data.length) {
           alert("No data received for download.");
