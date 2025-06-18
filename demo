@@ -7,6 +7,24 @@ import Chatbot from './components/ChatBot';
 import Login from './components/Login';
 import './App.css';
 
+// Robust function to clear all cookies (within JS limitations)
+function clearAllCookies() {
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    // Remove cookie for root path
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    // Attempt to remove cookie for every path segment
+    const pathSegments = location.pathname.split('/');
+    let path = '';
+    for (let i = 0; i < pathSegments.length; i++) {
+      path += (path.endsWith('/') ? '' : '/') + pathSegments[i];
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path};`;
+    }
+  }
+}
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chatbotMinimized, setChatbotMinimized] = useState(false);
@@ -44,15 +62,7 @@ function App() {
     setUsername('');
     localStorage.clear();
     sessionStorage.clear();
-
-    // Clear all cookies
-    document.cookie.split(";").forEach((c) => {
-      document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-    });
-
-    // Clear all caches
+    clearAllCookies();
     if ('caches' in window) {
       caches.keys().then((names) => {
         for (let name of names) {
@@ -60,7 +70,6 @@ function App() {
         }
       });
     }
-
     // Optionally, redirect or show a message here
   };
 
