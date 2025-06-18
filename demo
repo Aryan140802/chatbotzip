@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer';
 import Menu from './components/Menu';
@@ -13,6 +13,10 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [username, setUsername] = useState('');
+  const inactivityTimer = useRef(null);
+
+  // Inactivity time limit in ms (30 minutes)
+  const INACTIVITY_LIMIT = 30 * 60 * 1000;
 
   // Check for existing login session on app load
   useEffect(() => {
@@ -47,9 +51,10 @@ function App() {
     localStorage.removeItem('username');
     localStorage.removeItem('loginTime');
     sessionStorage.clear(); // Flush entire session storage
+    // Optionally, you can redirect or show a message here if you want
   };
 
-  // Auto logout after 1 hour
+  // Auto logout after 1 hour (session expiration as before)
   useEffect(() => {
     if (!isLoggedIn) return;
 
@@ -64,6 +69,38 @@ function App() {
     checkAutoLogout();
 
     return () => clearInterval(interval);
+  }, [isLoggedIn]);
+
+  // Auto logout after 30 min of inactivity
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        alert('You have been logged out due to 30 minutes of inactivity.');
+        handleLogout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    // List of events indicating user activity
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+
+    // Add event listeners
+    events.forEach(event =>
+      window.addEventListener(event, resetInactivityTimer, true)
+    );
+
+    // Start timer initially
+    resetInactivityTimer();
+
+    // Cleanup event listeners and timer on unmount or logout
+    return () => {
+      events.forEach(event =>
+        window.removeEventListener(event, resetInactivityTimer, true)
+      );
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
   }, [isLoggedIn]);
 
   useEffect(() => {
@@ -106,4 +143,3 @@ function App() {
 }
 
 export default App;
-
