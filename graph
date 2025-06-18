@@ -51,13 +51,20 @@ function getDownloadPathForChart(index) {
     case 3: return "EISHome/ipwise_top5_FiveM/SYS/";
     case 4: return "EISHome/portwise_top5_FiveM/EXP/";
     case 5: return "EISHome/portwise_top5_FiveM/SYS/";
+    case 6: return "FAR_EXPIRY_ALL"; // <--- Special marker for FAR Expiry
     default: return null;
   }
 }
 
-function convertToCSV(data) {
+// ---------- PATCH: Support additional columns for FAR details ----------
+const farCsvHeaders = [
+  "Far_Id", "Subject", "status", "created", "dependent_application", "Permanent_rule", "Zone"
+];
+
+// Convert an array of objects to CSV using the custom headers
+function convertToCSV(data, headers) {
   if (!data || !Array.isArray(data) || !data.length) return '';
-  const keys = Object.keys(data[0]);
+  const keys = headers || Object.keys(data[0]);
   const csvRows = [keys.join(',')];
   data.forEach(row => {
     csvRows.push(keys.map(key => `"${row[key] ?? ''}"`).join(','));
@@ -431,7 +438,6 @@ const GraphCarousel = () => {
     }
   }, [selectedTimeLabel, charts.length]);
 
-  // Pause carousel when dropdown/calendar is open, resume only when both are closed
   useEffect(() => {
     if (dropdownOpen || calendarOpen) {
       setPaused(true);
@@ -528,7 +534,6 @@ const GraphCarousel = () => {
         <div
           key={`day-${dateMid.toISOString()}`}
           className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
-          // Only trigger onClick for enabled dates
           onClick={() => isEnabled && handleDateSelect(dateMid)}
           style={{
             cursor: isEnabled ? "pointer" : "not-allowed",
@@ -545,8 +550,51 @@ const GraphCarousel = () => {
     return days;
   };
 
+  // ---------- PATCH: Download for FAR expiry (all months) ----------
   const handleDownloadClick = async () => {
     const path = getDownloadPathForChart(currentIndex);
+    if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
+      try {
+        setIsLoading(true);
+        // Get all months from the far expiry graph data
+        const farMonths = charts[6].rawData.map(item => item.name);
+
+        // Fetch details for all months in parallel
+        const allDetailsResponses = await Promise.all(
+          farMonths.map(month => getFARDetailsSpecific(month))
+        );
+
+        // Flatten all MonthlyDetails arrays into one
+        const allDetails = allDetailsResponses.flatMap(resp =>
+          resp.data?.MonthlyDetails || []
+        );
+
+        if (!allDetails.length) {
+          alert("No FAR details available for download.");
+          setIsLoading(false);
+          return;
+        }
+
+        // Convert all details to CSV using headers for all fields
+        const csv = convertToCSV(allDetails, farCsvHeaders);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `FAR_Details_ALL.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+        console.error("Download failed", e);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+    // ...existing download logic for other charts...
     if (path) {
       try {
         setIsLoading(true);
@@ -626,7 +674,6 @@ const GraphCarousel = () => {
               >
                 {selectedTimeLabel}
               </button>
-              {/* === DISABLE POINTER EVENTS ON DROPDOWN MENU WHEN CALENDAR IS OPEN === */}
               <ul
                 className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}
                 style={{ pointerEvents: calendarOpen ? 'none' : 'auto' }}
@@ -717,133 +764,144 @@ const GraphCarousel = () => {
         ))}
 
       {showFarDetails && (
-  <div className="far-details-modal">
-    <div className="modal-content">
-      <div className="modal-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <h3 style={{ margin: 0 }}>
-          FAR Details for {selectedMonthData?.name}
-        </h3>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <button
-            className="download-button"
-            onClick={() => {
-              if (!filteredFarDetails.length) return;
-              const csv = convertToCSV(filteredFarDetails);
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-              const url = URL.createObjectURL(blob);
-              const link = document.createElement('a');
-              link.href = url;
-              link.setAttribute('download', `FAR_Details_${selectedMonthData?.name}.csv`);
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-            }}
-            disabled={isLoadingDetails || !filteredFarDetails.length}
-            title="Download FAR Details"
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-          >
-            <img
-              className="logo"
-              src={Download}
-              alt="Download Icon"
-              style={{ height: '28px' }}
-            />
-          </button>
-          <button
-            onClick={() => {
-              setShowFarDetails(false);
-              setPaused(false);
-            }}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#f285c1',
-              fontSize: '24px',
-              cursor: 'pointer',
-              padding: '5px',
-              marginLeft: '8px'
-            }}
-            title="Close"
-            aria-label="Close"
-          >×</button>
-        </div>
-      </div>
-      <div className="modal-body" style={{
-        padding: '20px',
-        maxHeight: '500px',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {isLoadingDetails ? (
-          <div style={{ textAlign: 'center', color: '#fff' }}>
-            <div className="loading-spinner"></div>
-            <p>Loading FAR details...</p>
+        <div className="far-details-modal">
+          <div className="modal-content">
+            <div className="modal-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h3 style={{ margin: 0 }}>
+                FAR Details for {selectedMonthData?.name}
+              </h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  className="download-button"
+                  onClick={() => {
+                    if (!filteredFarDetails.length) return;
+                    const csv = convertToCSV(filteredFarDetails, farCsvHeaders);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `FAR_Details_${selectedMonthData?.name}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                  }}
+                  disabled={isLoadingDetails || !filteredFarDetails.length}
+                  title="Download FAR Details"
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                >
+                  <img
+                    className="logo"
+                    src={Download}
+                    alt="Download Icon"
+                    style={{ height: '28px' }}
+                  />
+                </button>
+                <button
+                  onClick={() => {
+                    setShowFarDetails(false);
+                    setPaused(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f285c1',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    padding: '5px',
+                    marginLeft: '8px'
+                  }}
+                  title="Close"
+                  aria-label="Close"
+                >×</button>
+              </div>
+            </div>
+            <div className="modal-body" style={{
+              padding: '20px',
+              maxHeight: '500px',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}>
+              {isLoadingDetails ? (
+                <div style={{ textAlign: 'center', color: '#fff' }}>
+                  <div className="loading-spinner"></div>
+                  <p>Loading FAR details...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="far-Search" style={{
+                    paddingBottom: '10px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: '#2e1a3b',
+                    zIndex: 2
+                  }}>
+                    <input
+                      type="text"
+                      placeholder="Search FAR ID or Subject"
+                      value={farDetailsSearch}
+                      onChange={e => setFarDetailsSearch(e.target.value)}
+                      style={{
+                        width: '98%',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc'
+                      }}
+                    />
+                  </div>
+                  <div className="far-details-table" style={{
+                    overflowY: 'auto',
+                    flex: 1,
+                    position: 'relative'
+                  }}>
+                    <table style={{ width: '100%' }}>
+                      <thead style={{
+                        position: 'sticky',
+                        top: 0,
+                        backgroundColor: '#2e1a3b',
+                        zIndex: 1
+                      }}>
+                        {/* PATCH: Additional columns */}
+                        <tr>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>FAR ID</th>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>Status</th>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>Created</th>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>Dependent Application</th>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>Permanent Rule</th>
+                          <th style={{ padding: '8px', textAlign: 'left' }}>Zone</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredFarDetails.length > 0 ? (
+                          filteredFarDetails.map((detail, index) => (
+                            <tr key={index} style={{ borderBottom: '1px solid #444' }}>
+                              <td style={{ padding: '8px' }}>{detail.Far_Id || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Subject || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.status || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.created || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.dependent_application || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Permanent_rule || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Zone || 'N/A'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '8px' }}>
+                              No FAR details found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="far-Search" style={{
-              paddingBottom: '10px',
-              position: 'sticky',
-              top: 0,
-              backgroundColor: '#2e1a3b',
-              zIndex: 2
-            }}>
-              <input
-                type="text"
-                placeholder="Search FAR ID or Subject"
-                value={farDetailsSearch}
-                onChange={e => setFarDetailsSearch(e.target.value)}
-                style={{
-                  width: '98%',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc'
-                }}
-              />
-            </div>
-            <div className="far-details-table" style={{
-              overflowY: 'auto',
-              flex: 1,
-              position: 'relative'
-            }}>
-              <table style={{ width: '100%' }}>
-                <thead style={{
-                  position: 'sticky',
-                  top: 0,
-                  backgroundColor: '#2e1a3b',
-                  zIndex: 1
-                }}>
-                  <tr>
-                    <th style={{ padding: '8px', textAlign: 'left' }}>FAR ID</th>
-                    <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredFarDetails.length > 0 ? (
-                    filteredFarDetails.map((detail, index) => (
-                      <tr key={index} style={{ borderBottom: '1px solid #444' }}>
-                        <td style={{ padding: '8px' }}>{detail.Far_Id || 'N/A'}</td>
-                        <td style={{ padding: '8px' }}>{detail.Subject || 'N/A'}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={2} style={{ textAlign: 'center', padding: '8px' }}>
-                        No FAR details found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )}
       </div>
     </div>
   );
