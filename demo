@@ -23,14 +23,8 @@ function App() {
     const storedUsername = localStorage.getItem('username');
     const storedLoginTime = localStorage.getItem('loginTime');
     if (storedUsername && storedLoginTime) {
-      // Check if session has expired
-      const loginTime = parseInt(storedLoginTime, 10);
-      if (loginTime && Date.now() - loginTime < 60 * 60 * 1000) {
-        setUsername(storedUsername);
-        setIsLoggedIn(true);
-      } else {
-        handleLogout();
-      }
+      setUsername(storedUsername);
+      setIsLoggedIn(true);
     }
   }, []);
 
@@ -44,47 +38,31 @@ function App() {
     sessionStorage.setItem('loginTime', now.toString());
   };
 
+  // Logout and flush session storage, local storage, cookies, and caches
   const handleLogout = () => {
-  setIsLoggedIn(false);
-  setUsername('');
-  localStorage.clear();
-  sessionStorage.clear();
+    setIsLoggedIn(false);
+    setUsername('');
+    localStorage.clear();
+    sessionStorage.clear();
 
-  // Clear all cookies
-  document.cookie.split(";").forEach((c) => {
-    document.cookie = c
-      .replace(/^ +/, "")
-      .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-  });
-
-  // Clear all caches
-  if ('caches' in window) {
-    caches.keys().then((names) => {
-      for (let name of names) {
-        caches.delete(name);
-      }
+    // Clear all cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-  }
 
-  // Optionally, you can redirect or show a message here if you want
-};
+    // Clear all caches
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      });
+    }
 
-  // Auto logout after 1 hour (session expiration as before)
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const checkAutoLogout = () => {
-      const loginTime = parseInt(localStorage.getItem('loginTime'), 10);
-      if (loginTime && Date.now() - loginTime > 60 * 60 * 1000) {
-        handleLogout();
-      }
-    };
-
-    const interval = setInterval(checkAutoLogout, 60 * 1000); // Check every minute
-    checkAutoLogout();
-
-    return () => clearInterval(interval);
-  }, [isLoggedIn]);
+    // Optionally, redirect or show a message here
+  };
 
   // Auto logout after 30 min of inactivity
   useEffect(() => {
@@ -117,19 +95,6 @@ function App() {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
   }, [isLoggedIn]);
-
-  useEffect(() => {
-    const clearCache = () => {
-      if ('caches' in window) {
-        caches.keys().then((names) => {
-          for (let name of names) {
-            caches.delete(name);
-          }
-        });
-      }
-    };
-    clearCache();
-  }, []);
 
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;
