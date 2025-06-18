@@ -1,690 +1,169 @@
-import { useState, useEffect, useRef } from "react";
-import ProfileIcon from "./ProfileIcon";
-import TypingIndicator from "./TypingIndicator";
-import "../styles/Chatbot.css";
-import send from "../assets/Send.png";
-import logo from "../assets/logobot.jpg";
-import { getPost, postMessage } from "../api/PostApi";
+// Sidebar.jsx (updated)
+import React, { useEffect, useState } from 'react';
+import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { cardLinks } from './CardLinks';
+import '../styles/Menu.css';
+import ProtectedLink from './ProtectedLink';
 
-const formatDynamicMessage = (text) => {
-  if (!text || typeof text !== "string") return text;
+const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen, isLoggedIn }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const [password, setPassword] = useState(null);
 
-  // Case 1: HTML-formatted messages with <b> tags
-  if (text.includes("<b>")) {
-    const pattern = /<b>(.*?)<\/b>:\s*(.*?)(?=<b>|$)/gs;
-    const lines = [];
-    let match;
-    while ((match = pattern.exec(text)) !== null) {
-      const key = match[1].trim();
-      const value = match[2].trim().replace(/\n/g, "<br/>");
-      lines.push(`<div><strong>${key}:</strong> ${value}</div>`);
-    }
-    return `<div class="formatted-card">${lines.join("")}</div>`;
-  }
+  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
 
-  // Case 2: Likely a server config line (very long, no <b>, many ":")
-  const isServerConfig = text.length > 100 && (text.match(/:/g) || []).length > 4;
-  if (isServerConfig) {
-    const pattern = /([^\n:]+?:[^:\n]+?)(?=\s+[A-Za-z0-9_\-]+ ?:|$)/g;
-    let formatted = "";
-    let index = 0;
-
-    const introMatch = text.match(/^(.*?OS Version.*?\))\s*/);
-    if (introMatch) {
-      formatted += introMatch[1] + "<br/>";
-      text = text.slice(introMatch[0].length);
-    }
-
-    const kvPairs = [...text.matchAll(pattern)];
-    kvPairs.forEach((m) => {
-      formatted += m[1].trim() + "<br/>";
-    });
-
-    return `<div class="formatted-card">${formatted.trim()}</div>`;
-  }
-
-  // Default plain text
-  const cleanedText = text.replace(/:,\s*$/, ":").trim();
-  return cleanedText;
-};
-
-// Dynamic Form Component
-const DynamicForm = ({ fields, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({});
-  const [errors, setErrors] = useState({});
-
+  // Get userId and password from localStorage on mount
   useEffect(() => {
-    // Initialize form data with empty values or default values from fields
-    const initialData = {};
-    fields.forEach(field => {
-      initialData[field.name] = field.defaultValue || '';
-    });
-    setFormData(initialData);
-  }, [fields]);
-
-  const handleInputChange = (fieldName, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
-    
-    // Clear error for this field when user starts typing
-    if (errors[fieldName]) {
-      setErrors(prev => ({
-        ...prev,
-        [fieldName]: null
-      }));
+    const uid = localStorage.getItem('uidd');
+    const pwd = localStorage.getItem('password');
+    if (uid && pwd) {
+      setUserId(uid);
+      setPassword(pwd);
+    } else {
+      console.warn('No user credentials found in localStorage');
     }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    fields.forEach(field => {
-      if (field.required && (!formData[field.name] || formData[field.name].trim() === '')) {
-        newErrors[field.name] = `${field.label || field.name} is required`;
-      }
-      
-      // Add other validation rules as needed
-      if (field.type === 'email' && formData[field.name] && 
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData[field.name])) {
-        newErrors[field.name] = 'Please enter a valid email address';
-      }
-      
-      if (field.minLength && formData[field.name] && 
-          formData[field.name].length < field.minLength) {
-        newErrors[field.name] = `Minimum ${field.minLength} characters required`;
-      }
-    });
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
-    }
-  };
-
-  const renderField = (field) => {
-    const { name, type, label, placeholder, options, required } = field;
-    const value = formData[name] || '';
-    const error = errors[name];
-
-    switch (type) {
-      case 'date':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      case 'select':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <select
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              className={`form-select ${error ? 'error' : ''}`}
-            >
-              <option value="">Select an option</option>
-              {options?.map((option, idx) => (
-                <option key={idx} value={option.value || option}>
-                  {option.label || option}
-                </option>
-              ))}
-            </select>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      case 'textarea':
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <textarea
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              placeholder={placeholder}
-              className={`form-textarea ${error ? 'error' : ''}`}
-              rows={3}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      case 'checkbox':
-        return (
-          <div key={name} className="form-field checkbox-field">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={value === true || value === 'true'}
-                onChange={(e) => handleInputChange(name, e.target.checked)}
-                className="form-checkbox"
-              />
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-
-      default:
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {label || name} {required && <span className="required">*</span>}
-            </label>
-            <input
-              type={type || 'text'}
-              value={value}
-              onChange={(e) => handleInputChange(name, e.target.value)}
-              placeholder={placeholder}
-              className={`form-input ${error ? 'error' : ''}`}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
-    }
-  };
-
-  return (
-    <div className="dynamic-form-container">
-      <form onSubmit={handleSubmit} className="dynamic-form">
-        {fields.map(renderField)}
-        <div className="form-actions">
-          <button type="button" onClick={onCancel} className="cancel-button">
-            Cancel
-          </button>
-          <button type="submit" className="submit-button">
-            Submit
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-};
-
-const Chatbot = ({ setChatbotMinimized }) => {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [formDisabled, setFormDisabled] = useState(true);
-  const [activeForm, setActiveForm] = useState(null); // Store form configuration
-
-  const messagesEndRef = useRef(null);
-  const timeoutRef = useRef(null);
-  const API_TIMEOUT = 20000;
-
-  const clearCurrentTimeout = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-  };
-
-  const setApiTimeout = (errorHandler) => {
-    clearCurrentTimeout();
-    timeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      errorHandler();
-    }, API_TIMEOUT);
-  };
-
-  const getCurrentTime = () => {
-    const now = new Date();
-    return `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
-  };
-
-  // Check if the response contains form fields (object with empty string values and arrays)
-  const hasFormFields = (response) => {
-    if (!response || !response.message || typeof response.message !== 'object') {
-      return false;
-    }
-    
-    const message = response.message;
-    // Check if message is an object with properties that look like form fields
-    const keys = Object.keys(message);
-    return keys.length > 0 && keys.some(key => 
-      typeof message[key] === 'string' || 
-      Array.isArray(message[key]) ||
-      key.toLowerCase().includes('options')
-    );
-  };
-
-  // Extract form fields from response message object
-  const extractFormFields = (response) => {
-    if (!response || !response.message || typeof response.message !== 'object') {
-      return null;
-    }
-    
-    const message = response.message;
-    const fields = [];
-    
-    Object.keys(message).forEach(key => {
-      const value = message[key];
-      
-      if (key.toLowerCase().includes('options') && Array.isArray(value)) {
-        // This is an options array for another field
-        return;
-      }
-      
-      const field = {
-        name: key,
-        label: key.charAt(0).toUpperCase() + key.slice(1), // Capitalize first letter
-        required: false
-      };
-      
-      // Check if there's a corresponding options array
-      const optionsKey = key.toLowerCase() + 'options';
-      const optionsArray = message[optionsKey];
-      
-      if (Array.isArray(optionsArray)) {
-        field.type = 'select';
-        field.options = optionsArray;
-      } else if (key.toLowerCase().includes('date') || value === 'date') {
-        field.type = 'date';
-      } else if (typeof value === 'string') {
-        field.type = 'text';
-      }
-      
-      field.defaultValue = typeof value === 'string' ? value : '';
-      fields.push(field);
-    });
-    
-    return fields.length > 0 ? fields : null;
-  };
-
-  const getPostData = async () => {
-    try {
-      setIsTyping(true);
-      setApiTimeout(() => {
-        setMessages([
-          {
-            id: Date.now(),
-            text: "Unable to load messages. Please try again later.",
-            sender: "bot",
-            time: getCurrentTime(),
-          },
-        ]);
-      });
-
-      const res = await getPost();
-      clearCurrentTimeout();
-
-      const formattedMessages = res.data.chat_history.map((item, index) => {
-        const message = {
-          id: Date.now() + index,
-          text: item.message || "",
-          sender: item.sender.toLowerCase() === "you" ? "user" : "bot",
-          time: getCurrentTime(),
-          options: item.options || [],
-        };
-
-        // Check if this message contains form fields
-        if (hasFormFields(item)) {
-          message.formFields = extractFormFields(item);
-          message.isFormMessage = true;
-        }
-
-        return message;
-      });
-
-      setMessages(formattedMessages);
-      setFormDisabled(true);
-      setIsTyping(false);
-    } catch {
-      clearCurrentTimeout();
-      setIsTyping(false);
-      setMessages([
-        {
-          id: Date.now(),
-          text: "An error occurred while loading messages.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-  };
-
-  useEffect(() => {
-    getPostData();
-    return () => clearCurrentTimeout();
   }, []);
 
+  // Fetch favorites from backend
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, activeForm]);
+    if (!userId || !password) return;
 
-  const checkEnableForm = (text) => {
-    const lowerText = text.toLowerCase();
-    return lowerText.includes("enter") || lowerText.includes("provide");
-  };
+    const fetchFavorites = async () => {
+      try {
+        const res = await fetch('/PyPortal/EISHome/postFavourites/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, password }),
+        });
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (newMessage.trim() === "") return;
+        const data = await res.json();
+        const favData = data.favourites;
 
-    const userMsg = {
-      id: Date.now(),
-      text: newMessage,
-      sender: "user",
-      time: getCurrentTime(),
-    };
+        let favArray = [];
 
-    setMessages((prev) => [...prev, userMsg]);
-    setNewMessage("");
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-      const res = await postMessage(newMessage);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-
-        // Check if response contains form fields
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
+        if (Array.isArray(favData)) {
+          favArray = favData;
+        } else if (typeof favData === 'string') {
+          favArray = favData.split(',').map(item => item.trim()).filter(Boolean);
         }
 
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
+        setFavorites(favArray);
+      } catch (err) {
+        console.error('Failed to load favorites:', err);
       }
-    } catch {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-
-    setIsTyping(false);
-  };
-
-  const handleOptionClick = async (optionText) => {
-    const cleanedOpt = optionText.replace(/^\d+\.|[a-zA-Z]\.\s*/, "").trim();
-
-    const userMessage = {
-      id: Date.now(),
-      text: cleanedOpt,
-      sender: "user",
-      time: getCurrentTime(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setFormDisabled(true);
-    setIsTyping(true);
+    fetchFavorites();
+  }, [userId, password]);
 
+  // Update backend when favorites change
+  const updateFavoritesOnBackend = async (updatedFavorites) => {
     try {
-      setApiTimeout(() => {});
-      const res = await postMessage(cleanedOpt);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-
-        // Check if response contains form fields
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
+      await fetch('/PyPortal/EISHome/postFavourites/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          password,
+          favList: updatedFavorites, // Send as array
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to update favorites:', error);
     }
-
-    setIsTyping(false);
   };
 
-  // Handle form submission
-  const handleFormSubmit = async (formData) => {
-    setActiveForm(null);
-    
-    // Create user message showing the submitted data
-    const userMessage = {
-      id: Date.now(),
-      text: `Form submitted: ${Object.entries(formData).map(([key, value]) => `${key}: ${value}`).join(', ')}`,
-      sender: "user",
-      time: getCurrentTime(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsTyping(true);
-    setFormDisabled(true);
-
-    try {
-      setApiTimeout(() => {});
-      
-      // Send form data with the specified payload structure
-      const payload = {
-        message: formData
-      };
-      
-      const res = await postMessage(payload);
-      clearCurrentTimeout();
-
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
-
-        // Check if response contains form fields
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest);
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
-    } catch {
-      clearCurrentTimeout();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "An error occurred while submitting the form. Please try again.",
-          sender: "bot",
-          time: getCurrentTime(),
-        },
-      ]);
-    }
-
-    setIsTyping(false);
+  // Toggle favorite
+  const toggleFavorite = (name) => {
+    setFavorites((prev) => {
+      const updated = prev.includes(name)
+        ? prev.filter((fav) => fav !== name)
+        : [...prev, name];
+      updateFavoritesOnBackend(updated);
+      return updated;
+    });
   };
 
-  // Handle form cancellation
-  const handleFormCancel = () => {
-    setActiveForm(null);
-  };
-
-  // Handle form button click
-  const handleFormButtonClick = (fields) => {
-    setActiveForm(fields);
-  };
-
-  const handleMinimize = () => {
-    setIsMinimized(true);
-    setChatbotMinimized(true);
-  };
-
-  const handleRestore = () => {
-    setIsMinimized(false);
-    setChatbotMinimized(false);
-  };
+  // Filter and sort links
+  const filteredLinks = cardLinks
+    .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      const aFav = favorites.includes(a.name);
+      const bFav = favorites.includes(b.name);
+      return aFav === bFav ? 0 : aFav ? -1 : 1;
+    });
 
   return (
-    <div className={`chat-container ${isMinimized ? "minimized" : ""}`}>
-      <div className="chat-header">
-        <img src={logo} alt="Logo" className="chat-logo" onClick={handleRestore} />
-        {!isMinimized && (
-          <>
-            <div className="chat-title">
-              <h1>EIS GINI</h1>
-              <h5>(Generative Interactive Neural Interface)</h5>
-            </div>
-            <button className="minimize-button" onClick={handleMinimize}>
-              &#x2212;
-            </button>
-          </>
-        )}
-      </div>
+    <>
+      {!isSidebarOpen && (
+        <button className="sidebar-toggle" onClick={toggleSidebar}>
+          <MenuIcon size={24} />
+        </button>
+      )}
 
-      {!isMinimized && (
-        <>
-          <div className="messages-container">
-            {messages.map((item, index) => (
-              <div
-                key={index}
-                className={`message-wrapper ${item.sender.toLowerCase()}`}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: item.sender === "user" ? "flex-end" : "flex-start",
-                  marginBottom: "12px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                  {item.sender === "bot" && <ProfileIcon sender={item.sender} />}
-                  <div className={`message ${item.sender === "user" ? "user-message" : "bot-message"}`}>
-                    {item.sender === "bot" && !item.isFormMessage ? (
-                      <div
-                        className="message-content"
-                        dangerouslySetInnerHTML={{ __html: formatDynamicMessage(item.text) }}
-                      />
-                    ) : item.sender === "bot" && item.isFormMessage ? (
-                      <div className="message-content">
-                        <p>Please fill out the form with the required information:</p>
-                      </div>
-                    ) : (
-                      <div className="message-content">{item.text}</div>
-                    )}
-                    
-                    {/* Render form button if message has form fields */}
-                    {item.formFields && (
-                      <div className="form-trigger">
-                        <button 
-                          className="form-button"
-                          onClick={() => handleFormButtonClick(item.formFields)}
-                        >
-                          Fill Form
-                        </button>
-                      </div>
-                    )}
-                    
-                    {item.options?.length > 0 && (
-                      <div className="options-list">
-                        {item.options.map((opt, i) => {
-                          const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
-                          const isPlainText =
-                            displayText.includes("please select one by name") ||
-                            displayText.includes("please select from the following options");
+      <div className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
+        <div className="sidebar-header">
+          {isSidebarOpen && <h2 className="sidebar-title">Quick Access</h2>}
+          <button
+            className="collapse-btn"
+            onClick={toggleSidebar}
+            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+          </button>
+        </div>
 
-                          if (isPlainText) {
-                            return (
-                              <div key={i} className="plain-text-option">
-                                {displayText}
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <button key={i} className="option-button" onClick={() => handleOptionClick(opt)}>
-                              {displayText}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="message-time">{item.time}</div>
-                  </div>
-                  {item.sender === "user" && <ProfileIcon sender={item.sender} />}
-                </div>
-              </div>
-            ))}
-            {isTyping && (
-              <div style={{ display: "flex", alignItems: "flex-end", gap: "5px" }}>
-                <ProfileIcon sender="bot" />
-                <div className="message bot-message">
-                  <TypingIndicator />
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Render active form */}
-          {activeForm && (
-            <DynamicForm
-              fields={activeForm}
-              onSubmit={handleFormSubmit}
-              onCancel={handleFormCancel}
-            />
-          )}
-
-          <form className="message-form" onSubmit={handleSendMessage}>
+        {isSidebarOpen && (
+          <div className="sidebar-search">
             <input
               type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={formDisabled ? "Select a relevant option or wait for prompt..." : "Type a message..."}
-              className="message-input"
-              disabled={formDisabled}
+              placeholder="Search links..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
             />
-            <button type="submit" className="send-button" disabled={formDisabled}>
-              <img className="logo" src={send} alt="Send" style={{ height: "20px", opacity: formDisabled ? 0.5 : 1 }} />
-            </button>
-          </form>
-        </>
-      )}
-    </div>
+          </div>
+        )}
+
+
+      
+      <div className="sidebar-content">
+        <div className="sidebar-section">
+          {filteredLinks.map((link, index) => {
+            const isFavorited = favorites.includes(link.name);
+            return (
+              <div key={index} className="link-card">
+                <span
+                  className="star-icon"
+                  onClick={() => toggleFavorite(link.name)}
+                  title={isFavorited ? 'Unstar' : 'Star'}
+                >
+                  {isFavorited ? (
+                    <Star fill="#facc15" color="#facc15" size={16} />
+                  ) : (
+                    <Star color="#fff" size={16} />
+                  )}
+                </span>
+                <ProtectedLink url={link.url} isLoggedIn={isLoggedIn}>
+                  {isSidebarOpen ? (
+                    <span className="link-anchor">{link.name}</span>
+                  ) : (
+                    <img
+                      src={link.icon}
+                      alt={link.name}
+                      title={link.name}
+                      className="link-icon"
+                    />
+                  )}
+                </ProtectedLink>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 };
 
-export default Chatbot;
+export default Sidebar;
