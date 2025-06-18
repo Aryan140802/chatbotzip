@@ -1,118 +1,77 @@
-// src/App.js
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Home from './components/Home'; // New component
-import Login from './components/Login';
-import './App.css';
 
-function App() {
-  const [auth, setAuth] = useState({
-    isLoggedIn: false,
-    username: ''
-  });
-
-  // Check authentication on app load
-  useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    const storedLoginTime = localStorage.getItem('loginTime');
-    
-    if (storedUsername && storedLoginTime) {
-      const loginTime = parseInt(storedLoginTime, 10);
-      if (Date.now() - loginTime < 60 * 60 * 1000) { // 1 hour session
-        setAuth({
-          isLoggedIn: true,
-          username: storedUsername
-        });
-      } else {
-        handleLogout();
-      }
-    }
-  }, []);
-
-  const handleLogin = (username) => {
-    const now = Date.now();
-    setAuth({
-      isLoggedIn: true,
-      username
-    });
-    localStorage.setItem('username', username);
-    localStorage.setItem('loginTime', now.toString());
-  };
-
-  const handleLogout = () => {
-    setAuth({
-      isLoggedIn: false,
-      username: ''
-    });
-    localStorage.removeItem('username');
-    localStorage.removeItem('loginTime');
-    sessionStorage.removeItem('redirectUrl');
-  };
-
-  return (
-    <Router>
-      <div className="app">
-        <Header
-          username={auth.username}
-          onLogout={handleLogout}
-        />
-        
-        <Routes>
-          <Route path="/login" element={
-            auth.isLoggedIn ? (
-              <Navigate to="/" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          } />
-          
-          <Route path="/" element={
-            auth.isLoggedIn ? (
-              <Home auth={auth} />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } />
-        </Routes>
-        
-        <Footer />
-      </div>
-    </Router>
-  );
-}
-
-export default App;
-
-
-// src/components/Home.js
 import React, { useState } from 'react';
-import Menu from './Menu';
-import Dashboard from './Dashboard';
-import Chatbot from './ChatBot';
+import '../styles/Login.css';
+import Header from './Header';
+import Footer from './Footer';
+import { postLogin } from "../api/loginApi";
 
-function Home({ auth }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [chatbotMinimized, setChatbotMinimized] = useState(false);
+function Login({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+
+    try {
+      const response = await postLogin(username, password);
+      console.log('Login response:', response);
+
+      // Check the response status from your Django backen
+      if (response.data.status === 302) {
+        // Call parent component's onLogin function with username
+        onLogin(response.data.username);
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error.response && error.response.data) {
+        setError(error.response.data.Response || 'Login failed');
+      } else {
+        setError('Unable to connect to server');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
-        <Menu
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
-          isLoggedIn={auth.isLoggedIn}
-        />
-        <Dashboard isSidebarOpen={isSidebarOpen} />
-        <Chatbot 
-          setChatbotMinimized={setChatbotMinimized} 
-          username={auth.username} 
-        />
+    <div className={darkMode ? 'dark-mode' : ''}>
+      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <div className="login-container">
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <form className="login-form" onSubmit={handleSubmit}>
+          <h2>Login</h2>
+          {error && <div className="error-message">{error}</div>}
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
       </div>
-    </>
+      <Footer />
+    </div>
   );
 }
 
-export default Home;
-
+export default Login;
