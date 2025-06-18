@@ -1,167 +1,287 @@
-import React, { useEffect, useState } from 'react';
-import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
-import { cardLinks } from '../links';
-import '../styles/Menu.css';
+// ProtectedLink.jsx
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [favorites, setFavorites] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [password, setPassword] = useState(null);
+const ProtectedLink = ({ url, children, isLoggedIn }) => {
+  const navigate = useNavigate();
 
-  const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+  const handleClick = (e) => {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      // Store the target URL in session storage
+      sessionStorage.setItem('redirectUrl', url);
+      // Redirect to login page
+      navigate('/login');
+    }
+    // If logged in, the normal link behavior will proceed
+  };
 
-  // Get userId and password from localStorage on mount
+  return (
+    <a href={url} onClick={handleClick} target="_blank" rel="noopener noreferrer">
+      {children}
+    </a>
+  );
+};
+
+export default ProtectedLink;
+
+
+
+
+
+// Login.jsx (updated)
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import '../styles/Login.css';
+import Header from './Header';
+import Footer from './Footer';
+import { postLogin } from "../api/loginApi";
+
+function Login({ onLogin }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
   useEffect(() => {
-    const uid = localStorage.getItem('uidd');
-    const pwd = localStorage.getItem('password');
-    if (uid && pwd) {
-      setUserId(uid);
-      setPassword(pwd);
-    } else {
-      console.warn('No user credentials found in localStorage');
+    // Check if user is already logged in
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      navigate('/');
+    }
+  }, [navigate]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await postLogin(username, password);
+      console.log('Login response:', response);
+
+      if (response.data.status === 302) {
+        // Call parent component's onLogin function with username
+        onLogin(response.data.username);
+        
+        // Check for redirect URL
+        const redirectUrl = sessionStorage.getItem('redirectUrl');
+        if (redirectUrl) {
+          sessionStorage.removeItem('redirectUrl');
+          window.open(redirectUrl, '_blank');
+        }
+        
+        navigate('/');
+      } else {
+        setError('Invalid credentials');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error.response && error.response.data) {
+        setError(error.response.data.Response || 'Login failed');
+      } else {
+        setError('Unable to connect to server');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={darkMode ? 'dark-mode' : ''}>
+      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <div className="login-container">
+        <div className="bubble"></div>
+        <div className="bubble"></div>
+        <form className="login-form" onSubmit={handleSubmit}>
+          <h2>Login</h2>
+          {error && <div className="error-message">{error}</div>}
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
+        </form>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+export default Login;
+
+
+
+// App.js (updated with routing)
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer';
+import Menu from './components/Menu';
+import Dashboard from './components/Dashboard';
+import Chatbot from './components/ChatBot';
+import Login from './components/Login';
+import './App.css';
+
+function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [chatbotMinimized, setChatbotMinimized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [username, setUsername] = useState('');
+
+  // Check for existing login session on app load
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    const storedLoginTime = localStorage.getItem('loginTime');
+    if (storedUsername && storedLoginTime) {
+      // Check if session has expired
+      const loginTime = parseInt(storedLoginTime, 10);
+      if (loginTime && Date.now() - loginTime < 60 * 60 * 1000) {
+        setUsername(storedUsername);
+        setIsLoggedIn(true);
+      } else {
+        handleLogout();
+      }
     }
   }, []);
 
-  // Fetch favorites from backend
+  const handleLogin = (user) => {
+    const now = Date.now();
+    setUsername(user);
+    setIsLoggedIn(true);
+    localStorage.setItem('username', user);
+    localStorage.setItem('loginTime', now.toString());
+    sessionStorage.setItem('loginTime', now.toString());
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUsername('');
+    localStorage.removeItem('username');
+    localStorage.removeItem('loginTime');
+    sessionStorage.clear();
+  };
+
+  // Auto logout after 1 hour
   useEffect(() => {
-    if (!userId || !password) return;
+    if (!isLoggedIn) return;
 
-    const fetchFavorites = async () => {
-      try {
-        const res = await fetch('/PyPortal/EISHome/postFavourites/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, password }),
-        });
-
-        const data = await res.json();
-        const favData = data.favourites;
-
-        let favArray = [];
-
-        if (Array.isArray(favData)) {
-          favArray = favData;
-        } else if (typeof favData === 'string') {
-          favArray = favData.split(',').map(item => item.trim()).filter(Boolean);
-        }
-
-        setFavorites(favArray);
-      } catch (err) {
-        console.error('Failed to load favorites:', err);
+    const checkAutoLogout = () => {
+      const loginTime = parseInt(localStorage.getItem('loginTime'), 10);
+      if (loginTime && Date.now() - loginTime > 60 * 60 * 1000) {
+        handleLogout();
       }
     };
 
-    fetchFavorites();
-  }, [userId, password]);
+    const interval = setInterval(checkAutoLogout, 60 * 1000);
+    checkAutoLogout();
 
-  // Update backend when favorites change
-  const updateFavoritesOnBackend = async (updatedFavorites) => {
-    try {
-      await fetch('/PyPortal/EISHome/postFavourites/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          password,
-          favList: updatedFavorites, // Send as array
-        }),
-      });
-    } catch (error) {
-      console.error('Failed to update favorites:', error);
-    }
-  };
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
 
-  // Toggle favorite
-  const toggleFavorite = (name) => {
-    setFavorites((prev) => {
-      const updated = prev.includes(name)
-        ? prev.filter((fav) => fav !== name)
-        : [...prev, name];
-      updateFavoritesOnBackend(updated);
-      return updated;
-    });
-  };
+  return (
+    <Router>
+      <div>
+        <Header
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          username={username}
+          onLogout={handleLogout}
+        />
+        {!chatbotMinimized && <div className="app-background" />}
+        
+        <Routes>
+          <Route path="/login" element={
+            isLoggedIn ? <Navigate to="/" /> : <Login onLogin={handleLogin} />
+          } />
+          
+          <Route path="/" element={
+            isLoggedIn ? (
+              <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
+                <Menu
+                  isSidebarOpen={isSidebarOpen}
+                  setIsSidebarOpen={setIsSidebarOpen}
+                  isLoggedIn={isLoggedIn}
+                />
+                <Dashboard isSidebarOpen={isSidebarOpen} />
+                <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
+              </div>
+            ) : (
+              <Navigate to="/login" />
+            )
+          } />
+        </Routes>
+        
+        <Footer />
+      </div>
+    </Router>
+  );
+}
 
-  // Filter and sort links
-  const filteredLinks = cardLinks
-    .filter((link) => link.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => {
-      const aFav = favorites.includes(a.name);
-      const bFav = favorites.includes(b.name);
-      return aFav === bFav ? 0 : aFav ? -1 : 1;
-    });
+export default App;
+
+
+// Sidebar.jsx (updated)
+import React, { useEffect, useState } from 'react';
+import { Menu as MenuIcon, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { cardLinks } from './CardLinks';
+import '../styles/Menu.css';
+import ProtectedLink from './ProtectedLink';
+
+const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen, isLoggedIn }) => {
+  // ... (keep all existing state and effects)
 
   return (
     <>
-      {!isSidebarOpen && (
-        <button className="sidebar-toggle" onClick={toggleSidebar}>
-          <MenuIcon size={24} />
-        </button>
-      )}
-
-      <div className={`sidebar ${isSidebarOpen ? 'open' : 'collapsed'}`}>
-        <div className="sidebar-header">
-          {isSidebarOpen && <h2 className="sidebar-title">Quick Access</h2>}
-          <button
-            className="collapse-btn"
-            onClick={toggleSidebar}
-            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-          >
-            {isSidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
-        </div>
-
-        {isSidebarOpen && (
-          <div className="sidebar-search">
-            <input
-              type="text"
-              placeholder="Search links..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-        )}
-
-        <div className="sidebar-content">
-          <div className="sidebar-section">
-            {filteredLinks.map((link, index) => {
-              const isFavorited = favorites.includes(link.name);
-              return (
-                <div key={index} className="link-card">
-                  <span
-                    className="star-icon"
-                    onClick={() => toggleFavorite(link.name)}
-                    title={isFavorited ? 'Unstar' : 'Star'}
-                  >
-                    {isFavorited ? (
-                      <Star fill="#facc15" color="#facc15" size={16} />
-                    ) : (
-                      <Star color="#fff" size={16} />
-                    )}
-                  </span>
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="link-anchor"
-                  >
-                    {isSidebarOpen ? (
-                      <span>{link.name}</span>
-                    ) : (
-                      <img
-                        src={link.icon}
-                        alt={link.name}
-                        title={link.name}
-                        className="link-icon"
-                      />
-                    )}
-                  </a>
-                </div>
-              );
-            })}
-          </div>
+      {/* ... (keep existing toggle button and sidebar header) */}
+      
+      <div className="sidebar-content">
+        <div className="sidebar-section">
+          {filteredLinks.map((link, index) => {
+            const isFavorited = favorites.includes(link.name);
+            return (
+              <div key={index} className="link-card">
+                <span
+                  className="star-icon"
+                  onClick={() => toggleFavorite(link.name)}
+                  title={isFavorited ? 'Unstar' : 'Star'}
+                >
+                  {isFavorited ? (
+                    <Star fill="#facc15" color="#facc15" size={16} />
+                  ) : (
+                    <Star color="#fff" size={16} />
+                  )}
+                </span>
+                <ProtectedLink url={link.url} isLoggedIn={isLoggedIn}>
+                  {isSidebarOpen ? (
+                    <span className="link-anchor">{link.name}</span>
+                  ) : (
+                    <img
+                      src={link.icon}
+                      alt={link.name}
+                      title={link.name}
+                      className="link-icon"
+                    />
+                  )}
+                </ProtectedLink>
+              </div>
+            );
+          })}
         </div>
       </div>
     </>
@@ -169,3 +289,6 @@ const Sidebar = ({ darkMode, isSidebarOpen, setIsSidebarOpen }) => {
 };
 
 export default Sidebar;
+
+
+
