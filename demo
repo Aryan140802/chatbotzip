@@ -48,8 +48,8 @@ function App() {
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUsername('');
-    localStorage.removeItem('username');
-    localStorage.removeItem('loginTime');
+    localStorage.clear();
+  
     sessionStorage.clear(); // Flush entire session storage
     // Optionally, you can redirect or show a message here if you want
   };
