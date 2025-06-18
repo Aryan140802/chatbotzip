@@ -23,9 +23,25 @@ import {
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
-// Helper to normalize to midnight (prevents Date comparison bugs)
-function toMidnight(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+// ---- CSV helpers ----
+const farHeaders = [
+  "Far_Id", "Subject", "Status", "Created", "Dependent_application", "Permanent_Rule", "ZONE"
+];
+
+function convertToCSV(data, options = {}) {
+  if (!Array.isArray(data) || !data.length) return '';
+  let keys;
+  // Use custom header if given, else infer from keys in first object and exclude as needed
+  if (options.headers) {
+    keys = options.headers;
+  } else {
+    keys = Object.keys(data[0]).filter(k => !(options.excludeKeys || []).includes(k));
+  }
+  const csvRows = [keys.join(',')];
+  data.forEach(row => {
+    csvRows.push(keys.map(key => `"${row[key] ?? ''}"`).join(','));
+  });
+  return csvRows.join('\n');
 }
 
 function extractFirstArray(obj) {
@@ -54,22 +70,6 @@ function getDownloadPathForChart(index) {
     case 6: return "FAR_EXPIRY_ALL"; // <--- Special marker for FAR Expiry
     default: return null;
   }
-}
-
-// ---------- PATCH: Support additional columns for FAR details ----------
-const farCsvHeaders = [
-  "Far_Id", "Subject", "status", "created", "dependent_application", "Permanent_rule", "Zone"
-];
-
-// Convert an array of objects to CSV using the custom headers
-function convertToCSV(data, headers) {
-  if (!data || !Array.isArray(data) || !data.length) return '';
-  const keys = headers || Object.keys(data[0]);
-  const csvRows = [keys.join(',')];
-  data.forEach(row => {
-    csvRows.push(keys.map(key => `"${row[key] ?? ''}"`).join(','));
-  });
-  return csvRows.join('\n');
 }
 
 const formatHits = (value) => {
@@ -499,9 +499,8 @@ const GraphCarousel = () => {
     }
   };
 
-  // === REPLACE YOUR generateCalendarDays FUNCTION WITH THIS ===
   const generateCalendarDays = () => {
-    const today = toMidnight(new Date());
+    const today = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     weekdays.forEach(day => days.push(
@@ -514,12 +513,10 @@ const GraphCarousel = () => {
     const lastDayOfMonth = new Date(year, month + 1, 0);
     const firstDayWeekday = firstDayOfMonth.getDay();
 
-    // Empty slots for alignment
     for (let i = 0; i < firstDayWeekday; i++) {
       days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
     }
 
-    // Only days from today-7 (exclusive) to yesterday (inclusive) are enabled
     const minEnabled = new Date(today);
     minEnabled.setDate(today.getDate() - 7);
     const maxEnabled = new Date(today);
@@ -527,9 +524,9 @@ const GraphCarousel = () => {
 
     for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
       const date = new Date(year, month, day);
-      const dateMid = toMidnight(date);
+      const dateMid = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const isEnabled = dateMid > minEnabled && dateMid <= maxEnabled;
-      const isSelected = selectedDate && toMidnight(selectedDate).getTime() === dateMid.getTime();
+      const isSelected = selectedDate && new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()).getTime() === dateMid.getTime();
       days.push(
         <div
           key={`day-${dateMid.toISOString()}`}
@@ -550,33 +547,26 @@ const GraphCarousel = () => {
     return days;
   };
 
-  // ---------- PATCH: Download for FAR expiry (all months) ----------
+  // ---- DOWNLOAD LOGIC PATCH ----
   const handleDownloadClick = async () => {
     const path = getDownloadPathForChart(currentIndex);
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
-        // Get all months from the far expiry graph data
         const farMonths = charts[6].rawData.map(item => item.name);
-
-        // Fetch details for all months in parallel
         const allDetailsResponses = await Promise.all(
           farMonths.map(month => getFARDetailsSpecific(month))
         );
-
-        // Flatten all MonthlyDetails arrays into one
         const allDetails = allDetailsResponses.flatMap(resp =>
           resp.data?.MonthlyDetails || []
         );
-
         if (!allDetails.length) {
           alert("No FAR details available for download.");
           setIsLoading(false);
           return;
         }
-
-        // Convert all details to CSV using headers for all fields
-        const csv = convertToCSV(allDetails, farCsvHeaders);
+        // Use fixed headers for FAR
+        const csv = convertToCSV(allDetails, { headers: farHeaders });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -594,7 +584,7 @@ const GraphCarousel = () => {
       }
       return;
     }
-    // ...existing download logic for other charts...
+    // For all other graphs, exclude logVal column
     if (path) {
       try {
         setIsLoading(true);
@@ -608,7 +598,8 @@ const GraphCarousel = () => {
           setIsLoading(false);
           return;
         }
-        const csv = convertToCSV(data);
+        // Remove logVal for all graph CSVs
+        const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -775,7 +766,7 @@ const GraphCarousel = () => {
                   className="download-button"
                   onClick={() => {
                     if (!filteredFarDetails.length) return;
-                    const csv = convertToCSV(filteredFarDetails, farCsvHeaders);
+                    const csv = convertToCSV(filteredFarDetails, { headers: farHeaders });
                     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
                     const link = document.createElement('a');
@@ -862,7 +853,6 @@ const GraphCarousel = () => {
                         backgroundColor: '#2e1a3b',
                         zIndex: 1
                       }}>
-                        {/* PATCH: Additional columns */}
                         <tr>
                           <th style={{ padding: '8px', textAlign: 'left' }}>FAR ID</th>
                           <th style={{ padding: '8px', textAlign: 'left' }}>Subject</th>
@@ -876,14 +866,14 @@ const GraphCarousel = () => {
                       <tbody>
                         {filteredFarDetails.length > 0 ? (
                           filteredFarDetails.map((detail, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid #444' }}>
+                            <tr key={index}>
                               <td style={{ padding: '8px' }}>{detail.Far_Id || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.Subject || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.status || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.created || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.dependent_application || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.Permanent_rule || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.Zone || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Status || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Created || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Dependent_application || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.Permanent_Rule || 'N/A'}</td>
+                              <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}</td>
                             </tr>
                           ))
                         ) : (
