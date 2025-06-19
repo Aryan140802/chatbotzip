@@ -1,0 +1,34 @@
+import axios from 'axios';
+
+// Create axios instance with proper configuration
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  timeout: 10000,  // Reasonable timeout
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Login API function - clean implementation
+export const postLogin = async (uid, password) => {
+  try {
+    const response = await api.post('EISHome/newLogin/', { "uid":uid, "password":password });
+    const uidd = response.data.userId;
+    const passwordd=response.data.password;
+    console.log("this is username ")
+    console.log(response.data.username)
+    const username=response.data.username;
+    console.log("this is runign");
+    if(uidd && passwordd){
+      localStorage.setItem('uidd',uidd);
+      localStorage.setItem('password',passwordd);
+      localStorage.setItem('username',username);
+      console.log(localStorage.getItem('uidd'));
+    }
+    return response;
+
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error; // Re-throw to allow component-level handling
+  }
+};
