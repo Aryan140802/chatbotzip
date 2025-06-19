@@ -1,0 +1,29 @@
+export const cardLinks = [
+  { name: 'Daily Checklist', url: 'https://10.191.171.12:5443/EIS/Checklist/' , icon: '../src/assets/accountability.png'},
+  { name: 'Compliance Monitoring', url: 'https://10.191.171.12:5443/EIS/Compliance/'  ,icon:'../src/assets/accountability.png' },
+  { name: 'Outlook Sign-in', url: 'https://portal.office.com/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'MQ Monitoring Portal (PR)', url: 'https://10.191.171.12:5443/EIS/MQ_Monitoring/' ,icon:'../src/assets/accountability.png'},
+  { name: 'MQ Monitoring Portal (DR)', url: 'https://10.191.171.12:5443/EIS/MQ_Monitoring_Dr/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'Centralized Dynatrace', url: 'https://10.189.37.183/' ,icon:'../src/assets/accountability.png'},
+  { name: 'EIS Monitoring (PR)', url: 'https://10.191.171.12:5443/EIS/port_monitoring/' ,icon:'../src/assets/accountability.png' },
+  { name: 'FAR', url: 'https://nspm.sbi/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'RFC', url: 'https://coportal.sbi.co.in:5443/EISON/index.php'  ,icon:'../src/assets/accountability.png'},
+  { name: 'Shared Folder', url: 'https://sbionline.sharepoint.com/sites/EIS_TCS_SUPPORT/SOP/Forms/AllItems.aspx'  ,icon:'../src/assets/accountability.png'},
+  { name: 'Ticketing Tools', url: 'https://10.191.171.12:5443/EIS/TMT/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'PIMS', url: 'https://pims.onlinesbi.com/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'Ultimatix', url: 'https://www.ultimatix.net'  ,icon:'../src/assets/accountability.png'},
+  { name: 'TFS', url: 'https://eistfsserver.sbi.co.in/tis/' ,icon:'../src/assets/accountability.png' },
+  { name: 'Onboarding Portal', url: 'https://10.191.171.12:5443/EISInfra/EIS/EIS/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'API/Morkload Search', url: 'https://10.191.171.12:5443/PyPortal/APISearch/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'CURL Search', url: 'https://10.191.171.12:5443/EISInfra/curlSearch/index.php'  ,icon:'../src/assets/accountability.png'},
+  { name: 'CBS Port Monitoring', url: 'https://10.191.171.12:5443/EIS/CBS_Connection/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'PR Load Balancer', url: 'https://10.188.10.106:2443/login' ,icon:'../src/assets/accountability.png'},
+ { name: 'DPG Url', url: 'https://10.188.16.73:8443/'  ,icon:'../src/assets/accountability.png'},
+  { name: 'IBM PMR CASE', url: 'https://login.ibm.com/authvx/mtfim/sps/authvxv?PolicyId=...'  ,icon:'../src/assets/accountability.png'},
+  { name: 'Ansible', url: 'https://10.191.171.12:9443/#/login'  ,icon:'../src/assets/accountability.png'},
+
+];
+
+
+
+main portal link- https://10.191.171.12:5443/PyPorta
