@@ -60,19 +60,19 @@ function extractFirstArray(obj) {
 }
 function getDownloadPathForChart(index) {
   switch (index) {
-    case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
-    case 1: return { path: "EISHome/servicewise_top5_FiveM/SYS/" };
-    case 2: return { path: "EISHome/ipwise_top5_FiveM/EXP/" };
-    case 3: return { path: "EISHome/ipwise_top5_FiveM/SYS/" };
-    case 4: return { path: "EISHome/portwise_top5_FiveM/EXP/" };
-    case 5: return { path: "EISHome/portwise_top5_FiveM/SYS/" };
-    case 6: return { path: "FAR_EXPIRY_ALL" };
-    case 7: return { path: "EISHome/mqOverall/", layer: "exp" };
-    case 8: return { path: "EISHome/mqOverall/", layer: "sys" };
-    case 9: return { path: "EISHome/mqSource/", layer: "exp" };
-    case 10: return { path: "EISHome/mqSource/", layer: "sys" };
-    case 11: return { path: "EISHome/mqHourly/", layer: "exp" };
-    case 12: return { path: "EISHome/mqHourly/", layer: "sys" };
+    case 0: return "EISHome/servicewise_top5_FiveM/EXP/";
+    case 1: return "EISHome/servicewise_top5_FiveM/SYS/";
+    case 2: return "EISHome/ipwise_top5_FiveM/EXP/";
+    case 3: return "EISHome/ipwise_top5_FiveM/SYS/";
+    case 4: return "EISHome/portwise_top5_FiveM/EXP/";
+    case 5: return "EISHome/portwise_top5_FiveM/SYS/";
+    case 6: return "FAR_EXPIRY_ALL";
+    case 7: return "EISHome/mqOverall/exp/";
+    case 8: return "EISHome/mqOverall/sys/";
+    case 9: return "EISHome/mqSource/exp/";
+    case 10: return "EISHome/mqSource/sys/";
+    case 11: return "EISHome/mqHourly/exp/";
+    case 12: return "EISHome/mqHourly/sys/";
     default: return null;
   }
 }
@@ -358,10 +358,7 @@ const GraphCarousel = () => {
 
   // Download logic (handles both original and MQ charts, FAR modal)
   const handleDownloadClick = async () => {
-    const downloadInfo = getDownloadPathForChart(currentIndex);
-    if (!downloadInfo) return;
-    const path = downloadInfo.path;
-    const layer = downloadInfo.layer;
+    const path = getDownloadPathForChart(currentIndex);
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
@@ -394,47 +391,48 @@ const GraphCarousel = () => {
       }
       return;
     }
-    try {
-      setIsLoading(true);
-      let data;
-      if (currentIndex >= charts.length) {
-        // MQ charts
-        const mqIdx = currentIndex - charts.length;
-        let payload = {
-          username: localStorage.getItem('uidd'),
-          password: localStorage.getItem('password'),
-        };
-        if (layer) payload.layer = layer;
-        if (mqIdx >= 4) payload.hour = String(mqHour).padStart(2, '0');
-        const res = await postGraphDownload({ path, ...payload });
-        data = extractFirstArray(res.data);
-      } else {
-        // Non-MQ
-        const response = await postGraphDownload({
-          path,
-          time: selectedTimeValue
-        });
-        data = extractFirstArray(response.data);
-      }
-      if (!data || !Array.isArray(data) || !data.length) {
-        alert("No data received for download.");
+    if (path) {
+      try {
+        setIsLoading(true);
+        let data;
+        if (currentIndex >= charts.length) {
+          // MQ charts download
+          const mqIdx = currentIndex - charts.length;
+          let payload = {
+            username: localStorage.getItem('uidd'),
+            password: localStorage.getItem('password')
+          };
+          if (mqIdx >= 4) payload.hour = String(mqHour).padStart(2, '0');
+          const res = await postGraphDownload({ path, ...payload });
+          data = extractFirstArray(res.data);
+        } else {
+          // Non-MQ
+          const response = await postGraphDownload({
+            path,
+            time: selectedTimeValue
+          });
+          data = extractFirstArray(response.data);
+        }
+        if (!data || !Array.isArray(data) || !data.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
         setIsLoading(false);
-        return;
       }
-      const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      alert("Download failed.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
