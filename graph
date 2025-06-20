@@ -67,6 +67,7 @@ function safeGetArray(obj, key) {
   return [];
 }
 
+// --- Chart/MQ/FAR download paths ---
 function getDownloadPathForChart(index) {
   switch (index) {
     case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
@@ -92,9 +93,7 @@ const formatHits = (value) => {
   if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
   return value;
 };
-
 const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const ThreeDBar = (props) => {
   const { x, y, width, height, fill } = props;
@@ -118,49 +117,66 @@ const getMqOverallArray = res => safeGetArray(res?.data, 'mqOverallWiseWLog');
 const getMqSourceArray  = res => safeGetArray(res?.data, 'mqSourceWiseWLog');
 const getMqHourlyArray  = res => safeGetArray(res?.data, 'HourlyMqDetails');
 
+const timeOptions = [
+  { label: "5 min", value: "5min" },
+  { label: "15 min", value: "15min" },
+  { label: "30 min", value: "30min" },
+  { label: "1 hour", value: "1hour" },
+  { label: "Till now", value: "tillnow" },
+  { label: "Yesterday", value: "yesterday" },
+  { label: "Custom date", value: "custom" },
+];
+
+function toMidnight(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+const baseTitles = [
+  'Service-wise Exp Data',
+  'Service-wise Sys Data',
+  'IP-wise Exp Data',
+  'IP-wise Sys Data',
+  'Port-wise Exp Data',
+  'Port-wise Sys Data',
+  'Monthly FAR Expiry Distribution',
+  ...MQ_TITLES
+];
+
+const COLORS = [
+  '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
+  '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
+  '#33FF8C', '#FF33BD', '#338CFF'
+];
+
 const GraphCarousel = () => {
-  // --- regular charts ---
+  // --- UI/State ---
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [charts, setCharts] = useState([]);
-  // --- MQ charts ---
   const [mqCharts, setMqCharts] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
+
+  // MQ Hourly
   const [mqHour, setMqHour] = useState(() => {
     const h = new Date().getHours();
     return h < 9 ? 9 : h > 18 ? 18 : h;
   });
 
-  // --- UI state ---
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
-  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
+  // FAR modal
   const [showFarDetails, setShowFarDetails] = useState(false);
   const [selectedMonthData, setSelectedMonthData] = useState(null);
   const [farDetails, setFarDetails] = useState([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [farDetailsSearch, setFarDetailsSearch] = useState('');
-
+  const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  const COLORS = [
-    '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
-    '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
-    '#33FF8C', '#FF33BD', '#338CFF'
-  ];
-
-  const baseTitles = [
-    'Service-wise Exp Data',
-    'Service-wise Sys Data',
-    'IP-wise Exp Data',
-    'IP-wise Sys Data',
-    'Port-wise Exp Data',
-    'Port-wise Sys Data',
-    'Monthly FAR Expiry Distribution',
-    ...MQ_TITLES
-  ];
-
-  // --- fetch and combine chart data ---
+  // --- Fetch regular charts ---
   useEffect(() => {
     (async () => {
       setIsLoading(true);
@@ -314,6 +330,7 @@ const GraphCarousel = () => {
     })();
   }, [selectedTimeValue]);
 
+  // --- Fetch MQ charts ---
   useEffect(() => {
     (async () => {
       const hourStr = mqHour >= 9 && mqHour <= 18 ? String(mqHour).padStart(2, '0') : null;
@@ -430,10 +447,94 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // Combine all charts
+  // --- Combine all charts for carousel ---
   const allCharts = [...charts, ...mqCharts];
-  const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5;
+  const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5; // MQ Hourly charts
   const timerEnabled = mqHour >= 9 && mqHour <= 18;
+
+  // Time range selector handlers
+  const handleTimeChange = (option) => {
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
+    setDropdownOpen(false);
+    setCalendarOpen(false);
+  };
+
+  const handleDateSelect = (date) => {
+    if (!date) return;
+    const formattedDate = date.toISOString().split('T')[0];
+    setSelectedDate(date);
+    setSelectedTimeLabel(`Custom: ${date.toLocaleDateString('en-US')}`);
+    setSelectedTimeValue(`custom_${formattedDate}`);
+    setCalendarOpen(false);
+  };
+
+  const generateCalendarDays = () => {
+    const today = toMidnight(new Date());
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    weekdays.forEach(day => days.push(
+      <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
+    ));
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    for (let i = 0; i < firstDayWeekday; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
+    }
+    const minEnabled = new Date(today);
+    minEnabled.setDate(today.getDate() - 7);
+    const maxEnabled = new Date(today);
+    maxEnabled.setDate(today.getDate() - 1);
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      const date = new Date(year, month, day);
+      const dateMid = toMidnight(date);
+      const isEnabled = dateMid > minEnabled && dateMid <= maxEnabled;
+      const isSelected = selectedDate && toMidnight(selectedDate).getTime() === dateMid.getTime();
+      days.push(
+        <div
+          key={`day-${dateMid.toISOString()}`}
+          className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
+          onClick={() => isEnabled && handleDateSelect(dateMid)}
+          style={{
+            cursor: isEnabled ? "pointer" : "not-allowed",
+            color: isEnabled ? undefined : "#ccc",
+            background: isSelected ? "#aaf" : undefined,
+            opacity: isEnabled ? 1 : 0.5,
+          }}
+          title={isEnabled ? "Select this date" : "Date not selectable"}
+        >
+          {day}
+        </div>
+      );
+    }
+    return days;
+  };
+
+  // FAR Pie click (show modal)
+  async function handlePieClick(data) {
+    if (!data || !data.name) return;
+    setSelectedMonthData(data);
+    setIsLoadingDetails(true);
+    setShowFarDetails(true);
+    setFarDetailsSearch('');
+    setPaused(true);
+    try {
+      const response = await getFARDetailsSpecific(data.name);
+      setFarDetails((response.data && response.data.MonthlyDetails) || []);
+    } catch (err) {
+      setFarDetails([]);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  }
 
   // Download logic (handles both original and MQ charts, FAR modal)
   const handleDownloadClick = async () => {
@@ -523,26 +624,7 @@ const GraphCarousel = () => {
     }
   };
 
-  // FAR details modal
-  const handlePieClick = async (data) => {
-    if (!data || !data.name) return;
-    setSelectedMonthData(data);
-    setIsLoadingDetails(true);
-    setShowFarDetails(true);
-    setFarDetailsSearch('');
-    setPaused(true);
-
-    try {
-      const response = await getFARDetailsSpecific(data.name);
-      setFarDetails((response.data && response.data.MonthlyDetails) || []);
-    } catch (err) {
-      setFarDetails([]);
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  };
-
-  // Patch for FAR Pie chart (kept as before to keep click handlers etc)
+  // Patch for FAR Pie chart to keep click handlers
   if (charts[6] && charts[6].baseTitle === "Monthly FAR Expiry Distribution") {
     charts[6].chart = (
       <ResponsiveContainer>
@@ -607,6 +689,41 @@ const GraphCarousel = () => {
   return (
     <div className="carousel-container">
       <div className="carousel-header">
+        {currentIndex < 6 && (
+          <div className="timeline-selector">
+            <div className="dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={() => {
+                  setDropdownOpen(!dropdownOpen);
+                  setCalendarOpen(false);
+                }}
+              >
+                {selectedTimeLabel}
+              </button>
+              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}
+                style={{ pointerEvents: calendarOpen ? 'none' : 'auto' }}>
+                {timeOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleTimeChange(option)}
+                    className={option.value === selectedTimeValue ? 'selected' : ''}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+              {calendarOpen && (
+                <div className="calendar-container" ref={calendarRef}>
+                  <div className="calendar-header">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="calendar">{generateCalendarDays()}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <h2>
           {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : allCharts[currentIndex]?.baseTitle}
         </h2>
@@ -657,11 +774,6 @@ const GraphCarousel = () => {
           <div className="loading-overlay">
             <div className="loading-spinner"></div>
             <div>Loading data...</div>
-            {retryCount > 0 && (
-              <div style={{ marginTop: '10px', fontSize: '14px', color: '#888' }}>
-                Retrying... (Attempt {retryCount}/3)
-              </div>
-            )}
           </div>
         ) : (
           allCharts.map((item, index) => (
