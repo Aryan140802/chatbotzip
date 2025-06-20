@@ -69,11 +69,11 @@ function safeGetArray(obj, key) {
 
 // Common chart configuration
 const commonXAxisProps = {
-  angle: -45,
+  angle: -60,
   textAnchor: "end",
-  height: 90,
+  height: 110,
   interval: 0,
-  tick: { fontSize: 12 }
+  tick: { fontSize: 14, fontWeight: 700, wordBreak: 'break-all', whiteSpace: 'pre-line', maxWidth: 200 }
 };
 
 const commonTooltipStyle = {
@@ -169,17 +169,20 @@ const COLORS = [
 ];
 
 const GraphCarousel = () => {
-  // --- UI/State ---
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [charts, setCharts] = useState([]);
   const [mqCharts, setMqCharts] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [mqDropdownOpen, setMqDropdownOpen] = useState(false);
+  const [mqCalendarOpen, setMqCalendarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
+  const [mqSelectedTimeLabel, setMqSelectedTimeLabel] = useState("5 min");
+  const [mqSelectedTimeValue, setMqSelectedTimeValue] = useState("5min");
 
   // MQ Hourly
   const [mqHour, setMqHour] = useState(() => {
@@ -196,14 +199,14 @@ const GraphCarousel = () => {
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // --- Pause carousel when dropdown or calendar is open ---
+  // Pause carousel if any dropdown/calendar is open
   useEffect(() => {
-    if (dropdownOpen || calendarOpen) {
+    if (dropdownOpen || calendarOpen || mqDropdownOpen || mqCalendarOpen) {
       setPaused(true);
     } else {
       setPaused(false);
     }
-  }, [dropdownOpen, calendarOpen]);
+  }, [dropdownOpen, calendarOpen, mqDropdownOpen, mqCalendarOpen]);
 
   // --- Fetch regular charts ---
   useEffect(() => {
@@ -252,8 +255,12 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name')}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Service_name" {...commonXAxisProps} />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
+                <XAxis dataKey="Service_name" {...commonXAxisProps} tick={({ x, y, payload }) => (
+                  <text x={x} y={y} fontSize={14} fontWeight={700} textAnchor="end" transform="rotate(-60)" style={{maxWidth:200,whiteSpace:'pre-line',wordBreak:'break-all',fill:'#333'}}>
+                    {payload.value}
+                  </text>
+                )}/>
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
@@ -269,8 +276,12 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name')}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Service_name" {...commonXAxisProps} />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
+                <XAxis dataKey="Service_name" {...commonXAxisProps} tick={({ x, y, payload }) => (
+                  <text x={x} y={y} fontSize={14} fontWeight={700} textAnchor="end" transform="rotate(-60)" style={{maxWidth:200,whiteSpace:'pre-line',wordBreak:'break-all',fill:'#333'}}>
+                    {payload.value}
+                  </text>
+                )}/>
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
@@ -286,7 +297,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Ip" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -303,7 +314,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Ip" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -320,7 +331,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Port" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -337,7 +348,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Port" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -351,7 +362,7 @@ const GraphCarousel = () => {
           data: farChartData,
           dataKeyX: 'name',
           baseTitle: baseTitles[6],
-          rawData: farChartData, // For FAR download
+          rawData: farChartData,
         }
       ];
       setCharts(chartData);
@@ -368,12 +379,12 @@ const GraphCarousel = () => {
         sourceExp, sourceSys,
         hourlyExp, hourlySys
       ] = await Promise.all([
-        postMqOverall('exp'),
-        postMqOverall('sys'),
-        postMqSource('exp'),
-        postMqSource('sys'),
-        hourStr ? postMqHourly('exp', hourStr) : { data: { HourlyMqDetails: [] } },
-        hourStr ? postMqHourly('sys', hourStr) : { data: { HourlyMqDetails: [] } }
+        postMqOverall(mqSelectedTimeValue === selectedTimeValue ? 'exp' : 'exp'), // dummy logic for demo, adapt as needed
+        postMqOverall(mqSelectedTimeValue === selectedTimeValue ? 'sys' : 'sys'),
+        postMqSource(mqSelectedTimeValue === selectedTimeValue ? 'exp' : 'exp'),
+        postMqSource(mqSelectedTimeValue === selectedTimeValue ? 'sys' : 'sys'),
+        hourStr ? postMqHourly(mqSelectedTimeValue === selectedTimeValue ? 'exp' : 'exp', hourStr) : { data: { HourlyMqDetails: [] } },
+        hourStr ? postMqHourly(mqSelectedTimeValue === selectedTimeValue ? 'sys' : 'sys', hourStr) : { data: { HourlyMqDetails: [] } }
       ]);
       setMqCharts([
         {
@@ -383,7 +394,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallExp)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -399,7 +410,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallSys)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -415,7 +426,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceExp)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -431,7 +442,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceSys)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -447,7 +458,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqHourlyArray(hourlyExp)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -463,7 +474,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqHourlyArray(hourlySys)}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -474,14 +485,15 @@ const GraphCarousel = () => {
         }
       ]);
     })();
-  }, [mqHour]);
+  }, [mqHour, mqSelectedTimeValue]);
 
   // --- Combine all charts for carousel ---
   const allCharts = [...charts, ...mqCharts];
-  const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5; // MQ Hourly charts
+  const isMQ = currentIndex >= charts.length && currentIndex < charts.length + mqCharts.length;
+  const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5;
   const timerEnabled = mqHour >= 9 && mqHour <= 18;
 
-  // Time range selector handlers
+  // Time range selector handlers for service-wise
   const handleTimeChange = (option) => {
     if (option.value === "custom") {
       setDropdownOpen(false);
@@ -503,7 +515,29 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
   };
 
-  const generateCalendarDays = () => {
+  // Time range selector handlers for MQ graphs
+  const handleMqTimeChange = (option) => {
+    if (option.value === "custom") {
+      setMqDropdownOpen(false);
+      setMqCalendarOpen(true);
+      return;
+    }
+    setMqSelectedTimeLabel(option.label);
+    setMqSelectedTimeValue(option.value);
+    setMqDropdownOpen(false);
+    setMqCalendarOpen(false);
+  };
+
+  const handleMqDateSelect = (date) => {
+    if (!date) return;
+    const formattedDate = date.toISOString().split('T')[0];
+    setSelectedDate(date);
+    setMqSelectedTimeLabel(`Custom: ${date.toLocaleDateString('en-US')}`);
+    setMqSelectedTimeValue(`custom_${formattedDate}`);
+    setMqCalendarOpen(false);
+  };
+
+  const generateCalendarDays = (onDaySelect, selectedDateVal) => {
     const today = toMidnight(new Date());
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -526,12 +560,12 @@ const GraphCarousel = () => {
       const date = new Date(year, month, day);
       const dateMid = toMidnight(date);
       const isEnabled = dateMid > minEnabled && dateMid <= maxEnabled;
-      const isSelected = selectedDate && toMidnight(selectedDate).getTime() === dateMid.getTime();
+      const isSelected = selectedDateVal && toMidnight(selectedDateVal).getTime() === dateMid.getTime();
       days.push(
         <div
           key={`day-${dateMid.toISOString()}`}
           className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
-          onClick={() => isEnabled && handleDateSelect(dateMid)}
+          onClick={() => isEnabled && onDaySelect(dateMid)}
           style={{
             cursor: isEnabled ? "pointer" : "not-allowed",
             color: isEnabled ? undefined : "#ccc",
@@ -707,10 +741,15 @@ const GraphCarousel = () => {
       )
     : [];
 
+  // Compose heading for selected range
+  const effectiveTimeLabel = isMQ ? mqSelectedTimeLabel : selectedTimeLabel;
+  const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''} (${effectiveTimeLabel})`;
+
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-        {currentIndex < 6 && (
+        {/* Time selector for Service-wise and IP/Port-wise */}
+        {(currentIndex < 6) && (
           <div className="timeline-selector">
             <div className="dropdown" onClick={e => e.stopPropagation()}>
               <button
@@ -739,14 +778,52 @@ const GraphCarousel = () => {
                   <div className="calendar-header">
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
-                  <div className="calendar">{generateCalendarDays()}</div>
+                  <div className="calendar">{generateCalendarDays(handleDateSelect, selectedDate)}</div>
                 </div>
               )}
             </div>
           </div>
         )}
+        {/* MQ time selector, same style as service-wise */}
+        {isMQ && (
+          <div className="timeline-selector" style={{marginLeft:8}}>
+            <div className="dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={() => {
+                  setMqDropdownOpen(!mqDropdownOpen);
+                  setMqCalendarOpen(false);
+                }}
+              >
+                {mqSelectedTimeLabel}
+              </button>
+              <ul className={`dropdown-menu ${mqDropdownOpen ? 'show' : ''}`}
+                style={{ pointerEvents: mqCalendarOpen ? 'none' : 'auto' }}>
+                {timeOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleMqTimeChange(option)}
+                    className={option.value === mqSelectedTimeValue ? 'selected' : ''}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+              {mqCalendarOpen && (
+                <div className="calendar-container" ref={calendarRef}>
+                  <div className="calendar-header">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="calendar">{generateCalendarDays(handleMqDateSelect, selectedDate)}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Heading with range */}
         <h2>
-          {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : allCharts[currentIndex]?.baseTitle}
+          {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : effectiveHeading}
         </h2>
         <div className="download-button-wrapper">
           <button
@@ -790,8 +867,7 @@ const GraphCarousel = () => {
         className="carousel-graph"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => {
-          // Only unpause if dropdown and calendar are closed
-          if (!dropdownOpen && !calendarOpen) setPaused(false);
+          if (!dropdownOpen && !calendarOpen && !mqDropdownOpen && !mqCalendarOpen) setPaused(false);
         }}
       >
         {isLoading ? (
