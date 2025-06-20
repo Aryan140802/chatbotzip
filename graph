@@ -30,6 +30,7 @@ import { useState, useEffect, useRef } from "react";
 const farHeaders = [
   "Far_Id", "Subject", "Status", "Created", "Dependent_application", "Permanent_Rule", "ZONE"
 ];
+
 function convertToCSV(data, options = {}) {
   if (!Array.isArray(data) || !data.length) return '';
   let keys;
@@ -44,6 +45,7 @@ function convertToCSV(data, options = {}) {
   });
   return csvRows.join('\n');
 }
+
 function extractFirstArray(obj) {
   if (Array.isArray(obj)) return obj;
   if (obj && typeof obj === 'object') {
@@ -58,6 +60,7 @@ function extractFirstArray(obj) {
   }
   return null;
 }
+
 function getDownloadPathForChart(index) {
   switch (index) {
     case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
@@ -76,14 +79,17 @@ function getDownloadPathForChart(index) {
     default: return null;
   }
 }
+
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
   if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
   return value;
 };
+
 const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
 const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 const ThreeDBar = (props) => {
   const { x, y, width, height, fill } = props;
   const depth = 6;
@@ -108,15 +114,15 @@ const getMqSourceArray  = res => res.data?.mqSourceWiseWLog || [];
 const getMqHourlyArray  = res => res.data?.HourlyMqDetails || [];
 
 const GraphCarousel = () => {
-  // --- regular charts
+  // --- regular charts ---
   const [charts, setCharts] = useState([]);
-  // --- MQ charts
+  // --- MQ charts ---
   const [mqCharts, setMqCharts] = useState([]);
   const [mqHour, setMqHour] = useState(() => {
     const h = new Date().getHours();
     return h < 9 ? 9 : h > 18 ? 18 : h;
   });
-
+  
   // --- UI state ---
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -133,6 +139,7 @@ const GraphCarousel = () => {
   const [farDetails, setFarDetails] = useState([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [farDetailsSearch, setFarDetailsSearch] = useState('');
+  
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
@@ -154,12 +161,13 @@ const GraphCarousel = () => {
 
   const baseTitles = [
     'Service-wise Exp Data',
-    'Service-wise Sys Data',
+    'Service-wise Sys Data', 
     'IP-wise Exp Data',
     'IP-wise Sys Data',
     'Port-wise Exp Data',
     'Port-wise Sys Data',
-    'Monthly FAR Expiry Distribution'
+    'Monthly FAR Expiry Distribution',
+    ...MQ_TITLES
   ];
 
   // --- fetch and combine chart data ---
@@ -356,7 +364,7 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // combine
+  // combine charts 
   const allCharts = [...charts, ...mqCharts];
   const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5;
   const timerEnabled = mqHour >= 9 && mqHour <= 18;
@@ -365,8 +373,10 @@ const GraphCarousel = () => {
   const handleDownloadClick = async () => {
     const downloadInfo = getDownloadPathForChart(currentIndex);
     if (!downloadInfo) return;
+
     const path = downloadInfo.path;
     const layer = downloadInfo.layer;
+
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
@@ -399,6 +409,7 @@ const GraphCarousel = () => {
       }
       return;
     }
+
     try {
       setIsLoading(true);
       let data;
@@ -421,11 +432,14 @@ const GraphCarousel = () => {
         });
         data = extractFirstArray(response.data);
       }
+
       if (!data || !Array.isArray(data) || !data.length) {
         alert("No data received for download.");
         setIsLoading(false);
         return;
       }
+
+      // Remove logVal for all graph CSVs
       const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -451,6 +465,7 @@ const GraphCarousel = () => {
     setShowFarDetails(true);
     setFarDetailsSearch('');
     setPaused(true);
+
     try {
       const response = await getFARDetailsSpecific(data.name);
       setFarDetails((response.data && response.data.MonthlyDetails) || []);
@@ -484,7 +499,7 @@ const GraphCarousel = () => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip
+          <Tooltip 
             formatter={(value) => [`${value}`, 'Count']}
             contentStyle={{
               backgroundColor: '#2e1a3b',
@@ -520,7 +535,7 @@ const GraphCarousel = () => {
           <button
             className="download-button"
             onClick={handleDownloadClick}
-            disabled={isLoading || getDownloadPathForChart(currentIndex) === null}
+            disabled={isLoading || !getDownloadPathForChart(currentIndex)}
           >
             <img
               className="logo"
@@ -713,27 +728,4 @@ const GraphCarousel = () => {
                               <td style={{ padding: '8px' }}>{detail.Created || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.Dependent_application || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.Permanent_Rule || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={7} style={{ textAlign: 'center', padding: '8px' }}>
-                              No FAR details found
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default GraphCarousel;
+                              <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}
