@@ -11,12 +11,12 @@ import {
   getIpWiseSys5,
   getPortWiseExp5,
   getPortWiseSys5,
-  postPortWiseExp5,
-  postPortWiseSys5,
-  postIpWiseSys5,
-  postIpWiseExp5,
   postServiceWiseExp5,
   postServiceWiseSys5,
+  postIpWiseExp5,
+  postIpWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5,
   getFARExpires,
   getFARDetailsSpecific,
   postGraphDownload,
@@ -131,21 +131,16 @@ const GraphCarousel = () => {
   // --- UI state ---
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [retryCount, setRetryCount] = useState(0);
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
-  const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
   const [showFarDetails, setShowFarDetails] = useState(false);
   const [selectedMonthData, setSelectedMonthData] = useState(null);
   const [farDetails, setFarDetails] = useState([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [farDetailsSearch, setFarDetailsSearch] = useState('');
 
-  const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
   const COLORS = [
@@ -203,41 +198,115 @@ const GraphCarousel = () => {
           logVal: Number(item.logVal || 0)
         }));
       }
+      // Build bar charts for service-wise, ip-wise, port-wise (EXP/SYS)
       const chartData = [
         {
           data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
           dataKeyX: 'Service_name',
-          baseTitle: baseTitles[0]
+          baseTitle: baseTitles[0],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Service_name" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
         },
         {
           data: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
           dataKeyX: 'Service_name',
-          baseTitle: baseTitles[1]
+          baseTitle: baseTitles[1],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Service_name" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
         },
         {
           data: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
           dataKeyX: 'Ip',
-          baseTitle: baseTitles[2]
+          baseTitle: baseTitles[2],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Ip" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
         },
         {
           data: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
           dataKeyX: 'Ip',
-          baseTitle: baseTitles[3]
+          baseTitle: baseTitles[3],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Ip" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
         },
         {
           data: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
           dataKeyX: 'Port',
-          baseTitle: baseTitles[4]
+          baseTitle: baseTitles[4],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Port" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
         },
         {
           data: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
           dataKeyX: 'Port',
-          baseTitle: baseTitles[5]
+          baseTitle: baseTitles[5],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Port" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
         },
         {
           data: farChartData,
           dataKeyX: 'name',
-          baseTitle: baseTitles[6]
+          baseTitle: baseTitles[6],
+          rawData: farChartData, // For FAR download
         }
       ];
       setCharts(chartData);
@@ -361,7 +430,7 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // combine charts 
+  // Combine all charts
   const allCharts = [...charts, ...mqCharts];
   const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5;
   const timerEnabled = mqHour >= 9 && mqHour <= 18;
@@ -473,13 +542,13 @@ const GraphCarousel = () => {
     }
   };
 
-  // Fix: show FAR modal on pie click for chart #6, prevent map() crash
-  if (allCharts[6] && allCharts[6].baseTitle === "Monthly FAR Expiry Distribution") {
-    allCharts[6].chart = (
+  // Patch for FAR Pie chart (kept as before to keep click handlers etc)
+  if (charts[6] && charts[6].baseTitle === "Monthly FAR Expiry Distribution") {
+    charts[6].chart = (
       <ResponsiveContainer>
         <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
           <Pie
-            data={allCharts[6].rawData || []}
+            data={charts[6].rawData || []}
             cx="50%"
             cy="50%"
             labelLine
@@ -492,7 +561,7 @@ const GraphCarousel = () => {
             onClick={handlePieClick}
             style={{ cursor: 'pointer' }}
           >
-            {(Array.isArray(allCharts[6].rawData) ? allCharts[6].rawData : []).map((entry, index) => (
+            {(Array.isArray(charts[6].rawData) ? charts[6].rawData : []).map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -513,6 +582,19 @@ const GraphCarousel = () => {
       </ResponsiveContainer>
     );
   }
+
+  // Carousel interval logic
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!paused && !showFarDetails && allCharts.length > 0) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev === allCharts.length - 1 ? 0 : prev + 1));
+      }, 5000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [paused, allCharts.length, showFarDetails]);
 
   const filteredFarDetails = Array.isArray(farDetails)
     ? farDetails.filter(detail =>
