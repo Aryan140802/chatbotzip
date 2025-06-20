@@ -61,6 +61,11 @@ function extractFirstArray(obj) {
   return null;
 }
 
+function safeGetArray(obj, key) {
+  if (obj && typeof obj === 'object' && Array.isArray(obj[key])) return obj[key];
+  return [];
+}
+
 function getDownloadPathForChart(index) {
   switch (index) {
     case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
@@ -108,10 +113,9 @@ const MQ_TITLES = [
   'MQ Hourly EXP', 'MQ Hourly SYS'
 ];
 
-// Utility functions to extract correct array for each MQ chart
-const getMqOverallArray = res => res.data?.mqOverallWiseWLog || [];
-const getMqSourceArray  = res => res.data?.mqSourceWiseWLog || [];
-const getMqHourlyArray  = res => res.data?.HourlyMqDetails || [];
+const getMqOverallArray = res => safeGetArray(res.data, 'mqOverallWiseWLog');
+const getMqSourceArray  = res => safeGetArray(res.data, 'mqSourceWiseWLog');
+const getMqHourlyArray  = res => safeGetArray(res.data, 'HourlyMqDetails');
 
 const GraphCarousel = () => {
   // --- regular charts ---
@@ -122,7 +126,7 @@ const GraphCarousel = () => {
     const h = new Date().getHours();
     return h < 9 ? 9 : h > 18 ? 18 : h;
   });
-  
+
   // --- UI state ---
   const [currentIndex, setCurrentIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -174,7 +178,6 @@ const GraphCarousel = () => {
   useEffect(() => {
     (async () => {
       setIsLoading(true);
-      // fetch regular charts
       const [
         serviceExp, serviceSys, ipExp, ipSys, portExp, portSys
       ] = await Promise.all([
@@ -187,7 +190,6 @@ const GraphCarousel = () => {
       ]);
       const farResp = await getFARExpires();
       const farChartData = [];
-      // Defensive fix: Only forEach if array
       const monthlyFarCount = farResp?.data?.MonthlyFarCount;
       if (Array.isArray(monthlyFarCount)) {
         monthlyFarCount.forEach(monthData => {
@@ -252,7 +254,6 @@ const GraphCarousel = () => {
     })();
   }, [selectedTimeValue]);
 
-  // fetch MQ charts (server/msgCount)
   useEffect(() => {
     (async () => {
       const hourStr = mqHour >= 9 && mqHour <= 18 ? String(mqHour).padStart(2, '0') : null;
