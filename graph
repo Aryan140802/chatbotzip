@@ -102,7 +102,10 @@ const MQ_TITLES = [
   'MQ Hourly EXP', 'MQ Hourly SYS'
 ];
 
-const getMqArray = (res) => res.data?.mqOverallWiseWLog || [];
+// Utility functions to extract correct array for each MQ chart
+const getMqOverallArray = res => res.data?.mqOverallWiseWLog || [];
+const getMqSourceArray  = res => res.data?.mqSourceWiseWLog || [];
+const getMqHourlyArray  = res => res.data?.HourlyMqDetails || [];
 
 const GraphCarousel = () => {
   // --- regular charts
@@ -249,17 +252,17 @@ const GraphCarousel = () => {
         postMqOverall('sys'),
         postMqSource('exp'),
         postMqSource('sys'),
-        hourStr ? postMqHourly('exp', hourStr) : { data: { mqOverallWiseWLog: [] } },
-        hourStr ? postMqHourly('sys', hourStr) : { data: { mqOverallWiseWLog: [] } }
+        hourStr ? postMqHourly('exp', hourStr) : { data: { HourlyMqDetails: [] } },
+        hourStr ? postMqHourly('sys', hourStr) : { data: { HourlyMqDetails: [] } }
       ]);
       setMqCharts([
         {
           baseTitle: MQ_TITLES[0],
           title: MQ_TITLES[0],
-          rawData: getMqArray(overallExp),
+          rawData: getMqOverallArray(overallExp),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={getMqArray(overallExp)}>
+              <BarChart data={getMqOverallArray(overallExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
@@ -272,10 +275,10 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[1],
           title: MQ_TITLES[1],
-          rawData: getMqArray(overallSys),
+          rawData: getMqOverallArray(overallSys),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={getMqArray(overallSys)}>
+              <BarChart data={getMqOverallArray(overallSys)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
@@ -288,10 +291,10 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[2],
           title: MQ_TITLES[2],
-          rawData: getMqArray(sourceExp),
+          rawData: getMqSourceArray(sourceExp),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={getMqArray(sourceExp)}>
+              <BarChart data={getMqSourceArray(sourceExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
@@ -304,10 +307,10 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[3],
           title: MQ_TITLES[3],
-          rawData: getMqArray(sourceSys),
+          rawData: getMqSourceArray(sourceSys),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={getMqArray(sourceSys)}>
+              <BarChart data={getMqSourceArray(sourceSys)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
@@ -320,10 +323,10 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[4],
           title: MQ_TITLES[4],
-          rawData: getMqArray(hourlyExp),
+          rawData: getMqHourlyArray(hourlyExp),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={getMqArray(hourlyExp)}>
+              <BarChart data={getMqHourlyArray(hourlyExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
@@ -336,10 +339,10 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[5],
           title: MQ_TITLES[5],
-          rawData: getMqArray(hourlySys),
+          rawData: getMqHourlyArray(hourlySys),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={getMqArray(hourlySys)}>
+              <BarChart data={getMqHourlyArray(hourlySys)}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
