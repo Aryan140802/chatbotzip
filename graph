@@ -187,6 +187,7 @@ const GraphCarousel = () => {
       ]);
       const farResp = await getFARExpires();
       const farChartData = [];
+      // Defensive fix: Only forEach if array
       const monthlyFarCount = farResp?.data?.MonthlyFarCount;
       if (Array.isArray(monthlyFarCount)) {
         monthlyFarCount.forEach(monthData => {
