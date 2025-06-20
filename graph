@@ -60,19 +60,19 @@ function extractFirstArray(obj) {
 }
 function getDownloadPathForChart(index) {
   switch (index) {
-    case 0: return "EISHome/servicewise_top5_FiveM/EXP/";
-    case 1: return "EISHome/servicewise_top5_FiveM/SYS/";
-    case 2: return "EISHome/ipwise_top5_FiveM/EXP/";
-    case 3: return "EISHome/ipwise_top5_FiveM/SYS/";
-    case 4: return "EISHome/portwise_top5_FiveM/EXP/";
-    case 5: return "EISHome/portwise_top5_FiveM/SYS/";
-    case 6: return "FAR_EXPIRY_ALL";
-    case 7: return "EISHome/mqOverall/exp/";
-    case 8: return "EISHome/mqOverall/sys/";
-    case 9: return "EISHome/mqSource/exp/";
-    case 10: return "EISHome/mqSource/sys/";
-    case 11: return "EISHome/mqHourly/exp/";
-    case 12: return "EISHome/mqHourly/sys/";
+    case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
+    case 1: return { path: "EISHome/servicewise_top5_FiveM/SYS/" };
+    case 2: return { path: "EISHome/ipwise_top5_FiveM/EXP/" };
+    case 3: return { path: "EISHome/ipwise_top5_FiveM/SYS/" };
+    case 4: return { path: "EISHome/portwise_top5_FiveM/EXP/" };
+    case 5: return { path: "EISHome/portwise_top5_FiveM/SYS/" };
+    case 6: return { path: "FAR_EXPIRY_ALL" };
+    case 7: return { path: "EISHome/mqOverall/", layer: "exp" };
+    case 8: return { path: "EISHome/mqOverall/", layer: "sys" };
+    case 9: return { path: "EISHome/mqSource/", layer: "exp" };
+    case 10: return { path: "EISHome/mqSource/", layer: "sys" };
+    case 11: return { path: "EISHome/mqHourly/", layer: "exp" };
+    case 12: return { path: "EISHome/mqHourly/", layer: "sys" };
     default: return null;
   }
 }
@@ -101,6 +101,8 @@ const MQ_TITLES = [
   'MQ Source EXP', 'MQ Source SYS',
   'MQ Hourly EXP', 'MQ Hourly SYS'
 ];
+
+const getMqArray = (res) => res.data?.mqOverallWiseWLog || [];
 
 const GraphCarousel = () => {
   // --- regular charts
@@ -234,7 +236,7 @@ const GraphCarousel = () => {
     })();
   }, [selectedTimeValue]);
 
-  // fetch MQ charts
+  // fetch MQ charts (server/msgCount)
   useEffect(() => {
     (async () => {
       const hourStr = mqHour >= 9 && mqHour <= 18 ? String(mqHour).padStart(2, '0') : null;
@@ -247,22 +249,22 @@ const GraphCarousel = () => {
         postMqOverall('sys'),
         postMqSource('exp'),
         postMqSource('sys'),
-        hourStr ? postMqHourly('exp', hourStr) : { data: { data: [] } },
-        hourStr ? postMqHourly('sys', hourStr) : { data: { data: [] } }
+        hourStr ? postMqHourly('exp', hourStr) : { data: { mqOverallWiseWLog: [] } },
+        hourStr ? postMqHourly('sys', hourStr) : { data: { mqOverallWiseWLog: [] } }
       ]);
       setMqCharts([
         {
           baseTitle: MQ_TITLES[0],
           title: MQ_TITLES[0],
-          rawData: overallExp.data?.data || [],
+          rawData: getMqArray(overallExp),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={overallExp.data?.data || []}>
+              <BarChart data={getMqArray(overallExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Label" />
+                <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
-                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+                <Bar dataKey="msgCount" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
           )
@@ -270,15 +272,15 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[1],
           title: MQ_TITLES[1],
-          rawData: overallSys.data?.data || [],
+          rawData: getMqArray(overallSys),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={overallSys.data?.data || []}>
+              <BarChart data={getMqArray(overallSys)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Label" />
+                <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
-                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+                <Bar dataKey="msgCount" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
           )
@@ -286,15 +288,15 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[2],
           title: MQ_TITLES[2],
-          rawData: sourceExp.data?.data || [],
+          rawData: getMqArray(sourceExp),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={sourceExp.data?.data || []}>
+              <BarChart data={getMqArray(sourceExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Label" />
+                <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
-                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+                <Bar dataKey="msgCount" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
           )
@@ -302,15 +304,15 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[3],
           title: MQ_TITLES[3],
-          rawData: sourceSys.data?.data || [],
+          rawData: getMqArray(sourceSys),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={sourceSys.data?.data || []}>
+              <BarChart data={getMqArray(sourceSys)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Label" />
+                <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
-                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+                <Bar dataKey="msgCount" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
           )
@@ -318,15 +320,15 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[4],
           title: MQ_TITLES[4],
-          rawData: hourlyExp.data?.data || [],
+          rawData: getMqArray(hourlyExp),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={hourlyExp.data?.data || []}>
+              <BarChart data={getMqArray(hourlyExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Label" />
+                <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
-                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+                <Bar dataKey="msgCount" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
           )
@@ -334,15 +336,15 @@ const GraphCarousel = () => {
         {
           baseTitle: MQ_TITLES[5],
           title: MQ_TITLES[5],
-          rawData: hourlySys.data?.data || [],
+          rawData: getMqArray(hourlySys),
           chart: (
             <ResponsiveContainer>
-              <BarChart data={hourlySys.data?.data || []}>
+              <BarChart data={getMqArray(hourlySys)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Label" />
+                <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
-                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+                <Bar dataKey="msgCount" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
           )
@@ -358,7 +360,10 @@ const GraphCarousel = () => {
 
   // Download logic (handles both original and MQ charts, FAR modal)
   const handleDownloadClick = async () => {
-    const path = getDownloadPathForChart(currentIndex);
+    const downloadInfo = getDownloadPathForChart(currentIndex);
+    if (!downloadInfo) return;
+    const path = downloadInfo.path;
+    const layer = downloadInfo.layer;
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
@@ -391,48 +396,47 @@ const GraphCarousel = () => {
       }
       return;
     }
-    if (path) {
-      try {
-        setIsLoading(true);
-        let data;
-        if (currentIndex >= charts.length) {
-          // MQ charts download
-          const mqIdx = currentIndex - charts.length;
-          let payload = {
-            username: localStorage.getItem('uidd'),
-            password: localStorage.getItem('password')
-          };
-          if (mqIdx >= 4) payload.hour = String(mqHour).padStart(2, '0');
-          const res = await postGraphDownload({ path, ...payload });
-          data = extractFirstArray(res.data);
-        } else {
-          // Non-MQ
-          const response = await postGraphDownload({
-            path,
-            time: selectedTimeValue
-          });
-          data = extractFirstArray(response.data);
-        }
-        if (!data || !Array.isArray(data) || !data.length) {
-          alert("No data received for download.");
-          setIsLoading(false);
-          return;
-        }
-        const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        alert("Download failed.");
-      } finally {
-        setIsLoading(false);
+    try {
+      setIsLoading(true);
+      let data;
+      if (currentIndex >= charts.length) {
+        // MQ charts
+        const mqIdx = currentIndex - charts.length;
+        let payload = {
+          username: localStorage.getItem('uidd'),
+          password: localStorage.getItem('password'),
+        };
+        if (layer) payload.layer = layer;
+        if (mqIdx >= 4) payload.hour = String(mqHour).padStart(2, '0');
+        const res = await postGraphDownload({ path, ...payload });
+        data = extractFirstArray(res.data);
+      } else {
+        // Non-MQ
+        const response = await postGraphDownload({
+          path,
+          time: selectedTimeValue
+        });
+        data = extractFirstArray(response.data);
       }
+      if (!data || !Array.isArray(data) || !data.length) {
+        alert("No data received for download.");
+        setIsLoading(false);
+        return;
+      }
+      const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Download failed.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
