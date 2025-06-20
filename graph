@@ -728,7 +728,6 @@ const GraphCarousel = () => {
                               <td style={{ padding: '8px' }}>{detail.Created || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.Dependent_application || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.Permanent_Rule || 'N/A'}</td>
-                              <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}
                               <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}</td>
                             </tr>
                           ))
