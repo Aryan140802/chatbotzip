@@ -67,7 +67,27 @@ function safeGetArray(obj, key) {
   return [];
 }
 
-// --- Chart/MQ/FAR download paths ---
+// Common chart configuration
+const commonXAxisProps = {
+  angle: -45,
+  textAnchor: "end",
+  height: 90,
+  interval: 0,
+  tick: { fontSize: 12 }
+};
+
+const commonTooltipStyle = {
+  contentStyle: {
+    backgroundColor: '#2e1a3b',
+    borderColor: '#f285c1',
+    color: '#fff',
+    borderRadius: '8px',
+    cursor: 'pointer'
+  },
+  itemStyle: { color: '#fff' },
+  labelStyle: { color: '#f285c1' }
+};
+
 function getDownloadPathForChart(index) {
   switch (index) {
     case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
@@ -176,6 +196,15 @@ const GraphCarousel = () => {
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
+  // --- Pause carousel when dropdown or calendar is open ---
+  useEffect(() => {
+    if (dropdownOpen || calendarOpen) {
+      setPaused(true);
+    } else {
+      setPaused(false);
+    }
+  }, [dropdownOpen, calendarOpen]);
+
   // --- Fetch regular charts ---
   useEffect(() => {
     (async () => {
@@ -224,9 +253,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name')}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Service_name" />
+                <XAxis dataKey="Service_name" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -241,9 +270,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name')}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Service_name" />
+                <XAxis dataKey="Service_name" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -258,9 +287,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Ip" />
+                <XAxis dataKey="Ip" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -275,9 +304,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Ip" />
+                <XAxis dataKey="Ip" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -292,9 +321,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Port" />
+                <XAxis dataKey="Port" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -309,9 +338,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Port" />
+                <XAxis dataKey="Port" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -355,9 +384,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="server" />
+                <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="msgCount" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -371,9 +400,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallSys)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="server" />
+                <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="msgCount" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -387,9 +416,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="server" />
+                <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="msgCount" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -403,9 +432,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceSys)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="server" />
+                <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="msgCount" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -419,9 +448,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={getMqHourlyArray(hourlyExp)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="server" />
+                <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="msgCount" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -435,9 +464,9 @@ const GraphCarousel = () => {
             <ResponsiveContainer>
               <BarChart data={getMqHourlyArray(hourlySys)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="server" />
+                <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
-                <Tooltip />
+                <Tooltip {...commonTooltipStyle} />
                 <Bar dataKey="msgCount" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
               </BarChart>
             </ResponsiveContainer>
@@ -649,15 +678,7 @@ const GraphCarousel = () => {
           </Pie>
           <Tooltip 
             formatter={(value) => [`${value}`, 'Count']}
-            contentStyle={{
-              backgroundColor: '#2e1a3b',
-              borderColor: '#f285c1',
-              color: '#fff',
-              borderRadius: '8px',
-              cursor: 'pointer'
-            }}
-            itemStyle={{ color: '#fff' }}
-            labelStyle={{ color: '#f285c1' }}
+            {...commonTooltipStyle}
           />
           <Legend layout="horizontal" verticalAlign="bottom" align="center" />
         </PieChart>
@@ -768,7 +789,10 @@ const GraphCarousel = () => {
       <div
         className="carousel-graph"
         onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
+        onMouseLeave={() => {
+          // Only unpause if dropdown and calendar are closed
+          if (!dropdownOpen && !calendarOpen) setPaused(false);
+        }}
       >
         {isLoading ? (
           <div className="loading-overlay">
