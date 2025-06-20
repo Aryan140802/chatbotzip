@@ -729,3 +729,27 @@ const GraphCarousel = () => {
                               <td style={{ padding: '8px' }}>{detail.Dependent_application || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.Permanent_Rule || 'N/A'}</td>
                               <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}
+                              <td style={{ padding: '8px' }}>{detail.ZONE || 'N/A'}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={7} style={{ textAlign: 'center', padding: '8px' }}>
+                              No FAR details found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GraphCarousel;
