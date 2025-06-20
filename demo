@@ -56,13 +56,46 @@ function App() {
     sessionStorage.setItem('loginTime', now.toString());
   };
 
+  // Function to call logout API
+  const callLogoutAPI = async () => {
+    try {
+      const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogout/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Include cookies if needed for authentication
+        // Add any required body data
+        body: JSON.stringify({
+          username: username,
+          timestamp: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        console.warn('Logout API call failed:', response.status, response.statusText);
+      } else {
+        console.log('Logout API call successful');
+      }
+    } catch (error) {
+      console.error('Error calling logout API:', error);
+      // Don't prevent logout even if API call fails
+    }
+  };
+
   // Logout and flush session storage, local storage, cookies, and caches
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Call the logout API first
+    await callLogoutAPI();
+    
+    // Clear local state and storage
     setIsLoggedIn(false);
     setUsername('');
     localStorage.clear();
     sessionStorage.clear();
     clearAllCookies();
+    
+    // Clear caches
     if ('caches' in window) {
       caches.keys().then((names) => {
         for (let name of names) {
@@ -70,6 +103,7 @@ function App() {
         }
       });
     }
+    
     // Optionally, redirect or show a message here
   };
 
