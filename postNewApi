@@ -269,3 +269,46 @@ export const postMqHourly = async (layer, hour) => {
     throw error;
   }
 };
+
+/**
+ * === NEW: MQ DOWNLOAD FUNCTIONS (for mqgraph and mqHourly) ===
+ */
+
+// Download mqgraph (source or overall) given a path ending with /layer
+export const downloadMqGraph = async (path) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const payload = {
+      uid,
+      password,
+      download: true
+    };
+    // If the API returns a file, use responseType: 'blob'
+    const response = await api.post(path, payload, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Could not download mqgraph:', error);
+    throw error;
+  }
+};
+
+// Download mqHourly given a path ending with /layer and an hour
+export const downloadMqHourly = async (path, hour) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const payload = {
+      uid,
+      password,
+      hour,
+      download: true
+    };
+    // If the API returns a file, use responseType: 'blob'
+    const response = await api.post(path, payload, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Could not download mqHourly:', error);
+    throw error;
+  }
+};
