@@ -1,6 +1,6 @@
 import '../styles/GraphCarousel.css';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import Download from '../assets/down-arrow.png';
@@ -11,12 +11,12 @@ import {
   getIpWiseSys5,
   getPortWiseExp5,
   getPortWiseSys5,
-  postPortWiseExp5,
-  postPortWiseSys5,
-  postIpWiseSys5,
-  postIpWiseExp5,
   postServiceWiseExp5,
   postServiceWiseSys5,
+  postIpWiseExp5,
+  postIpWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5,
   getFARExpires,
   getFARDetailsSpecific,
   postGraphDownload,
@@ -30,6 +30,7 @@ import { useState, useEffect, useRef } from "react";
 const farHeaders = [
   "Far_Id", "Subject", "Status", "Created", "Dependent_application", "Permanent_Rule", "ZONE"
 ];
+
 function convertToCSV(data, options = {}) {
   if (!Array.isArray(data) || !data.length) return '';
   let keys;
@@ -44,6 +45,7 @@ function convertToCSV(data, options = {}) {
   });
   return csvRows.join('\n');
 }
+
 function extractFirstArray(obj) {
   if (Array.isArray(obj)) return obj;
   if (obj && typeof obj === 'object') {
@@ -58,6 +60,14 @@ function extractFirstArray(obj) {
   }
   return null;
 }
+
+// --- Robust array getter for possibly missing or malformed keys ---
+function safeGetArray(obj, key) {
+  if (obj && typeof obj === 'object' && Array.isArray(obj[key])) return obj[key];
+  return [];
+}
+
+// --- Chart/MQ/FAR download paths ---
 function getDownloadPathForChart(index) {
   switch (index) {
     case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
@@ -76,6 +86,7 @@ function getDownloadPathForChart(index) {
     default: return null;
   }
 }
+
 const formatHits = (value) => {
   if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
   if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
@@ -102,32 +113,61 @@ const MQ_TITLES = [
   'MQ Hourly EXP', 'MQ Hourly SYS'
 ];
 
-// Utility functions to extract correct array for each MQ chart
-const getMqOverallArray = res => res.data?.mqOverallWiseWLog || [];
-const getMqSourceArray  = res => res.data?.mqSourceWiseWLog || [];
-const getMqHourlyArray  = res => res.data?.HourlyMqDetails || [];
+const getMqOverallArray = res => safeGetArray(res?.data, 'mqOverallWiseWLog');
+const getMqSourceArray  = res => safeGetArray(res?.data, 'mqSourceWiseWLog');
+const getMqHourlyArray  = res => safeGetArray(res?.data, 'HourlyMqDetails');
+
+const timeOptions = [
+  { label: "5 min", value: "5min" },
+  { label: "15 min", value: "15min" },
+  { label: "30 min", value: "30min" },
+  { label: "1 hour", value: "1hour" },
+  { label: "Till now", value: "tillnow" },
+  { label: "Yesterday", value: "yesterday" },
+  { label: "Custom date", value: "custom" },
+];
+
+function toMidnight(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+const baseTitles = [
+  'Service-wise Exp Data',
+  'Service-wise Sys Data',
+  'IP-wise Exp Data',
+  'IP-wise Sys Data',
+  'Port-wise Exp Data',
+  'Port-wise Sys Data',
+  'Monthly FAR Expiry Distribution',
+  ...MQ_TITLES
+];
+
+const COLORS = [
+  '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
+  '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
+  '#33FF8C', '#FF33BD', '#338CFF'
+];
 
 const GraphCarousel = () => {
-  // --- regular charts
+  // --- UI/State ---
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const [charts, setCharts] = useState([]);
-  // --- MQ charts
   const [mqCharts, setMqCharts] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
+
+  // MQ Hourly
   const [mqHour, setMqHour] = useState(() => {
     const h = new Date().getHours();
     return h < 9 ? 9 : h > 18 ? 18 : h;
   });
 
-  // --- UI state ---
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
-  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
-  const [currentDisplayTitle, setCurrentDisplayTitle] = useState("");
+  // FAR modal
   const [showFarDetails, setShowFarDetails] = useState(false);
   const [selectedMonthData, setSelectedMonthData] = useState(null);
   const [farDetails, setFarDetails] = useState([]);
@@ -136,37 +176,10 @@ const GraphCarousel = () => {
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  const COLORS = [
-    '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
-    '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
-    '#33FF8C', '#FF33BD', '#338CFF'
-  ];
-
-  const timeOptions = [
-    { label: "5 min", value: "5min" },
-    { label: "15 min", value: "15min" },
-    { label: "30 min", value: "30min" },
-    { label: "1 hour", value: "1hour" },
-    { label: "Till now", value: "tillnow" },
-    { label: "Yesterday", value: "yesterday" },
-    { label: "Custom date", value: "custom" },
-  ];
-
-  const baseTitles = [
-    'Service-wise Exp Data',
-    'Service-wise Sys Data',
-    'IP-wise Exp Data',
-    'IP-wise Sys Data',
-    'Port-wise Exp Data',
-    'Port-wise Sys Data',
-    'Monthly FAR Expiry Distribution'
-  ];
-
-  // --- fetch and combine chart data ---
+  // --- Fetch regular charts ---
   useEffect(() => {
     (async () => {
       setIsLoading(true);
-      // fetch regular charts
       const [
         serviceExp, serviceSys, ipExp, ipSys, portExp, portSys
       ] = await Promise.all([
@@ -179,25 +192,19 @@ const GraphCarousel = () => {
       ]);
       const farResp = await getFARExpires();
       const farChartData = [];
-      if (farResp?.data?.MonthlyFarCount) {
-        farResp.data.MonthlyFarCount.forEach(monthData => {
-          const [month, value] = Object.entries(monthData)[0];
+      const monthlyFarCount = Array.isArray(farResp?.data?.MonthlyFarCount)
+        ? farResp.data.MonthlyFarCount
+        : [];
+      monthlyFarCount.forEach(monthData => {
+        const entries = Object.entries(monthData);
+        if (entries.length) {
+          const [month, value] = entries[0];
           const cleanMonth = month.replace(/\s*-\s*/, ' ');
           if (value > 0) {
             farChartData.push({ name: cleanMonth, value: value });
           }
-        });
-      }
-      // Robust service name axis: always string, trim, allow any chars
-      function formatServiceData(data) {
-        if (!data || !Array.isArray(data)) return [];
-        return data.map(item => ({
-          ...item,
-          Service_name: (item.Service_name || '').toString().trim(),
-          Hits: Number(item.Hits || 0),
-          logVal: Number(item.logVal || 0)
-        }));
-      }
+        }
+      });
       function formatData(data, key) {
         if (!data || !Array.isArray(data)) return [];
         return data.map(item => ({
@@ -207,41 +214,115 @@ const GraphCarousel = () => {
           logVal: Number(item.logVal || 0)
         }));
       }
+      // Build bar charts for service-wise, ip-wise, port-wise (EXP/SYS)
       const chartData = [
         {
-          data: formatServiceData(serviceExp?.data?.service_wise_top5 || []),
+          data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
           dataKeyX: 'Service_name',
-          baseTitle: baseTitles[0]
+          baseTitle: baseTitles[0],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Service_name" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
         },
         {
-          data: formatServiceData(serviceSys?.data?.service_wise_top5 || []),
+          data: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
           dataKeyX: 'Service_name',
-          baseTitle: baseTitles[1]
+          baseTitle: baseTitles[1],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Service_name" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
         },
         {
           data: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
           dataKeyX: 'Ip',
-          baseTitle: baseTitles[2]
+          baseTitle: baseTitles[2],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Ip" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
         },
         {
           data: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
           dataKeyX: 'Ip',
-          baseTitle: baseTitles[3]
+          baseTitle: baseTitles[3],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Ip" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
         },
         {
           data: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
           dataKeyX: 'Port',
-          baseTitle: baseTitles[4]
+          baseTitle: baseTitles[4],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Port" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#6a11cb" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
         },
         {
           data: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
           dataKeyX: 'Port',
-          baseTitle: baseTitles[5]
+          baseTitle: baseTitles[5],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="Port" />
+                <YAxis tickFormatter={formatHits} />
+                <Tooltip />
+                <Bar dataKey="Hits" fill="#ff6a00" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
         },
         {
           data: farChartData,
           dataKeyX: 'name',
-          baseTitle: baseTitles[6]
+          baseTitle: baseTitles[6],
+          rawData: farChartData, // For FAR download
         }
       ];
       setCharts(chartData);
@@ -249,7 +330,7 @@ const GraphCarousel = () => {
     })();
   }, [selectedTimeValue]);
 
-  // fetch MQ charts (server/msgCount)
+  // --- Fetch MQ charts ---
   useEffect(() => {
     (async () => {
       const hourStr = mqHour >= 9 && mqHour <= 18 ? String(mqHour).padStart(2, '0') : null;
@@ -273,6 +354,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallExp)}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
@@ -288,6 +370,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallSys)}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
@@ -303,6 +386,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceExp)}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
@@ -318,6 +402,7 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceSys)}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
@@ -331,11 +416,9 @@ const GraphCarousel = () => {
           title: MQ_TITLES[4],
           rawData: getMqHourlyArray(hourlyExp),
           chart: (
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart
-                data={getMqHourlyArray(hourlyExp)}
-                margin={{ left: 40, right: 40 }}
-              >
+            <ResponsiveContainer>
+              <BarChart data={getMqHourlyArray(hourlyExp)}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
@@ -349,11 +432,9 @@ const GraphCarousel = () => {
           title: MQ_TITLES[5],
           rawData: getMqHourlyArray(hourlySys),
           chart: (
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart
-                data={getMqHourlyArray(hourlySys)}
-                margin={{ left: 40, right: 40 }}
-              >
+            <ResponsiveContainer>
+              <BarChart data={getMqHourlyArray(hourlySys)}>
+                <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="server" />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip />
@@ -366,17 +447,103 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // combine
+  // --- Combine all charts for carousel ---
   const allCharts = [...charts, ...mqCharts];
-  const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5;
+  const isMQHourly = currentIndex >= charts.length + 4 && currentIndex <= charts.length + 5; // MQ Hourly charts
   const timerEnabled = mqHour >= 9 && mqHour <= 18;
+
+  // Time range selector handlers
+  const handleTimeChange = (option) => {
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
+    setDropdownOpen(false);
+    setCalendarOpen(false);
+  };
+
+  const handleDateSelect = (date) => {
+    if (!date) return;
+    const formattedDate = date.toISOString().split('T')[0];
+    setSelectedDate(date);
+    setSelectedTimeLabel(`Custom: ${date.toLocaleDateString('en-US')}`);
+    setSelectedTimeValue(`custom_${formattedDate}`);
+    setCalendarOpen(false);
+  };
+
+  const generateCalendarDays = () => {
+    const today = toMidnight(new Date());
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    weekdays.forEach(day => days.push(
+      <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
+    ));
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    for (let i = 0; i < firstDayWeekday; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
+    }
+    const minEnabled = new Date(today);
+    minEnabled.setDate(today.getDate() - 7);
+    const maxEnabled = new Date(today);
+    maxEnabled.setDate(today.getDate() - 1);
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      const date = new Date(year, month, day);
+      const dateMid = toMidnight(date);
+      const isEnabled = dateMid > minEnabled && dateMid <= maxEnabled;
+      const isSelected = selectedDate && toMidnight(selectedDate).getTime() === dateMid.getTime();
+      days.push(
+        <div
+          key={`day-${dateMid.toISOString()}`}
+          className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
+          onClick={() => isEnabled && handleDateSelect(dateMid)}
+          style={{
+            cursor: isEnabled ? "pointer" : "not-allowed",
+            color: isEnabled ? undefined : "#ccc",
+            background: isSelected ? "#aaf" : undefined,
+            opacity: isEnabled ? 1 : 0.5,
+          }}
+          title={isEnabled ? "Select this date" : "Date not selectable"}
+        >
+          {day}
+        </div>
+      );
+    }
+    return days;
+  };
+
+  // FAR Pie click (show modal)
+  async function handlePieClick(data) {
+    if (!data || !data.name) return;
+    setSelectedMonthData(data);
+    setIsLoadingDetails(true);
+    setShowFarDetails(true);
+    setFarDetailsSearch('');
+    setPaused(true);
+    try {
+      const response = await getFARDetailsSpecific(data.name);
+      setFarDetails((response.data && response.data.MonthlyDetails) || []);
+    } catch (err) {
+      setFarDetails([]);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  }
 
   // Download logic (handles both original and MQ charts, FAR modal)
   const handleDownloadClick = async () => {
     const downloadInfo = getDownloadPathForChart(currentIndex);
     if (!downloadInfo) return;
+
     const path = downloadInfo.path;
     const layer = downloadInfo.layer;
+
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
@@ -409,6 +576,7 @@ const GraphCarousel = () => {
       }
       return;
     }
+
     try {
       setIsLoading(true);
       let data;
@@ -431,11 +599,14 @@ const GraphCarousel = () => {
         });
         data = extractFirstArray(response.data);
       }
+
       if (!data || !Array.isArray(data) || !data.length) {
         alert("No data received for download.");
         setIsLoading(false);
         return;
       }
+
+      // Remove logVal for all graph CSVs
       const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -453,31 +624,13 @@ const GraphCarousel = () => {
     }
   };
 
-  // FAR details modal
-  const handlePieClick = async (data) => {
-    if (!data || !data.name) return;
-    setSelectedMonthData(data);
-    setIsLoadingDetails(true);
-    setShowFarDetails(true);
-    setFarDetailsSearch('');
-    setPaused(true);
-    try {
-      const response = await getFARDetailsSpecific(data.name);
-      setFarDetails((response.data && response.data.MonthlyDetails) || []);
-    } catch (err) {
-      setFarDetails([]);
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  };
-
-  // Patch: show FAR modal on pie click for chart #6
-  if (allCharts[6] && allCharts[6].baseTitle === "Monthly FAR Expiry Distribution") {
-    allCharts[6].chart = (
+  // Patch for FAR Pie chart to keep click handlers
+  if (charts[6] && charts[6].baseTitle === "Monthly FAR Expiry Distribution") {
+    charts[6].chart = (
       <ResponsiveContainer>
         <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
           <Pie
-            data={allCharts[6].rawData}
+            data={charts[6].rawData || []}
             cx="50%"
             cy="50%"
             labelLine
@@ -490,11 +643,11 @@ const GraphCarousel = () => {
             onClick={handlePieClick}
             style={{ cursor: 'pointer' }}
           >
-            {allCharts[6].rawData.map((entry, index) => (
+            {(Array.isArray(charts[6].rawData) ? charts[6].rawData : []).map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip
+          <Tooltip 
             formatter={(value) => [`${value}`, 'Count']}
             contentStyle={{
               backgroundColor: '#2e1a3b',
@@ -512,6 +665,19 @@ const GraphCarousel = () => {
     );
   }
 
+  // Carousel interval logic
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!paused && !showFarDetails && allCharts.length > 0) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev === allCharts.length - 1 ? 0 : prev + 1));
+      }, 5000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [paused, allCharts.length, showFarDetails]);
+
   const filteredFarDetails = Array.isArray(farDetails)
     ? farDetails.filter(detail =>
         farDetailsSearch.trim() === '' ||
@@ -523,6 +689,41 @@ const GraphCarousel = () => {
   return (
     <div className="carousel-container">
       <div className="carousel-header">
+        {currentIndex < 6 && (
+          <div className="timeline-selector">
+            <div className="dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={() => {
+                  setDropdownOpen(!dropdownOpen);
+                  setCalendarOpen(false);
+                }}
+              >
+                {selectedTimeLabel}
+              </button>
+              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}
+                style={{ pointerEvents: calendarOpen ? 'none' : 'auto' }}>
+                {timeOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleTimeChange(option)}
+                    className={option.value === selectedTimeValue ? 'selected' : ''}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+              {calendarOpen && (
+                <div className="calendar-container" ref={calendarRef}>
+                  <div className="calendar-header">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="calendar">{generateCalendarDays()}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <h2>
           {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : allCharts[currentIndex]?.baseTitle}
         </h2>
@@ -530,7 +731,7 @@ const GraphCarousel = () => {
           <button
             className="download-button"
             onClick={handleDownloadClick}
-            disabled={isLoading || getDownloadPathForChart(currentIndex) === null}
+            disabled={isLoading || !getDownloadPathForChart(currentIndex)}
           >
             <img
               className="logo"
@@ -542,40 +743,25 @@ const GraphCarousel = () => {
         </div>
       </div>
 
-      {/* MQ Hourly charts: add range selector like first 6 charts */}
       {isMQHourly && (
-        <div style={{ margin: "10px 0", display: "flex", alignItems: "center" }}>
-          <div style={{ marginRight: 24 }}>
-            <label>
-              Hour:&nbsp;
-              <input
-                type="number"
-                min={9}
-                max={18}
-                value={mqHour}
-                onChange={e => setMqHour(Number(e.target.value))}
-                disabled={!timerEnabled}
-                style={{ width: 60 }}
-              />
-            </label>
-            {!timerEnabled && (
-              <span style={{ color: 'gray', marginLeft: 8 }}>
-                Timer active from 9AM to 6PM
-              </span>
-            )}
-          </div>
-          {/* Add range selector for MQ Hourly charts, like first 6 charts */}
-          <div>
-            <select
-              value={selectedTimeValue}
-              onChange={e => setSelectedTimeValue(e.target.value)}
-              style={{ padding: "7px 12px", borderRadius: "4px", border: "1px solid #ccc" }}
-            >
-              {timeOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+        <div style={{ margin: "10px 0" }}>
+          <label>
+            Hour:&nbsp;
+            <input
+              type="number"
+              min={9}
+              max={18}
+              value={mqHour}
+              onChange={e => setMqHour(Number(e.target.value))}
+              disabled={!timerEnabled}
+              style={{ width: 60 }}
+            />
+          </label>
+          {!timerEnabled && (
+            <span style={{ color: 'gray', marginLeft: 8 }}>
+              Timer active from 9AM to 6PM
+            </span>
+          )}
         </div>
       )}
 
@@ -588,62 +774,15 @@ const GraphCarousel = () => {
           <div className="loading-overlay">
             <div className="loading-spinner"></div>
             <div>Loading data...</div>
-            {retryCount > 0 && (
-              <div style={{ marginTop: '10px', fontSize: '14px', color: '#888' }}>
-                Retrying... (Attempt {retryCount}/3)
-              </div>
-            )}
           </div>
         ) : (
           allCharts.map((item, index) => (
             <div
               key={`chart-container-${index}`}
               className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
-              style={{ display: index === currentIndex ? 'block' : 'none', width: '100%' }}
+              style={{ display: index === currentIndex ? 'block' : 'none' }}
             >
-              {/* Robust X axis for service charts: vertical, ellipsis, tooltip */}
-              {index < 2 ? (
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart
-                    data={item.data}
-                    margin={{ left: 40, right: 40, bottom: 50 }}
-                  >
-                    <XAxis
-                      dataKey={item.dataKeyX}
-                      interval={0}
-                      angle={-35}
-                      textAnchor="end"
-                      height={70}
-                      tick={({ x, y, payload }) => {
-                        // Truncate long names for X axis, show ellipsis and tooltip
-                        const text = payload.value;
-                        const maxLen = 12;
-                        const display = text.length > maxLen ? text.slice(0, maxLen - 2) + '…' : text;
-                        return (
-                          <g transform={`translate(${x},${y + 10})`}>
-                            <title>{text}</title>
-                            <text
-                              style={{ fontSize: "13px", cursor: text.length > maxLen ? 'pointer' : 'default' }}
-                              textAnchor="end"
-                              fill="#666"
-                            >
-                              {display}
-                            </text>
-                          </g>
-                        );
-                      }}
-                    />
-                    <YAxis tickFormatter={formatHits} />
-                    <Tooltip
-                      formatter={formatHits}
-                      labelFormatter={label => item.data.find(d => d[item.dataKeyX] === label)?.Service_name || label}
-                    />
-                    <Bar dataKey="Hits" fill={index === 0 ? "#6a11cb" : "#ff6a00"} shape={ThreeDBar} barSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                item.chart
-              )}
+              {item.chart}
             </div>
           ))
         )}
