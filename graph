@@ -67,12 +67,12 @@ function getDownloadPathForChart(index) {
     case 4: return "EISHome/portwise_top5_FiveM/EXP/";
     case 5: return "EISHome/portwise_top5_FiveM/SYS/";
     case 6: return "FAR_EXPIRY_ALL";
-    case 7: return "EISHome/mqOverall/exp/";
-    case 8: return "EISHome/mqOverall/sys/";
-    case 9: return "EISHome/mqSource/exp/";
-    case 10: return "EISHome/mqSource/sys/";
-    case 11: return "EISHome/mqHourly/exp/";
-    case 12: return "EISHome/mqHourly/sys/";
+    case 7: return { path: "EISHome/mqOverall/", layer: "exp" };
+    case 8: return { path: "EISHome/mqOverall/", layer: "sys" };
+    case 9: return { path: "EISHome/mqSource/", layer: "exp" };
+    case 10: return { path: "EISHome/mqSource/", layer: "sys" };
+    case 11: return { path: "EISHome/mqHourly/", layer: "exp" };
+    case 12: return { path: "EISHome/mqHourly/", layer: "sys" };
     default: return null;
   }
 }
@@ -358,7 +358,10 @@ const GraphCarousel = () => {
 
   // Download logic (handles both original and MQ charts, FAR modal)
   const handleDownloadClick = async () => {
-    const path = getDownloadPathForChart(currentIndex);
+  const downloadInfo = getDownloadPathForChart(currentIndex);
+  if (!downloadInfo) return;
+  let path = downloadInfo.path;
+  let layer = downloadInfo.layer;
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
@@ -392,27 +395,28 @@ const GraphCarousel = () => {
       return;
     }
     if (path) {
-      try {
-        setIsLoading(true);
-        let data;
-        if (currentIndex >= charts.length) {
-          // MQ charts download
-          const mqIdx = currentIndex - charts.length;
-          let payload = {
-            username: localStorage.getItem('uidd'),
-            password: localStorage.getItem('password')
-          };
-          if (mqIdx >= 4) payload.hour = String(mqHour).padStart(2, '0');
-          const res = await postGraphDownload({ path, ...payload });
-          data = extractFirstArray(res.data);
-        } else {
-          // Non-MQ
-          const response = await postGraphDownload({
-            path,
-            time: selectedTimeValue
-          });
-          data = extractFirstArray(response.data);
-        }
+       try {
+    setIsLoading(true);
+    let data;
+    if (currentIndex >= charts.length) {
+      // MQ charts
+      const mqIdx = currentIndex - charts.length;
+      let payload = {
+        username: localStorage.getItem('uidd'),
+        password: localStorage.getItem('password'),
+        layer
+      };
+      if (mqIdx >= 4) payload.hour = String(mqHour).padStart(2, '0');
+      const res = await postGraphDownload({ path, ...payload });
+      data = extractFirstArray(res.data);
+    } else {
+      // Non-MQ
+      const response = await postGraphDownload({
+        path,
+        time: selectedTimeValue
+      });
+      data = extractFirstArray(response.data);
+    }
         if (!data || !Array.isArray(data) || !data.length) {
           alert("No data received for download.");
           setIsLoading(false);
@@ -428,13 +432,12 @@ const GraphCarousel = () => {
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
-      } catch (e) {
-        alert("Download failed.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
+       } catch (e) {
+    alert("Download failed.");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // FAR details modal
   const handlePieClick = async (data) => {
