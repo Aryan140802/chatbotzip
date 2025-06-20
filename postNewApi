@@ -111,7 +111,6 @@ export const getFARDetailsSpecific = async (dataFilter) => {
   }
 };
 
-
 export const postGraphDownload = async ({ path, time }) => {
   try {
     const uid = localStorage.getItem('uidd');
@@ -225,6 +224,57 @@ export const postPortWiseSys5 = async (time) => {
     return response;
   } catch (error) {
     console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+// === NEW MQ API FUNCTIONS BELOW ===
+
+// POST to EISHome/mqOverall/<layer>/ with { username, password }
+export const postMqOverall = async (layer) => {
+  try {
+    const username = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqOverall/${layer}/`, {
+      username,
+      password,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqOverall:', error);
+    throw error;
+  }
+};
+
+// POST to EISHome/mqSource/<layer>/ with { username, password }
+export const postMqSource = async (layer) => {
+  try {
+    const username = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqSource/${layer}/`, {
+      username,
+      password,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqSource:', error);
+    throw error;
+  }
+};
+
+// POST to EISHome/mqHourly/<layer>/ with { username, password, hour }
+export const postMqHourly = async (layer, hour) => {
+  try {
+    const username = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqHourly/${layer}/`, {
+      username,
+      password,
+      hour,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqHourly:', error);
     throw error;
   }
 };
