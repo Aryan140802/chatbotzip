@@ -1,100 +1,40 @@
-GraphCarousel.jsx:480 Uncaught TypeError: Cannot read properties of undefined (reading 'map')
-    at GS (GraphCarousel.jsx:480:35)
-
-﻿
 {
-    "mqSourceWiseWLog": [
+    "MonthlyFarCount": [
         {
-            "id": 927,
-            "layer": "exp",
-            "date": "2025-06-20",
-            "server": "10.188.25.13",
-            "msgCount": 5794250,
-            "logVal": 7
+            "June-2025": 35
         },
         {
-            "id": 928,
-            "layer": "exp",
-            "date": "2025-06-20",
-            "server": "10.188.25.14",
-            "msgCount": 5794153,
-            "logVal": 7
+            "July-2025": 23
         },
         {
-            "id": 929,
-            "layer": "exp",
-            "date": "2025-06-20",
-            "server": "10.188.24.13",
-            "msgCount": 5790116,
-            "logVal": 7
+            "August-2025": 32
         },
         {
-            "id": 930,
-            "layer": "exp",
-            "date": "2025-06-20",
-            "server": "10.188.24.14",
-            "msgCount": 5789963,
-            "logVal": 7
+            "September-2025": 23
         },
         {
-            "id": 931,
-            "layer": "exp",
-            "date": "2025-06-20",
-            "server": "10.188.25.11",
-            "msgCount": 5786129,
-            "logVal": 7
+            "October-2025": 0
+        },
+        {
+            "November-2025": 0
+        },
+        {
+            "December-2025": 0
+        },
+        {
+            "January-2026": 13
+        },
+        {
+            "February-2026": 11
+        },
+        {
+            "March-2026": 5
+        },
+        {
+            "April-2026": 60
+        },
+        {
+            "May-2026": 68
         }
     ]
 }
-
-{
-    "HourlyMqDetails": [
-        {
-            "id": 3349,
-            "layer": "exp",
-            "hour": "15--16",
-            "date": "2025-06-20",
-            "server": "10.188.25.89",
-            "msgCount": 1083017,
-            "logVal": 6
-        },
-        {
-            "id": 3334,
-            "layer": "exp",
-            "hour": "15--16",
-            "date": "2025-06-20",
-            "server": "10.188.24.82",
-            "msgCount": 1075125,
-            "logVal": 6
-        },
-        {
-            "id": 3332,
-            "layer": "exp",
-            "hour": "14--15",
-            "date": "2025-06-20",
-            "server": "10.188.25.89",
-            "msgCount": 1023512,
-            "logVal": 6
-        },
-        {
-            "id": 3318,
-            "layer": "exp",
-            "hour": "14--15",
-            "date": "2025-06-20",
-            "server": "10.188.24.82",
-            "msgCount": 1015867,
-            "logVal": 6
-        },
-        {
-            "id": 3338,
-            "layer": "exp",
-            "hour": "15--16",
-            "date": "2025-06-20",
-            "server": "10.188.24.86",
-            "msgCount": 1010554,
-            "logVal": 6
-        }
-    ]
-}
-
-
