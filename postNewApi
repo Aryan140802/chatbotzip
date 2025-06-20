@@ -11,28 +11,18 @@ const api = axios.create({
 
 // Modified postMessage to always send data under "message"
 export const postMessage = (data) => {
-  // If data is a string (regular message)
   if (typeof data === 'string') {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
-
-  // If data is an array, send it under message
   if (Array.isArray(data)) {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
-
-  // If data is an object, check if it has a 'message' property
   if (typeof data === 'object' && data !== null) {
-    // If it's already in the format { message: {...} }, send it directly
     if (data.hasOwnProperty('message')) {
       return api.post('EIS-GINI/', data, { timeout: 100000 });
     }
-
-    // If it's just form data without message wrapper, wrap it under message
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
-
-  // Default case (fallback)
   return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
 };
 
@@ -115,14 +105,12 @@ export const postGraphDownload = async ({ path, time }) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    // payload includes download: true
     const payload = {
       uid,
       password,
       time,
       download: true
     };
-    // POST to the dynamic path
     const response = await api.post(path, payload);
     return response;
   } catch (error) {
@@ -228,16 +216,17 @@ export const postPortWiseSys5 = async (time) => {
   }
 };
 
-// === NEW MQ API FUNCTIONS BELOW ===
+// === UPDATED MQ API FUNCTIONS BELOW ===
 
-// POST to EISHome/mqOverall/<layer>/ with { username, password }
+// POST to EISHome/mqOverall/ with { username, password, layer }
 export const postMqOverall = async (layer) => {
   try {
     const username = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    const response = await api.post(`EISHome/mqOverall/${layer}/`, {
+    const response = await api.post('EISHome/mqOverall/', {
       username,
       password,
+      layer,
     });
     return response;
   } catch (error) {
@@ -246,14 +235,15 @@ export const postMqOverall = async (layer) => {
   }
 };
 
-// POST to EISHome/mqSource/<layer>/ with { username, password }
+// POST to EISHome/mqSource/ with { username, password, layer }
 export const postMqSource = async (layer) => {
   try {
     const username = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    const response = await api.post(`EISHome/mqSource/${layer}/`, {
+    const response = await api.post('EISHome/mqSource/', {
       username,
       password,
+      layer,
     });
     return response;
   } catch (error) {
@@ -262,14 +252,15 @@ export const postMqSource = async (layer) => {
   }
 };
 
-// POST to EISHome/mqHourly/<layer>/ with { username, password, hour }
+// POST to EISHome/mqHourly/ with { username, password, layer, hour }
 export const postMqHourly = async (layer, hour) => {
   try {
     const username = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    const response = await api.post(`EISHome/mqHourly/${layer}/`, {
+    const response = await api.post('EISHome/mqHourly/', {
       username,
       password,
+      layer,
       hour,
     });
     return response;
