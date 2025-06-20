@@ -473,13 +473,13 @@ const GraphCarousel = () => {
     }
   };
 
-  // Patch: show FAR modal on pie click for chart #6
+  // Fix: show FAR modal on pie click for chart #6, prevent map() crash
   if (allCharts[6] && allCharts[6].baseTitle === "Monthly FAR Expiry Distribution") {
     allCharts[6].chart = (
       <ResponsiveContainer>
         <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
           <Pie
-            data={allCharts[6].rawData}
+            data={allCharts[6].rawData || []}
             cx="50%"
             cy="50%"
             labelLine
@@ -492,7 +492,7 @@ const GraphCarousel = () => {
             onClick={handlePieClick}
             style={{ cursor: 'pointer' }}
           >
-            {allCharts[6].rawData.map((entry, index) => (
+            {(Array.isArray(allCharts[6].rawData) ? allCharts[6].rawData : []).map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
