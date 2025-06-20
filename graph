@@ -1,6 +1,6 @@
 import '../styles/GraphCarousel.css';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts';
 import Download from '../assets/down-arrow.png';
@@ -22,7 +22,9 @@ import {
   postGraphDownload,
   postMqOverall,
   postMqSource,
-  postMqHourly
+  postMqHourly,
+  downloadMqGraph,
+  downloadMqHourly,
 } from "../api/PostApi";
 import { useState, useEffect, useRef } from "react";
 
@@ -61,19 +63,17 @@ function extractFirstArray(obj) {
   return null;
 }
 
-// --- Robust array getter for possibly missing or malformed keys ---
 function safeGetArray(obj, key) {
   if (obj && typeof obj === 'object' && Array.isArray(obj[key])) return obj[key];
   return [];
 }
 
-// Common chart configuration
 const commonXAxisProps = {
-  angle: 0, // horizontal labels for best visibility
+  angle: 0,
   textAnchor: "middle",
   height: 50,
   interval: 0,
-  tick: { fontSize: 14, fontWeight: 700, wordBreak: 'break-all', whiteSpace: 'pre-line', maxWidth: 200 }
+  tick: { fontSize: 14, fontWeight: 700, wordBreak: 'break-all', whiteSpace: 'pre-line', maxWidth: 110 }
 };
 
 const commonTooltipStyle = {
@@ -115,6 +115,9 @@ const formatHits = (value) => {
 };
 const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
 
+// Utility to trim service name for visual
+const trimLabel = (label, max = 15) => label && label.length > max ? label.slice(0, max - 2) + '…' : label;
+
 const ThreeDBar = (props) => {
   const { x, y, width, height, fill } = props;
   const depth = 6;
@@ -137,7 +140,6 @@ const getMqOverallArray = res => safeGetArray(res?.data, 'mqOverallWiseWLog');
 const getMqSourceArray  = res => safeGetArray(res?.data, 'mqSourceWiseWLog');
 const getMqHourlyArray  = res => safeGetArray(res?.data, 'HourlyMqDetails');
 
-// Only allow MQ Hourly time range: 9-18
 const mqHourlyOptions = [
   { label: "9", value: "09" },
   { label: "10", value: "10" },
@@ -205,7 +207,6 @@ const GraphCarousel = () => {
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Pause carousel if any dropdown/calendar is open
   useEffect(() => {
     if (dropdownOpen || calendarOpen || mqHourlyDropdownOpen) {
       setPaused(true);
@@ -252,7 +253,6 @@ const GraphCarousel = () => {
           logVal: Number(item.logVal || 0)
         }));
       }
-      // Build bar charts for service-wise, ip-wise, port-wise (EXP/SYS)
       const chartData = [
         {
           data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
@@ -261,19 +261,18 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name')}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis
                   dataKey="Service_name"
                   {...commonXAxisProps}
                   tick={({ x, y, payload }) => (
-                    <foreignObject x={x - 50} y={y + 10} width={100} height={45}>
+                    <foreignObject x={x - 55} y={y + 10} width={110} height={38}>
                       <div
                         style={{
                           fontSize: 14,
                           fontWeight: 700,
                           color: '#333',
                           textAlign: 'center',
-                          maxWidth: 90,
+                          maxWidth: 100,
                           wordBreak: 'break-word',
                           whiteSpace: 'normal',
                           overflow: 'hidden',
@@ -281,7 +280,7 @@ const GraphCarousel = () => {
                         }}
                         title={payload.value}
                       >
-                        {payload.value}
+                        {trimLabel(payload.value)}
                       </div>
                     </foreignObject>
                   )}
@@ -301,19 +300,18 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name')}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis
                   dataKey="Service_name"
                   {...commonXAxisProps}
                   tick={({ x, y, payload }) => (
-                    <foreignObject x={x - 50} y={y + 10} width={100} height={45}>
+                    <foreignObject x={x - 55} y={y + 10} width={110} height={38}>
                       <div
                         style={{
                           fontSize: 14,
                           fontWeight: 700,
                           color: '#333',
                           textAlign: 'center',
-                          maxWidth: 90,
+                          maxWidth: 100,
                           wordBreak: 'break-word',
                           whiteSpace: 'normal',
                           overflow: 'hidden',
@@ -321,7 +319,7 @@ const GraphCarousel = () => {
                         }}
                         title={payload.value}
                       >
-                        {payload.value}
+                        {trimLabel(payload.value)}
                       </div>
                     </foreignObject>
                   )}
@@ -341,7 +339,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Ip" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -358,7 +355,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Ip" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -375,7 +371,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Port" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -392,7 +387,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="Port" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -437,7 +431,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallExp)}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -453,7 +446,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqOverallArray(overallSys)}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -469,7 +461,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceExp)}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -485,7 +476,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqSourceArray(sourceSys)}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -502,7 +492,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqHourlyArray(hourlyExp)}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -519,7 +508,6 @@ const GraphCarousel = () => {
           chart: (
             <ResponsiveContainer>
               <BarChart data={getMqHourlyArray(hourlySys)}>
-                <CartesianGrid stroke="#e0e0e0" strokeDasharray="0" />
                 <XAxis dataKey="server" {...commonXAxisProps} />
                 <YAxis tickFormatter={formatHits} />
                 <Tooltip {...commonTooltipStyle} />
@@ -532,12 +520,10 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // --- Combine all charts for carousel ---
   const allCharts = [...charts, ...mqCharts];
   const isMQ = currentIndex >= charts.length && currentIndex < charts.length + mqCharts.length;
   const isMQHourly = currentIndex === charts.length + 4 || currentIndex === charts.length + 5;
 
-  // Time range selector handlers for service-wise
   const handleTimeChange = (option) => {
     if (option.value === "custom") {
       setDropdownOpen(false);
@@ -559,7 +545,6 @@ const GraphCarousel = () => {
     setCalendarOpen(false);
   };
 
-  // MQ Hourly selector
   const handleMqHourChange = (option) => {
     setMqHour(option.value);
     setMqHourlyDropdownOpen(false);
@@ -609,7 +594,6 @@ const GraphCarousel = () => {
     return days;
   };
 
-  // FAR Pie click (show modal)
   async function handlePieClick(data) {
     if (!data || !data.name) return;
     setSelectedMonthData(data);
@@ -627,7 +611,7 @@ const GraphCarousel = () => {
     }
   }
 
-  // Download logic (handles both original and MQ charts, FAR modal)
+  // Download logic
   const handleDownloadClick = async () => {
     const downloadInfo = getDownloadPathForChart(currentIndex);
     if (!downloadInfo) return;
@@ -635,6 +619,70 @@ const GraphCarousel = () => {
     const path = downloadInfo.path;
     const layer = downloadInfo.layer;
 
+    // MQ Overall/Source: Use downloadMqGraph
+    if (
+      (currentIndex === charts.length + 0 || currentIndex === charts.length + 1) || // MQ Overall
+      (currentIndex === charts.length + 2 || currentIndex === charts.length + 3)    // MQ Source
+    ) {
+      try {
+        setIsLoading(true);
+        let apiPath = path + (layer || "");
+        const mqRes = await downloadMqGraph(apiPath);
+        const arr = extractFirstArray(mqRes.data);
+        if (!arr || !arr.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(arr);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // MQ Hourly: Use downloadMqHourly
+    if (currentIndex === charts.length + 4 || currentIndex === charts.length + 5) {
+      try {
+        setIsLoading(true);
+        let apiPath = path + (layer || "");
+        const mqRes = await downloadMqHourly(apiPath, mqHour);
+        const arr = extractFirstArray(mqRes.data);
+        if (!arr || !arr.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(arr);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}-${mqHour}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // FAR Pie
     if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
@@ -668,28 +716,15 @@ const GraphCarousel = () => {
       return;
     }
 
+    // Default: Non-MQ
     try {
       setIsLoading(true);
       let data;
-      if (currentIndex >= charts.length) {
-        // MQ charts
-        const mqIdx = currentIndex - charts.length;
-        let payload = {
-          username: localStorage.getItem('uidd'),
-          password: localStorage.getItem('password'),
-        };
-        if (layer) payload.layer = layer;
-        if (mqIdx >= 4) payload.hour = mqHour;
-        const res = await postGraphDownload({ path, ...payload });
-        data = extractFirstArray(res.data);
-      } else {
-        // Non-MQ
-        const response = await postGraphDownload({
-          path,
-          time: selectedTimeValue
-        });
-        data = extractFirstArray(response.data);
-      }
+      const response = await postGraphDownload({
+        path,
+        time: selectedTimeValue
+      });
+      data = extractFirstArray(response.data);
 
       if (!data || !Array.isArray(data) || !data.length) {
         alert("No data received for download.");
@@ -697,7 +732,6 @@ const GraphCarousel = () => {
         return;
       }
 
-      // Remove logVal for all graph CSVs
       const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -715,7 +749,6 @@ const GraphCarousel = () => {
     }
   };
 
-  // Patch for FAR Pie chart to keep click handlers
   if (charts[6] && charts[6].baseTitle === "Monthly FAR Expiry Distribution") {
     charts[6].chart = (
       <ResponsiveContainer>
@@ -748,7 +781,6 @@ const GraphCarousel = () => {
     );
   }
 
-  // Carousel interval logic
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (!paused && !showFarDetails && allCharts.length > 0) {
@@ -769,14 +801,12 @@ const GraphCarousel = () => {
       )
     : [];
 
-  // Compose heading for selected range
   const effectiveTimeLabel = currentIndex < charts.length ? selectedTimeLabel : (isMQHourly ? `${mqHour}:00` : "");
   const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}${effectiveTimeLabel ? ` (${effectiveTimeLabel})` : ""}`;
 
   return (
     <div className="carousel-container">
       <div className="carousel-header">
-        {/* Time selector for Service-wise and IP/Port-wise */}
         {(currentIndex < 6) && (
           <div className="timeline-selector">
             <div className="dropdown" onClick={e => e.stopPropagation()}>
@@ -812,7 +842,6 @@ const GraphCarousel = () => {
             </div>
           </div>
         )}
-        {/* MQ Hourly time selector only for MQ Hourly charts */}
         {isMQHourly && (
           <div className="timeline-selector" style={{marginLeft:8}}>
             <div className="dropdown" onClick={e => e.stopPropagation()}>
@@ -836,8 +865,6 @@ const GraphCarousel = () => {
             </div>
           </div>
         )}
-
-        {/* Heading with range */}
         <h2>
           {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : effectiveHeading}
         </h2>
@@ -882,7 +909,6 @@ const GraphCarousel = () => {
         )}
       </div>
 
-      {/* Carousel dots */}
       <div className="carousel-dots">
         {allCharts.map((_, index) => (
           <span
@@ -893,7 +919,6 @@ const GraphCarousel = () => {
         ))}
       </div>
 
-      {/* FAR details modal */}
       {showFarDetails && (
         <div className="far-details-modal">
           <div className="modal-content">
