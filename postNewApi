@@ -11,28 +11,21 @@ const api = axios.create({
 
 // Modified postMessage to always send data under "message"
 export const postMessage = (data) => {
-  // If data is a string (regular message)
   if (typeof data === 'string') {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
 
-  // If data is an array, send it under message
   if (Array.isArray(data)) {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
 
-  // If data is an object, check if it has a 'message' property
   if (typeof data === 'object' && data !== null) {
-    // If it's already in the format { message: {...} }, send it directly
     if (data.hasOwnProperty('message')) {
       return api.post('EIS-GINI/', data, { timeout: 100000 });
     }
-
-    // If it's just form data without message wrapper, wrap it under message
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
 
-  // Default case (fallback)
   return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
 };
 
@@ -111,20 +104,20 @@ export const getFARDetailsSpecific = async (dataFilter) => {
   }
 };
 
-
+// UPDATED: Always add a trailing slash after path
 export const postGraphDownload = async ({ path, time }) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    // payload includes download: true
     const payload = {
       uid,
       password,
       time,
       download: true
     };
-    // POST to the dynamic path
-    const response = await api.post(path, payload);
+    // Ensure path ends with a slash
+    const pathWithSlash = path.endsWith('/') ? path : path + '/';
+    const response = await api.post(pathWithSlash, payload);
     return response;
   } catch (error) {
     console.error("Error in postGraphDownload:", error);
