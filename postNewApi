@@ -266,11 +266,16 @@ export const postMqHourly = async (layer, hour) => {
     throw error;
   }
 };
-// Download mqgraph (source or overall) given a path ending with /layer
+
+// Download mqgraph (source or overall) given a path ending with /layer/
 export const downloadMqGraph = async (path) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
+    // Ensure the path ends with a slash
+    if (!path.endsWith('/')) {
+      path += '/';
+    }
     const payload = {
       uid,
       password,
@@ -285,11 +290,15 @@ export const downloadMqGraph = async (path) => {
   }
 };
 
-// Download mqHourly given a path ending with /layer and an hour
+// Download mqHourly given a path ending with /layer/ and an hour
 export const downloadMqHourly = async (path, hour) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
+    // Ensure the path ends with a slash
+    if (!path.endsWith('/')) {
+      path += '/';
+    }
     const payload = {
       uid,
       password,
