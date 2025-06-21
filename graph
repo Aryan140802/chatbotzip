@@ -81,14 +81,14 @@ const commonXAxisProps = {
     wordBreak: 'break-all',
     whiteSpace: 'pre-line',
     maxWidth: 110,
-    fill: "#fff" // White tick labels
+    fill: "#fff"
   },
-  stroke: "#fff" // White axis line
+  stroke: "#fff"
 };
 
 const commonYAxisProps = {
-  stroke: "#fff", // White axis line
-  tick: { fill: "#fff" } // White tick labels
+  stroke: "#fff",
+  tick: { fill: "#fff" }
 };
 
 const commonTooltipStyle = {
@@ -211,7 +211,7 @@ const GraphCarousel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
-  const [mqHour, setMqHour] = useState("09");
+  const [mqHour, setMqHour] = useState("09"); // default 9 for MQ Hourly
 
   // FAR modal
   const [showFarDetails, setShowFarDetails] = useState(false);
@@ -646,7 +646,143 @@ const GraphCarousel = () => {
   }
 
   // Download logic
-  // ... (unchanged, elided for brevity)
+  const handleDownloadClick = async () => {
+    const downloadInfo = getDownloadPathForChart(currentIndex);
+    if (!downloadInfo) return;
+
+    const path = downloadInfo.path;
+    const layer = downloadInfo.layer;
+
+    // MQ Overall/Source: Use downloadMqGraph
+    if (
+      (currentIndex === charts.length + 0 || currentIndex === charts.length + 1) || // MQ Overall
+      (currentIndex === charts.length + 2 || currentIndex === charts.length + 3)    // MQ Source
+    ) {
+      try {
+        setIsLoading(true);
+        let apiPath = path + (layer || "");
+        const mqRes = await downloadMqGraph(apiPath);
+        const arr = extractFirstArray(mqRes.data);
+        if (!arr || !arr.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(arr);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // MQ Hourly: Use downloadMqHourly
+    if (currentIndex === charts.length + 4 || currentIndex === charts.length + 5) {
+      try {
+        setIsLoading(true);
+        let apiPath = path + (layer || "");
+        const mqRes = await downloadMqHourly(apiPath, mqHour);
+        const arr = extractFirstArray(mqRes.data);
+        if (!arr || !arr.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(arr);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}-${mqHour}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // FAR Pie
+    if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
+      try {
+        setIsLoading(true);
+        const farMonths = charts[6].rawData.map(item => item.name);
+        const allDetailsResponses = await Promise.all(
+          farMonths.map(month => getFARDetailsSpecific(month))
+        );
+        const allDetails = allDetailsResponses.flatMap(resp =>
+          resp.data?.MonthlyDetails || []
+        );
+        if (!allDetails.length) {
+          alert("No FAR details available for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(allDetails, { headers: farHeaders });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `FAR_Details_ALL.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Default: Non-MQ
+    try {
+      setIsLoading(true);
+      let data;
+      const response = await postGraphDownload({
+        path,
+        time: selectedTimeValue
+      });
+      data = extractFirstArray(response.data);
+
+      if (!data || !Array.isArray(data) || !data.length) {
+        alert("No data received for download.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Remove logVal for all graph CSVs
+      const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Download failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Patch for FAR Pie chart to keep click handlers
   if (charts[6] && charts[6].baseTitle === "Monthly FAR Expiry Distribution") {
