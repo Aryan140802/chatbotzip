@@ -14,18 +14,15 @@ export const postMessage = (data) => {
   if (typeof data === 'string') {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
-
   if (Array.isArray(data)) {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
-
   if (typeof data === 'object' && data !== null) {
     if (data.hasOwnProperty('message')) {
       return api.post('EIS-GINI/', data, { timeout: 100000 });
     }
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
-
   return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
 };
 
@@ -104,7 +101,6 @@ export const getFARDetailsSpecific = async (dataFilter) => {
   }
 };
 
-// UPDATED: Always add a trailing slash after path
 export const postGraphDownload = async ({ path, time }) => {
   try {
     const uid = localStorage.getItem('uidd');
@@ -115,9 +111,7 @@ export const postGraphDownload = async ({ path, time }) => {
       time,
       download: true
     };
-    // Ensure path ends with a slash
-    const pathWithSlash = path.endsWith('/') ? path : path + '/';
-    const response = await api.post(pathWithSlash, payload);
+    const response = await api.post(path, payload);
     return response;
   } catch (error) {
     console.error("Error in postGraphDownload:", error);
@@ -218,6 +212,95 @@ export const postPortWiseSys5 = async (time) => {
     return response;
   } catch (error) {
     console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+// === UPDATED MQ API FUNCTIONS BELOW ===
+
+// POST to EISHome/mqOverall/<layer>/ with { username, password }
+export const postMqOverall = async (layer) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqOverall/${layer}/`, {
+      uid,
+      password,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqOverall:', error);
+    throw error;
+  }
+};
+
+// POST to EISHome/mqSource/<layer>/ with { username, password }
+export const postMqSource = async (layer) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqSource/${layer}/`, {
+      uid,
+      password,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqSource:', error);
+    throw error;
+  }
+};
+
+// POST to EISHome/mqHourly/<layer>/ with { username, password, hour }
+export const postMqHourly = async (layer, hour) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqHourly/${layer}/`, {
+      uid,
+      password,
+      hour,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqHourly:', error);
+    throw error;
+  }
+};
+// Download mqgraph (source or overall) given a path ending with /layer
+export const downloadMqGraph = async (path) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const payload = {
+      uid,
+      password,
+      download: true
+    };
+    // If the API returns a file, use responseType: 'blob'
+    const response = await api.post(path, payload, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Could not download mqgraph:', error);
+    throw error;
+  }
+};
+
+// Download mqHourly given a path ending with /layer and an hour
+export const downloadMqHourly = async (path, hour) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const payload = {
+      uid,
+      password,
+      hour,
+      download: true
+    };
+    // If the API returns a file, use responseType: 'blob'
+    const response = await api.post(path, payload, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Could not download mqHourly:', error);
     throw error;
   }
 };
