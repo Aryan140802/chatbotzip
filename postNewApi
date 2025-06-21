@@ -11,18 +11,28 @@ const api = axios.create({
 
 // Modified postMessage to always send data under "message"
 export const postMessage = (data) => {
+  // If data is a string (regular message)
   if (typeof data === 'string') {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
+
+  // If data is an array, send it under message
   if (Array.isArray(data)) {
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
+
+  // If data is an object, check if it has a 'message' property
   if (typeof data === 'object' && data !== null) {
+    // If it's already in the format { message: {...} }, send it directly
     if (data.hasOwnProperty('message')) {
       return api.post('EIS-GINI/', data, { timeout: 100000 });
     }
+
+    // If it's just form data without message wrapper, wrap it under message
     return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
   }
+
+  // Default case (fallback)
   return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
 };
 
@@ -101,16 +111,19 @@ export const getFARDetailsSpecific = async (dataFilter) => {
   }
 };
 
+
 export const postGraphDownload = async ({ path, time }) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
+    // payload includes download: true
     const payload = {
       uid,
       password,
       time,
       download: true
     };
+    // POST to the dynamic path
     const response = await api.post(path, payload);
     return response;
   } catch (error) {
@@ -212,103 +225,6 @@ export const postPortWiseSys5 = async (time) => {
     return response;
   } catch (error) {
     console.error('Could not fetch error:', error);
-    throw error;
-  }
-};
-
-// === UPDATED MQ API FUNCTIONS BELOW ===
-
-// POST to EISHome/mqOverall/ with { username, password, layer }
-export const postMqOverall = async (layer) => {
-  try {
-    const username = localStorage.getItem('uidd');
-    const password = localStorage.getItem('password');
-    const response = await api.post('EISHome/mqOverall/', {
-      username,
-      password,
-      layer,
-    });
-    return response;
-  } catch (error) {
-    console.error('Could not fetch mqOverall:', error);
-    throw error;
-  }
-};
-
-// POST to EISHome/mqSource/ with { username, password, layer }
-export const postMqSource = async (layer) => {
-  try {
-    const username = localStorage.getItem('uidd');
-    const password = localStorage.getItem('password');
-    const response = await api.post('EISHome/mqSource/', {
-      username,
-      password,
-      layer,
-    });
-    return response;
-  } catch (error) {
-    console.error('Could not fetch mqSource:', error);
-    throw error;
-  }
-};
-
-// POST to EISHome/mqHourly/ with { username, password, layer, hour }
-export const postMqHourly = async (layer, hour) => {
-  try {
-    const username = localStorage.getItem('uidd');
-    const password = localStorage.getItem('password');
-    const response = await api.post('EISHome/mqHourly/', {
-      username,
-      password,
-      layer,
-      hour,
-    });
-    return response;
-  } catch (error) {
-    console.error('Could not fetch mqHourly:', error);
-    throw error;
-  }
-};
-
-/**
- * === NEW: MQ DOWNLOAD FUNCTIONS (for mqgraph and mqHourly) ===
- */
-
-// Download mqgraph (source or overall) given a path ending with /layer
-export const downloadMqGraph = async (path) => {
-  try {
-    const uid = localStorage.getItem('uidd');
-    const password = localStorage.getItem('password');
-    const payload = {
-      uid,
-      password,
-      download: true
-    };
-    // If the API returns a file, use responseType: 'blob'
-    const response = await api.post(path, payload, { responseType: 'blob' });
-    return response;
-  } catch (error) {
-    console.error('Could not download mqgraph:', error);
-    throw error;
-  }
-};
-
-// Download mqHourly given a path ending with /layer and an hour
-export const downloadMqHourly = async (path, hour) => {
-  try {
-    const uid = localStorage.getItem('uidd');
-    const password = localStorage.getItem('password');
-    const payload = {
-      uid,
-      password,
-      hour,
-      download: true
-    };
-    // If the API returns a file, use responseType: 'blob'
-    const response = await api.post(path, payload, { responseType: 'blob' });
-    return response;
-  } catch (error) {
-    console.error('Could not download mqHourly:', error);
     throw error;
   }
 };
