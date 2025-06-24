@@ -29,6 +29,1188 @@ import {
 import { useState, useEffect, useRef } from "react";
 
 // ---- CSV helpers ----
+function convertToCSV(data, options = {}) {
+  if (!Array.isArray(data) || !data.length) return '';
+  let keys;
+  if (options.headers) {
+    keys = options.headers;
+  } else {
+    keys = Object.keys(data[0]).filter(k => !(options.excludeKeys || []).includes(k));
+  }
+  const csvRows = [keys.join(',')];
+  data.forEach(row => {
+    csvRows.push(keys.map(key => `"${row[key] ?? ''}"`).join(','));
+  });
+  return csvRows.join('\n');
+}
+
+function extractFirstArray(obj) {
+  if (Array.isArray(obj)) return obj;
+  if (obj && typeof obj === 'object') {
+    for (const value of Object.values(obj)) {
+      if (Array.isArray(value)) return value;
+      if (value && typeof value === 'object') {
+        for (const nestedValue of Object.values(value)) {
+          if (Array.isArray(nestedValue)) return nestedValue;
+        }
+      }
+    }
+  }
+  return null;
+}
+function safeGetArray(obj, key) {
+  if (obj && typeof obj === 'object' && Array.isArray(obj[key])) return obj[key];
+  return [];
+}
+
+// Common chart configuration
+const commonXAxisProps = {
+  angle: 0,
+  textAnchor: "middle",
+  height: 50,
+  interval: 0,
+  tick: {
+    fontSize: 14,
+    fontWeight: 700,
+    wordBreak: 'break-all',
+    whiteSpace: 'pre-line',
+    maxWidth: 110,
+    fill: "#fff"
+  },
+  stroke: "#fff"
+};
+const commonYAxisProps = {
+  stroke: "#fff",
+  tick: { fill: "#fff" }
+};
+const commonTooltipStyle = {
+  contentStyle: {
+    backgroundColor: '#2e1a3b',
+    borderColor: '#f285c1',
+    color: '#fff',
+    borderRadius: '8px',
+    cursor: 'pointer'
+  },
+  itemStyle: { color: '#fff' },
+  labelStyle: { color: '#f285c1' }
+};
+
+function getDownloadPathForChart(index, totalCharts) {
+  switch (index) {
+    case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
+    case 1: return { path: "EISHome/servicewise_top5_FiveM/SYS/" };
+    case 2: return { path: "EISHome/ipwise_top5_FiveM/EXP/" };
+    case 3: return { path: "EISHome/ipwise_top5_FiveM/SYS/" };
+    case 4: return { path: "EISHome/portwise_top5_FiveM/EXP/" };
+    case 5: return { path: "EISHome/portwise_top5_FiveM/SYS/" };
+    // MQ charts (6-11)
+    case 6: return { path: "EISHome/mqOverall/", layer: "exp" };
+    case 7: return { path: "EISHome/mqOverall/", layer: "sys" };
+    case 8: return { path: "EISHome/mqSource/", layer: "exp" };
+    case 9: return { path: "EISHome/mqSource/", layer: "sys" };
+    case 10: return { path: "EISHome/mqHourly/", layer: "exp" };
+    case 11: return { path: "EISHome/mqHourly/", layer: "sys" };
+    // FAR Pie is always last
+    default: {
+      if (index === totalCharts - 1) return { path: "FAR_EXPIRY_ALL" };
+      return null;
+    }
+  }
+}
+
+const formatHits = (value) => {
+  if (value >= 10000000) return (value / 10000000).toFixed(2) + ' Cr';
+  if (value >= 100000) return (value / 100000).toFixed(2) + ' L';
+  if (value >= 1000) return (value / 1000).toFixed(2) + ' K';
+  return value;
+};
+const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
+const trimLabel = (label, max = 15) => label && label.length > max ? label.slice(0, max) : label;
+
+const ThreeDBar = (props) => {
+  const { x, y, width, height, fill } = props;
+  const depth = 6;
+  return (
+    <g>
+      <rect x={x} y={y} width={width} height={height} fill={fill} style={{ transition: "all 0.3s ease" }} className="custom-bar" />
+      <polygon points={`${x},${y} ${x + depth},${y - depth} ${x + width + depth},${y - depth} ${x + width},${y}`} fill="#ffffff33" />
+      <polygon points={`${x + width},${y} ${x + width + depth},${y - depth} ${x + width + depth},${y + height - depth} ${x + width},${y + height}`} fill="#00000033" />
+    </g>
+  );
+};
+
+const MQ_TITLES = [
+  'Top-5 MQ Overall Hits(EXP)', 'Top-5 MQ Overall Hits(SYS)',
+  'Top-5 MQ Source-Wise Hits(EXP)', 'Top-5 MQ Source-Wise(SYS)',
+  'Top-5 MQ Hourly Hits(EXP)', 'Top-5 MQ Hourly Hits(SYS)'
+];
+
+const getMqOverallArray = res => safeGetArray(res?.data, 'mqOverallWiseWLog');
+const getMqSourceArray  = res => safeGetArray(res?.data, 'mqSourceWiseWLog');
+const getMqHourlyArray  = res => safeGetArray(res?.data, 'HourlyMqDetails');
+
+const mqHourlyOptions = [
+  { label: "9", value: "09" },
+  { label: "10", value: "10" },
+  { label: "11", value: "11" },
+  { label: "12", value: "12" },
+  { label: "13", value: "13" },
+  { label: "14", value: "14" },
+  { label: "15", value: "15" },
+  { label: "16", value: "16" },
+  { label: "17", value: "17" },
+  { label: "18", value: "18" },
+];
+
+const timeOptions = [
+  { label: "5 min", value: "5min" },
+  { label: "15 min", value: "15min" },
+  { label: "30 min", value: "30min" },
+  { label: "1 hour", value: "1hour" },
+  { label: "Till now", value: "tillnow" },
+  { label: "Yesterday", value: "yesterday" },
+  { label: "Custom date", value: "custom" },
+];
+function toMidnight(d) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+const baseTitles = [
+  'Top-5 Utilized Service(EXP)',
+  'Top-5 Utilized Service(SYS)',
+  'Top-5 Utilized Servers(EXP)',
+  'Top-5 Utilized Servers(SYS)',
+  'Top-5 Utilized Ports(EXP)',
+  'Top-5 Utilized Ports(SYS)',
+  ...MQ_TITLES,
+  'Monthly FAR Expiry Distribution'
+];
+
+const COLORS = [
+  '#FF5733', '#33FF57', '#3357FF', '#F3FF33', '#FF33F3',
+  '#33FFF3', '#BD33FF', '#FF8C33', '#33FFBD', '#8C33FF',
+  '#33FF8C', '#FF33BD', '#338CFF'
+];
+
+const GraphCarousel = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [charts, setCharts] = useState([]);
+  const [mqCharts, setMqCharts] = useState([]);
+  const [farChart, setFarChart] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [mqHourlyDropdownOpen, setMqHourlyDropdownOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
+  const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
+  const [mqHour, setMqHour] = useState("09");
+
+  // FAR modal
+  const [showFarDetails, setShowFarDetails] = useState(false);
+  const [selectedMonthData, setSelectedMonthData] = useState(null);
+  const [farDetails, setFarDetails] = useState([]);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [farDetailsSearch, setFarDetailsSearch] = useState('');
+  const calendarRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  // Pause carousel if any dropdown/calendar is open
+  useEffect(() => {
+    if (dropdownOpen || calendarOpen || mqHourlyDropdownOpen) {
+      setPaused(true);
+    } else {
+      setPaused(false);
+    }
+  }, [dropdownOpen, calendarOpen, mqHourlyDropdownOpen]);
+
+  // --- Fetch regular charts ---
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      const [
+        serviceExp, serviceSys, ipExp, ipSys, portExp, portSys
+      ] = await Promise.all([
+        postServiceWiseExp5(selectedTimeValue),
+        postServiceWiseSys5(selectedTimeValue),
+        postIpWiseExp5(selectedTimeValue),
+        postIpWiseSys5(selectedTimeValue),
+        postPortWiseExp5(selectedTimeValue),
+        postPortWiseSys5(selectedTimeValue)
+      ]);
+      function formatData(data, key) {
+        if (!data || !Array.isArray(data)) return [];
+        return data.map(item => ({
+          ...item,
+          [key]: item[key]?.toString().trim() || '',
+          Hits: Number(item.Hits || 0),
+          logVal: Number(item.logVal || 0)
+        }));
+      }
+      // Build bar charts for service-wise, ip-wise, port-wise (EXP/SYS)
+      const chartData = [
+        {
+          data: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
+          dataKeyX: 'Service_name',
+          baseTitle: baseTitles[0],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name')}>
+                <CartesianGrid stroke="#e0e0e0" />
+                <XAxis
+                  dataKey="Service_name"
+                  {...commonXAxisProps}
+                  tick={({ x, y, payload }) => (
+                    <foreignObject x={x - 55} y={y + 10} width={110} height={38}>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: '#fff',
+                          textAlign: 'center',
+                          maxWidth: 100,
+                          wordBreak: 'break-word',
+                          whiteSpace: 'normal',
+                          overflow: 'hidden'
+                        }}
+                        title={payload.value}
+                      >
+                        {trimLabel(payload.value)}
+                      </div>
+                    </foreignObject>
+                  )}
+                  stroke="#fff"
+                />
+                  <defs>
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
+                   <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
+                   <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="Hits" fill="url(#barGradientExp)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(serviceExp?.data?.service_wise_top5 || [], 'Service_name'),
+        },
+        {
+          data: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
+          dataKeyX: 'Service_name',
+          baseTitle: baseTitles[1],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name')}>
+                <CartesianGrid stroke="#e0e0e0" />
+                <XAxis
+                  dataKey="Service_name"
+                  {...commonXAxisProps}
+                  tick={({ x, y, payload }) => (
+                    <foreignObject x={x - 55} y={y + 10} width={110} height={38}>
+                      <div
+                        style={{
+                          fontSize: 14,
+                          fontWeight: 700,
+                          color: '#fff',
+                          textAlign: 'center',
+                          maxWidth: 100,
+                          wordBreak: 'break-word',
+                          whiteSpace: 'normal',
+                          overflow: 'hidden'
+                        }}
+                        title={payload.value}
+                      >
+                        {trimLabel(payload.value)}
+                      </div>
+                    </foreignObject>
+                  )}
+                  stroke="#fff"
+                />
+                  <defs>
+                   <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                 <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="Hits" fill="url(#barGradientSys)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(serviceSys?.data?.service_wise_top5 || [], 'Service_name'),
+        },
+        {
+          data: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
+          dataKeyX: 'Ip',
+          baseTitle: baseTitles[2],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
+                <CartesianGrid stroke="#e0e0e0" />
+                   <defs>
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
+                   <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
+                   <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="Ip" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="Hits" fill="url(#barGradientExp)"  shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip'),
+        },
+        {
+          data: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
+          dataKeyX: 'Ip',
+          baseTitle: baseTitles[3],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
+                <CartesianGrid stroke="#e0e0e0" />
+                   <defs>
+                   <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                   <XAxis dataKey="Ip" {...commonXAxisProps} stroke="#fff" />
+                 <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="Hits" fill="url(#barGradientSys)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip'),
+        },
+        {
+          data: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
+          dataKeyX: 'Port',
+          baseTitle: baseTitles[4],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
+                <CartesianGrid stroke="#e0e0e0" />
+                   <defs>
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
+                   <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
+                   <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="Port" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="Hits" fill="url(#barGradientExp)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(portExp?.data?.port_wise_top5 || [], 'Port'),
+        },
+        {
+          data: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
+          dataKeyX: 'Port',
+          baseTitle: baseTitles[5],
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
+                <CartesianGrid stroke="#e0e0e0" />
+                   <defs>
+                   <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                  <XAxis dataKey="Port" {...commonXAxisProps} stroke="#fff" />
+                 <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="Hits" fill="url(#barGradientSys)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          ),
+          rawData: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
+        }
+      ];
+      setCharts(chartData);
+      setIsLoading(false);
+    })();
+  }, [selectedTimeValue]);
+
+  // --- Fetch MQ charts ---
+  useEffect(() => {
+    (async () => {
+      const [
+        overallExp, overallSys,
+        sourceExp, sourceSys,
+        hourlyExp, hourlySys
+      ] = await Promise.all([
+        postMqOverall('exp'),
+        postMqOverall('sys'),
+        postMqSource('exp'),
+        postMqSource('sys'),
+        postMqHourly('exp', mqHour),
+        postMqHourly('sys', mqHour)
+      ]);
+      setMqCharts([
+        {
+          baseTitle: MQ_TITLES[0],
+          title: MQ_TITLES[0],
+          rawData: getMqOverallArray(overallExp),
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={getMqOverallArray(overallExp)}>
+                <CartesianGrid stroke="#e0e0e0" />
+                     <defs>
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
+                   <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
+                   <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="server" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="msgCount" fill="url(#barGradientExp)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )
+        },
+        {
+          baseTitle: MQ_TITLES[1],
+          title: MQ_TITLES[1],
+          rawData: getMqOverallArray(overallSys),
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={getMqOverallArray(overallSys)}>
+                <CartesianGrid stroke="#e0e0e0" />
+                  <defs>
+                   <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="server" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="msgCount" fill="url(#barGradientSys)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )
+        },
+        {
+          baseTitle: MQ_TITLES[2],
+          title: MQ_TITLES[2],
+          rawData: getMqSourceArray(sourceExp),
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={getMqSourceArray(sourceExp)}>
+                <CartesianGrid stroke="#e0e0e0" />
+                     <defs>
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
+                   <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
+                   <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="server" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="msgCount" fill="url(#barGradientExp)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )
+        },
+        {
+          baseTitle: MQ_TITLES[3],
+          title: MQ_TITLES[3],
+          rawData: getMqSourceArray(sourceSys),
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={getMqSourceArray(sourceSys)}>
+                <CartesianGrid stroke="#e0e0e0" />
+              <defs>
+                   <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="server" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="msgCount" fill="url(#barGradientSys)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )
+        },
+        // MQ Hourly EXP
+        {
+          baseTitle: MQ_TITLES[4],
+          title: MQ_TITLES[4],
+          rawData: getMqHourlyArray(hourlyExp),
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={getMqHourlyArray(hourlyExp)}>
+                <CartesianGrid stroke="#e0e0e0" />
+                     <defs>
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
+                   <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
+                   <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="server" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="msgCount" fill="url(#barGradientExp)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )
+        },
+        // MQ Hourly SYS
+        {
+          baseTitle: MQ_TITLES[5],
+          title: MQ_TITLES[5],
+          rawData: getMqHourlyArray(hourlySys),
+          chart: (
+            <ResponsiveContainer>
+              <BarChart data={getMqHourlyArray(hourlySys)}>
+                <CartesianGrid stroke="#e0e0e0" />
+                  <defs>
+                   <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  </linearGradient>
+                   </defs>
+                <XAxis dataKey="server" {...commonXAxisProps} stroke="#fff" />
+                <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
+                <Tooltip {...commonTooltipStyle} />
+                <Bar dataKey="msgCount" fill="url(#barGradientSys)" shape={ThreeDBar} barSize={50} />
+              </BarChart>
+            </ResponsiveContainer>
+          )
+        }
+      ]);
+    })();
+  }, [mqHour]);
+
+  // --- Fetch FAR chart (now always at end) ---
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      const farResp = await getFARExpires();
+      const farChartData = [];
+      const monthlyFarCount = Array.isArray(farResp?.data?.MonthlyFarCount)
+        ? farResp.data.MonthlyFarCount
+        : [];
+      monthlyFarCount.forEach(monthData => {
+        const entries = Object.entries(monthData);
+        if (entries.length) {
+          const [month, value] = entries[0];
+          const cleanMonth = month.replace(/\s*-\s*/, ' ');
+          if (value > 0) {
+            farChartData.push({ name: cleanMonth, value: value });
+          }
+        }
+      });
+      setFarChart({
+        data: farChartData,
+        dataKeyX: 'name',
+        baseTitle: 'Monthly FAR Expiry Distribution',
+        rawData: farChartData,
+      });
+      setIsLoading(false);
+    })();
+  }, []);
+
+  // --- Combine all charts for carousel. FAR Pie always last. ---
+  const allCharts = [...charts, ...mqCharts, ...(farChart ? [farChart] : [])];
+  const totalCharts = allCharts.length;
+  const isMQ = currentIndex >= charts.length && currentIndex < charts.length + mqCharts.length;
+  const isMQHourly = currentIndex === charts.length + 4 || currentIndex === charts.length + 5;
+  const isFarData = currentIndex === totalCharts - 1;
+
+  // Time range selector handlers for service-wise
+  const handleTimeChange = (option) => {
+    if (option.value === "custom") {
+      setDropdownOpen(false);
+      setCalendarOpen(true);
+      return;
+    }
+    setSelectedTimeLabel(option.label);
+    setSelectedTimeValue(option.value);
+    setDropdownOpen(false);
+    setCalendarOpen(false);
+  };
+
+  const handleDateSelect = (date) => {
+    if (!date) return;
+    const formattedDate = date.toISOString().split('T')[0];
+    setSelectedDate(date);
+    setSelectedTimeLabel(`Custom: ${date.toLocaleDateString('en-US')}`);
+    setSelectedTimeValue(`custom_${formattedDate}`);
+    setCalendarOpen(false);
+  };
+
+  // MQ Hourly selector
+  const handleMqHourChange = (option) => {
+    setMqHour(option.value);
+    setMqHourlyDropdownOpen(false);
+  };
+
+  const generateCalendarDays = (onDaySelect, selectedDateVal) => {
+    const today = toMidnight(new Date());
+    const days = [];
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    weekdays.forEach(day => days.push(
+      <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
+    ));
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    const firstDayWeekday = firstDayOfMonth.getDay();
+    for (let i = 0; i < firstDayWeekday; i++) {
+      days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
+    }
+    const minEnabled = new Date(today);
+    minEnabled.setDate(today.getDate() - 7);
+    const maxEnabled = new Date(today);
+    maxEnabled.setDate(today.getDate() - 1);
+    for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+      const date = new Date(year, month, day);
+      const dateMid = toMidnight(date);
+      const isEnabled = dateMid > minEnabled && dateMid <= maxEnabled;
+      const isSelected = selectedDateVal && toMidnight(selectedDateVal).getTime() === dateMid.getTime();
+      days.push(
+        <div
+          key={`day-${dateMid.toISOString()}`}
+          className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
+          onClick={() => isEnabled && onDaySelect(dateMid)}
+          style={{
+            cursor: isEnabled ? "pointer" : "not-allowed",
+            color: isEnabled ? undefined : "#ccc",
+            background: isSelected ? "#aaf" : undefined,
+            opacity: isEnabled ? 1 : 0.5,
+          }}
+          title={isEnabled ? "Select this date" : "Date not selectable"}
+        >
+          {day}
+        </div>
+      );
+    }
+    return days;
+  };
+
+  // FAR Pie click (show modal)
+  async function handlePieClick(data) {
+    if (!data || !data.name) return;
+    setSelectedMonthData(data);
+    setIsLoadingDetails(true);
+    setShowFarDetails(true);
+    setFarDetailsSearch('');
+    setPaused(true);
+    try {
+      const response = await getFARDetailsSpecific(data.name);
+      setFarDetails((response.data && response.data.MonthlyDetails) || []);
+    } catch (err) {
+      setFarDetails([]);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  }
+
+  // Download logic
+  const handleDownloadClick = async () => {
+    const downloadInfo = getDownloadPathForChart(currentIndex, totalCharts);
+    if (!downloadInfo) return;
+
+    const path = downloadInfo.path;
+    const layer = downloadInfo.layer;
+
+    // MQ Overall/Source: Use downloadMqGraph
+    if (
+      (currentIndex === charts.length + 0 || currentIndex === charts.length + 1) || // MQ Overall
+      (currentIndex === charts.length + 2 || currentIndex === charts.length + 3)    // MQ Source
+    ) {
+      try {
+        setIsLoading(true);
+        let apiPath = path + (layer || "") + "/";
+        const mqRes = await downloadMqGraph(apiPath);
+        const arr = extractFirstArray(mqRes.data);
+        if (!arr || !arr.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(arr,{ excludeKeys: ['logVal'] });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // MQ Hourly: Use downloadMqHourly
+    if (currentIndex === charts.length + 4 || currentIndex === charts.length + 5) {
+      try {
+        setIsLoading(true);
+        let apiPath = path + (layer || "") + "/";
+        const mqRes = await downloadMqHourly(apiPath, mqHour);
+        const arr = extractFirstArray(mqRes.data);
+        if (!arr || !arr.length) {
+          alert("No data received for download.");
+          setIsLoading(false);
+          return;
+        }
+        const csv = convertToCSV(arr,{ excludeKeys: ['logVal'] });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}-${mqHour}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // FAR Pie (last chart)
+    if (path === "FAR_EXPIRY_ALL" && farChart?.rawData) {
+      try {
+        setIsLoading(true);
+        const farMonths = farChart.rawData.map(item => item.name);
+        const allDetailsResponses = await Promise.all(
+          farMonths.map(month => getFARDetailsSpecific(month))
+        );
+        const allDetails = allDetailsResponses.flatMap(resp =>
+          resp.data?.MonthlyDetails || []
+        );
+        if (!allDetails.length) {
+          alert("No FAR details available for download.");
+          setIsLoading(false);
+          return;
+        }
+        // Dynamic headers for FAR data
+        const headers = allDetails.length > 0 ? Object.keys(allDetails[0]) : [];
+        const csv = convertToCSV(allDetails, { headers });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `FAR_Details_ALL.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // Default: Non-MQ
+    try {
+      setIsLoading(true);
+      let data;
+      const response = await postGraphDownload({
+        path,
+        time: selectedTimeValue
+      });
+      data = extractFirstArray(response.data);
+
+      if (!data || !Array.isArray(data) || !data.length) {
+        alert("No data received for download.");
+        setIsLoading(false);
+        return;
+      }
+      const csv = convertToCSV(data, { excludeKeys: ['logVal'] });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Download failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Patch for FAR Pie chart to keep click handlers
+  if (farChart && farChart.baseTitle === "Monthly FAR Expiry Distribution") {
+    farChart.chart = (
+      <ResponsiveContainer>
+        <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
+          <Pie
+            data={farChart.rawData || []}
+            cx="50%"
+            cy="50%"
+            labelLine
+            outerRadius={130}
+            innerRadius={60}
+            fill="#8884d8"
+            dataKey="value"
+            nameKey="name"
+            label={({ name, percent }) => `${name}: ${formatPercent(percent)}`}
+            onClick={handlePieClick}
+            style={{ cursor: 'pointer' }}
+          >
+            {(Array.isArray(farChart.rawData) ? farChart.rawData : []).map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={(value) => [`${value}`, 'Count']}
+            {...commonTooltipStyle}
+          />
+          <Legend layout="horizontal" verticalAlign="bottom" align="center" />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  // Carousel interval logic
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (!paused && !showFarDetails && allCharts.length > 0) {
+      intervalRef.current = setInterval(() => {
+        setCurrentIndex(prev => (prev === allCharts.length - 1 ? 0 : prev + 1));
+      }, 5000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [paused, allCharts.length, showFarDetails]);
+
+  // Filter for FAR modal, dynamic headers
+  const filteredFarDetails = Array.isArray(farDetails)
+    ? farDetails.filter(detail =>
+      farDetailsSearch.trim() === '' ||
+      Object.values(detail).some(v =>
+        v && v.toString().toLowerCase().includes(farDetailsSearch.toLowerCase())
+      )
+    )
+    : [];
+  const farModalHeaders = filteredFarDetails.length > 0
+    ? Object.keys(filteredFarDetails[0])
+    : [];
+
+  // Compose heading for selected range; do NOT add time for FAR data (last index)
+  const effectiveTimeLabel =
+    (currentIndex < charts.length + mqCharts.length && !isFarData)
+      ? selectedTimeLabel
+      : (isMQHourly ? `${mqHour}:00` : "");
+  const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}${effectiveTimeLabel ? ` (${effectiveTimeLabel})` : ""}`;
+
+  return (
+    <div className="carousel-container">
+      <div className="carousel-header">
+        {/* Time selector for Service-wise and IP/Port-wise */}
+        {(currentIndex < 6) && (
+          <div className="timeline-selector">
+            <div className="dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={() => {
+                  setDropdownOpen(!dropdownOpen);
+                  setCalendarOpen(false);
+                }}
+              >
+                {selectedTimeLabel}
+              </button>
+              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}
+                style={{ pointerEvents: calendarOpen ? 'none' : 'auto' }}>
+                {timeOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleTimeChange(option)}
+                    className={option.value === selectedTimeValue ? 'selected' : ''}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+              {calendarOpen && (
+                <div className="calendar-container" ref={calendarRef}>
+                  <div className="calendar-header">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="calendar">{generateCalendarDays(handleDateSelect, selectedDate)}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        {/* MQ Hourly time selector only for MQ Hourly charts */}
+        {isMQHourly && (
+          <div className="timeline-selector" style={{ marginLeft: 8 }}>
+            <div className="dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-toggle"
+                onClick={() => setMqHourlyDropdownOpen(!mqHourlyDropdownOpen)}
+              >
+                {mqHour}:00
+              </button>
+              <ul className={`dropdown-menu ${mqHourlyDropdownOpen ? 'show' : ''}`}>
+                {mqHourlyOptions.map(option => (
+                  <li
+                    key={option.value}
+                    onClick={() => handleMqHourChange(option)}
+                    className={option.value === mqHour ? 'selected' : ''}
+                  >
+                    {option.label}:00
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* Heading with range */}
+        <h2>
+          {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : effectiveHeading}
+        </h2>
+        <div className="download-button-wrapper">
+          <button
+            className="download-button"
+            onClick={handleDownloadClick}
+            disabled={isLoading || !getDownloadPathForChart(currentIndex, totalCharts)}
+          >
+            <img
+              className="logo"
+              src={Download}
+              alt="Download Icon"
+              style={{ height: '36px', marginRight: '3px' }}
+            />
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="carousel-graph"
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => {
+          if (!dropdownOpen && !calendarOpen && !mqHourlyDropdownOpen) setPaused(false);
+        }}
+      >
+        {isLoading ? (
+          <div className="loading-overlay">
+            <div className="loading-spinner"></div>
+            <div>Loading data...</div>
+          </div>
+        ) : (
+          allCharts.map((item, index) => (
+            <div
+              key={`chart-container-${index}`}
+              className={`chart-fade ${index === currentIndex ? 'active' : ''}`}
+              style={{ display: index === currentIndex ? 'block' : 'none' }}
+            >
+              {item.chart}
+            </div>
+          ))
+        )}
+      </div>
+      {/* Carousel dots */}
+      <div className="carousel-dots">
+        {allCharts.map((_, index) => (
+          <span
+            key={`dot-${index}`}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+            onClick={() => setCurrentIndex(index)}
+          />
+        ))}
+      </div>
+
+      {/* Dynamic FAR Modal */}
+      {showFarDetails && (
+        <div className="far-details-modal">
+          <div className="modal-content">
+            <div className="modal-header" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h3 style={{ margin: 0 }}>
+                FAR Details for {selectedMonthData?.name}
+              </h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  className="download-button"
+                  onClick={() => {
+                    if (!filteredFarDetails.length) return;
+                    // Dynamic headers for FAR
+                    const headers = filteredFarDetails.length > 0 ? Object.keys(filteredFarDetails[0]) : [];
+                    const csv = convertToCSV(filteredFarDetails, { headers });
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `FAR_Details_${selectedMonthData?.name}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                  }}
+                  disabled={isLoadingDetails || !filteredFarDetails.length}
+                  title="Download FAR Details"
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                >
+                  <img
+                    className="logo"
+                    src={Download}
+                    alt="Download Icon"
+                    style={{ height: '28px' }}
+                  />
+                </button>
+                <button
+                  onClick={() => {
+                    setShowFarDetails(false);
+                    setPaused(false);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f285c1',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    padding: '5px',
+                    marginLeft: '8px'
+                  }}
+                  title="Close"
+                  aria-label="Close"
+                >×</button>
+              </div>
+            </div>
+            <div className="modal-body" style={{
+              padding: '20px',
+              maxHeight: '500px',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}>
+              {isLoadingDetails ? (
+                <div style={{ textAlign: 'center', color: '#fff' }}>
+                  <div className="loading-spinner"></div>
+                  <p>Loading FAR details...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="far-Search" style={{
+                    paddingBottom: '10px',
+                    position: 'sticky',
+                    top: 0,
+                    backgroundColor: '#2e1a3b',
+                    zIndex: 2
+                  }}>
+                    <input
+                      type="text"
+                      placeholder="Search any field"
+                      value={farDetailsSearch}
+                      onChange={e => setFarDetailsSearch(e.target.value)}
+                      style={{
+                        width: '98%',
+                        padding: '10px',
+                        borderRadius: '4px',
+                        border: '1px solid #ccc'
+                      }}
+                    />
+                  </div>
+                  <div className="far-details-table" style={{
+                    overflowY: 'auto',
+                    flex: 1,
+                    position: 'relative'
+                  }}>
+                    <table style={{ width: '100%' }}>
+                      <thead style={{
+                        position: 'sticky',
+                        top: 0,
+                        backgroundColor: '#2e1a3b',
+                        zIndex: 1
+                      }}>
+                        <tr>
+                          {farModalHeaders.map(h => (
+                            <th key={h} style={{ padding: '8px', textAlign: 'left' }}>{h.replace(/_/g, " ")}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredFarDetails.length > 0 ? (
+                          filteredFarDetails.map((detail, index) => (
+                            <tr key={index}>
+                              {farModalHeaders.map(h => (
+                                <td key={h} style={{ padding: '8px' }}>{detail[h] || 'N/A'}</td>
+                              ))}
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={farModalHeaders.length} style={{ textAlign: 'center', padding: '8px' }}>
+                              No FAR details found
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GraphCarousel;import '../styles/GraphCarousel.css';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend
+} from 'recharts';
+import Download from '../assets/down-arrow.png';
+import {
+  getServiceWiseExp5,
+  getServiceWiseSys5,
+  getIpWiseExp5,
+  getIpWiseSys5,
+  getPortWiseExp5,
+  getPortWiseSys5,
+  postServiceWiseExp5,
+  postServiceWiseSys5,
+  postIpWiseExp5,
+  postIpWiseSys5,
+  postPortWiseExp5,
+  postPortWiseSys5,
+  getFARExpires,
+  getFARDetailsSpecific,
+  postGraphDownload,
+  postMqOverall,
+  postMqSource,
+  postMqHourly,
+  downloadMqGraph,
+  downloadMqHourly
+} from "../api/PostApi";
+import { useState, useEffect, useRef } from "react";
+
+// ---- CSV helpers ----
 const farHeaders = [
   "Far_Id", "Subject", "Status", "Created", "Dependent_application", "Permanent_Rule", "ZONE"
 ];
