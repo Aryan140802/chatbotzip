@@ -1,3 +1,7 @@
+const [downloadTooltip, setDownloadTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
+  const [dotTooltip, setDotTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
+
+
  {/* Download Tooltip */}
       {downloadTooltip.show && (
         <div
