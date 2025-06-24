@@ -1,3 +1,108 @@
+ <div className="download-button-wrapper" style={{ position: "relative", display: "inline-block" }}>
+          <button
+            className="download-button"
+            onClick={handleDownloadClick}
+            disabled={isLoading || !getDownloadPathForChart(currentIndex, totalCharts)}
+            onMouseEnter={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip({
+                show: true,
+                text: 'Click to download complete data',
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+              });
+            }}
+            onMouseMove={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip(t =>
+                t.show
+                  ? {
+                      ...t,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top,
+                    }
+                  : t
+              );
+            }}
+            onMouseLeave={() => setTooltip(t => ({ ...t, show: false }))}
+          >
+            <img
+              className="logo"
+              src={Download}
+              alt="Download Icon"
+              style={{ height: '36px', marginRight: '3px' }}
+            />
+          </button>
+        </div>
+      </div>
+
+
+
+
+
+ {/* Carousel dots */}
+      <div className="carousel-dots" style={{ textAlign: "center", marginTop: 10 }}>
+        {allCharts.map((item, index) => (
+          <span
+            key={`dot-${index}`}
+            className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
+            onClick={() => setCurrentIndex(index)}
+            onMouseEnter={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip({
+                show: true,
+                text: allCharts[index]?.baseTitle || '',
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+              });
+            }}
+            onMouseMove={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip(t =>
+                t.show
+                  ? {
+                      ...t,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top,
+                    }
+                  : t
+              );
+            }}
+            onMouseLeave={() => setTooltip(t => ({ ...t, show: false }))}
+            style={{ cursor: 'pointer', display: "inline-block", margin: "0 5px" }}
+          />
+        ))}
+      </div>
+
+      {/* Tooltip */}
+      {tooltip.show && (
+        <div
+          style={{
+            position: 'fixed',
+            left: tooltip.x,
+            top: tooltip.y - 30, // 30px above the element
+            transform: 'translate(-50%, -100%)',
+            background: '#2e1a3b',
+            color: '#fff',
+            border: '1px solid #f285c1',
+            borderRadius: 8,
+            padding: '6px 14px',
+            fontSize: 15,
+            fontWeight: 500,
+            pointerEvents: 'none',
+            boxShadow: '0 4px 18px #0005',
+            zIndex: 9999,
+            whiteSpace: 'nowrap',
+            transition: 'opacity 0.15s'
+          }}
+        >
+          {tooltip.text}
+        </div>
+      )}
+
+
+
+
 import '../styles/GraphCarousel.css';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
