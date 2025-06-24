@@ -656,10 +656,10 @@ const GraphCarousel = () => {
   }, [mqHour]);
 
   // --- Combine all charts for carousel ---
-  const allCharts = [...mqCharts,...charts];
+  const allCharts = [...charts,...mqCharts];
   const isMQ = currentIndex >= charts.length && currentIndex < charts.length + mqCharts.length;
   const isMQHourly = currentIndex === charts.length + 4 || currentIndex === charts.length + 5;
-  const isFarData = currentIndex === 12;
+  const isFarData = currentIndex === 6;
 
   // Time range selector handlers for service-wise
   const handleTimeChange = (option) => {
