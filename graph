@@ -99,26 +99,22 @@ const commonTooltipStyle = {
   labelStyle: { color: '#f285c1' }
 };
 
-function getDownloadPathForChart(index, chartsLen) {
+function getDownloadPathForChart(index) {
   switch (index) {
-    case 0: return { path: "EISHome/mqOverall/", layer: "exp" };
-    case 1: return { path: "EISHome/mqOverall/", layer: "sys" };
-    case 2: return { path: "EISHome/mqSource/", layer: "exp" };
-    case 3: return { path: "EISHome/mqSource/", layer: "sys" };
-    case 4: return { path: "EISHome/mqHourly/", layer: "exp" };
-    case 5: return { path: "EISHome/mqHourly/", layer: "sys" };
-    // ... rest are same as before but FAR (pie) is now at the end
-    default:
-      // FAR Pie is now at the last index (chartsLen + mqChartsLen)
-      if (index === chartsLen + 6) return { path: "FAR_EXPIRY_ALL" };
-      // for rest
-      if (index === 6) return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
-      if (index === 7) return { path: "EISHome/servicewise_top5_FiveM/SYS/" };
-      if (index === 8) return { path: "EISHome/ipwise_top5_FiveM/EXP/" };
-      if (index === 9) return { path: "EISHome/ipwise_top5_FiveM/SYS/" };
-      if (index === 10) return { path: "EISHome/portwise_top5_FiveM/EXP/" };
-      if (index === 11) return { path: "EISHome/portwise_top5_FiveM/SYS/" };
-      return null;
+    case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
+    case 1: return { path: "EISHome/servicewise_top5_FiveM/SYS/" };
+    case 2: return { path: "EISHome/ipwise_top5_FiveM/EXP/" };
+    case 3: return { path: "EISHome/ipwise_top5_FiveM/SYS/" };
+    case 4: return { path: "EISHome/portwise_top5_FiveM/EXP/" };
+    case 5: return { path: "EISHome/portwise_top5_FiveM/SYS/" };
+    case 6: return { path: "FAR_EXPIRY_ALL" };
+    case 7: return { path: "EISHome/mqOverall/", layer: "exp" };
+    case 8: return { path: "EISHome/mqOverall/", layer: "sys" };
+    case 9: return { path: "EISHome/mqSource/", layer: "exp" };
+    case 10: return { path: "EISHome/mqSource/", layer: "sys" };
+    case 11: return { path: "EISHome/mqHourly/", layer: "exp" };
+    case 12: return { path: "EISHome/mqHourly/", layer: "sys" };
+    default: return null;
   }
 }
 
@@ -130,7 +126,6 @@ const formatHits = (value) => {
 };
 const formatPercent = (value) => `${(value * 100).toFixed(1)}%`;
 
-// Utility to trim service name for visual, but DO NOT ADD ELLIPSIS
 const trimLabel = (label, max = 15) => label && label.length > max ? label.slice(0, max) : label;
 
 const ThreeDBar = (props) => {
@@ -189,8 +184,8 @@ const baseTitles = [
   'Top-5 Utilized Servers(SYS)',
   'Top-5 Utilized Ports(EXP)',
   'Top-5 Utilized Ports(SYS)',
-  ...MQ_TITLES,
-  'Monthly FAR Expiry Distribution' // FAR will be moved to end
+  'Monthly FAR Expiry Distribution',
+  ...MQ_TITLES
 ];
 
 const COLORS = [
@@ -204,7 +199,6 @@ const GraphCarousel = () => {
   const [paused, setPaused] = useState(false);
   const [charts, setCharts] = useState([]);
   const [mqCharts, setMqCharts] = useState([]);
-  const [farChart, setFarChart] = useState(null); // FAR chart separated
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [mqHourlyDropdownOpen, setMqHourlyDropdownOpen] = useState(false);
@@ -212,7 +206,7 @@ const GraphCarousel = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTimeLabel, setSelectedTimeLabel] = useState("5 min");
   const [selectedTimeValue, setSelectedTimeValue] = useState("5min");
-  const [mqHour, setMqHour] = useState("09"); // default 9 for MQ Hourly
+  const [mqHour, setMqHour] = useState("09");
 
   // FAR modal
   const [showFarDetails, setShowFarDetails] = useState(false);
@@ -220,11 +214,14 @@ const GraphCarousel = () => {
   const [farDetails, setFarDetails] = useState([]);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [farDetailsSearch, setFarDetailsSearch] = useState('');
-  const [modalTableKeys, setModalTableKeys] = useState([]); // NEW for dynamic FAR modal
+  const [modalTableKeys, setModalTableKeys] = useState([]); // DYNAMIC TABLE KEYS
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Pause carousel if any dropdown/calendar is open
+  // Tooltip states
+  const [showDownloadTooltip, setShowDownloadTooltip] = useState(false);
+  const [dotTooltipIdx, setDotTooltipIdx] = useState(null);
+
   useEffect(() => {
     if (dropdownOpen || calendarOpen || mqHourlyDropdownOpen) {
       setPaused(true);
@@ -233,7 +230,7 @@ const GraphCarousel = () => {
     }
   }, [dropdownOpen, calendarOpen, mqHourlyDropdownOpen]);
 
-  // --- Fetch regular charts (except FAR) and FAR chart separately ---
+  // --- Fetch regular charts ---
   useEffect(() => {
     (async () => {
       setIsLoading(true);
@@ -247,7 +244,6 @@ const GraphCarousel = () => {
         postPortWiseExp5(selectedTimeValue),
         postPortWiseSys5(selectedTimeValue)
       ]);
-      // FAR data moved to separate call
       const farResp = await getFARExpires();
       const farChartData = [];
       const monthlyFarCount = Array.isArray(farResp?.data?.MonthlyFarCount)
@@ -272,7 +268,6 @@ const GraphCarousel = () => {
           logVal: Number(item.logVal || 0)
         }));
       }
-
       // Build bar charts for service-wise, ip-wise, port-wise (EXP/SYS)
       const chartData = [
         {
@@ -308,7 +303,7 @@ const GraphCarousel = () => {
                   stroke="#fff"
                 />
                 <defs>
-                  <linearGradient id="barGradientExp" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
                   </linearGradient>
@@ -354,9 +349,9 @@ const GraphCarousel = () => {
                   stroke="#fff"
                 />
                 <defs>
-                  <linearGradient id="barGradientSys" x1="0" x2="0" y2="1">
-                   <stop offset="0%" stopColor="#ff6a00" stopOpacity={1}/>
-                   <stop offset="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
                   </linearGradient>
                 </defs>
                 <YAxis tickFormatter={formatHits} {...commonYAxisProps} />
@@ -376,7 +371,7 @@ const GraphCarousel = () => {
               <BarChart data={formatData(ipExp?.data?.Ip_wise_top5 || [], 'Ip')}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientExp" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
                   </linearGradient>
@@ -399,9 +394,9 @@ const GraphCarousel = () => {
               <BarChart data={formatData(ipSys?.data?.Ip_wise_top5 || [], 'Ip')}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientSys" x1="0" x2="0" y2="1">
-                   <stop offset="0%" stopColor="#ff6a00" stopOpacity={1}/>
-                   <stop offset="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="Ip" {...commonXAxisProps} stroke="#fff" />
@@ -422,7 +417,7 @@ const GraphCarousel = () => {
               <BarChart data={formatData(portExp?.data?.port_wise_top5 || [], 'Port')}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientExp" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
                   </linearGradient>
@@ -445,9 +440,9 @@ const GraphCarousel = () => {
               <BarChart data={formatData(portSys?.data?.port_wise_top5 || [], 'Port')}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientSys" x1="0" x2="0" y2="1">
-                   <stop offset="0%" stopColor="#ff6a00" stopOpacity={1}/>
-                   <stop offset="100%" stopColor="#ffb347" stopOpacity={1}/>
+                  <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
+                   <stop offset ="0%" stopColor="#ff6a00" stopOpacity={1}/>
+                   <stop offset ="100%" stopColor="#ffb347" stopOpacity={1}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="Port" {...commonXAxisProps} stroke="#fff" />
@@ -458,17 +453,16 @@ const GraphCarousel = () => {
             </ResponsiveContainer>
           ),
           rawData: formatData(portSys?.data?.port_wise_top5 || [], 'Port'),
-        },
+        }
       ];
-      setCharts(chartData);
-
-      // FAR chart moved to separate state, but not added to charts[]
-      setFarChart({
+      // FAR chart at end
+      const farChart = {
         data: farChartData,
         dataKeyX: 'name',
-        baseTitle: baseTitles[baseTitles.length - 1],
+        baseTitle: baseTitles[6],
         rawData: farChartData,
-      });
+      };
+      setCharts([...chartData, farChart]);
       setIsLoading(false);
     })();
   }, [selectedTimeValue]);
@@ -498,7 +492,7 @@ const GraphCarousel = () => {
               <BarChart data={getMqOverallArray(overallExp)}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientExp" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
                   </linearGradient>
@@ -520,7 +514,7 @@ const GraphCarousel = () => {
               <BarChart data={getMqOverallArray(overallSys)}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientSys" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#ff6a00" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#ffb347" stopOpacity={1}/>
                   </linearGradient>
@@ -542,7 +536,7 @@ const GraphCarousel = () => {
               <BarChart data={getMqSourceArray(sourceExp)}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientExp" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
                   </linearGradient>
@@ -564,7 +558,7 @@ const GraphCarousel = () => {
               <BarChart data={getMqSourceArray(sourceSys)}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientSys" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#ff6a00" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#ffb347" stopOpacity={1}/>
                   </linearGradient>
@@ -587,7 +581,7 @@ const GraphCarousel = () => {
               <BarChart data={getMqHourlyArray(hourlyExp)}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientExp" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientExp" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#6a11cb" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#2575fc" stopOpacity={1}/>
                   </linearGradient>
@@ -610,7 +604,7 @@ const GraphCarousel = () => {
               <BarChart data={getMqHourlyArray(hourlySys)}>
                 <CartesianGrid stroke="#e0e0e0" />
                 <defs>
-                  <linearGradient id="barGradientSys" x1="0" x2="0" y2="1">
+                  <linearGradient id ="barGradientSys" x1="0" x2="0" y2="1">
                    <stop offset="0%" stopColor="#ff6a00" stopOpacity={1}/>
                    <stop offset="100%" stopColor="#ffb347" stopOpacity={1}/>
                   </linearGradient>
@@ -627,15 +621,11 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // --- Combine all charts for carousel, FAR Pie at the END ---
-  const allCharts = [...charts, ...mqCharts, farChart].filter(Boolean);
-  const chartsLen = charts.length;
-  const mqChartsLen = mqCharts.length;
-  const farPieIndex = chartsLen + mqChartsLen; // last index
-
-  const isMQ = currentIndex >= chartsLen && currentIndex < chartsLen + mqChartsLen;
-  const isMQHourly = currentIndex === chartsLen + 4 || currentIndex === chartsLen + 5;
-  const isFarData = currentIndex === farPieIndex;
+  // --- Combine all charts for carousel ---
+  const allCharts = [...charts, ...mqCharts];
+  const isMQ = currentIndex >= charts.length && currentIndex < charts.length + mqCharts.length;
+  const isMQHourly = currentIndex === charts.length + 4 || currentIndex === charts.length + 5;
+  const isFarData = currentIndex === 6;
 
   // Time range selector handlers for service-wise
   const handleTimeChange = (option) => {
@@ -670,7 +660,7 @@ const GraphCarousel = () => {
     const days = [];
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     weekdays.forEach(day => days.push(
-      <div key={`weekday-${day}`} className="calendar-weekday">{day}</div>
+      <div key={`weekday-${day}`} style={{ display: 'inline-block', width: 32, textAlign: 'center', color: '#fff' }}>{day}</div>
     ));
     const year = today.getFullYear();
     const month = today.getMonth();
@@ -678,7 +668,7 @@ const GraphCarousel = () => {
     const lastDayOfMonth = new Date(year, month + 1, 0);
     const firstDayWeekday = firstDayOfMonth.getDay();
     for (let i = 0; i < firstDayWeekday; i++) {
-      days.push(<div key={`empty-start-${i}`} className="calendar-day empty"></div>);
+      days.push(<div key={`empty-start-${i}`} style={{ display: 'inline-block', width: 32, height: 32 }}></div>);
     }
     const minEnabled = new Date(today);
     minEnabled.setDate(today.getDate() - 7);
@@ -692,14 +682,16 @@ const GraphCarousel = () => {
       days.push(
         <div
           key={`day-${dateMid.toISOString()}`}
-          className={`calendar-day${isEnabled ? '' : ' disabled'}${isSelected ? ' selected' : ''}`}
-          onClick={() => isEnabled && onDaySelect(dateMid)}
           style={{
+            display: 'inline-block',
+            width: 32, height: 32, textAlign: 'center', lineHeight: '32px',
             cursor: isEnabled ? "pointer" : "not-allowed",
-            color: isEnabled ? undefined : "#ccc",
+            color: isEnabled ? "#fff" : "#ccc",
             background: isSelected ? "#aaf" : undefined,
             opacity: isEnabled ? 1 : 0.5,
+            borderRadius: 5
           }}
+          onClick={() => isEnabled && onDaySelect(dateMid)}
           title={isEnabled ? "Select this date" : "Date not selectable"}
         >
           {day}
@@ -721,7 +713,6 @@ const GraphCarousel = () => {
       const response = await getFARDetailsSpecific(data.name);
       const detailsArr = (response.data && response.data.MonthlyDetails) || [];
       setFarDetails(detailsArr);
-      // Set dynamic table keys
       if (detailsArr.length > 0) {
         setModalTableKeys(Object.keys(detailsArr[0]));
       } else {
@@ -737,7 +728,7 @@ const GraphCarousel = () => {
 
   // Download logic
   const handleDownloadClick = async () => {
-    const downloadInfo = getDownloadPathForChart(currentIndex, chartsLen);
+    const downloadInfo = getDownloadPathForChart(currentIndex);
     if (!downloadInfo) return;
 
     const path = downloadInfo.path;
@@ -745,8 +736,8 @@ const GraphCarousel = () => {
 
     // MQ Overall/Source: Use downloadMqGraph
     if (
-      (currentIndex === chartsLen + 0 || currentIndex === chartsLen + 1) || // MQ Overall
-      (currentIndex === chartsLen + 2 || currentIndex === chartsLen + 3)    // MQ Source
+      (currentIndex === 7 || currentIndex === 8) ||
+      (currentIndex === 9 || currentIndex === 10)
     ) {
       try {
         setIsLoading(true);
@@ -777,7 +768,7 @@ const GraphCarousel = () => {
     }
 
     // MQ Hourly: Use downloadMqHourly
-    if (currentIndex === chartsLen + 4 || currentIndex === chartsLen + 5) {
+    if (currentIndex === 11 || currentIndex === 12) {
       try {
         setIsLoading(true);
         let apiPath = path + (layer || "") + "/";
@@ -806,11 +797,11 @@ const GraphCarousel = () => {
       return;
     }
 
-    // FAR Pie (now at end)
-    if (path === "FAR_EXPIRY_ALL" && farChart?.rawData) {
+    // FAR Pie
+    if (path === "FAR_EXPIRY_ALL" && charts[6]?.rawData) {
       try {
         setIsLoading(true);
-        const farMonths = farChart.rawData.map(item => item.name);
+        const farMonths = charts[6].rawData.map(item => item.name);
         const allDetailsResponses = await Promise.all(
           farMonths.map(month => getFARDetailsSpecific(month))
         );
@@ -822,7 +813,7 @@ const GraphCarousel = () => {
           setIsLoading(false);
           return;
         }
-        // Get all keys for dynamic CSV headers
+        // Dynamic headers
         const allKeys = Array.from(new Set(allDetails.flatMap(item => Object.keys(item))));
         const csv = convertToCSV(allDetails, { headers: allKeys });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -876,14 +867,13 @@ const GraphCarousel = () => {
     }
   };
 
-  // Patch for FAR Pie chart to keep click handlers, NOW always at END
-  let farPieChartJSX = null;
-  if (farChart && farChart.baseTitle === "Monthly FAR Expiry Distribution") {
-    farPieChartJSX = (
+  // Patch for FAR Pie chart to keep click handlers
+  if (charts[6] && charts[6].baseTitle === "Monthly FAR Expiry Distribution") {
+    charts[6].chart = (
       <ResponsiveContainer>
         <PieChart margin={{ top: 30, right: 30, left: 30, bottom: 30 }}>
           <Pie
-            data={farChart.rawData || []}
+            data={charts[6].rawData || []}
             cx="50%"
             cy="50%"
             labelLine
@@ -896,7 +886,7 @@ const GraphCarousel = () => {
             onClick={handlePieClick}
             style={{ cursor: 'pointer' }}
           >
-            {(Array.isArray(farChart.rawData) ? farChart.rawData : []).map((entry, index) => (
+            {(Array.isArray(charts[6].rawData) ? charts[6].rawData : []).map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
@@ -931,26 +921,29 @@ const GraphCarousel = () => {
     )
     : [];
 
-  // Compose heading for selected range; do NOT add time for FAR data (last index)
   const effectiveTimeLabel =
-    (currentIndex < chartsLen && !isFarData)
+    (currentIndex < 6 && !isFarData)
       ? selectedTimeLabel
       : (isMQHourly ? `${mqHour}:00` : "");
   const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}${effectiveTimeLabel ? ` (${effectiveTimeLabel})` : ""}`;
 
-  // ---- Tooltip states for download button and dots ----
-  const [showDownloadTooltip, setShowDownloadTooltip] = useState(false);
-  const [dotTooltipIdx, setDotTooltipIdx] = useState(null);
-
   return (
-    <div className="carousel-container">
-      <div className="carousel-header">
-        {/* Time selector for Service-wise and IP/Port-wise */}
+    <div style={{ background: "#1a1024", borderRadius: 18, padding: 16, position: "relative" }}>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 14 }}>
         {(currentIndex < 6) && (
-          <div className="timeline-selector">
-            <div className="dropdown" onClick={e => e.stopPropagation()}>
+          <div style={{ marginRight: 16 }}>
+            <div style={{ position: "relative" }}>
               <button
-                className="dropdown-toggle"
+                style={{
+                  background: "#2e1a3b",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 14px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 15
+                }}
                 onClick={() => {
                   setDropdownOpen(!dropdownOpen);
                   setCalendarOpen(false);
@@ -958,45 +951,105 @@ const GraphCarousel = () => {
               >
                 {selectedTimeLabel}
               </button>
-              <ul className={`dropdown-menu ${dropdownOpen ? 'show' : ''}`}
-                style={{ pointerEvents: calendarOpen ? 'none' : 'auto' }}>
+              <ul
+                style={{
+                  display: dropdownOpen ? "block" : "none",
+                  background: "#2e1a3b",
+                  color: "#fff",
+                  padding: 0,
+                  margin: 0,
+                  borderRadius: 8,
+                  listStyle: "none",
+                  position: "absolute",
+                  left: 0,
+                  zIndex: 10,
+                  minWidth: 120,
+                  boxShadow: "0 2px 8px #0008"
+                }}
+              >
                 {timeOptions.map(option => (
                   <li
                     key={option.value}
                     onClick={() => handleTimeChange(option)}
-                    className={option.value === selectedTimeValue ? 'selected' : ''}
+                    style={{
+                      padding: "8px 14px",
+                      cursor: "pointer",
+                      background: option.value === selectedTimeValue ? "#f285c1" : undefined,
+                      color: option.value === selectedTimeValue ? "#1a1024" : "#fff"
+                    }}
                   >
                     {option.label}
                   </li>
                 ))}
               </ul>
               {calendarOpen && (
-                <div className="calendar-container" ref={calendarRef}>
-                  <div className="calendar-header">
+                <div
+                  ref={calendarRef}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 42,
+                    background: "#2e1a3b",
+                    color: "#fff",
+                    borderRadius: 10,
+                    boxShadow: "0 2px 8px #000a",
+                    padding: 14,
+                    zIndex: 11
+                  }}
+                >
+                  <div style={{ fontWeight: 700, marginBottom: 8 }}>
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
-                  <div className="calendar">{generateCalendarDays(handleDateSelect, selectedDate)}</div>
+                  <div>{generateCalendarDays(handleDateSelect, selectedDate)}</div>
                 </div>
               )}
             </div>
           </div>
         )}
-        {/* MQ Hourly time selector only for MQ Hourly charts */}
         {isMQHourly && (
-          <div className="timeline-selector" style={{ marginLeft: 8 }}>
-            <div className="dropdown" onClick={e => e.stopPropagation()}>
+          <div style={{ marginLeft: 8 }}>
+            <div style={{ position: "relative" }}>
               <button
-                className="dropdown-toggle"
+                style={{
+                  background: "#2e1a3b",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 14px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 15
+                }}
                 onClick={() => setMqHourlyDropdownOpen(!mqHourlyDropdownOpen)}
               >
                 {mqHour}
               </button>
-              <ul className={`dropdown-menu ${mqHourlyDropdownOpen ? 'show' : ''}`}>
+              <ul
+                style={{
+                  display: mqHourlyDropdownOpen ? "block" : "none",
+                  background: "#2e1a3b",
+                  color: "#fff",
+                  padding: 0,
+                  margin: 0,
+                  borderRadius: 8,
+                  listStyle: "none",
+                  position: "absolute",
+                  left: 0,
+                  zIndex: 10,
+                  minWidth: 80,
+                  boxShadow: "0 2px 8px #0008"
+                }}
+              >
                 {mqHourlyOptions.map(option => (
                   <li
                     key={option.value}
                     onClick={() => handleMqHourChange(option)}
-                    className={option.value === mqHour ? 'selected' : ''}
+                    style={{
+                      padding: "8px 14px",
+                      cursor: "pointer",
+                      background: option.value === mqHour ? "#f285c1" : undefined,
+                      color: option.value === mqHour ? "#1a1024" : "#fff"
+                    }}
                   >
                     {option.label}
                   </li>
@@ -1005,53 +1058,106 @@ const GraphCarousel = () => {
             </div>
           </div>
         )}
-        <div className="carousel-title">
+        <div style={{ flex: 1, textAlign: "center", fontWeight: 800, fontSize: 21, color: "#fff", letterSpacing: 1 }}>
           {effectiveHeading}
         </div>
         <div
-          className="download-btn-wrapper"
-          style={{ position: "relative", display: "inline-block" }}
+          style={{
+            position: "relative",
+            display: "inline-block",
+            verticalAlign: "middle"
+          }}
           onMouseEnter={() => setShowDownloadTooltip(true)}
           onMouseLeave={() => setShowDownloadTooltip(false)}
         >
           <button
-            className="download-btn"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              outline: "none",
+              borderRadius: "50%",
+              padding: "6px 10px"
+            }}
             onClick={handleDownloadClick}
             disabled={isLoading}
-            style={{ position: 'relative' }}
           >
             <img src={Download} alt="Download" style={{ width: 20, height: 20, verticalAlign: 'middle' }} />
           </button>
           {showDownloadTooltip && (
-            <div className="custom-tooltip download-tooltip">
+            <div style={{
+              position: "absolute",
+              left: "50%",
+              top: "130%",
+              transform: "translateX(-50%)",
+              zIndex: 100,
+              background: "#2e1a3b",
+              color: "#fff",
+              border: "1px solid #f285c1",
+              borderRadius: 8,
+              padding: "7px 12px",
+              fontSize: 15,
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
+              boxShadow: "0 2px 8px #0008"
+            }}>
               Click on download to download all data
             </div>
           )}
         </div>
       </div>
 
-      <div className="carousel-content" style={{ minHeight: 420 }}>
+      <div style={{ minHeight: 420 }}>
         {isLoading ? (
           <div style={{ color: '#fff', textAlign: 'center', marginTop: 100, fontSize: 24 }}>Loading...</div>
         ) : (
-          isFarData ? farPieChartJSX : allCharts[currentIndex]?.chart
+          allCharts[currentIndex]?.chart
         )}
       </div>
 
       {/* Carousel Dots with hover tooltips for titles */}
-      <div className="carousel-dots">
+      <div style={{ display: "flex", justifyContent: "center", margin: "18px 0 0 0", gap: 12 }}>
         {allCharts.map((chart, idx) => (
           <div
             key={idx}
-            className={`carousel-dot${idx === currentIndex ? ' active' : ''}`}
+            style={{
+              position: 'relative',
+              cursor: "pointer",
+              width: 20,
+              height: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
             onClick={() => setCurrentIndex(idx)}
             onMouseEnter={() => setDotTooltipIdx(idx)}
             onMouseLeave={() => setDotTooltipIdx(null)}
-            style={{ position: 'relative' }}
           >
-            <div className="dot-shape"></div>
-            {(dotTooltipIdx === idx) && (
-              <div className="custom-tooltip dot-tooltip">
+            <div style={{
+              width: 12,
+              height: 12,
+              background: idx === currentIndex ? "#f285c1" : "#bbb",
+              borderRadius: "50%",
+              transition: "background 0.2s, box-shadow 0.2s",
+              boxShadow: idx === currentIndex ? "0 0 4px #f285c1" : undefined
+            }}></div>
+            {dotTooltipIdx === idx && (
+              <div style={{
+                position: "absolute",
+                left: "50%",
+                top: -45,
+                transform: "translateX(-50%)",
+                zIndex: 110,
+                background: "#2e1a3b",
+                color: "#fff",
+                border: "1px solid #f285c1",
+                borderRadius: 8,
+                padding: "7px 12px",
+                fontSize: 14,
+                whiteSpace: "nowrap",
+                pointerEvents: "none",
+                boxShadow: "0 2px 8px #0008"
+              }}>
                 {chart.baseTitle}
               </div>
             )}
@@ -1061,22 +1167,54 @@ const GraphCarousel = () => {
 
       {/* FAR modal (dynamic table) */}
       {showFarDetails && (
-        <div className="far-modal">
-          <div className="far-modal-content">
-            <button className="far-modal-close" onClick={() => { setShowFarDetails(false); setPaused(false); }}>&times;</button>
-            <h3>FAR Details for {selectedMonthData?.name}</h3>
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(24,16,36,0.95)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          zIndex: 3000
+        }}>
+          <div style={{
+            background: "#1d1126",
+            padding: "28px 24px 16px 24px",
+            borderRadius: 10,
+            boxShadow: "0 8px 40px #000a",
+            width: "80vw",
+            maxWidth: 940,
+            position: "relative"
+          }}>
+            <button
+              onClick={() => { setShowFarDetails(false); setPaused(false); }}
+              style={{
+                position: "absolute",
+                right: 20, top: 18,
+                fontSize: 28,
+                color: "#fff",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer"
+              }}
+            >&times;</button>
+            <h3 style={{ color: "#fff", marginTop: 0 }}>FAR Details for {selectedMonthData?.name}</h3>
             <input
               type="text"
               placeholder="Search by FAR Id or Subject"
               value={farDetailsSearch}
               onChange={e => setFarDetailsSearch(e.target.value)}
-              style={{ marginBottom: 8, width: '60%' }}
+              style={{
+                marginBottom: 8, width: '60%',
+                padding: "6px 10px",
+                borderRadius: 5,
+                border: "1px solid #444",
+                background: "#231337",
+                color: "#fff"
+              }}
             />
             {isLoadingDetails ? (
               <div style={{ color: '#fff', textAlign: 'center', fontSize: 18 }}>Loading...</div>
             ) : (
               <div style={{ maxHeight: 420, overflowY: 'auto', border: '1px solid #bbb', borderRadius: 8, background: '#181024' }}>
-                <table className="far-details-table" style={{ width: '100%', color: '#fff', borderCollapse: 'collapse' }}>
+                <table style={{ width: '100%', color: '#fff', borderCollapse: 'collapse', fontSize: 14 }}>
                   <thead>
                     <tr>
                       {modalTableKeys.map((key) => (
