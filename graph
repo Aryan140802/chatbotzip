@@ -215,8 +215,8 @@ const GraphCarousel = () => {
   const calendarRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Tooltip state
-  const [tooltip, setTooltip] = useState({ show: false, text: '', x: 0, y: 0 });
+  // Tooltip state for download button and dots
+  const [tooltip, setTooltip] = useState({ show: false, text: '', x: 0, y: 0, above: true });
 
   // Pause carousel if any dropdown/calendar is open
   useEffect(() => {
@@ -928,7 +928,7 @@ const GraphCarousel = () => {
   const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}${effectiveTimeLabel ? ` (${effectiveTimeLabel})` : ""}`;
 
   return (
-    <div className="carousel-container">
+    <div className="carousel-container" style={{ position: "relative" }}>
       <div className="carousel-header">
         {/* Time selector for Service-wise and IP/Port-wise */}
         {(currentIndex < 6) && (
@@ -997,13 +997,30 @@ const GraphCarousel = () => {
         </h2>
         <div
           className="download-button-wrapper"
-          onMouseEnter={e => setTooltip({
-            show: true,
-            text: 'Click to download full data',
-            x: e.clientX,
-            y: e.clientY
-          })}
-          onMouseMove={e => setTooltip(t => t.show ? { ...t, x: e.clientX, y: e.clientY } : t)}
+          style={{ position: "relative", display: "inline-block" }}
+          onMouseEnter={e => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltip({
+              show: true,
+              text: 'Click to download complete data',
+              x: rect.left + rect.width / 2,
+              y: rect.top,
+              above: true
+            });
+          }}
+          onMouseMove={e => {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltip(t =>
+              t.show
+                ? {
+                    ...t,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top,
+                    above: true
+                  }
+                : t
+            );
+          }}
           onMouseLeave={() => setTooltip(t => ({ ...t, show: false }))}
         >
           <button
@@ -1046,19 +1063,35 @@ const GraphCarousel = () => {
         )}
       </div>
       {/* Carousel dots */}
-      <div className="carousel-dots">
+      <div className="carousel-dots" style={{ position: "relative" }}>
         {allCharts.map((item, index) => (
           <span
             key={`dot-${index}`}
             className={`dot ${index === currentIndex ? 'active' : ''} ${paused ? 'paused' : ''}`}
             onClick={() => setCurrentIndex(index)}
-            onMouseEnter={e => setTooltip({
-              show: true,
-              text: allCharts[index]?.baseTitle || '',
-              x: e.clientX,
-              y: e.clientY
-            })}
-            onMouseMove={e => setTooltip(t => t.show ? { ...t, x: e.clientX, y: e.clientY } : t)}
+            onMouseEnter={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip({
+                show: true,
+                text: allCharts[index]?.baseTitle || '',
+                x: rect.left + rect.width / 2,
+                y: rect.top,
+                above: true
+              });
+            }}
+            onMouseMove={e => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              setTooltip(t =>
+                t.show
+                  ? {
+                      ...t,
+                      x: rect.left + rect.width / 2,
+                      y: rect.top,
+                      above: true
+                    }
+                  : t
+              );
+            }}
             onMouseLeave={() => setTooltip(t => ({ ...t, show: false }))}
             style={{ cursor: 'pointer' }}
           />
@@ -1070,8 +1103,9 @@ const GraphCarousel = () => {
         <div
           style={{
             position: 'fixed',
-            left: tooltip.x + 12,
-            top: tooltip.y + 12,
+            left: tooltip.x,
+            top: tooltip.y - 16, // 16px above the element
+            transform: 'translate(-50%, -100%)',
             background: '#2e1a3b',
             color: '#fff',
             border: '1px solid #f285c1',
