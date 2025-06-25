@@ -14,9 +14,7 @@ function clearAllCookies() {
   for (const cookie of cookies) {
     const eqPos = cookie.indexOf("=");
     const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-    // Remove cookie for root path
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-    // Attempt to remove cookie for every path segment
     const pathSegments = window.location.pathname.split('/');
     let path = '';
     for (let i = 0; i < pathSegments.length; i++) {
@@ -27,20 +25,15 @@ function clearAllCookies() {
 }
 
 // -- Disable Inspect Element Feature --
-function useDisableInspectElement() {
+function useDisableInspectElement(enabled) {
   useEffect(() => {
-    // Disable right-click context menu
+    if (!enabled) return;
+
     const handleContextMenu = (e) => e.preventDefault();
     document.addEventListener('contextmenu', handleContextMenu);
 
-    // Disable F12, Ctrl+Shift+I/J/C/U, Ctrl+U, Ctrl+Shift+C, Ctrl+Shift+J, Cmd+Opt+I, etc.
     const handleKeyDown = (e) => {
-      // F12
-      if (e.keyCode === 123) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      // Ctrl+Shift+I/J/C/U, Ctrl+U (view source), Cmd+Opt+I (Mac)
+      if (e.keyCode === 123) { e.preventDefault(); e.stopPropagation(); }
       if (
         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'U'].includes(e.key.toUpperCase())) ||
         (e.ctrlKey && e.key.toUpperCase() === 'U') ||
@@ -52,11 +45,9 @@ function useDisableInspectElement() {
     };
     document.addEventListener('keydown', handleKeyDown);
 
-    // Drag element from DOM disables
     const handleDragStart = (e) => e.preventDefault();
     document.addEventListener('dragstart', handleDragStart);
 
-    // Select all disables (Ctrl+A)
     const handleSelectStart = (e) => {
       if (e.ctrlKey && e.key === 'a') {
         e.preventDefault();
@@ -65,20 +56,28 @@ function useDisableInspectElement() {
     };
     document.addEventListener('keydown', handleSelectStart);
 
-    // Cleanup
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('keydown', handleSelectStart);
     };
-  }, []);
+  }, [enabled]);
+}
+
+// NEW: API call for login that returns userLevel, etc.
+async function loginApi(username, password) {
+  const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogin/', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ username, password })
+  });
+  if (!response.ok) throw new Error('Login failed');
+  return response.json(); // should contain userLevel etc.
 }
 
 function App() {
-  // Use the hook to disable inspect element
-  useDisableInspectElement();
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chatbotMinimized, setChatbotMinimized] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -86,37 +85,49 @@ function App() {
   const [username, setUsername] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false);
+  const [userLevel, setUserLevel] = useState(''); // NEW
   const inactivityTimer = useRef(null);
 
-  // Inactivity time limit in ms (30 minutes)
   const INACTIVITY_LIMIT = 30 * 60 * 1000;
+
+  // Conditionally enable disable-inspect based on userLevel
+  useDisableInspectElement(userLevel && userLevel !== 'L1');
 
   // Check for existing login session on app load
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     const storedLoginTime = localStorage.getItem('loginTime');
-    if (storedUsername && storedLoginTime) {
+    const storedUserLevel = localStorage.getItem('userLevel');
+    if (storedUsername && storedLoginTime && storedUserLevel) {
       setUsername(storedUsername);
+      setUserLevel(storedUserLevel);
       setIsLoggedIn(true);
     }
   }, []);
 
   // Set login timestamp on login
-  const handleLogin = async (user) => {
-    const now = Date.now();
-    setUsername(user);
-    setIsLoggedIn(true);
-    localStorage.setItem('username', user);
-    localStorage.setItem('loginTime', now.toString());
-    sessionStorage.setItem('loginTime', now.toString());
+  const handleLogin = async (user, password) => {
+    try {
+      // Use your login API
+      const loginData = await loginApi(user, password);
+      const now = Date.now();
+      setUsername(user);
+      setUserLevel(loginData.userLevel); // Set userLevel from API payload
+      setIsLoggedIn(true);
+      localStorage.setItem('username', user);
+      localStorage.setItem('userLevel', loginData.userLevel);
+      localStorage.setItem('loginTime', now.toString());
+      sessionStorage.setItem('loginTime', now.toString());
 
-    // Fetch announcement and show popup
-    const ann = await fetchLatestAnnouncement();
-    setAnnouncement(ann);
-    if (ann) setShowAnnouncementPopup(true);
+      // Fetch announcement and show popup
+      const ann = await fetchLatestAnnouncement();
+      setAnnouncement(ann);
+      if (ann) setShowAnnouncementPopup(true);
+    } catch (err) {
+      alert('Login failed: ' + err.message);
+    }
   };
 
-  // On login from persisted session, fetch announcement
   useEffect(() => {
     if (isLoggedIn && !announcement) {
       (async () => {
@@ -125,92 +136,11 @@ function App() {
         if (ann) setShowAnnouncementPopup(true);
       })();
     }
-  // eslint-disable-next-line
   }, [isLoggedIn]);
 
-  // Function to call logout API
-  const callLogoutAPI = async () => {
-    try {
-      const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogout/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Include cookies if needed for authentication
-        // Add any required body data
-        body: JSON.stringify({
-          username: username,
-          timestamp: new Date().toISOString()
-        })
-      });
+  // ...rest of your code remains the same...
 
-      if (!response.ok) {
-        console.warn('Logout API call failed:', response.status, response.statusText);
-      } else {
-        console.log('Logout API call successful');
-      }
-    } catch (error) {
-      console.error('Error calling logout API:', error);
-      // Don't prevent logout even if API call fails
-    }
-  };
-
-  // Logout and flush session storage, local storage, cookies, and caches
-  const handleLogout = async () => {
-    // Call the logout API first
-    await callLogoutAPI();
-
-    // Clear local state and storage
-    setIsLoggedIn(false);
-    setUsername('');
-    localStorage.clear();
-    sessionStorage.clear();
-    clearAllCookies();
-
-    // Clear caches
-    if ('caches' in window) {
-      caches.keys().then((names) => {
-        for (let name of names) {
-          caches.delete(name);
-        }
-      });
-    }
-
-    // Optionally, redirect or show a message here
-  };
-
-  // Auto logout after 30 min of inactivity
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const resetInactivityTimer = () => {
-      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = setTimeout(() => {
-        alert('You have been logged out due to 30 minutes of inactivity.');
-        handleLogout();
-      }, INACTIVITY_LIMIT);
-    };
-
-    // List of events indicating user activity
-    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
-
-    // Add event listeners
-    events.forEach(event =>
-      window.addEventListener(event, resetInactivityTimer, true)
-    );
-
-    // Start timer initially
-    resetInactivityTimer();
-
-    // Cleanup event listeners and timer on unmount or logout
-    return () => {
-      events.forEach(event =>
-        window.removeEventListener(event, resetInactivityTimer, true)
-      );
-      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    };
-  }, [isLoggedIn]);
-
+  // --- Pass handleLogin with new signature to Login component ---
   if (!isLoggedIn) {
     return <Login onLogin={handleLogin} />;
   }
