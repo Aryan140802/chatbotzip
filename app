@@ -26,7 +26,59 @@ function clearAllCookies() {
   }
 }
 
+// -- Disable Inspect Element Feature --
+function useDisableInspectElement() {
+  useEffect(() => {
+    // Disable right-click context menu
+    const handleContextMenu = (e) => e.preventDefault();
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    // Disable F12, Ctrl+Shift+I/J/C/U, Ctrl+U, Ctrl+Shift+C, Ctrl+Shift+J, Cmd+Opt+I, etc.
+    const handleKeyDown = (e) => {
+      // F12
+      if (e.keyCode === 123) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      // Ctrl+Shift+I/J/C/U, Ctrl+U (view source), Cmd+Opt+I (Mac)
+      if (
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'U'].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key.toUpperCase() === 'U') ||
+        (e.metaKey && e.altKey && e.key.toUpperCase() === 'I')
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Drag element from DOM disables
+    const handleDragStart = (e) => e.preventDefault();
+    document.addEventListener('dragstart', handleDragStart);
+
+    // Select all disables (Ctrl+A)
+    const handleSelectStart = (e) => {
+      if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', handleSelectStart);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('keydown', handleSelectStart);
+    };
+  }, []);
+}
+
 function App() {
+  // Use the hook to disable inspect element
+  useDisableInspectElement();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chatbotMinimized, setChatbotMinimized] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
