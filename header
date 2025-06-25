@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
-import axios from 'axios';
+import { postAnnouncement } from './postNewApi';
 
 export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -14,6 +14,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [announcementMsg, setAnnouncementMsg] = useState('');
   const dropdownRef = useRef();
 
+  // Fetch environment info
   useEffect(() => {
     const fetchEnvAndSetup = async () => {
       try {
@@ -29,6 +30,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     fetchEnvAndSetup();
   }, []);
 
+  // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -67,29 +69,13 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     e.preventDefault();
     setSubmitting(true);
     setAnnouncementMsg('');
-    const uid = localStorage.getItem('uidd');
-    const password = localStorage.getItem('password');
-    const time = announcementTime && !isNaN(Number(announcementTime)) ? Number(announcementTime) : 24;
-
     if (!announcement.trim()) {
       setAnnouncementMsg('Announcement cannot be empty.');
       setSubmitting(false);
       return;
     }
-
     try {
-      const payload = {
-        announcement,
-        time,
-        uid,
-        password,
-      };
-      await axios.post('https://10.191.171.12:5443/EISHome/announcement/', payload, {
-        timeout: 30000,
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      await postAnnouncement(announcement, announcementTime);
       setAnnouncementMsg('Announcement posted successfully!');
       setTimeout(() => {
         handleCloseAnnouncement();
