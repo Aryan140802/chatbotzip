@@ -1,14 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
+import axios from 'axios';
 
 export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [env, setEnv] = useState('');
   const [setup, setSetup] = useState('');
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [announcementTime, setAnnouncementTime] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [announcementMsg, setAnnouncementMsg] = useState('');
   const dropdownRef = useRef();
 
-  // Fetch environment info
   useEffect(() => {
     const fetchEnvAndSetup = async () => {
       try {
@@ -21,11 +26,9 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
         setEnv('');
       }
     };
-
     fetchEnvAndSetup();
   }, []);
 
-  // Close menu on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -42,6 +45,59 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     if (env === 'PR') return 'PR is live now!! ';
     if (env === 'DR') return 'DR is live now!! ';
     return 'Welcome to EIS INFRA ';
+  };
+
+  // Announcement Modal handlers
+  const handleOpenAnnouncement = () => {
+    setAnnouncement('');
+    setAnnouncementTime('');
+    setAnnouncementMsg('');
+    setShowAnnouncementModal(true);
+    setMenuOpen(false);
+  };
+
+  const handleCloseAnnouncement = () => {
+    setShowAnnouncementModal(false);
+    setAnnouncement('');
+    setAnnouncementTime('');
+    setAnnouncementMsg('');
+  };
+
+  const handleSubmitAnnouncement = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setAnnouncementMsg('');
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const time = announcementTime && !isNaN(Number(announcementTime)) ? Number(announcementTime) : 24;
+
+    if (!announcement.trim()) {
+      setAnnouncementMsg('Announcement cannot be empty.');
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const payload = {
+        announcement,
+        time,
+        uid,
+        password,
+      };
+      await axios.post('https://10.191.171.12:5443/EISHome/announcement/', payload, {
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      setAnnouncementMsg('Announcement posted successfully!');
+      setTimeout(() => {
+        handleCloseAnnouncement();
+      }, 1200);
+    } catch (err) {
+      setAnnouncementMsg('Error posting announcement. Please try again.');
+    }
+    setSubmitting(false);
   };
 
   return (
@@ -89,11 +145,6 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
               </span>
             ))}
         </marquee>
-
-        {/* Optional: Replace <marquee> with modern animation */}
-        {/* <div style={{ whiteSpace: 'nowrap', animation: 'scrollText 20s linear infinite', fontWeight: 'bold', opacity: 0.4 }}>
-          {getMarqueeText().repeat(50)}
-        </div> */}
       </div>
 
       {/* Header Content */}
@@ -149,10 +200,17 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                     borderRadius: '6px',
                     padding: '10px',
                     zIndex: 9999,
-                    minWidth: '120px'
+                    minWidth: '150px',
                   }}
                   aria-label="Dropdown menu"
                 >
+                  <div
+                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #333' }}
+                    onClick={handleOpenAnnouncement}
+                    aria-label="Make an announcement"
+                  >
+                    Make an Announcement
+                  </div>
                   <div
                     style={{ padding: '8px 12px', cursor: 'pointer' }}
                     onClick={onLogout}
@@ -166,6 +224,95 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
           )}
         </div>
       </div>
+
+      {/* Announcement Modal */}
+      {showAnnouncementModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99999,
+          }}
+        >
+          <form
+            onSubmit={handleSubmitAnnouncement}
+            style={{
+              background: '#221d2e',
+              color: '#fff',
+              padding: '30px 24px 18px',
+              borderRadius: '10px',
+              width: '350px',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.20)'
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: 16, fontWeight: 600, fontSize: 20 }}>Make an Announcement</h2>
+            <label style={{ display: 'block', marginBottom: 8 }}>
+              Announcement:
+              <textarea
+                value={announcement}
+                onChange={e => setAnnouncement(e.target.value)}
+                rows={3}
+                required
+                style={{ width: '100%', marginTop: 4, borderRadius: 4, padding: 6, fontSize: 15, resize: 'vertical', marginBottom: 14 }}
+                placeholder="Enter announcement..."
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: 12 }}>
+              Duration (hours):
+              <input
+                type="number"
+                value={announcementTime}
+                min={1}
+                max={240}
+                step={1}
+                onChange={e => setAnnouncementTime(e.target.value)}
+                placeholder="(Default 24 hours)"
+                style={{ width: '100%', borderRadius: 3, padding: 6, fontSize: 15, marginTop: 4 }}
+              />
+            </label>
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{
+                  background: '#4d70ff',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '7px 18px',
+                  fontSize: 15,
+                  cursor: submitting ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {submitting ? 'Submitting...' : 'Submit'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseAnnouncement}
+                style={{
+                  background: '#3a1a58',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '7px 18px',
+                  fontSize: 15,
+                  cursor: 'pointer'
+                }}
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+            </div>
+            {announcementMsg && (
+              <div style={{ marginTop: 13, color: announcementMsg.includes('success') ? '#7fff7f' : '#ff7f7f', fontWeight: 500 }}>
+                {announcementMsg}
+              </div>
+            )}
+          </form>
+        </div>
+      )}
     </div>
   );
 }
