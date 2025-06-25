@@ -337,3 +337,18 @@ export const postAnnouncement = async (announcement, time) => {
     throw error;
   }
 };
+
+
+
+export const fetchLatestAnnouncement = async () => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const res = await api.post('EISHome/announcement/', { uid, password });
+    // Assuming the response is { announcement: "..." }
+    return res.data.announcement || "";
+  } catch (error) {
+    console.error('Could not fetch announcement:', error);
+    return "";
+  }
+};
