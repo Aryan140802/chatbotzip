@@ -1,106 +1,65 @@
-/* ...your existing styles... */
-
-.announcement-popup-overlay {
-  position: fixed;
-  z-index: 9999;
-  left: 0; top: 0; right: 0; bottom: 0;
-  background: rgba(10, 18, 32, 0.75); /* More modern, deeper blue overlay */
+.footer-custom {
+  position: relative;
+  width: 100%;
+  height: 52px;
+  min-height: 52px;
+  background: #23243a;
+  color: #fff;
   display: flex;
   align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
-  animation: fadeInOverlay 0.3s ease;
+  justify-content: space-between;
+  font-weight: bold;
+  padding: 0 32px;
+  box-sizing: border-box;
+  z-index: 20;
 }
 
-@keyframes fadeInOverlay {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
-}
-
-.announcement-popup {
-  background: linear-gradient(135deg, #23243a 70%, #1c1a21 100%);
-  padding: 2.5rem 3.2rem 2.5rem 2.5rem;
-  border-radius: 20px;
-  box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.38), 0 1.5px 6px 0 #2a2a64;
-  position: relative;
-  max-width: 88vw;
-  min-width: 340px;
-  max-height: 75vh;
-  overflow: auto;
-  border: 1.5px solid #3b5aff;
-  animation: popIn 0.23s cubic-bezier(.45,1.51,.61,1.01);
-  color: #ecf0fa;
-}
-
-@keyframes popIn {
-  0% { transform: scale(0.88); opacity: 0; }
-  80% { transform: scale(1.02); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.announcement-popup-close {
-  position: absolute;
-  top: 18px;
-  right: 22px;
-  background: none;
-  border: none;
-  font-size: 2.3rem;
-  color: #3b5aff;
-  cursor: pointer;
-  transition: color 0.18s;
-  font-weight: 600;
-  z-index: 2;
-  line-height: 1;
-  padding: 0;
-}
-
-.announcement-popup-close:hover,
-.announcement-popup-close:focus {
-  color: #ff4069;
-  outline: none;
-}
-
-.announcement-popup-content {
-  margin-top: 12px;
-  font-size: 1.18rem;
-  color: #ecf0fa;
-  word-break: break-word;
+.footer-bold {
+  font-weight: bold;
+  color: #fff;
   letter-spacing: 0.02em;
-  line-height: 1.55;
-  text-shadow: 0 2px 16px rgba(59,90,255,0.09);
+  font-size: 1.06rem;
+  z-index: 2;
 }
 
-.announcement-popup-content h3 {
-  color: #3b5aff;
-  background: linear-gradient(92deg,#3b5aff 40%,#a8bfff 80%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 1.45rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.04em;
-  text-shadow: 0 2px 16px #2a2a6433;
+.footer-left {
+  flex: 0 0 auto;
+}
+
+.footer-right {
+  flex: 0 0 auto;
 }
 
 .footer-announcement-marquee {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 12px;
+  margin: auto;
   width: 100%;
-  text-align: center;
-  z-index: 2;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
+  z-index: 5;
+  background: none; /* Ensures no transparency or overlay */
 }
 
 .footer-announcement-marquee marquee {
-  font-size: 1.1rem;
-  color: #3b5aff;
-  font-weight: 500;
-  background: transparent;
   width: 100%;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  background: none;
   border: none;
   outline: none;
-  text-shadow: 0 1px 10px #23243a33;
+  pointer-events: all;
+  line-height: 52px;
+}
+
+.footer-announcement {
+  color: #fff;
+  font-weight: bold;
+  background: none;
+  text-shadow: 0 2px 16px #2a2a6433;
 }
