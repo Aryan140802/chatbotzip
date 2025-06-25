@@ -6,7 +6,7 @@ import Dashboard from './components/Dashboard';
 import Chatbot from './components/ChatBot';
 import Login from './components/Login';
 import './App.css';
-import { fetchLatestAnnouncement } from './postNewApi';
+import { fetchLatestAnnouncement } from './api/PostApi';
 
 // Robust function to clear all cookies (within JS limitations)
 function clearAllCookies() {
@@ -198,13 +198,7 @@ function App() {
         <Dashboard isSidebarOpen={isSidebarOpen} />
         <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
       </div>
-      <Footer>
-        {announcement && (
-          <div className="footer-announcement-marquee">
-            <marquee>{announcement}</marquee>
-          </div>
-        )}
-      </Footer>
+      <Footer />
     </div>
   );
 }
