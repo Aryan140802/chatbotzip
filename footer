@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchLatestAnnouncement } from '../postNewApi'; // adjust the path as needed
+import './Footer.css'; // Import the CSS file
 
 export default function Footer() {
   const [clock, setClock] = useState('');
@@ -27,13 +28,17 @@ export default function Footer() {
 
   return (
     <footer className="footer-custom">
-      <span className="footer-bold footer-left">EIS INFRA © 2025</span>
+      <span className="footer-left">EIS INFRA © 2025</span>
+      
       {announcement && (
         <div className="footer-announcement-marquee">
-          <marquee><span className="footer-bold footer-announcement">{announcement}</span></marquee>
+          <marquee>
+            <span className="footer-announcement">{announcement}</span>
+          </marquee>
         </div>
       )}
-      <span className="footer-bold footer-right" id="clock">{clock}</span>
+      
+      <span className="footer-right" id="clock">{clock}</span>
     </footer>
   );
 }
