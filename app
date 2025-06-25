@@ -14,7 +14,9 @@ function clearAllCookies() {
   for (const cookie of cookies) {
     const eqPos = cookie.indexOf("=");
     const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    // Remove cookie for root path
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    // Attempt to remove cookie for every path segment
     const pathSegments = window.location.pathname.split('/');
     let path = '';
     for (let i = 0; i < pathSegments.length; i++) {
@@ -24,7 +26,7 @@ function clearAllCookies() {
   }
 }
 
-// -- Disable Inspect Element Feature --
+// Function to conditionally disable inspect element
 function useDisableInspectElement(enabled) {
   useEffect(() => {
     if (!enabled) return;
@@ -33,7 +35,12 @@ function useDisableInspectElement(enabled) {
     document.addEventListener('contextmenu', handleContextMenu);
 
     const handleKeyDown = (e) => {
-      if (e.keyCode === 123) { e.preventDefault(); e.stopPropagation(); }
+      // F12
+      if (e.keyCode === 123) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      // Ctrl+Shift+I/J/C/U, Ctrl+U (view source), Cmd+Opt+I (Mac)
       if (
         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'U'].includes(e.key.toUpperCase())) ||
         (e.ctrlKey && e.key.toUpperCase() === 'U') ||
@@ -65,7 +72,7 @@ function useDisableInspectElement(enabled) {
   }, [enabled]);
 }
 
-// NEW: API call for login that returns userLevel, etc.
+// Login API call to get userLevel and other details
 async function loginApi(username, password) {
   const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogin/', {
     method: 'POST',
@@ -74,7 +81,33 @@ async function loginApi(username, password) {
     body: JSON.stringify({ username, password })
   });
   if (!response.ok) throw new Error('Login failed');
-  return response.json(); // should contain userLevel etc.
+  return response.json(); // should contain userLevel and other info
+}
+
+// Logout API call
+async function callLogoutAPI(username) {
+  try {
+    const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogout/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        username: username,
+        timestamp: new Date().toISOString()
+      })
+    });
+
+    if (!response.ok) {
+      console.warn('Logout API call failed:', response.status, response.statusText);
+    } else {
+      console.log('Logout API call successful');
+    }
+  } catch (error) {
+    console.error('Error calling logout API:', error);
+    // Don't prevent logout even if API call fails
+  }
 }
 
 function App() {
@@ -85,12 +118,13 @@ function App() {
   const [username, setUsername] = useState('');
   const [announcement, setAnnouncement] = useState('');
   const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false);
-  const [userLevel, setUserLevel] = useState(''); // NEW
+  const [userLevel, setUserLevel] = useState('');
   const inactivityTimer = useRef(null);
 
+  // Inactivity time limit in ms (30 minutes)
   const INACTIVITY_LIMIT = 30 * 60 * 1000;
 
-  // Conditionally enable disable-inspect based on userLevel
+  // Only disable inspect for users other than L1
   useDisableInspectElement(userLevel && userLevel !== 'L1');
 
   // Check for existing login session on app load
@@ -105,10 +139,9 @@ function App() {
     }
   }, []);
 
-  // Set login timestamp on login
+  // Set login timestamp and userLevel on login
   const handleLogin = async (user, password) => {
     try {
-      // Use your login API
       const loginData = await loginApi(user, password);
       const now = Date.now();
       setUsername(user);
@@ -128,6 +161,7 @@ function App() {
     }
   };
 
+  // On login from persisted session, fetch announcement
   useEffect(() => {
     if (isLoggedIn && !announcement) {
       (async () => {
@@ -136,12 +170,64 @@ function App() {
         if (ann) setShowAnnouncementPopup(true);
       })();
     }
+    // eslint-disable-next-line
   }, [isLoggedIn]);
 
-  // ...rest of your code remains the same...
+  // Logout and flush session storage, local storage, cookies, and caches
+  const handleLogout = async () => {
+    await callLogoutAPI(username);
 
-  // --- Pass handleLogin with new signature to Login component ---
+    setIsLoggedIn(false);
+    setUsername('');
+    setUserLevel('');
+    localStorage.clear();
+    sessionStorage.clear();
+    clearAllCookies();
+
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      });
+    }
+    // Optionally, redirect or show a message here
+  };
+
+  // Auto logout after 30 min of inactivity
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        alert('You have been logged out due to 30 minutes of inactivity.');
+        handleLogout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    // List of events indicating user activity
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+
+    // Add event listeners
+    events.forEach(event =>
+      window.addEventListener(event, resetInactivityTimer, true)
+    );
+
+    // Start timer initially
+    resetInactivityTimer();
+
+    // Cleanup event listeners and timer on unmount or logout
+    return () => {
+      events.forEach(event =>
+        window.removeEventListener(event, resetInactivityTimer, true)
+      );
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [isLoggedIn]);
+
   if (!isLoggedIn) {
+    // Login component must now provide both username and password to handleLogin
     return <Login onLogin={handleLogin} />;
   }
 
