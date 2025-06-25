@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { fetchLatestAnnouncement } from '../postNewApi'; // adjust the path as needed
 
 export default function Footer() {
   const [clock, setClock] = useState('');
+  const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
     const updateClock = () => {
@@ -15,10 +17,23 @@ export default function Footer() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Fetch the announcement on mount
+    (async () => {
+      const ann = await fetchLatestAnnouncement();
+      setAnnouncement(ann);
+    })();
+  }, []);
+
   return (
-    <footer className="footer">
+    <footer className="footer" style={{ position: 'relative' }}>
       <span>EIS INFRA © 2025</span>
       <span id="clock">{clock}</span>
+      {announcement && (
+        <div className="footer-announcement-marquee">
+          <marquee>{announcement}</marquee>
+        </div>
+      )}
     </footer>
   );
 }
