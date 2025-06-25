@@ -26,14 +26,14 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="footer" style={{ position: 'relative' }}>
-      <span>EIS INFRA © 2025</span>
-      <span id="clock">{clock}</span>
+    <footer className="footer-custom">
+      <span className="footer-bold footer-left">EIS INFRA © 2025</span>
       {announcement && (
         <div className="footer-announcement-marquee">
-          <marquee>{announcement}</marquee>
+          <marquee><span className="footer-bold footer-announcement">{announcement}</span></marquee>
         </div>
       )}
+      <span className="footer-bold footer-right" id="clock">{clock}</span>
     </footer>
   );
 }
