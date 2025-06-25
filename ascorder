@@ -1,65 +1,82 @@
 .footer-custom {
   position: relative;
-  width: 100%;
-  height: 52px;
-  min-height: 52px;
-  background: #23243a;
-  color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-weight: bold;
-  padding: 0 32px;
-  box-sizing: border-box;
-  z-index: 20;
-}
-
-.footer-bold {
-  font-weight: bold;
-  color: #fff;
-  letter-spacing: 0.02em;
-  font-size: 1.06rem;
-  z-index: 2;
+  padding: 10px 20px;
+  background-color: #333;
+  color: white;
+  font-family: Arial, sans-serif;
+  height: 50px;
+  overflow: hidden;
 }
 
 .footer-left {
-  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 .footer-right {
-  flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
+  font-weight: bold;
+  font-size: 14px;
 }
 
 .footer-announcement-marquee {
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  margin: auto;
-  width: 100%;
-  height: 100%;
+  bottom: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 5;
-  background: none; /* Ensures no transparency or overlay */
+  z-index: 1;
+  overflow: hidden;
 }
 
 .footer-announcement-marquee marquee {
   width: 100%;
-  color: #fff;
-  font-weight: bold;
-  font-size: 1.1rem;
-  background: none;
-  border: none;
-  outline: none;
-  pointer-events: all;
-  line-height: 52px;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .footer-announcement {
-  color: #fff;
   font-weight: bold;
-  background: none;
-  text-shadow: 0 2px 16px #2a2a6433;
+  color: white;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+/* Alternative CSS animation approach for better browser compatibility */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.footer-announcement-scroll {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.footer-announcement-text {
+  animation: scroll-left 15s linear infinite;
+  font-weight: bold;
+  color: white;
+  font-size: 14px;
+  white-space: nowrap;
 }
