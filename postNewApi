@@ -266,23 +266,19 @@ export const postMqHourly = async (layer, hour) => {
     throw error;
   }
 };
-
-// Download mqgraph (source or overall) given a path ending with /layer/
+// Download mqgraph (source or overall) given a path ending with /layer
 export const downloadMqGraph = async (path) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    // Ensure the path ends with a slash
-    if (!path.endsWith('/')) {
-      path += '/';
-    }
     const payload = {
       uid,
       password,
       download: true
     };
     // If the API returns a file, use responseType: 'blob'
-    const response = await api.post(path, payload, { responseType: 'blob' });
+    const response = await api.post(path, payload);
+          console.log(response);
     return response;
   } catch (error) {
     console.error('Could not download mqgraph:', error);
@@ -290,15 +286,11 @@ export const downloadMqGraph = async (path) => {
   }
 };
 
-// Download mqHourly given a path ending with /layer/ and an hour
+// Download mqHourly given a path ending with /layer and an hour
 export const downloadMqHourly = async (path, hour) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
-    // Ensure the path ends with a slash
-    if (!path.endsWith('/')) {
-      path += '/';
-    }
     const payload = {
       uid,
       password,
@@ -306,7 +298,8 @@ export const downloadMqHourly = async (path, hour) => {
       download: true
     };
     // If the API returns a file, use responseType: 'blob'
-    const response = await api.post(path, payload, { responseType: 'blob' });
+    const response = await api.post(path, payload);
+           console.log(response);
     return response;
   } catch (error) {
     console.error('Could not download mqHourly:', error);
