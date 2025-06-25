@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import Chatbot from './components/ChatBot';
 import Login from './components/Login';
 import './App.css';
+import { fetchLatestAnnouncement } from './postNewApi';
 
 // Robust function to clear all cookies (within JS limitations)
 function clearAllCookies() {
@@ -31,6 +32,8 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [username, setUsername] = useState('');
+  const [announcement, setAnnouncement] = useState('');
+  const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false);
   const inactivityTimer = useRef(null);
 
   // Inactivity time limit in ms (30 minutes)
@@ -47,14 +50,31 @@ function App() {
   }, []);
 
   // Set login timestamp on login
-  const handleLogin = (user) => {
+  const handleLogin = async (user) => {
     const now = Date.now();
     setUsername(user);
     setIsLoggedIn(true);
     localStorage.setItem('username', user);
     localStorage.setItem('loginTime', now.toString());
     sessionStorage.setItem('loginTime', now.toString());
+
+    // Fetch announcement and show popup
+    const ann = await fetchLatestAnnouncement();
+    setAnnouncement(ann);
+    if (ann) setShowAnnouncementPopup(true);
   };
+
+  // On login from persisted session, fetch announcement
+  useEffect(() => {
+    if (isLoggedIn && !announcement) {
+      (async () => {
+        const ann = await fetchLatestAnnouncement();
+        setAnnouncement(ann);
+        if (ann) setShowAnnouncementPopup(true);
+      })();
+    }
+  // eslint-disable-next-line
+  }, [isLoggedIn]);
 
   // Function to call logout API
   const callLogoutAPI = async () => {
@@ -151,6 +171,24 @@ function App() {
         username={username}
         onLogout={handleLogout}
       />
+      {/* Announcement Popup */}
+      {showAnnouncementPopup && announcement &&
+        <div className="announcement-popup-overlay">
+          <div className="announcement-popup">
+            <button
+              className="announcement-popup-close"
+              onClick={() => setShowAnnouncementPopup(false)}
+              aria-label="Close announcement"
+            >
+              ×
+            </button>
+            <div className="announcement-popup-content">
+              <h3>Announcement</h3>
+              <div>{announcement}</div>
+            </div>
+          </div>
+        </div>
+      }
       {!chatbotMinimized && <div className="app-background" />}
       <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
         <Menu
@@ -160,7 +198,13 @@ function App() {
         <Dashboard isSidebarOpen={isSidebarOpen} />
         <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
       </div>
-      <Footer />
+      <Footer>
+        {announcement && (
+          <div className="footer-announcement-marquee">
+            <marquee>{announcement}</marquee>
+          </div>
+        )}
+      </Footer>
     </div>
   );
 }
