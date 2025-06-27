@@ -80,7 +80,7 @@ async function loginApi(username, password) {
     credentials: 'include',
     body: JSON.stringify({ username, password })
   });
-  if (!response.ok) throw new Error('Login failed');
+ 
   return response.json(); // should contain userLevel and other info
 }
 
