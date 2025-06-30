@@ -3,21 +3,205 @@ import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
 import { postAnnouncement } from '../api/PostApi';
 
-
 // CSS-only Alert Icon component
 const AlertIcon = ({ size = 32 }) => (
   <span
     className="css-alert-icon"
-    style={{ width: size, height: size }}
+    style={{
+      width: size,
+      height: size,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: size * 0.7,
+      background: 'transparent',
+    }}
     aria-label="Alert"
     role="img"
   >
-    <span className="css-alert-icon-exclaim">!</span>
+    <span
+      className="css-alert-icon-exclaim"
+      style={{
+        fontWeight: 'bold',
+        fontSize: size * 0.8,
+        color: '#ffef5f',
+      }}
+    >
+      !
+    </span>
   </span>
 );
 
+// Alert Modal Component
+function AlertModal({
+  open,
+  onClose,
+  alertTab,
+  setAlertTab,
+  alerts,
+  alertsLoading,
+  alertsError,
+  isAdmin,
+}) {
+  if (!open) return null;
 
-export default function Header({ username, onLogout, showProfileIcon = true }) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(0,0,0,0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999,
+      }}
+      onClick={onClose}
+      aria-modal="true"
+      tabIndex={-1}
+    >
+      <div
+        style={{
+          background: '#221d2e',
+          color: '#fff',
+          padding: '32px 28px 20px',
+          borderRadius: '10px',
+          minWidth: '350px',
+          maxWidth: '95vw',
+          boxShadow: '0 6px 24px rgba(0,0,0,0.20)',
+          position: 'relative',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          aria-label="Close Alerts"
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 12,
+            right: 14,
+            background: 'transparent',
+            border: 'none',
+            color: '#fff',
+            fontSize: 22,
+            cursor: 'pointer',
+          }}
+          type="button"
+        >
+          &times;
+        </button>
+        <h2
+          style={{
+            marginTop: 0,
+            marginBottom: 12,
+            fontWeight: 600,
+            fontSize: 20,
+            textAlign: 'center',
+          }}
+        >
+          Alerts
+        </h2>
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 18, justifyContent: 'center' }}>
+          <button
+            type="button"
+            style={{
+              background: alertTab === 'user' ? '#4d70ff' : '#3a1a58',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px 6px 0 0',
+              padding: '6px 18px',
+              fontWeight: 500,
+              fontSize: 15,
+              cursor: 'pointer',
+              outline: 'none',
+            }}
+            onClick={() => setAlertTab('user')}
+            aria-selected={alertTab === 'user'}
+          >
+            User Alerts
+          </button>
+          {isAdmin && (
+            <button
+              type="button"
+              style={{
+                background: alertTab === 'admin' ? '#4d70ff' : '#3a1a58',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px 6px 0 0',
+                padding: '6px 18px',
+                fontWeight: 500,
+                fontSize: 15,
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+              onClick={() => setAlertTab('admin')}
+              aria-selected={alertTab === 'admin'}
+            >
+              Admin Alerts
+            </button>
+          )}
+        </div>
+        {/* Alert List */}
+        <div style={{ minHeight: 80, maxHeight: 360, overflowY: 'auto', marginBottom: 6 }}>
+          {alertsLoading ? (
+            <div style={{ textAlign: 'center', margin: '30px 0', color: '#bbb' }}>
+              Loading...
+            </div>
+          ) : alertsError ? (
+            <div style={{ color: '#ff7f7f', textAlign: 'center', fontWeight: 500 }}>
+              {alertsError}
+            </div>
+          ) : (
+            <>
+              {Array.isArray(alerts[alertTab]) && alerts[alertTab].length > 0 ? (
+                <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
+                  {alerts[alertTab].map((alert, idx) => (
+                    <li
+                      key={alert.id || idx}
+                      style={{
+                        background: '#2e1442',
+                        borderRadius: 6,
+                        padding: '10px 12px',
+                        marginBottom: 8,
+                        fontSize: 15,
+                        borderLeft: '4px solid #4d70ff',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {alert.message || alert.text || JSON.stringify(alert)}
+                      {alert.created_at && (
+                        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>
+                          {new Date(alert.created_at).toLocaleString()}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div style={{ color: '#bbb', textAlign: 'center', fontSize: 15, margin: '15px 0' }}>
+                  No alerts to show.
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        {/* End */}
+      </div>
+    </div>
+  );
+}
+
+export default function Header({
+  username,
+  onLogout,
+  showProfileIcon = true,
+  isAdmin = false,
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [env, setEnv] = useState('');
   const [setup, setSetup] = useState('');
@@ -26,7 +210,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [announcementTime, setAnnouncementTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [announcementMsg, setAnnouncementMsg] = useState('');
-  const dropdownRef = useRef();
+  const dropdownRef = useRef(null);
 
   // Alert Modal state
   const [showAlertModal, setShowAlertModal] = useState(false);
@@ -34,7 +218,6 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [alerts, setAlerts] = useState({ user: [], admin: [] });
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [alertsError, setAlertsError] = useState('');
-
 
   // Fetch environment info
   useEffect(() => {
@@ -60,7 +243,8 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () =>
+      document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const getMarqueeText = () => {
@@ -87,8 +271,6 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     setAnnouncementMsg('');
   };
 
-
-
   const handleSubmitAnnouncement = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -110,8 +292,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     setSubmitting(false);
   };
 
-
- // --- ALERT MODAL HANDLERS ---
+  // --- ALERT MODAL HANDLERS ---
   const handleOpenAlertModal = async () => {
     setShowAlertModal(true);
     setAlertsLoading(true);
@@ -119,13 +300,16 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     setAlertTab('user');
     try {
       // Fetch user alerts (always present)
-      const userRes = await fetch('http://10.191.171.12:5443/EISHome/getPortalAlerts/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const userRes = await fetch(
+        'http://10.191.171.12:5443/EISHome/getPortalAlerts/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
       let userAlerts = await userRes.json();
       if (!Array.isArray(userAlerts)) userAlerts = userAlerts?.alerts || [];
-      // Optionally: fetch admin alerts if isAdmin (not implemented yet)
+      // Optionally: fetch admin alerts if isAdmin
       let adminAlerts = [];
       if (isAdmin) {
         // Placeholder for admin alerts API when ready
@@ -149,7 +333,6 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
     setAlertTab('user');
   };
 
-
   return (
     <div
       className="container"
@@ -158,9 +341,9 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
         paddingBottom: '19px',
         position: 'relative',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        background: 'linear-gradient(180deg, #1b1035, #2e1442, #3a1a58)',
+        backgroundImage: 'linear-gradient(180deg, #1b1035, #2e1442, #3a1a58)',
         color: '#ffffff',
-        overflow: 'visible'
+        overflow: 'visible',
       }}
     >
       {/* Marquee Background */}
@@ -174,17 +357,17 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
           height: '100%',
           display: 'flex',
           alignItems: 'flex-end',
-          zIndex: 1
+          zIndex: 1,
         }}
       >
         <marquee
           behavior="scroll"
           direction="left"
-          scrollamount="12"
+          scrollAmount={12}
           style={{
             backgroundColor: 'transparent',
             fontWeight: 'bold',
-            opacity: 0.4
+            opacity: 0.4,
           }}
         >
           {Array(1000)
@@ -206,7 +389,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
           width: '100%',
           position: 'relative',
           zIndex: 3,
-          padding: '0 20px'
+          padding: '0 20px',
         }}
       >
         {/* Logo */}
@@ -229,21 +412,25 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
           className="alert-icon-btn"
           aria-label="Show Alerts"
           style={{
-            marginRight: "10px",
-            background: "transparent",
-            border: "none",
-            cursor: "pointer",
-            padding: 0
+            marginRight: '10px',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: 0,
           }}
           onClick={handleOpenAlertModal}
-
+          type="button"
         >
           <AlertIcon size={32} />
         </button>
 
         {/* Profile & Dropdown */}
         <div
-          style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            position: 'relative',
+          }}
           ref={dropdownRef}
         >
           {showProfileIcon && username && (
@@ -272,7 +459,11 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                   aria-label="Dropdown menu"
                 >
                   <div
-                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #333' }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #333',
+                    }}
                     onClick={handleOpenAnnouncement}
                     aria-label="Make an announcement"
                   >
@@ -286,7 +477,6 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                     Logout
                   </div>
                 </div>
-
               )}
             </>
           )}
@@ -298,9 +488,14 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
         <div
           style={{
             position: 'fixed',
-            top: 0, left: 0, width: '100vw', height: '100vh',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
             background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             zIndex: 99999,
           }}
         >
@@ -312,18 +507,35 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
               padding: '30px 24px 18px',
               borderRadius: '10px',
               width: '350px',
-              boxShadow: '0 6px 24px rgba(0,0,0,0.20)'
+              boxShadow: '0 6px 24px rgba(0,0,0,0.20)',
             }}
           >
-            <h2 style={{ marginTop: 0, marginBottom: 16, fontWeight: 600, fontSize: 20 }}>Make an Announcement</h2>
+            <h2
+              style={{
+                marginTop: 0,
+                marginBottom: 16,
+                fontWeight: 600,
+                fontSize: 20,
+              }}
+            >
+              Make an Announcement
+            </h2>
             <label style={{ display: 'block', marginBottom: 8 }}>
               Announcement:
               <textarea
                 value={announcement}
-                onChange={e => setAnnouncement(e.target.value)}
+                onChange={(e) => setAnnouncement(e.target.value)}
                 rows={3}
                 required
-                style={{ width: '100%', marginTop: 4, borderRadius: 4, padding: 6, fontSize: 15, resize: 'vertical', marginBottom: 14 }}
+                style={{
+                  width: '100%',
+                  marginTop: 4,
+                  borderRadius: 4,
+                  padding: 6,
+                  fontSize: 15,
+                  resize: 'vertical',
+                  marginBottom: 14,
+                }}
                 placeholder="Enter announcement..."
               />
             </label>
@@ -335,9 +547,15 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                 min={1}
                 max={240}
                 step={1}
-                onChange={e => setAnnouncementTime(e.target.value)}
+                onChange={(e) => setAnnouncementTime(e.target.value)}
                 placeholder="(Default 24 hours)"
-                style={{ width: '100%', borderRadius: 3, padding: 6, fontSize: 15, marginTop: 4 }}
+                style={{
+                  width: '100%',
+                  borderRadius: 3,
+                  padding: 6,
+                  fontSize: 15,
+                  marginTop: 4,
+                }}
               />
             </label>
             <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
@@ -351,7 +569,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                   borderRadius: 4,
                   padding: '7px 18px',
                   fontSize: 15,
-                  cursor: submitting ? 'not-allowed' : 'pointer'
+                  cursor: submitting ? 'not-allowed' : 'pointer',
                 }}
               >
                 {submitting ? 'Submitting...' : 'Submit'}
@@ -366,7 +584,7 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
                   borderRadius: 4,
                   padding: '7px 18px',
                   fontSize: 15,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
                 disabled={submitting}
               >
@@ -374,13 +592,33 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
               </button>
             </div>
             {announcementMsg && (
-              <div style={{ marginTop: 13, color: announcementMsg.includes('success') ? '#7fff7f' : '#ff7f7f', fontWeight: 500 }}>
+              <div
+                style={{
+                  marginTop: 13,
+                  color: announcementMsg.includes('success')
+                    ? '#7fff7f'
+                    : '#ff7f7f',
+                  fontWeight: 500,
+                }}
+              >
                 {announcementMsg}
               </div>
             )}
           </form>
         </div>
       )}
+
+      {/* Alert Modal */}
+      <AlertModal
+        open={showAlertModal}
+        onClose={handleCloseAlertModal}
+        alertTab={alertTab}
+        setAlertTab={setAlertTab}
+        alerts={alerts}
+        alertsLoading={alertsLoading}
+        alertsError={alertsError}
+        isAdmin={isAdmin}
+      />
     </div>
   );
 }
