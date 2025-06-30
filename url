@@ -1,0 +1,2 @@
+path('getSecurityQuestion/',views.getSecurityQuestion,name="getSecurityQuestion"),
+path('forgotPassword/',views.forgotPassword,name="forgotPassword"),
