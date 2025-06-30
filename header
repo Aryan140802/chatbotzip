@@ -3,7 +3,10 @@ import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
 import { postAnnouncement } from './postNewApi';
 
-export default function Header({ username, onLogout, showProfileIcon = true }) {
+// Alert icon base64 (from provided image)
+const alertIcon = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADlCAYAAACYr7h/AAAACXBIWXMAAAsTAAALEwEAmpwYAAABFklEQVR4nO3PAQ0AAAgDINc/9K1hCwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwI4AAXiYFjYAAAAASUVORK5CYII=";
+
+export default function Header({ username, onLogout, showProfileIcon = true, isAdmin = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [env, setEnv] = useState('');
   const [setup, setSetup] = useState('');
@@ -12,6 +15,11 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [announcementTime, setAnnouncementTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [announcementMsg, setAnnouncementMsg] = useState('');
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertTab, setAlertTab] = useState('user');
+  const [alerts, setAlerts] = useState({ user: [], admin: [] });
+  const [alertsLoading, setAlertsLoading] = useState(false);
+  const [alertsError, setAlertsError] = useState('');
   const dropdownRef = useRef();
 
   // Fetch environment info
@@ -84,6 +92,44 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
       setAnnouncementMsg('Error posting announcement. Please try again.');
     }
     setSubmitting(false);
+  };
+
+  // --- ALERT MODAL HANDLERS ---
+  const handleOpenAlertModal = async () => {
+    setShowAlertModal(true);
+    setAlertsLoading(true);
+    setAlertsError('');
+    setAlertTab('user');
+    try {
+      // Fetch user alerts (always present)
+      const userRes = await fetch('http://10.191.171.12:5443/EISHome/getPortalAlerts/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      let userAlerts = await userRes.json();
+      if (!Array.isArray(userAlerts)) userAlerts = userAlerts?.alerts || [];
+      // Optionally: fetch admin alerts if isAdmin (not implemented yet)
+      let adminAlerts = [];
+      if (isAdmin) {
+        // Placeholder for admin alerts API when ready
+        // const adminRes = await fetch('http://10.191.171.12:5443/EISHome/getPortalAdminAlerts/', { ... });
+        // adminAlerts = await adminRes.json();
+        adminAlerts = []; // For now
+      }
+      setAlerts({ user: userAlerts, admin: adminAlerts });
+    } catch (error) {
+      setAlertsError('Could not fetch alerts. Please try again.');
+      setAlerts({ user: [], admin: [] });
+    }
+    setAlertsLoading(false);
+  };
+
+  const handleCloseAlertModal = () => {
+    setShowAlertModal(false);
+    setAlerts({ user: [], admin: [] });
+    setAlertsError('');
+    setAlertsLoading(false);
+    setAlertTab('user');
   };
 
   return (
@@ -160,11 +206,42 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
           EIS INFRA HOME
         </h1>
 
-        {/* Profile & Dropdown */}
+        {/* Profile, Alert, & Dropdown */}
         <div
-          style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+          style={{ display: 'flex', alignItems: 'center', position: 'relative', gap: 12 }}
           ref={dropdownRef}
         >
+          {/* ALERT BUTTON */}
+          <button
+            onClick={handleOpenAlertModal}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              marginRight: '8px',
+              outline: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              height: '40px'
+            }}
+            aria-label="Portal Alerts"
+            title="Portal Alerts"
+          >
+            <img
+              src={alertIcon}
+              alt="Alert"
+              style={{
+                height: '31px',
+                width: '31px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 10px #44000055',
+                background: 'white',
+                padding: '2px'
+              }}
+            />
+          </button>
+          {/* Profile & Dropdown */}
           {showProfileIcon && username && (
             <>
               <div
@@ -297,6 +374,116 @@ export default function Header({ username, onLogout, showProfileIcon = true }) {
               </div>
             )}
           </form>
+        </div>
+      )}
+
+      {/* ALERT MODAL */}
+      {showAlertModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99999,
+          }}
+        >
+          <div
+            style={{
+              background: '#2b1738',
+              color: '#fff',
+              padding: '28px 16px 20px',
+              borderRadius: '10px',
+              width: '420px',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.22)',
+              position: 'relative',
+              minHeight: '260px',
+              maxHeight: '75vh',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <button
+              onClick={handleCloseAlertModal}
+              style={{
+                position: 'absolute', top: 10, right: 12,
+                background: 'transparent', color: '#fff', border: 'none', fontSize: 20, cursor: 'pointer'
+              }}
+              aria-label="Close alerts"
+              title="Close"
+            >
+              ×
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <img src={alertIcon} alt="Alert" style={{ height: 28, width: 28 }} />
+              <span style={{ fontSize: 19, fontWeight: 600 }}>Portal Alerts</span>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', marginTop: 22, marginBottom: 8, borderBottom: '1px solid #44305a' }}>
+              <div
+                onClick={() => setAlertTab('user')}
+                style={{
+                  cursor: 'pointer',
+                  fontWeight: alertTab === 'user' ? 700 : 400,
+                  padding: '7px 22px 9px',
+                  borderBottom: alertTab === 'user' ? '3px solid #e74c3c' : '3px solid transparent',
+                  color: alertTab === 'user' ? '#fff' : '#c7b2e3',
+                  fontSize: 16,
+                  marginRight: 8,
+                  background: 'none'
+                }}
+              >
+                User
+              </div>
+              {isAdmin && (
+                <div
+                  onClick={() => setAlertTab('admin')}
+                  style={{
+                    cursor: 'pointer',
+                    fontWeight: alertTab === 'admin' ? 700 : 400,
+                    padding: '7px 22px 9px',
+                    borderBottom: alertTab === 'admin' ? '3px solid #e74c3c' : '3px solid transparent',
+                    color: alertTab === 'admin' ? '#fff' : '#c7b2e3',
+                    fontSize: 16,
+                    background: 'none'
+                  }}
+                >
+                  Admin
+                </div>
+              )}
+            </div>
+            {/* Alerts Content */}
+            <div style={{ flex: 1, overflowY: 'auto', marginTop: 7 }}>
+              {alertsLoading ? (
+                <div style={{ color: '#aaa', marginTop: 20 }}>Loading alerts...</div>
+              ) : alertsError ? (
+                <div style={{ color: '#ff7f7f', marginTop: 20 }}>{alertsError}</div>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {(alertTab === 'user' ? alerts.user : alerts.admin).length === 0 ? (
+                    <li style={{ color: '#bbb', fontSize: 15, marginTop: 10 }}>No alerts found.</li>
+                  ) : (
+                    (alertTab === 'user' ? alerts.user : alerts.admin).map((alert, idx) => (
+                      <li
+                        key={idx}
+                        style={{
+                          marginBottom: 12,
+                          padding: '11px 13px',
+                          background: '#361a2f',
+                          borderRadius: 7,
+                          fontSize: 15,
+                          boxShadow: '0 2px 8px #0002'
+                        }}
+                      >
+                        {typeof alert === 'string' ? alert : (alert.message || JSON.stringify(alert))}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
