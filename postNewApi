@@ -338,8 +338,6 @@ export const postAnnouncement = async (announcement, time) => {
   }
 };
 
-
-
 export const fetchLatestAnnouncement = async () => {
   try {
     const uid = localStorage.getItem('uidd');
@@ -350,5 +348,21 @@ export const fetchLatestAnnouncement = async () => {
   } catch (error) {
     console.error('Could not fetch announcement:', error);
     return "";
+  }
+};
+
+// === ALERT MODAL API ===
+export const fetchPortalAlerts = async () => {
+  try {
+    const userId = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/getPortalAlerts/', {
+      userId,
+      password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch portal alerts:', error);
+    throw error;
   }
 };
