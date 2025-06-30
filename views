@@ -1,0 +1,28 @@
+@csrf_exempt
+def forgotPassword(request):
+    try:
+      if request.method == 'POST':
+         data_json = json.loads(request.body.decode('utf-8'))
+         uid = data_json.get("uid")
+         neWpassword = data_json.get("password")
+         securityQuestion= data_json.get("SecQ")
+         querySet=Usermaster.objects.get(uid = uid,SecQ=securityQuestion)
+         querySet.password=password
+         if querySet is not None:
+             return JsonResponse({"msg":"Password updated successfully"},status=301,safe=False)
+         return JsonResponse({"msg":"Secret question not valid "},status=403,safe=False)
+    except Exception as e:
+         return JsonResponse({"An Error occured while fetching the data"},status=500,safe=False)
+
+@csrf_exempt
+def getSecurityQuestion(request):
+    try:
+      if request.method == 'POST':
+         data_json = json.loads(request.body.decode('utf-8'))
+         uid = data_json.get("uid")
+         querySet=Usermaster.objects.get(uid = uid)
+         if querySet is not None:
+             return JsonResponse({"securtiyQuestion":querySet["SecQ"]},status=301,safe=False)
+         return JsonResponse({"msg":"Emp id not valid"},status=403,safe=False)
+    except Exception as e:
+         return JsonResponse({"An Error occured while fetching the data"},status=500,safe=False)
