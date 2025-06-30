@@ -1,5 +1,8 @@
-path('mqOverall/<str:layer>/',views.mqOverall,name="mqOverAll"),   --> EISHome/mqOverall/exp {username:"fff",password:"ffff"}
-path('mqSource/<str:layer>/',views.mqSource,name="mqSource"),    ---> EISHome/mqSource/exp {username:"fff",password:"ffff"}
-path('mqHourly/<str:layer>/',views.mqHourly,name="mqHourly"),    ---> EISHome/mqHourly/exp {username:"fff",password:"ffff","hour":"15"}
-                                                                     
-																	 ---> EISHome/newLogout/
+{,…}
+totalAlerts
+: 
+[{id: 1268, portal: "PortMonitoring", effectedComponent: "LOGGING_SYS_01 of 10.177.40.155",…},…]
+[0 … 99]
+0
+: 
+{id: 1268, portal: "PortMonitoring", effectedComponent: "LOGGING_SYS_01 of 10.177.40.155",…}
