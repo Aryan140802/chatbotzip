@@ -1,208 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
-import { postAnnouncement } from '../api/PostApi';
-import { fetchPortalAlerts } from '../api/PostApi';
+import { postAnnouncement } from './postNewApi';
 
-// CSS-only Alert Icon component
-const AlertIcon = ({ size = 32 }) => (
-  <span
-    className="css-alert-icon"
-    style={{
-      width: size,
-      height: size,
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: size * 0.7,
-      background: 'transparent',
-    }}
-    aria-label="Alert"
-    role="img"
-  >
-    <span
-      className="css-alert-icon-exclaim"
-      style={{
-        fontWeight: 'bold',
-        fontSize: size * 0.8,
-        color: '#ffef5f',
-      }}
-    >
-      !
-    </span>
-  </span>
-);
-
-// Alert Modal Component
-function AlertModal({
-  open,
-  onClose,
-  alertTab,
-  setAlertTab,
-  alerts,
-  alertsLoading,
-  alertsError,
-  isAdmin,
-}) {
-  if (!open) return null;
-
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        background: 'rgba(0,0,0,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 99999,
-      }}
-      onClick={onClose}
-      aria-modal="true"
-      tabIndex={-1}
-    >
-      <div
-        style={{
-          background: '#221d2e',
-          color: '#fff',
-          padding: '32px 28px 20px',
-          borderRadius: '10px',
-          minWidth: '350px',
-          maxWidth: '95vw',
-          boxShadow: '0 6px 24px rgba(0,0,0,0.20)',
-          position: 'relative',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Close button */}
-        <button
-          aria-label="Close Alerts"
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: 12,
-            right: 14,
-            background: 'transparent',
-            border: 'none',
-            color: '#fff',
-            fontSize: 22,
-            cursor: 'pointer',
-          }}
-          type="button"
-        >
-          &times;
-        </button>
-        <h2
-          style={{
-            marginTop: 0,
-            marginBottom: 12,
-            fontWeight: 600,
-            fontSize: 20,
-            textAlign: 'center',
-          }}
-        >
-          Alerts
-        </h2>
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 18, justifyContent: 'center' }}>
-          <button
-            type="button"
-            style={{
-              background: alertTab === 'user' ? '#4d70ff' : '#3a1a58',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px 6px 0 0',
-              padding: '6px 18px',
-              fontWeight: 500,
-              fontSize: 15,
-              cursor: 'pointer',
-              outline: 'none',
-            }}
-            onClick={() => setAlertTab('user')}
-            aria-selected={alertTab === 'user'}
-          >
-            User Alerts
-          </button>
-          {isAdmin && (
-            <button
-              type="button"
-              style={{
-                background: alertTab === 'admin' ? '#4d70ff' : '#3a1a58',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px 6px 0 0',
-                padding: '6px 18px',
-                fontWeight: 500,
-                fontSize: 15,
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-              onClick={() => setAlertTab('admin')}
-              aria-selected={alertTab === 'admin'}
-            >
-              Admin Alerts
-            </button>
-          )}
-        </div>
-        {/* Alert List */}
-        <div style={{ minHeight: 80, maxHeight: 360, overflowY: 'auto', marginBottom: 6 }}>
-          {alertsLoading ? (
-            <div style={{ textAlign: 'center', margin: '30px 0', color: '#bbb' }}>
-              Loading...
-            </div>
-          ) : alertsError ? (
-            <div style={{ color: '#ff7f7f', textAlign: 'center', fontWeight: 500 }}>
-              {alertsError}
-            </div>
-          ) : (
-            <>
-              {Array.isArray(alerts[alertTab]) && alerts[alertTab].length > 0 ? (
-                <ul style={{ paddingLeft: 0, listStyle: 'none', margin: 0 }}>
-                  {alerts[alertTab].map((alert, idx) => (
-                    <li
-                      key={alert.id || idx}
-                      style={{
-                        background: '#2e1442',
-                        borderRadius: 6,
-                        padding: '10px 12px',
-                        marginBottom: 8,
-                        fontSize: 15,
-                        borderLeft: '4px solid #4d70ff',
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {alert.message || alert.text || JSON.stringify(alert)}
-                      {alert.created_at && (
-                        <div style={{ fontSize: 12, opacity: 0.6, marginTop: 2 }}>
-                          {new Date(alert.created_at).toLocaleString()}
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div style={{ color: '#bbb', textAlign: 'center', fontSize: 15, margin: '15px 0' }}>
-                  No alerts to show.
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        {/* End */}
-      </div>
-    </div>
-  );
-}
-
-export default function Header({
-  username,
-  onLogout,
-  showProfileIcon = true,
-  isAdmin = false,
-}) {
+export default function Header({ username, onLogout, showProfileIcon = true }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [env, setEnv] = useState('');
   const [setup, setSetup] = useState('');
@@ -211,14 +12,10 @@ export default function Header({
   const [announcementTime, setAnnouncementTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [announcementMsg, setAnnouncementMsg] = useState('');
-  const dropdownRef = useRef(null);
-
-  // Alert Modal state
   const [showAlertModal, setShowAlertModal] = useState(false);
-  const [alertTab, setAlertTab] = useState('user');
-  const [alerts, setAlerts] = useState({ user: [], admin: [] });
-  const [alertsLoading, setAlertsLoading] = useState(false);
-  const [alertsError, setAlertsError] = useState('');
+  const [alertData, setAlertData] = useState(null);
+
+  const dropdownRef = useRef();
 
   // Fetch environment info
   useEffect(() => {
@@ -244,8 +41,7 @@ export default function Header({
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () =>
-      document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const getMarqueeText = () => {
@@ -293,39 +89,24 @@ export default function Header({
     setSubmitting(false);
   };
 
-  // --- ALERT MODAL HANDLERS ---
-  const handleOpenAlertModal = async () => {
+  // Alert Modal handlers
+  const handleOpenAlert = () => {
+    // Here you should fetch your alert data if needed.
+    // For now, we'll use mock data for demonstration.
+    const mockAlert = {
+      Type: 'System Alert',
+      Time: new Date().toLocaleString(),
+      Message: 'This is a demo alert! Please check system status.',
+      Severity: 'High',
+      Source: 'Monitoring Service'
+    };
+    setAlertData(mockAlert);
     setShowAlertModal(true);
-    setAlertsLoading(true);
-    setAlertsError('');
-    setAlertTab('user');
-    try {
-      // Fetch user alerts (always present)
-      const userRes = await fetchPortalAlerts();
-      let userAlerts = userRes.data;
-      if (!Array.isArray(userAlerts)) userAlerts = userAlerts?.totalAlerts || [];
-      // Optionally: fetch admin alerts if isAdmin
-      let adminAlerts = [];
-      if (isAdmin) {
-        // Placeholder for admin alerts API when ready
-        // const adminRes = await fetch('http://10.191.171.12:5443/EISHome/getPortalAdminAlerts/', { ... });
-        // adminAlerts = await adminRes.json();
-        adminAlerts = []; // For now
-      }
-      setAlerts({ user: userAlerts, admin: adminAlerts });
-    } catch (error) {
-      setAlertsError('Could not fetch alerts. Please try again.');
-      setAlerts({ user: [], admin: [] });
-    }
-    setAlertsLoading(false);
   };
 
-  const handleCloseAlertModal = () => {
+  const handleCloseAlert = () => {
     setShowAlertModal(false);
-    setAlerts({ user: [], admin: [] });
-    setAlertsError('');
-    setAlertsLoading(false);
-    setAlertTab('user');
+    setAlertData(null);
   };
 
   return (
@@ -336,9 +117,9 @@ export default function Header({
         paddingBottom: '19px',
         position: 'relative',
         background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        backgroundImage: 'linear-gradient(180deg, #1b1035, #2e1442, #3a1a58)',
+        background: 'linear-gradient(180deg, #1b1035, #2e1442, #3a1a58)',
         color: '#ffffff',
-        overflow: 'visible',
+        overflow: 'visible'
       }}
     >
       {/* Marquee Background */}
@@ -352,17 +133,17 @@ export default function Header({
           height: '100%',
           display: 'flex',
           alignItems: 'flex-end',
-          zIndex: 1,
+          zIndex: 1
         }}
       >
         <marquee
           behavior="scroll"
           direction="left"
-          scrollAmount={12}
+          scrollamount="12"
           style={{
             backgroundColor: 'transparent',
             fontWeight: 'bold',
-            opacity: 0.4,
+            opacity: 0.4
           }}
         >
           {Array(1000)
@@ -384,7 +165,7 @@ export default function Header({
           width: '100%',
           position: 'relative',
           zIndex: 3,
-          padding: '0 20px',
+          padding: '0 20px'
         }}
       >
         {/* Logo */}
@@ -402,37 +183,40 @@ export default function Header({
           EIS INFRA HOME
         </h1>
 
-        {/* Alert Button */}
-        <button
-          className="alert-icon-btn"
-          aria-label="Show Alerts"
-          style={{
-            marginRight: '10px',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            padding: 0,
-          }}
-          onClick={handleOpenAlertModal}
-          type="button"
-        >
-          <AlertIcon size={32} />
-        </button>
-
-        {/* Profile & Dropdown */}
+        {/* Profile, Alert & Dropdown */}
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            position: 'relative',
-          }}
+          style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
           ref={dropdownRef}
         >
+          {/* Alert Button */}
+          <button
+            onClick={handleOpenAlert}
+            style={{
+              marginLeft: '10px',
+              padding: '7px 18px',
+              fontSize: 15,
+              fontWeight: 700,
+              background: 'linear-gradient(90deg, #ff416c, #ff4b2b)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 8,
+              boxShadow: '0 2px 8px rgba(255, 65, 108, 0.15)',
+              cursor: 'pointer',
+              outline: 'none',
+              transition: 'transform 0.15s, box-shadow 0.15s',
+              textShadow: '0px 1px 6px #000, 0px 0px 12px #ff5e62b4',
+              letterSpacing: 1,
+              zIndex: 10
+            }}
+            aria-label="View alerts"
+          >
+            &#9888; Alerts
+          </button>
           {showProfileIcon && username && (
             <>
               <div
                 onClick={() => setMenuOpen(!menuOpen)}
-                style={{ cursor: 'pointer', marginLeft: '10px' }}
+                style={{ cursor: 'pointer', marginLeft: '13px' }}
                 aria-label="Profile menu toggle"
               >
                 <ProfileIcon sender="user" />
@@ -454,11 +238,7 @@ export default function Header({
                   aria-label="Dropdown menu"
                 >
                   <div
-                    style={{
-                      padding: '8px 12px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #333',
-                    }}
+                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #333' }}
                     onClick={handleOpenAnnouncement}
                     aria-label="Make an announcement"
                   >
@@ -483,14 +263,9 @@ export default function Header({
         <div
           style={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
+            top: 0, left: 0, width: '100vw', height: '100vh',
             background: 'rgba(0,0,0,0.45)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 99999,
           }}
         >
@@ -502,35 +277,18 @@ export default function Header({
               padding: '30px 24px 18px',
               borderRadius: '10px',
               width: '350px',
-              boxShadow: '0 6px 24px rgba(0,0,0,0.20)',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.20)'
             }}
           >
-            <h2
-              style={{
-                marginTop: 0,
-                marginBottom: 16,
-                fontWeight: 600,
-                fontSize: 20,
-              }}
-            >
-              Make an Announcement
-            </h2>
+            <h2 style={{ marginTop: 0, marginBottom: 16, fontWeight: 600, fontSize: 20 }}>Make an Announcement</h2>
             <label style={{ display: 'block', marginBottom: 8 }}>
               Announcement:
               <textarea
                 value={announcement}
-                onChange={(e) => setAnnouncement(e.target.value)}
+                onChange={e => setAnnouncement(e.target.value)}
                 rows={3}
                 required
-                style={{
-                  width: '100%',
-                  marginTop: 4,
-                  borderRadius: 4,
-                  padding: 6,
-                  fontSize: 15,
-                  resize: 'vertical',
-                  marginBottom: 14,
-                }}
+                style={{ width: '100%', marginTop: 4, borderRadius: 4, padding: 6, fontSize: 15, resize: 'vertical', marginBottom: 14 }}
                 placeholder="Enter announcement..."
               />
             </label>
@@ -542,15 +300,9 @@ export default function Header({
                 min={1}
                 max={240}
                 step={1}
-                onChange={(e) => setAnnouncementTime(e.target.value)}
+                onChange={e => setAnnouncementTime(e.target.value)}
                 placeholder="(Default 24 hours)"
-                style={{
-                  width: '100%',
-                  borderRadius: 3,
-                  padding: 6,
-                  fontSize: 15,
-                  marginTop: 4,
-                }}
+                style={{ width: '100%', borderRadius: 3, padding: 6, fontSize: 15, marginTop: 4 }}
               />
             </label>
             <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
@@ -564,7 +316,7 @@ export default function Header({
                   borderRadius: 4,
                   padding: '7px 18px',
                   fontSize: 15,
-                  cursor: submitting ? 'not-allowed' : 'pointer',
+                  cursor: submitting ? 'not-allowed' : 'pointer'
                 }}
               >
                 {submitting ? 'Submitting...' : 'Submit'}
@@ -579,7 +331,7 @@ export default function Header({
                   borderRadius: 4,
                   padding: '7px 18px',
                   fontSize: 15,
-                  cursor: 'pointer',
+                  cursor: 'pointer'
                 }}
                 disabled={submitting}
               >
@@ -587,15 +339,7 @@ export default function Header({
               </button>
             </div>
             {announcementMsg && (
-              <div
-                style={{
-                  marginTop: 13,
-                  color: announcementMsg.includes('success')
-                    ? '#7fff7f'
-                    : '#ff7f7f',
-                  fontWeight: 500,
-                }}
-              >
+              <div style={{ marginTop: 13, color: announcementMsg.includes('success') ? '#7fff7f' : '#ff7f7f', fontWeight: 500 }}>
                 {announcementMsg}
               </div>
             )}
@@ -604,16 +348,114 @@ export default function Header({
       )}
 
       {/* Alert Modal */}
-      <AlertModal
-        open={showAlertModal}
-        onClose={handleCloseAlertModal}
-        alertTab={alertTab}
-        setAlertTab={setAlertTab}
-        alerts={alerts}
-        alertsLoading={alertsLoading}
-        alertsError={alertsError}
-        isAdmin={isAdmin}
-      />
+      {showAlertModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.60)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99998,
+          }}
+        >
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #ff416c 60%, #ff4b2b 100%)',
+              color: '#fff',
+              padding: '35px 34px 27px',
+              borderRadius: '15px',
+              minWidth: '410px',
+              maxWidth: '95vw',
+              boxShadow: '0 12px 36px rgba(255,65,108,0.25), 0 2px 16px #0007',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <button
+              onClick={handleCloseAlert}
+              style={{
+                position: 'absolute',
+                top: 13,
+                right: 14,
+                background: 'none',
+                color: '#fff',
+                border: 'none',
+                fontSize: 24,
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                textShadow: '0 2px 8px #000a',
+                zIndex: 100
+              }}
+              aria-label="Close alert modal"
+            >
+              &times;
+            </button>
+            <h2 style={{
+              marginTop: 0,
+              marginBottom: 22,
+              fontWeight: 700,
+              fontSize: 22,
+              textAlign: 'center',
+              letterSpacing: 1
+            }}>
+              Alert Details
+            </h2>
+            {alertData ? (
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  background: 'rgba(0,0,0,0.14)',
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  boxShadow: '0 1px 4px #0003'
+                }}
+              >
+                <thead>
+                  <tr>
+                    {Object.keys(alertData).map((key) =>
+                      <th
+                        key={key}
+                        style={{
+                          padding: '10px 8px',
+                          background: 'rgba(255,255,255,0.09)',
+                          color: '#fff',
+                          fontWeight: 600,
+                          borderBottom: '2px solid #ff416c99',
+                          textAlign: 'left'
+                        }}
+                      >
+                        {key}
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    {Object.values(alertData).map((val, i) =>
+                      <td
+                        key={i}
+                        style={{
+                          padding: '10px 8px',
+                          background: 'rgba(255,255,255,0.04)',
+                          color: '#fff',
+                          borderBottom: '1px solid #ff416c25'
+                        }}
+                      >
+                        {val}
+                      </td>
+                    )}
+                  </tr>
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ textAlign: 'center', fontSize: 17, fontWeight: 500 }}>
+                No alert data available.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
