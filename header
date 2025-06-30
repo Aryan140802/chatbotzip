@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ProfileIcon from './ProfileIcon';
 import logo from '../assets/tcs.png';
 import { postAnnouncement } from '../api/PostApi';
+import { fetchPortalAlerts } from '../api/PostApi';
 
 // CSS-only Alert Icon component
 const AlertIcon = ({ size = 32 }) => (
@@ -300,15 +301,9 @@ export default function Header({
     setAlertTab('user');
     try {
       // Fetch user alerts (always present)
-      const userRes = await fetch(
-        'http://10.191.171.12:5443/EISHome/getPortalAlerts/',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-      let userAlerts = await userRes.json();
-      if (!Array.isArray(userAlerts)) userAlerts = userAlerts?.alerts || [];
+      const userRes = await fetchPortalAlerts();
+      let userAlerts = userRes.data;
+      if (!Array.isArray(userAlerts)) userAlerts = userAlerts?.totalAlerts || [];
       // Optionally: fetch admin alerts if isAdmin
       let adminAlerts = [];
       if (isAdmin) {
