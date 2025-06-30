@@ -54,8 +54,11 @@ function Login({ onLogin }) {
     setForgotPwdMsg('');
     try {
       const res = await postGetSecurityQuestion(empId);
-      if (res.data.securtiyQuestion) {
-        setSecurityQ(res.data.securtiyQuestion);
+      // Accept both possible keys due to typo
+      const secQ = res.data.securityQuestion ?? res.data.securtiyQuestion;
+      // If the key is present (even if empty), allow to proceed to next modal
+      if (secQ !== undefined) {
+        setSecurityQ(secQ);
         setShowEmpIdModal(false);
         setShowSecQModal(true);
         setSecurityAnswer('');
@@ -136,24 +139,32 @@ function Login({ onLogin }) {
             Register
           </button>
           {/* Forgot Password link always visible */}
-          <div style={{marginTop: "10px"}}>
+          <div style={{ marginTop: "10px" }}>
             <a
               href="#"
               onClick={e => { e.preventDefault(); openForgotPwdModal(); }}
-              style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.95em' }}
+              style={{
+                color: '#007bff',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                fontSize: '0.95em',
+                display: 'inline-block'
+              }}
             >
               Forgot Password?
             </a>
           </div>
         </form>
-        {forgotPwdMsg && <div className="info-message">{forgotPwdMsg}</div>}
+        {forgotPwdMsg && !showEmpIdModal && !showSecQModal && (
+          <div className="info-message">{forgotPwdMsg}</div>
+        )}
       </div>
       <Footer />
 
       {/* Employee ID Modal */}
       {showEmpIdModal && (
         <div className="modal-overlay">
-          <div className="modal-box">
+          <div className="modal-box modal-fade">
             <h3>Forgot Password</h3>
             <form onSubmit={handleEmpIdSubmit}>
               <label>Enter your Employee ID:</label>
@@ -163,10 +174,11 @@ function Login({ onLogin }) {
                 onChange={(e) => setEmpId(e.target.value)}
                 required
                 autoFocus
+                className="modal-input"
               />
               <div className="modal-actions">
-                <button type="submit" disabled={secQLoading}>Next</button>
-                <button type="button" onClick={closeModals}>Cancel</button>
+                <button className="modal-btn" type="submit" disabled={secQLoading}>Next</button>
+                <button className="modal-btn cancel" type="button" onClick={closeModals}>Cancel</button>
               </div>
             </form>
             {forgotPwdMsg && <div className="error-message">{forgotPwdMsg}</div>}
@@ -177,30 +189,38 @@ function Login({ onLogin }) {
       {/* Security Question Modal */}
       {showSecQModal && (
         <div className="modal-overlay">
-          <div className="modal-box">
+          <div className="modal-box modal-fade">
             <h3>Reset Password</h3>
             <form onSubmit={handleSecQSubmit}>
               <label>Employee ID:</label>
-              <input type="text" value={empId} readOnly />
+              <input className="modal-input" type="text" value={empId} readOnly />
               <label>Security Question:</label>
-              <input type="text" value={securityQ} readOnly />
+              <input className="modal-input" type="text" value={securityQ ?? ""} readOnly />
+              {securityQ === "" && (
+                <div className="info-message" style={{ color: "orange" }}>
+                  No security question set for this user. Please contact admin if you cannot reset your password.
+                </div>
+              )}
               <label>Your Answer:</label>
               <input
+                className="modal-input"
                 type="text"
                 value={securityAnswer}
                 onChange={(e) => setSecurityAnswer(e.target.value)}
-                required
+                required={securityQ !== ""}
+                disabled={securityQ === ""}
               />
               <label>New Password:</label>
               <input
+                className="modal-input"
                 type="password"
                 value={newPwd}
                 onChange={(e) => setNewPwd(e.target.value)}
                 required
               />
               <div className="modal-actions">
-                <button type="submit" disabled={secQLoading}>Submit</button>
-                <button type="button" onClick={closeModals}>Cancel</button>
+                <button className="modal-btn" type="submit" disabled={secQLoading}>Submit</button>
+                <button className="modal-btn cancel" type="button" onClick={closeModals}>Cancel</button>
               </div>
             </form>
             {forgotPwdMsg && <div className="error-message">{forgotPwdMsg}</div>}
@@ -208,18 +228,87 @@ function Login({ onLogin }) {
         </div>
       )}
 
-      {/* Modal styling (you can move to your CSS file) */}
+      {/* Modal styling (move to Login.css if preferred) */}
       <style>{`
         .modal-overlay {
           position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-          background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;
+          background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000;
+          animation: modal-bg-fade 0.2s;
         }
         .modal-box {
-          background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); min-width: 320px;
+          background: #fff;
+          padding: 2em 2.2em 1.5em 2.2em;
+          border-radius: 14px;
+          box-shadow: 0 4px 24px rgba(0,0,0,0.22);
+          min-width: 330px;
+          max-width: 90vw;
+          animation: modal-fadein 0.24s;
+          position: relative;
         }
-        .modal-actions { margin-top: 1em; display: flex; gap: 1em; }
-        .info-message { color: green; margin-top: 1em; }
-        .error-message { color: red; margin-top: 1em; }
+        .modal-box h3 {
+          margin-top: 0;
+          margin-bottom: 1.1em;
+          font-size: 1.33em;
+          text-align: center;
+        }
+        .modal-input {
+          width: 100%;
+          padding: 0.60em 0.9em;
+          border: 1.1px solid #c6c7d4;
+          border-radius: 5px;
+          margin-bottom: 0.9em;
+          font-size: 1em;
+          background: #f7f8fa;
+          transition: border 0.18s;
+        }
+        .modal-input:focus {
+          border: 1.2px solid #1976d2;
+          outline: none;
+          background: #fff;
+        }
+        .modal-actions {
+          margin-top: 0.8em;
+          display: flex;
+          gap: 0.9em;
+          justify-content: flex-end;
+        }
+        .modal-btn {
+          background: #1976d2;
+          color: #fff;
+          border: none;
+          padding: 0.52em 1.18em;
+          border-radius: 4px;
+          font-size: 0.98em;
+          cursor: pointer;
+          transition: background 0.18s;
+        }
+        .modal-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        .modal-btn.cancel {
+          background: #e74c3c;
+        }
+        .info-message {
+          color: #1976d2;
+          margin-top: 1em;
+          font-size: 1em;
+          text-align: center;
+        }
+        .error-message {
+          color: #e74c3c;
+          margin-top: 1em;
+          font-size: 1em;
+          text-align: center;
+        }
+        @keyframes modal-fadein {
+          from { transform: translateY(-22px) scale(0.98); opacity: 0; }
+          to   { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @keyframes modal-bg-fade {
+          from { background: rgba(0,0,0,0.0);}
+          to   { background: rgba(0,0,0,0.5);}
+        }
       `}</style>
     </div>
   );
