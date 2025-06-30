@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './Header.css';
+import React, { useState, useRef, useEffect } from 'react';
+import ProfileIcon from './ProfileIcon';
+import logo from '../assets/tcs.png';
+import { postAnnouncement } from '../api/PostApi';
+
 
 // CSS-only Alert Icon component
 const AlertIcon = ({ size = 32 }) => (
@@ -13,16 +16,17 @@ const AlertIcon = ({ size = 32 }) => (
   </span>
 );
 
-const Header = ({
-  darkMode,
-  setDarkMode,
-  username,
-  onLogout,
-  userLevel,
-}) => {
-  // State for environment info
+
+export default function Header({ username, onLogout, showProfileIcon = true }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const [env, setEnv] = useState('');
-  const [envError, setEnvError] = useState(false);
+  const [setup, setSetup] = useState('');
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [announcementTime, setAnnouncementTime] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [announcementMsg, setAnnouncementMsg] = useState('');
+  const dropdownRef = useRef();
 
   // Alert Modal state
   const [showAlertModal, setShowAlertModal] = useState(false);
@@ -31,63 +35,103 @@ const Header = ({
   const [alertsLoading, setAlertsLoading] = useState(false);
   const [alertsError, setAlertsError] = useState('');
 
-  // Profile dropdown state (optional)
-  const [showProfile, setShowProfile] = useState(false);
-  const profileRef = useRef();
 
-  // Fetch environment info (try https, fallback to http)
+  // Fetch environment info
   useEffect(() => {
-    const fetchEnv = async () => {
+    const fetchEnvAndSetup = async () => {
       try {
-        const res = await fetch('https://10.191.171.12:5443/PyPortal/env');
-        const data = await res.json();
-        setEnv(data.Environment || 'Unknown');
-        setEnvError(false);
-      } catch (e) {
-        try {
-          const res = await fetch('http://10.191.171.12:5443/PyPortal/env');
-          const data = await res.json();
-          setEnv(data.Environment || 'Unknown');
-          setEnvError(false);
-        } catch {
-          setEnv('Unknown');
-          setEnvError(true);
-        }
+        const response = await fetch('https://10.191.171.12:5443/PyPortal/env');
+        const data = await response.json();
+        setEnv(data.Environment);
+        setSetup(data.PRDRSetup);
+      } catch (error) {
+        console.error('Failed to fetch environment:', error);
+        setEnv('');
       }
     };
-    fetchEnv();
+    fetchEnvAndSetup();
   }, []);
 
-  // Profile menu close on outside click
+  // Close menu on outside click
   useEffect(() => {
-    const handleClick = (e) => {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setShowProfile(false);
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ---- ALERT MODAL HANDLING ----
+  const getMarqueeText = () => {
+    if (env === 'PR' && setup === 'YES') return 'PR DR SETUP is live!!';
+    if (env === 'DR' && setup === 'YES') return 'PR DR SETUP is live!!';
+    if (env === 'PR') return 'PR is live now!! ';
+    if (env === 'DR') return 'DR is live now!! ';
+    return 'Welcome to EIS INFRA ';
+  };
+
+  // Announcement Modal handlers
+  const handleOpenAnnouncement = () => {
+    setAnnouncement('');
+    setAnnouncementTime('');
+    setAnnouncementMsg('');
+    setShowAnnouncementModal(true);
+    setMenuOpen(false);
+  };
+
+  const handleCloseAnnouncement = () => {
+    setShowAnnouncementModal(false);
+    setAnnouncement('');
+    setAnnouncementTime('');
+    setAnnouncementMsg('');
+  };
+
+
+
+  const handleSubmitAnnouncement = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setAnnouncementMsg('');
+    if (!announcement.trim()) {
+      setAnnouncementMsg('Announcement cannot be empty.');
+      setSubmitting(false);
+      return;
+    }
+    try {
+      await postAnnouncement(announcement, announcementTime);
+      setAnnouncementMsg('Announcement posted successfully!');
+      setTimeout(() => {
+        handleCloseAnnouncement();
+      }, 1200);
+    } catch (err) {
+      setAnnouncementMsg('Error posting announcement. Please try again.');
+    }
+    setSubmitting(false);
+  };
+
+
+ // --- ALERT MODAL HANDLERS ---
   const handleOpenAlertModal = async () => {
     setShowAlertModal(true);
     setAlertsLoading(true);
     setAlertsError('');
     setAlertTab('user');
     try {
-      // User alerts
+      // Fetch user alerts (always present)
       const userRes = await fetch('http://10.191.171.12:5443/EISHome/getPortalAlerts/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' }
       });
       let userAlerts = await userRes.json();
       if (!Array.isArray(userAlerts)) userAlerts = userAlerts?.alerts || [];
-      // Admin alerts (if admin)
+      // Optionally: fetch admin alerts if isAdmin (not implemented yet)
       let adminAlerts = [];
-      if (userLevel === 'admin') {
-        // Placeholder for future admin alerts API
-        adminAlerts = [];
+      if (isAdmin) {
+        // Placeholder for admin alerts API when ready
+        // const adminRes = await fetch('http://10.191.171.12:5443/EISHome/getPortalAdminAlerts/', { ... });
+        // adminAlerts = await adminRes.json();
+        adminAlerts = []; // For now
       }
       setAlerts({ user: userAlerts, admin: adminAlerts });
     } catch (error) {
@@ -105,16 +149,81 @@ const Header = ({
     setAlertTab('user');
   };
 
+
   return (
-    <header className="header-bar">
-      <div className="header-left">
-        <span className="header-logo">EIS INFRA HOME</span>
-        <span className="header-env">
-          <b>Environment:</b> {env}
-          {envError && <span style={{ color: 'red', marginLeft: 8 }}>(Failed to fetch)</span>}
-        </span>
+    <div
+      className="container"
+      style={{
+        paddingTop: '19px',
+        paddingBottom: '19px',
+        position: 'relative',
+        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+        background: 'linear-gradient(180deg, #1b1035, #2e1442, #3a1a58)',
+        color: '#ffffff',
+        overflow: 'visible'
+      }}
+    >
+      {/* Marquee Background */}
+      <div
+        style={{
+          position: 'absolute',
+          width: '100%',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'flex-end',
+          zIndex: 1
+        }}
+      >
+        <marquee
+          behavior="scroll"
+          direction="left"
+          scrollamount="12"
+          style={{
+            backgroundColor: 'transparent',
+            fontWeight: 'bold',
+            opacity: 0.4
+          }}
+        >
+          {Array(1000)
+            .fill(getMarqueeText())
+            .map((text, index) => (
+              <span key={index} style={{ marginRight: '150px' }}>
+                {text}
+              </span>
+            ))}
+        </marquee>
       </div>
-      <div className="header-actions">
+
+      {/* Header Content */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          position: 'relative',
+          zIndex: 3,
+          padding: '0 20px'
+        }}
+      >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <img
+            className="logo"
+            src={logo}
+            alt="TCS Company Logo"
+            style={{ height: '40px', marginRight: '20px' }}
+          />
+        </div>
+
+        {/* Title */}
+        <h1 style={{ margin: 0, fontSize: 'clamp(1.5rem, 2vw, 2.5rem)' }}>
+          EIS INFRA HOME
+        </h1>
+
         {/* Alert Button */}
         <button
           className="alert-icon-btn"
@@ -127,84 +236,151 @@ const Header = ({
             padding: 0
           }}
           onClick={handleOpenAlertModal}
+
         >
           <AlertIcon size={32} />
         </button>
-        {/* Profile Dropdown */}
-        <div className="profile-dropdown" ref={profileRef}>
-          <button
-            onClick={() => setShowProfile((p) => !p)}
-            className="profile-btn"
-            aria-label="Profile menu"
-          >
-            {username ? username : "User"}
-          </button>
-          {showProfile && (
-            <ul className="profile-menu">
-              <li onClick={onLogout}>Logout</li>
-            </ul>
+
+        {/* Profile & Dropdown */}
+        <div
+          style={{ display: 'flex', alignItems: 'center', position: 'relative' }}
+          ref={dropdownRef}
+        >
+          {showProfileIcon && username && (
+            <>
+              <div
+                onClick={() => setMenuOpen(!menuOpen)}
+                style={{ cursor: 'pointer', marginLeft: '10px' }}
+                aria-label="Profile menu toggle"
+              >
+                <ProfileIcon sender="user" />
+              </div>
+              {menuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '50px',
+                    right: 0,
+                    background: '#1e1e1e',
+                    color: '#fff',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    borderRadius: '6px',
+                    padding: '10px',
+                    zIndex: 9999,
+                    minWidth: '150px',
+                  }}
+                  aria-label="Dropdown menu"
+                >
+                  <div
+                    style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #333' }}
+                    onClick={handleOpenAnnouncement}
+                    aria-label="Make an announcement"
+                  >
+                    Make an Announcement
+                  </div>
+                  <div
+                    style={{ padding: '8px 12px', cursor: 'pointer' }}
+                    onClick={onLogout}
+                    aria-label="Logout button"
+                  >
+                    Logout
+                  </div>
+                </div>
+
+              )}
+            </>
           )}
         </div>
       </div>
 
-      {/* ALERT MODAL */}
-      {showAlertModal && (
-        <div className="alert-modal-overlay">
-          <div className="alert-modal">
-            <button
-              className="alert-modal-close"
-              onClick={handleCloseAlertModal}
-              aria-label="Close alerts"
-              title="Close"
-            >
-              ×
-            </button>
-            <div className="alert-modal-header">
-              <AlertIcon size={28} />
-              <span style={{ fontSize: 19, fontWeight: 600, marginLeft: 10 }}>Portal Alerts</span>
-            </div>
-            <div className="alert-modal-tabs">
-              <div
-                className={alertTab === 'user' ? 'active' : ''}
-                onClick={() => setAlertTab('user')}
+      {/* Announcement Modal */}
+      {showAnnouncementModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, width: '100vw', height: '100vh',
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 99999,
+          }}
+        >
+          <form
+            onSubmit={handleSubmitAnnouncement}
+            style={{
+              background: '#221d2e',
+              color: '#fff',
+              padding: '30px 24px 18px',
+              borderRadius: '10px',
+              width: '350px',
+              boxShadow: '0 6px 24px rgba(0,0,0,0.20)'
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: 16, fontWeight: 600, fontSize: 20 }}>Make an Announcement</h2>
+            <label style={{ display: 'block', marginBottom: 8 }}>
+              Announcement:
+              <textarea
+                value={announcement}
+                onChange={e => setAnnouncement(e.target.value)}
+                rows={3}
+                required
+                style={{ width: '100%', marginTop: 4, borderRadius: 4, padding: 6, fontSize: 15, resize: 'vertical', marginBottom: 14 }}
+                placeholder="Enter announcement..."
+              />
+            </label>
+            <label style={{ display: 'block', marginBottom: 12 }}>
+              Duration (hours):
+              <input
+                type="number"
+                value={announcementTime}
+                min={1}
+                max={240}
+                step={1}
+                onChange={e => setAnnouncementTime(e.target.value)}
+                placeholder="(Default 24 hours)"
+                style={{ width: '100%', borderRadius: 3, padding: 6, fontSize: 15, marginTop: 4 }}
+              />
+            </label>
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <button
+                type="submit"
+                disabled={submitting}
+                style={{
+                  background: '#4d70ff',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '7px 18px',
+                  fontSize: 15,
+                  cursor: submitting ? 'not-allowed' : 'pointer'
+                }}
               >
-                User
+                {submitting ? 'Submitting...' : 'Submit'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseAnnouncement}
+                style={{
+                  background: '#3a1a58',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 4,
+                  padding: '7px 18px',
+                  fontSize: 15,
+                  cursor: 'pointer'
+                }}
+                disabled={submitting}
+              >
+                Cancel
+              </button>
+            </div>
+            {announcementMsg && (
+              <div style={{ marginTop: 13, color: announcementMsg.includes('success') ? '#7fff7f' : '#ff7f7f', fontWeight: 500 }}>
+                {announcementMsg}
               </div>
-              {userLevel === 'admin' && (
-                <div
-                  className={alertTab === 'admin' ? 'active' : ''}
-                  onClick={() => setAlertTab('admin')}
-                >
-                  Admin
-                </div>
-              )}
-            </div>
-            <div className="alert-modal-list">
-              {alertsLoading ? (
-                <div className="alert-modal-status">Loading alerts...</div>
-              ) : alertsError ? (
-                <div className="alert-modal-status" style={{ color: '#ff7f7f' }}>{alertsError}</div>
-              ) : (
-                <ul>
-                  {(alertTab === 'user' ? alerts.user : alerts.admin).length === 0 ? (
-                    <li className="alert-modal-empty">No alerts found.</li>
-                  ) : (
-                    (alertTab === 'user' ? alerts.user : alerts.admin).map((alert, idx) => (
-                      <li key={idx} className="alert-modal-item">
-                        {typeof alert === 'string'
-                          ? alert
-                          : (alert.message || JSON.stringify(alert))}
-                      </li>
-                    ))
-                  )}
-                </ul>
-              )}
-            </div>
-          </div>
+            )}
+          </form>
         </div>
       )}
-    </header>
+    </div>
   );
-};
-
-export default Header;
+}
