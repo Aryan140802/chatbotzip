@@ -366,3 +366,31 @@ export const fetchPortalAlerts = async () => {
     throw error;
   }
 };
+
+// Add API for getting security question
+export const postGetSecurityQuestion = async (uid) => {
+  try {
+    const response = await axios.post(
+      'https://10.191.171.12:5443/PyPortal/EISHome/getSecurityQuestion/',
+      { uid },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Add API for forgot password
+export const postForgotPassword = async ({ uid, SecQ, password, answer }) => {
+  try {
+    const response = await axios.post(
+      'https://10.191.171.12:5443/PyPortal/EISHome/forgotPassword/',
+      { uid, SecQ, password, answer },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
