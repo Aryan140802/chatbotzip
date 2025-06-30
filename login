@@ -11,9 +11,6 @@ function Login({ onLogin }) {
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [errorType, setErrorType] = useState('');
-  const [showForgotPwd, setShowForgotPwd] = useState(false);
-
   // Forgot password popup states
   const [showEmpIdModal, setShowEmpIdModal] = useState(false);
   const [empId, setEmpId] = useState('');
@@ -28,49 +25,21 @@ function Login({ onLogin }) {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setErrorType('');
-    setShowForgotPwd(false);
-
     try {
       const response = await postLogin(username, password);
-      // You should adjust this block based on your backend's actual response structure!
       if (response.data.status === 302) {
         onLogin(response.data.username);
-      } else if (response.data.status === 401) {
-        setError('Wrong ID');
-        setErrorType('id');
-      } else if (response.data.status === 402) {
-        setError('Wrong password');
-        setErrorType('password');
-        setShowForgotPwd(true);
       } else {
         setError('Invalid credentials');
-        setErrorType('');
       }
     } catch (error) {
-      if (error.response && error.response.data) {
-        if (error.response.data.message === "wrong id") {
-          setError('Wrong ID');
-          setErrorType('id');
-        } else if (error.response.data.message === "wrong password") {
-          setError('Wrong password');
-          setErrorType('password');
-          setShowForgotPwd(true);
-        } else {
-          setError(error.response.data.message || 'Login failed');
-          setErrorType('');
-        }
-      } else {
-        setError('Unable to connect to server');
-        setErrorType('');
-      }
+      setError('Unable to connect to server');
     } finally {
       setLoading(false);
     }
   };
 
   // --- Forgot Password Flow ---
-
   // Open Modal 1 (enter Employee ID)
   const openForgotPwdModal = () => {
     setShowEmpIdModal(true);
@@ -166,9 +135,16 @@ function Login({ onLogin }) {
           <button type="button" onClick={handleRegisterRedirect}>
             Register
           </button>
-          {errorType === 'password' && showForgotPwd && (
-            <button type="button" onClick={openForgotPwdModal}>Forgot Password?</button>
-          )}
+          {/* Forgot Password link always visible */}
+          <div style={{marginTop: "10px"}}>
+            <a
+              href="#"
+              onClick={e => { e.preventDefault(); openForgotPwdModal(); }}
+              style={{ color: '#007bff', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.95em' }}
+            >
+              Forgot Password?
+            </a>
+          </div>
         </form>
         {forgotPwdMsg && <div className="info-message">{forgotPwdMsg}</div>}
       </div>
