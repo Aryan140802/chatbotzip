@@ -54,9 +54,8 @@ function Login({ onLogin }) {
     setForgotPwdMsg('');
     try {
       const res = await postGetSecurityQuestion(empId);
-      // Accept both possible keys due to typo
-      const secQ = res.data.securityQuestion ?? res.data.securtiyQuestion;
-      // If the key is present (even if empty), allow to proceed to next modal
+      // Accept typo key first, then correct key
+      const secQ = res.data.securtiyQuestion ?? res.data.securityQuestion;
       if (typeof secQ !== 'undefined') {
         setSecurityQ(secQ);
         setShowEmpIdModal(false);
@@ -186,64 +185,62 @@ function Login({ onLogin }) {
         </div>
       )}
 
-      {/* Security Question Modal (styled as login form) */}
+      {/* Security Question Modal (use login-form and login-container for styling) */}
       {showSecQModal && (
         <div className="modal-overlay">
-          <div className="modal-box modal-fade" style={{ padding: 0, background: 'none', boxShadow: 'none', minWidth: 'unset' }}>
-            <div className="login-container" style={{ minHeight: 'unset', background: 'none', boxShadow: 'none', position: 'static' }}>
-              <form className="login-form" style={{ margin: 0, width: '350px', zIndex: 2 }} onSubmit={handleSecQSubmit}>
-                <h2>Reset Password</h2>
-                {forgotPwdMsg && <div className="error-message">{forgotPwdMsg}</div>}
-                <input
-                  type="text"
-                  value={empId}
-                  readOnly
-                  placeholder="Employee ID"
-                  style={{ background: "rgba(255,255,255,0.08)", cursor: "not-allowed" }}
-                />
-                <input
-                  type="text"
-                  value={securityQ || ''}
-                  readOnly
-                  placeholder="Security Question"
-                  style={{ background: "rgba(255,255,255,0.08)", cursor: "not-allowed" }}
-                />
-                {securityQ === "" && (
-                  <div className="info-message" style={{ color: "orange" }}>
-                    No security question set for this user. Please contact admin if you cannot reset your password.
-                  </div>
-                )}
-                <input
-                  type="text"
-                  placeholder="Your Answer"
-                  value={securityAnswer}
-                  onChange={e => setSecurityAnswer(e.target.value)}
-                  required={securityQ !== ""}
-                  disabled={securityQ === ""}
-                />
-                <input
-                  type="password"
-                  placeholder="New Password"
-                  value={newPwd}
-                  onChange={e => setNewPwd(e.target.value)}
-                  required
-                />
-                <button type="submit" disabled={secQLoading || !securityQ}>
-                  {secQLoading ? 'Submitting...' : 'Submit'}
-                </button>
-                <button
-                  type="button"
-                  style={{
-                    background: '#e74c3c',
-                    color: '#fff',
-                    marginTop: '0.5rem'
-                  }}
-                  onClick={closeModals}
-                >
-                  Cancel
-                </button>
-              </form>
-            </div>
+          <div className="login-container" style={{ minHeight: 'unset', background: 'none', boxShadow: 'none', position: 'static' }}>
+            <form className="login-form" style={{ margin: 0, width: '350px', zIndex: 2 }} onSubmit={handleSecQSubmit}>
+              <h2>Reset Password</h2>
+              {forgotPwdMsg && <div className="error-message">{forgotPwdMsg}</div>}
+              <input
+                type="text"
+                value={empId}
+                readOnly
+                placeholder="Employee ID"
+                style={{ background: "rgba(255,255,255,0.08)", cursor: "not-allowed" }}
+              />
+              <input
+                type="text"
+                value={securityQ || ''}
+                readOnly
+                placeholder="Security Question"
+                style={{ background: "rgba(255,255,255,0.08)", cursor: "not-allowed" }}
+              />
+              {securityQ === "" && (
+                <div className="info-message" style={{ color: "orange" }}>
+                  No security question set for this user. Please contact admin if you cannot reset your password.
+                </div>
+              )}
+              <input
+                type="text"
+                placeholder="Your Answer"
+                value={securityAnswer}
+                onChange={e => setSecurityAnswer(e.target.value)}
+                required={securityQ !== ""}
+                disabled={securityQ === ""}
+              />
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPwd}
+                onChange={e => setNewPwd(e.target.value)}
+                required
+              />
+              <button type="submit" disabled={secQLoading || !securityQ}>
+                {secQLoading ? 'Submitting...' : 'Submit'}
+              </button>
+              <button
+                type="button"
+                style={{
+                  background: '#e74c3c',
+                  color: '#fff',
+                  marginTop: '0.5rem'
+                }}
+                onClick={closeModals}
+              >
+                Cancel
+              </button>
+            </form>
           </div>
         </div>
       )}
