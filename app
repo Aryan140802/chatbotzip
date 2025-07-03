@@ -32,8 +32,8 @@ function useDisableInspectElement(enabled) {
     if (!enabled) return;
 
     document.oncontextmenu = function() {
-    return false;
-}
+      return false;
+    };
 
     const handleKeyDown = (e) => {
       // F12
@@ -65,7 +65,7 @@ function useDisableInspectElement(enabled) {
     document.addEventListener('keydown', handleSelectStart);
 
     return () => {
-      document.removeEventListener('contextmenu',oncontextmenu );
+      document.removeEventListener('contextmenu', document.oncontextmenu);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('keydown', handleSelectStart);
@@ -125,7 +125,7 @@ function App() {
   // Inactivity time limit in ms (30 minutes)
   const INACTIVITY_LIMIT = 30 * 60 * 1000;
 
-  // Only disable inspect for users other than L1
+  // Only disable inspect for users other than ADMIN
   useDisableInspectElement(userLevel && userLevel !== 'ADMIN');
 
   // Check for existing login session on app load
@@ -135,7 +135,7 @@ function App() {
     const storedUserLevel = localStorage.getItem('userlevel');
     if (storedUsername && storedLoginTime && storedUserLevel) {
       setUsername(storedUsername);
-      setUserLevel(storedUserLevel);
+      setUserLevel(storedUserLevel); // <- ensure userLevel is set!
       setIsLoggedIn(true);
     }
   }, []);
@@ -146,6 +146,10 @@ function App() {
       const loginData = await loginApi(user, password);
       const now = Date.now();
       setUsername(user);
+
+      // Set userLevel from response!
+      setUserLevel(loginData.userLevel);
+      localStorage.setItem('userlevel', loginData.userLevel);
 
       setIsLoggedIn(true);
       localStorage.setItem('username', user);
@@ -180,6 +184,7 @@ function App() {
 
     setIsLoggedIn(false);
     setUsername('');
+    setUserLevel('');
 
     localStorage.clear();
     sessionStorage.clear();
