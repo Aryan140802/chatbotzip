@@ -373,11 +373,19 @@ export default function Header({
       return;
     }
     try {
-      await postAnnouncement(announcement, announcementTime);
-      setAnnouncementMsg('Announcement posted successfully!');
-      setTimeout(() => {
-        handleCloseAnnouncement();
-      }, 1200);
+      const res = await postAnnouncement(announcement, announcementTime);
+      // Handle status: "pending"
+      if (res && res.status === 'pending') {
+        setAnnouncementMsg('Your announcement is pending approval. Please contact admin for approval.');
+        setTimeout(() => {
+          handleCloseAnnouncement();
+        }, 2000);
+      } else {
+        setAnnouncementMsg('Announcement posted successfully!');
+        setTimeout(() => {
+          handleCloseAnnouncement();
+        }, 1200);
+      }
     } catch (err) {
       setAnnouncementMsg('Error posting announcement. Please try again.');
     }
