@@ -31,8 +31,9 @@ function useDisableInspectElement(enabled) {
   useEffect(() => {
     if (!enabled) return;
 
-    const handleContextMenu = (e) => e.preventDefault();
-    document.addEventListener('contextmenu', handleContextMenu);
+    document.oncontextmenu = function() {
+    return false;
+}
 
     const handleKeyDown = (e) => {
       // F12
@@ -64,7 +65,7 @@ function useDisableInspectElement(enabled) {
     document.addEventListener('keydown', handleSelectStart);
 
     return () => {
-      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('contextmenu',oncontextmenu );
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('dragstart', handleDragStart);
       document.removeEventListener('keydown', handleSelectStart);
@@ -80,7 +81,7 @@ async function loginApi(username, password) {
     credentials: 'include',
     body: JSON.stringify({ username, password })
   });
- 
+
   return response.json(); // should contain userLevel and other info
 }
 
@@ -125,13 +126,13 @@ function App() {
   const INACTIVITY_LIMIT = 30 * 60 * 1000;
 
   // Only disable inspect for users other than L1
-  useDisableInspectElement(userLevel && userLevel !== 'L1');
+  useDisableInspectElement(userLevel && userLevel !== 'ADMIN');
 
   // Check for existing login session on app load
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     const storedLoginTime = localStorage.getItem('loginTime');
-    const storedUserLevel = localStorage.getItem('userLevel');
+    const storedUserLevel = localStorage.getItem('userlevel');
     if (storedUsername && storedLoginTime && storedUserLevel) {
       setUsername(storedUsername);
       setUserLevel(storedUserLevel);
@@ -145,10 +146,10 @@ function App() {
       const loginData = await loginApi(user, password);
       const now = Date.now();
       setUsername(user);
-      setUserLevel(loginData.userLevel); // Set userLevel from API payload
+
       setIsLoggedIn(true);
       localStorage.setItem('username', user);
-      localStorage.setItem('userLevel', loginData.userLevel);
+
       localStorage.setItem('loginTime', now.toString());
       sessionStorage.setItem('loginTime', now.toString());
 
@@ -179,7 +180,7 @@ function App() {
 
     setIsLoggedIn(false);
     setUsername('');
-    setUserLevel('');
+
     localStorage.clear();
     sessionStorage.clear();
     clearAllCookies();
