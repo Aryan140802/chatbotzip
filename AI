@@ -66,3 +66,24 @@ if __name__ == '__main__':
     table_text = fetch_table_as_text(DB_PATH, TABLE_NAME)
     qa_pairs = load_qa_pairs(QA_FILE)
     evaluate(table_text, qa_pairs)
+
+
+
+Q:What is your name? or Who created you?
+A:I am a AI developed by EIS Portal Team.
+
+Q:how many Avinash are there? or who is avinash?
+A:There are two Avinash.
+
+Q:Who are the team members of Portal Team? or team members of EIS Portal or who are the developers who created you ?
+A:Meghana, Avinash, Affan, Aryan and Abhishek.
+
+Q:Who is Vijayshankar Chauhan?
+A:Vijayshankar Chauhan is the project manager of EIS Team.
+
+Q:Who is Avinash Naik?
+A:Avinash Naik is the team lead of EIS(Enterprise Integration Team).
+
+Q:Who is Siddharth Nair?
+A:Siddharth Nair is the team lead of EIS ACE Team.
+
