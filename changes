@@ -6,3 +6,60 @@ totalAlerts
 0
 : 
 {id: 1268, portal: "PortMonitoring", effectedComponent: "LOGGING_SYS_01 of 10.177.40.155",…}
+import csv
+import subprocess
+from difflib import SequenceMatcher
+
+def load_table_as_text(csv_file):
+    with open(csv_file, newline='') as file:
+        reader = csv.reader(file)
+        rows = list(reader)
+
+    table_str = ''
+    for row in rows:
+        table_str += ' | '.join(row) + '\n'
+    return table_str
+
+def ask_mistral(prompt):
+    result = subprocess.run(
+        ["ollama", "run", "mistral"],
+        input=prompt.encode('utf-8'),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    return result.stdout.decode('utf-8').strip()
+
+def fuzzy_match(a, b, threshold=0.8):
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio() >= threshold
+
+# Load table
+table_text = load_table_as_text('sales_data.csv')
+
+# Load evaluation questions
+correct = 0
+total = 0
+
+with open('qa_table_eval.csv', newline='', encoding='utf-8') as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        question = row['question']
+        expected = row['expected'].strip()
+
+        prompt = f"""Here is a table:
+
+{table_text}
+
+Question: {question}
+Answer:"""
+
+        response = ask_mistral(prompt).strip()
+        print(f"\nQ: {question}")
+        print(f"Expected: {expected}")
+        print(f"Model Answer: {response}")
+
+        if fuzzy_match(response, expected):
+            correct += 1
+        total += 1
+
+accuracy = correct / total * 100
+print(f"\n✅ Model Accuracy: {correct}/{total} = {accuracy:.2f}%")
