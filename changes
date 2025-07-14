@@ -1,65 +1,51 @@
-{,…}
-totalAlerts
-: 
-[{id: 1268, portal: "PortMonitoring", effectedComponent: "LOGGING_SYS_01 of 10.177.40.155",…},…]
-[0 … 99]
-0
-: 
-{id: 1268, portal: "PortMonitoring", effectedComponent: "LOGGING_SYS_01 of 10.177.40.155",…}
-import csv
-import subprocess
-from difflib import SequenceMatcher
+from langchain.llms import Ollama
+from sentence_transformers import SentenceTransformer, util
+import time
+import re
 
-def load_table_as_text(csv_file):
-    with open(csv_file, newline='') as file:
-        reader = csv.reader(file)
-        rows = list(reader)
+# ✅ 1. Load Q&A from text file
+def load_qa_from_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as file:
+        text = file.read()
 
-    table_str = ''
-    for row in rows:
-        table_str += ' | '.join(row) + '\n'
-    return table_str
+    # Split based on Q: and A:
+    qa_pairs = re.findall(r'Q:(.*?)A:(.*?)(?=Q:|$)', text, re.DOTALL)
+    qa_pairs = [(q.strip(), a.strip()) for q, a in qa_pairs if q.strip() and a.strip()]
+    return qa_pairs
 
-def ask_mistral(prompt):
-    result = subprocess.run(
-        ["ollama", "run", "mistral"],
-        input=prompt.encode('utf-8'),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-    return result.stdout.decode('utf-8').strip()
+qa_list = load_qa_from_file('qa.txt')
 
-def fuzzy_match(a, b, threshold=0.8):
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio() >= threshold
+# ✅ 2. Load models
+llm = Ollama(model="mistral")
+embedder = SentenceTransformer('all-MiniLM-L6-v2')  # You can use another model too
+threshold = 0.75  # similarity threshold
 
-# Load table
-table_text = load_table_as_text('sales_data.csv')
-
-# Load evaluation questions
+# ✅ 3. Evaluate
 correct = 0
-total = 0
+total = len(qa_list)
 
-with open('qa_table_eval.csv', newline='', encoding='utf-8') as file:
-    reader = csv.DictReader(file)
-    for row in reader:
-        question = row['question']
-        expected = row['expected'].strip()
+for idx, (question, expected_answer) in enumerate(qa_list):
+    print(f"\n🔹 Question {idx+1}: {question}")
 
-        prompt = f"""Here is a table:
+    try:
+        generated_answer = llm.invoke(question)
+        print(f"🔸 Expected:  {expected_answer[:120]}...")
+        print(f"🔸 Generated: {generated_answer[:120]}...")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        continue
 
-{table_text}
+    embeddings = embedder.encode([expected_answer, generated_answer], convert_to_tensor=True)
+    similarity = util.pytorch_cos_sim(embeddings[0], embeddings[1]).item()
+    print(f"🔍 Similarity Score: {similarity:.3f}")
 
-Question: {question}
-Answer:"""
+    if similarity >= threshold:
+        correct += 1
 
-        response = ask_mistral(prompt).strip()
-        print(f"\nQ: {question}")
-        print(f"Expected: {expected}")
-        print(f"Model Answer: {response}")
+    time.sleep(1)
 
-        if fuzzy_match(response, expected):
-            correct += 1
-        total += 1
-
-accuracy = correct / total * 100
-print(f"\n✅ Model Accuracy: {correct}/{total} = {accuracy:.2f}%")
+# ✅ 4. Final Results
+accuracy = (correct / total) * 100 if total > 0 else 0
+print(f"\n Total Questions: {total}")
+print(f"Correct Matches (>{threshold}): {correct}")
+print(f" Semantic Accuracy: {accuracy:.2f}%")
