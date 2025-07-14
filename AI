@@ -1,0 +1,68 @@
+import sqlite3
+import subprocess
+import difflib
+
+# --- CONFIGURATION ---
+DB_PATH = 'your_data.db'       # Path to your SQLite DB
+TABLE_NAME = 'your_table'      # Name of the table in DB
+QA_FILE = 'qa.txt'             # Path to question/answer file
+
+# --- STEP 1: Read SQL table as plain text ---
+def fetch_table_as_text(db_path, table_name):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT * FROM {table_name}")
+    rows = cursor.fetchall()
+    headers = [desc[0] for desc in cursor.description]
+    conn.close()
+
+    text = ' | '.join(headers) + '\n'
+    for row in rows:
+        text += ' | '.join(str(cell) for cell in row) + '\n'
+    return text
+
+# --- STEP 2: Read Q&A pairs from text file ---
+def load_qa_pairs(filepath):
+    qa_pairs = []
+    with open(filepath, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+    q, a = '', ''
+    for line in lines:
+        if line.startswith('Q:'):
+            q = line[2:].strip()
+        elif line.startswith('A:'):
+            a = line[2:].strip()
+            qa_pairs.append((q, a))
+    return qa_pairs
+
+# --- STEP 3: Ask question to Mistral via Ollama ---
+def ask_mistral(prompt):
+    result = subprocess.run(
+        ["ollama", "run", "mistral"],
+        input=prompt.encode('utf-8'),
+        stdout=subprocess.PIPE
+    )
+    return result.stdout.decode().strip()
+
+# --- STEP 4: Evaluate accuracy ---
+def evaluate(table_text, qa_pairs):
+    correct = 0
+    for i, (question, expected) in enumerate(qa_pairs):
+        prompt = f"""Here is a table:\n{table_text}\n\nQuestion: {question}\nAnswer:"""
+        response = ask_mistral(prompt)
+        sim = difflib.SequenceMatcher(None, response.lower(), expected.lower()).ratio()
+        print(f"\n[{i+1}] Question: {question}")
+        print(f"Expected: {expected}")
+        print(f"Model:    {response}")
+        print(f"Match %:  {sim:.2f}")
+        if sim > 0.8:
+            correct += 1
+    accuracy = correct / len(qa_pairs)
+    print(f"\nFinal Accuracy: {accuracy*100:.2f}%")
+    return accuracy
+
+# --- RUN ---
+if __name__ == '__main__':
+    table_text = fetch_table_as_text(DB_PATH, TABLE_NAME)
+    qa_pairs = load_qa_pairs(QA_FILE)
+    evaluate(table_text, qa_pairs)
