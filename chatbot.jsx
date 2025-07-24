@@ -4,7 +4,7 @@ import TypingIndicator from "./TypingIndicator";
 import "../styles/Chatbot.css";
 import send from "../assets/Send.png";
 import logo from "../assets/logobot.jpg";
-import { getPost, postMessage } from "../api/PostApi";
+import { getPost } from "../api/PostApi"; // Removed postMessage import
 
 // Utility: Format dynamic bot message (safe HTML for <b> etc.)
 const formatDynamicMessage = (text) => {
@@ -200,7 +200,7 @@ const DynamicForm = ({
 }) => {
   const [fieldDefs, setFieldDefs] = useState(fields);
   const [formData, setFormData] = useState(() =>
-    Object.fromEntries(fields.map(f => [f.name, f.value || ""]))
+    Object.fromEntries(fields.map(f => [f.name, f.value || ""])
   );
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -480,6 +480,33 @@ const Chatbot = ({ setChatbotMinimized }) => {
   const timeoutRef = useRef(null);
   const API_TIMEOUT = 200000;
 
+  // New API call function
+  const postToChatModel = async (prompt) => {
+    try {
+      const payload = {
+        prompt: prompt,
+        model: "myllm:latest"
+      };
+      
+      const response = await fetch("https://10.191.171.12:5443/EISHOME_TEST/aichat/chatModelFarNew/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error posting to chat model:", error);
+      throw error;
+    }
+  };
+
   const clearCurrentTimeout = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -580,27 +607,18 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     try {
       setApiTimeout(() => { });
-      const res = await postMessage(newMessage);
+      const res = await postToChatModel(newMessage);
       clearCurrentTimeout();
 
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
+      const botResponse = {
+        id: Date.now(),
+        text: res.response || "I couldn't process that request.",
+        sender: "bot",
+        time: getCurrentTime(),
+      };
 
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest, {});
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
+      setMessages((prev) => [...prev, botResponse]);
+      setFormDisabled(!checkEnableForm(botResponse.text));
     } catch {
       clearCurrentTimeout();
       setMessages((prev) => [
@@ -633,29 +651,29 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     try {
       setApiTimeout(() => { });
-      const res = await postMessage(cleanedOpt);
+      const res = await postToChatModel(cleanedOpt);
       clearCurrentTimeout();
 
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: latest.message || "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
+      const botResponse = {
+        id: Date.now(),
+        text: res.response || "I couldn't process that request.",
+        sender: "bot",
+        time: getCurrentTime(),
+      };
 
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest, {});
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
+      setMessages((prev) => [...prev, botResponse]);
+      setFormDisabled(!checkEnableForm(botResponse.text));
     } catch {
       clearCurrentTimeout();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "An error occurred. Please try again.",
+          sender: "bot",
+          time: getCurrentTime(),
+        },
+      ]);
     }
 
     setIsTyping(false);
@@ -671,13 +689,12 @@ const Chatbot = ({ setChatbotMinimized }) => {
         setIsTyping(false);
         return;
       }
-      const payload = { message: filteredData };
-      const res = await postMessage(payload);
+      const prompt = `Process form field change: ${JSON.stringify(filteredData)}`;
+      const res = await postToChatModel(prompt);
       clearCurrentTimeout();
 
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest && hasFormFields(latest)) {
-        const updatedFields = extractFormFields(latest, fieldData);
+      if (res.response && hasFormFields({ message: res.response })) {
+        const updatedFields = extractFormFields({ message: res.response }, fieldData);
         setActiveForm(updatedFields);
         setCurrentFormFields(updatedFields);
       }
@@ -693,7 +710,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setCurrentFormType(null);
 
     const completeFormData = filterNonEmptyFields(formData);
-
     const formattedText = formatFormDataToSentence(formData, originalFields, currentFormType);
 
     const userMessage = {
@@ -709,28 +725,19 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
     try {
       setApiTimeout(() => { });
-      const payload = { message: completeFormData };
-      const res = await postMessage(payload);
+      const prompt = `Process this form data: ${formattedText}`;
+      const res = await postToChatModel(prompt);
       clearCurrentTimeout();
 
-      const latest = res.data.chat_history?.slice(-1)[0];
-      if (latest) {
-        const botResponse = {
-          id: Date.now(),
-          text: typeof latest.message === 'string' ? latest.message : "",
-          sender: "bot",
-          time: getCurrentTime(),
-          options: latest.options || [],
-        };
+      const botResponse = {
+        id: Date.now(),
+        text: res.response || "I've processed your form data.",
+        sender: "bot",
+        time: getCurrentTime(),
+      };
 
-        if (hasFormFields(latest)) {
-          botResponse.formFields = extractFormFields(latest, completeFormData);
-          botResponse.isFormMessage = true;
-        }
-
-        setMessages((prev) => [...prev, botResponse]);
-        setFormDisabled(!checkEnableForm(botResponse.text));
-      }
+      setMessages((prev) => [...prev, botResponse]);
+      setFormDisabled(!checkEnableForm(botResponse.text));
     } catch (error) {
       clearCurrentTimeout();
       setMessages((prev) => [
@@ -836,7 +843,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
                             displayText === "DO YOU WANT MORE DETAILS?:" ||
                             displayText === "do you want more details?" ||
                             displayText === "do you want more details" ||
-                            displayText === "do you want more details?:" ;
+                            displayText === "do you want more details?:";
 
                           if (isPlainText) {
                             return (
