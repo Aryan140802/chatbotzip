@@ -35,7 +35,7 @@ const formatDynamicMessage = (text) => {
       });
       return `<div class="formatted-card employee-info">${formattedLines.join('')}</div>`;
     }
-    const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))|(?:(.*?)\s*:\s*<b>(.*?)<\/b>)/gs;
+    const pattern = /(?:<b>(.*?)<\/b>:\s*(.*?))/gs;
     const lines = [];
     let match;
     while ((match = pattern.exec(text)) !== null) {
@@ -75,7 +75,7 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
         const fieldLabel = fieldLabelsMap[key] || key;
         const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
         if (value === null || value === undefined || value === '') {
-          sentences.push(`${formattedLabel}: No value given`);
+          sentences.push(``);
         } else {
           sentences.push(`${formattedLabel}: "${value}"`);
         }
@@ -86,13 +86,13 @@ const formatFormDataToSentence = (formData, originalFields, formType = null) => 
       const fieldLabel = fieldLabelsMap[key] || key;
       const formattedLabel = fieldLabel.charAt(0).toUpperCase() + fieldLabel.slice(1);
       if (value === null || value === undefined || value === '') {
-        sentences.push(`${formattedLabel}: No value given`);
+        sentences.push(``);
       } else {
         sentences.push(`${formattedLabel}: "${value}"`);
       }
     });
   }
-  return sentences.length > 0 ? sentences.join(', ') : "No values provided";
+  return sentences.length > 0 ? sentences.join(' ') : "no values given ";
 };
 
 const hasFormFields = (response) => {
@@ -119,15 +119,26 @@ const determineFieldType = (fieldName, fieldValue) => {
     return 'select';
   }
   if (typeof fieldValue === 'string' && fieldValue.trim() !== '' && fieldValue !== 'date') {
-    return 'textarea';
+    return 'text';
   }
   return 'text';
 };
 
 const determineFormType = (fields) => {
   const hasServiceField = fields.some(field => field.name.toLowerCase().includes('service'));
-  const hasExpiryOrCreatedField = fields.some(field => field.name.toLowerCase().includes('expiry') || field.name.toLowerCase().includes('created'));
+  const hasExpiryOrCreatedField = fields.some(field =>
+    field.name.toLowerCase().includes('expiry') ||
+    field.name.toLowerCase().includes('created')
+  );
+
+  // Check if this is a filter form
+  const isFilterForm = fields.some(field =>
+    field.name.toLowerCase().includes('filter') &&
+    Array.isArray(field.options)
+  );
+
   if (hasServiceField) return 'workload';
+  if (isFilterForm) return 'filter';
   if (hasExpiryOrCreatedField) return 'multiple';
   return 'default';
 };
@@ -138,13 +149,12 @@ const filterNonEmptyFields = (obj) =>
       ([, value]) =>
         value !== null &&
         value !== undefined &&
-        value !== "date" && // <-- extra guard: don't send "date" string value
+        value !== "date" &&
         !(typeof value === "string" && value.trim() === "") &&
         !(Array.isArray(value) && value.length === 0)
     )
   );
 
-// --- FIXED: Always use backend options to determine select fields! ---
 const extractFormFields = (response, currentValues = {}) => {
   if (!hasFormFields(response)) return null;
   return Object.entries(response.message).map(([name, value]) => {
@@ -162,7 +172,7 @@ const extractFormFields = (response, currentValues = {}) => {
     if (typeof currentValues[name] !== "undefined") {
       initialValue = currentValues[name];
     } else if (fieldType === "date" && value === "date") {
-      initialValue = ""; // <-- fix: treat "date" as empty string for date fields
+      initialValue = "";
     } else if (Array.isArray(value)) {
       initialValue = "";
     } else {
@@ -180,7 +190,6 @@ const extractFormFields = (response, currentValues = {}) => {
   });
 };
 
-// --- DynamicForm Subcomponent ---
 const DynamicForm = ({
   fields,
   onSubmit,
@@ -195,7 +204,8 @@ const DynamicForm = ({
   );
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [selectedFilter, setSelectedFilter] = useState(null);
+  const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
   useEffect(() => {
     setFieldDefs(fields);
     setFormData(current => {
@@ -216,6 +226,33 @@ const DynamicForm = ({
       return merged;
     });
   }, [fields]);
+
+  useEffect(() => {
+    if (formType === 'filter' && formData.filter) {
+      const newSelectedFilter = formData.filter.toLowerCase();
+      if (newSelectedFilter !== selectedFilter) {
+        setSelectedFilter(newSelectedFilter);
+
+        setFieldDefs(prevFields =>
+          prevFields.map(field => {
+            if (field.name.toLowerCase() === 'expires') {
+              return {
+                ...field,
+                required: newSelectedFilter.includes('filterexpired')
+              };
+            }
+            if (field.name.toLowerCase() === 'created') {
+              return {
+                ...field,
+                required: newSelectedFilter.includes('filtercreated')
+              };
+            }
+            return field;
+          })
+        );
+      }
+    }
+  }, [formData.filter, formType, selectedFilter]);
 
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
@@ -249,8 +286,17 @@ const DynamicForm = ({
 
   const handleSelectChange = async (name, value) => {
     let updated = { ...formData, [name]: value };
-    updated = applyCascadingLogic(updated, name);
-    setFormData(updated); // update immediately so UI reflects the change!
+
+    if (formType === 'filter' && name.toLowerCase() === 'filter') {
+      updated = applyCascadingLogic(updated, name);
+      setSelectedFilter(value.toLowerCase());
+    } else {
+      updated = applyCascadingLogic(updated, name);
+    }
+
+    setFormData(updated);
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
+
     if (onFieldChange) {
       const filtered = filterNonEmptyFields(updated);
       await onFieldChange(filtered, name);
@@ -259,7 +305,19 @@ const DynamicForm = ({
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const missing = fieldDefs.filter(f => f.required && !formData[f.name]);
+
+    const missing = fieldDefs.filter(f => {
+      if (formType === 'filter' && selectedFilter) {
+        if (selectedFilter.includes('filterexpired')) {
+          return f.required && f.name.toLowerCase() === 'expires' && !formData[f.name];
+        }
+        if (selectedFilter.includes('filtercreated')) {
+          return f.required && f.name.toLowerCase() === 'created' && !formData[f.name];
+        }
+      }
+      return f.required && !formData[f.name];
+    });
+
     if (missing.length > 0) {
       setErrors(prev => ({
         ...prev,
@@ -267,14 +325,25 @@ const DynamicForm = ({
       }));
       return;
     }
+
     setIsSubmitting(true);
     await onSubmit(formData, fieldDefs);
     setIsSubmitting(false);
   };
 
-  // Check if all required fields are filled (for workload form, used to disable submit)
   const allRequiredFilled = fieldDefs
-    .filter(f => f.required)
+    .filter(f => {
+      if (formType === 'filter' && selectedFilter) {
+        if (selectedFilter.includes('filterexpired')) {
+          return f.required && f.name.toLowerCase() === 'expires';
+        }
+        if (selectedFilter.includes('filtercreated')) {
+          return f.required && f.name.toLowerCase() === 'created';
+        }
+        return false;
+      }
+      return f.required;
+    })
     .every(f => !!formData[f.name]);
 
   const renderField = (field) => {
@@ -288,11 +357,16 @@ const DynamicForm = ({
     const value = formData[name] || "";
     const error = errors[name];
     const isService = name === "service";
+    const isRequiredField = field.required;
+
     switch (type) {
       case "select":
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
+            <label className="form-label">
+              {isRequiredField && <span style={{ color: "red" }}>* </span>}
+              {label.replace('* ', '')}
+            </label>
             <select
               value={value}
               onChange={e => handleSelectChange(name, e.target.value)}
@@ -312,7 +386,10 @@ const DynamicForm = ({
       case "date":
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
+            <label className="form-label">
+              {isRequiredField && <span style={{ color: "red" }}>* </span>}
+              {label.replace('* ', '')}
+            </label>
             <input
               type="date"
               value={value}
@@ -326,7 +403,10 @@ const DynamicForm = ({
       case "textarea":
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
+            <label className="form-label">
+              {isRequiredField && <span style={{ color: "red" }}>* </span>}
+              {label.replace('* ', '')}
+            </label>
             <textarea
               value={value}
               onChange={e => handleInputChange(name, e.target.value)}
@@ -341,7 +421,10 @@ const DynamicForm = ({
       default:
         return (
           <div key={name} className="form-field">
-            <label className="form-label">{isService && <span style={{ color: "red" }}>* </span>}{label.replace('* ', '')}</label>
+            <label className="form-label">
+              {isRequiredField && <span style={{ color: "red" }}>* </span>}
+              {label.replace('* ', '')}
+            </label>
             <input
               type="text"
               value={value}
@@ -371,7 +454,8 @@ const DynamicForm = ({
             disabled={
               isSubmitting ||
               isSubmittingFromParent ||
-              (formType === "workload" && !allRequiredFilled)
+              (formType === "workload" && !allFieldsFilled) ||
+              (formType === "filter" && !allRequiredFilled)
             }
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
@@ -382,7 +466,6 @@ const DynamicForm = ({
   );
 };
 
-// --- Main Chatbot Component ---
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -395,7 +478,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
 
   const messagesEndRef = useRef(null);
   const timeoutRef = useRef(null);
-  const API_TIMEOUT = 20000;
+  const API_TIMEOUT = 200000;
 
   const clearCurrentTimeout = () => {
     if (timeoutRef.current) {
@@ -578,7 +661,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     setIsTyping(false);
   };
 
-  // Handle cascading field changes for forms
   const handleFieldChange = async (fieldData, changedFieldName) => {
     try {
       setIsTyping(true);
@@ -606,7 +688,6 @@ const Chatbot = ({ setChatbotMinimized }) => {
     }
   };
 
-  // Form submit handler for forms
   const handleFormSubmit = async (formData, originalFields) => {
     setActiveForm(null);
     setCurrentFormType(null);
@@ -751,7 +832,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
                           const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
                           const isPlainText =
                             displayText.includes("please select one by name") ||
-                            displayText.includes("please select from the following options");
+                             displayText.includes("please select from following options")||
+                            displayText === "DO YOU WANT MORE DETAILS?:" ||
+                            displayText === "do you want more details?" ||
+                            displayText === "do you want more details" ||
+                            displayText === "do you want more details?:" ;
 
                           if (isPlainText) {
                             return (
