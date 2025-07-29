@@ -900,3 +900,697 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+
+
+
+
+
+import axios from 'axios';
+
+// Create axios instance with custom configuration
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/EISHOME_TEST/',
+ // baseURL: 'https://10.191.171.12:5443/EISHOME/'
+  timeout: 100000,
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Modified postMessage to always send data under "message"
+export const postMessage = (data) => {
+  if (typeof data === 'string') {
+    return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
+  }
+  if (Array.isArray(data)) {
+    return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
+  }
+  if (typeof data === 'object' && data !== null) {
+    if (data.hasOwnProperty('message')) {
+      return api.post('EIS-GINI/', data, { timeout: 100000 });
+    }
+    return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
+  }
+  return api.post('EIS-GINI/', { "message": data }, { timeout: 100000 });
+};
+
+// All other API functions remain unchanged
+export const getPost = () => {
+  return api.get('EIS-GINI/', { timeout: 100000 });
+};
+
+export const getServiceSys = () => {
+  return api.get('EISHome/servicewise_sys/');
+};
+
+export const getServiceExp = () => {
+  return api.get('EISHome/servicewise_exp/');
+};
+
+export const getIpwiseSys = () => {
+  return api.get('EISHome/ipwise_sys/');
+};
+
+export const getIpwiseExp = () => {
+  return api.get('EISHome/ipwise_exp/');
+};
+
+export const getPortwiseSys = () => {
+  return api.get('EISHome/portwise_sys/');
+};
+
+export const getPortwiseExp = () => {
+  return api.get('EISHome/portwise_exp/');
+};
+
+export const getServiceWiseExp5 = () => {
+  return api.get('EISHome/servicewise_top5_exp/');
+};
+
+export const getServiceWiseSys5 = () => {
+  return api.get('EISHome/servicewise_top5_sys/');
+};
+
+export const getIpWiseExp5 = () => {
+  return api.get('EISHome/ipwise_exp_top5/');
+};
+
+export const getIpWiseSys5 = () => {
+  return api.get('EISHome/ipwise_sys_top5/');
+};
+
+export const getPortWiseExp5 = () => {
+  return api.get('EISHome/portwise_top5_exp/');
+};
+
+export const getPortWiseSys5 = () => {
+  return api.get('EISHome/portwise_top5_sys/');
+};
+
+export const getFARExpires = () => {
+  return api.get('EISHome/farExpiresNext5M/');
+};
+
+// NEW: Add the FAR details specific API function
+export const getFARDetailsSpecific = async (dataFilter) => {
+  try {
+    const userId = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+
+    const response = await api.post('EISHome/farSpecificAll/', {
+      "data_filter": dataFilter,
+      "userId": userId,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch FAR details:', error);
+    throw error;
+  }
+};
+
+export const postGraphDownload = async ({ path, time }) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const payload = {
+      uid,
+      password,
+      time,
+      download: true
+    };
+    const response = await api.post(path, payload);
+    return response;
+  } catch (error) {
+    console.error("Error in postGraphDownload:", error);
+    throw error;
+  }
+};
+
+// Time-based post functions remain unchanged
+export const postServiceWiseExp5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/servicewise_top5_FiveM/EXP/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+export const postServiceWiseSys5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/servicewise_top5_FiveM/SYS/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+export const postIpWiseExp5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/ipwise_top5_FiveM/EXP/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+export const postIpWiseSys5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/ipwise_top5_FiveM/SYS/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+export const postPortWiseExp5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/portwise_top5_FiveM/EXP/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+export const postPortWiseSys5 = async (time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/portwise_top5_FiveM/SYS/', {
+      "time": time,
+      "uid": uid,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch error:', error);
+    throw error;
+  }
+};
+
+// === UPDATED MQ API FUNCTIONS BELOW ===
+
+// POST to EISHome/mqOverall/<layer>/ with { username, password }
+export const postMqOverall = async (layer) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqOverall/${layer}/`, {
+      uid,
+      password,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqOverall:', error);
+    throw error;
+  }
+};
+
+// POST to EISHome/mqSource/<layer>/ with { username, password }
+export const postMqSource = async (layer) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqSource/${layer}/`, {
+      uid,
+      password,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqSource:', error);
+    throw error;
+  }
+};
+
+// POST to EISHome/mqHourly/<layer>/ with { username, password, hour }
+export const postMqHourly = async (layer, hour) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post(`EISHome/mqHourly/${layer}/`, {
+      uid,
+      password,
+      hour,
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch mqHourly:', error);
+    throw error;
+  }
+};
+
+// Download mqgraph (source or overall) given a path ending with /layer/
+export const downloadMqGraph = async (path) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    // Ensure the path ends with a slash
+    if (!path.endsWith('/')) {
+      path += '/';
+    }
+    const payload = {
+      uid,
+      password,
+      download: true
+    };
+    // If the API returns a file, use responseType: 'blob'
+    const response = await api.post(path, payload, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Could not download mqgraph:', error);
+    throw error;
+  }
+};
+
+// Download mqHourly given a path ending with /layer/ and an hour
+export const downloadMqHourly = async (path, hour) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    // Ensure the path ends with a slash
+    if (!path.endsWith('/')) {
+      path += '/';
+    }
+    const payload = {
+      uid,
+      password,
+      hour,
+      download: true
+    };
+    // If the API returns a file, use responseType: 'blob'
+    const response = await api.post(path, payload, { responseType: 'blob' });
+    return response;
+  } catch (error) {
+    console.error('Could not download mqHourly:', error);
+    throw error;
+  }
+};
+
+// === ANNOUNCEMENT API ===
+export const postAnnouncement = async (announcement, time) => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const payload = {
+      announcement,
+      time: time && !isNaN(Number(time)) ? Number(time) : 24,
+      uid,
+      password,
+    };
+    const response = await api.post('EISHome/announcement/', payload, {
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not post announcement:', error);
+    throw error;
+  }
+};
+
+export const fetchLatestAnnouncement = async () => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const res = await api.post('EISHome/announcement/', { uid, password });
+    // Assuming the response is { announcement: "..." }
+    return res.data.announcement || "";
+  } catch (error) {
+    console.error('Could not fetch announcement:', error);
+    return "";
+  }
+};
+
+// === ALERT MODAL API ===
+export const fetchPortalAlerts = async () => {
+  try {
+    const uid = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+    const response = await api.post('EISHome/getPortalAlerts/', {
+      uid,
+      password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch portal alerts:', error);
+    throw error;
+  }
+};
+
+// Add API for getting security question
+export const postGetSecurityQuestion = async (uid) => {
+  try {
+    const response = await axios.post(
+      'https://10.191.171.12:5443/EISHOME_TEST/EISHome/getSecurityQuestion/',
+    // const response = await axios.post(
+    //  'https://10.191.171.12:5443/EISHOME/EISHome/getSecurityQuestion/',
+
+      { uid },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Add API for forgot password
+export const postForgotPassword = async ({ uid, securityQuestion, password,answer }) => {
+  try {
+    const response = await axios.post(
+      'https://10.191.171.12:5443/EISHOME_TEST/EISHome/forgotPassword/',
+     // 'https://10.191.171.12:5443/EISHOME/EISHome/forgotPassword/',
+      { uid, securityQuestion, password ,answer },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+
+
+
+import React, { useState, useEffect, useRef } from 'react';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer';
+import Menu from './components/Menu';
+import Dashboard from './components/Dashboard';
+import Chatbot from './components/ChatBot';
+import Login from './components/Login';
+import './App.css';
+import { fetchLatestAnnouncement } from './api/PostApi';
+
+// Robust function to clear all cookies (within JS limitations)
+function clearAllCookies() {
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    // Remove cookie for root path
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    // Attempt to remove cookie for every path segment
+    const pathSegments = window.location.pathname.split('/');
+    let path = '';
+    for (let i = 0; i < pathSegments.length; i++) {
+      path += (path.endsWith('/') ? '' : '/') + pathSegments[i];
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path};`;
+    }
+  }
+}
+
+// Function to conditionally disable inspect element
+function useDisableInspectElement(enabled) {
+  useEffect(() => {
+    if (!enabled) return;
+
+    document.oncontextmenu = function() {
+      return false;
+    };
+
+    const handleKeyDown = (e) => {
+      // F12
+      if (e.keyCode === 123) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      // Ctrl+Shift+I/J/C/U, Ctrl+U (view source), Cmd+Opt+I (Mac)
+      if (
+        (e.ctrlKey && e.shiftKey && ['I', 'J', 'C', 'U'].includes(e.key.toUpperCase())) ||
+        (e.ctrlKey && e.key.toUpperCase() === 'U') ||
+        (e.metaKey && e.altKey && e.key.toUpperCase() === 'I')
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+
+    const handleDragStart = (e) => e.preventDefault();
+    document.addEventListener('dragstart', handleDragStart);
+
+    const handleSelectStart = (e) => {
+      if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    document.addEventListener('keydown', handleSelectStart);
+
+    return () => {
+      document.removeEventListener('contextmenu', document.oncontextmenu);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('keydown', handleSelectStart);
+    };
+  }, [enabled]);
+}
+
+// Login API call to get userLevel and other details
+async function loginApi(username, password) {
+  const response = await fetch('https://10.191.171.12:5443/EISHOME_TEST/EISHome/newLogin/',
+ // const response = await fetch('https://10.191.171.12:5443/EISHOME/EISHome/newLogin/',
+          {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ username, password })
+  });
+
+  return response.json(); // should contain userLevel and other info
+}
+
+// Logout API call
+async function callLogoutAPI(username) {
+  try {
+    const response = await fetch('https://10.191.171.12:5443/EISHOME_TEST/EISHome/newLogout/',
+   // const response = await fetch('https://10.191.171.12:5443/EISHOME/EISHome/newLogout/',
+            {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        username: username,
+        timestamp: new Date().toISOString()
+      })
+    });
+
+    if (!response.ok) {
+      console.warn('Logout API call failed:', response.status, response.statusText);
+    } else {
+      console.log('Logout API call successful');
+    }
+  } catch (error) {
+    console.error('Error calling logout API:', error);
+    // Don't prevent logout even if API call fails
+  }
+}
+
+function App() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [chatbotMinimized, setChatbotMinimized] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [username, setUsername] = useState('');
+  const [announcement, setAnnouncement] = useState('');
+  const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false);
+  const [userLevel, setUserLevel] = useState('');
+  const inactivityTimer = useRef(null);
+
+  // Inactivity time limit in ms (60 minutes)
+  const INACTIVITY_LIMIT = 60 * 60 * 1000;
+
+  // Only disable inspect for users other than ADMIN
+  useDisableInspectElement(userLevel && userLevel !== 'ADMIN');
+
+  // Check for existing login session on app load
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    const storedLoginTime = localStorage.getItem('loginTime');
+    const storedUserLevel = localStorage.getItem('userlevel');
+    if (storedUsername && storedLoginTime && storedUserLevel) {
+      setUsername(storedUsername);
+      setUserLevel(storedUserLevel); // <- ensure userLevel is set!
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  // Set login timestamp and userLevel on login
+  const handleLogin = async (user, password) => {
+    try {
+      const loginData = await loginApi(user, password);
+      const now = Date.now();
+      setUsername(user);
+
+      // Set userLevel from response!
+      setUserLevel(loginData.userLevel);
+
+      setIsLoggedIn(true);
+      localStorage.setItem('username', user);
+
+      localStorage.setItem('loginTime', now.toString());
+      sessionStorage.setItem('loginTime', now.toString());
+
+      // Fetch announcement and show popup
+      const ann = await fetchLatestAnnouncement();
+      setAnnouncement(ann);
+      if (ann) setShowAnnouncementPopup(true);
+    } catch (err) {
+      alert('Login failed: ' + err.message);
+    }
+  };
+
+  // On login from persisted session, fetch announcement
+  useEffect(() => {
+    if (isLoggedIn && !announcement) {
+      (async () => {
+        const ann = await fetchLatestAnnouncement();
+        setAnnouncement(ann);
+        if (ann) setShowAnnouncementPopup(true);
+      })();
+    }
+    // eslint-disable-next-line
+  }, [isLoggedIn]);
+
+  // Logout and flush session storage, local storage, cookies, and caches
+  const handleLogout = async () => {
+    await callLogoutAPI(username);
+
+    setIsLoggedIn(false);
+    setUsername('');
+    setUserLevel('');
+
+    localStorage.clear();
+    sessionStorage.clear();
+    clearAllCookies();
+
+    if ('caches' in window) {
+      caches.keys().then((names) => {
+        for (let name of names) {
+          caches.delete(name);
+        }
+      });
+    }
+    // Optionally, redirect or show a message here
+  };
+
+  // Auto logout after 30 min of inactivity
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const resetInactivityTimer = () => {
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = setTimeout(() => {
+        alert('You have been logged out due to 60 minutes of inactivity.');
+        handleLogout();
+      }, INACTIVITY_LIMIT);
+    };
+
+    // List of events indicating user activity
+    const events = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
+
+    // Add event listeners
+    events.forEach(event =>
+      window.addEventListener(event, resetInactivityTimer, true)
+    );
+
+    // Start timer initially
+    resetInactivityTimer();
+
+    // Cleanup event listeners and timer on unmount or logout
+    return () => {
+      events.forEach(event =>
+        window.removeEventListener(event, resetInactivityTimer, true)
+      );
+      if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) {
+    // Login component must now provide both username and password to handleLogin
+    return <Login onLogin={handleLogin} />;
+  }
+
+  return (
+    <div>
+      <Header
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+        username={username}
+        onLogout={handleLogout}
+      />
+      {/* Announcement Popup */}
+      {showAnnouncementPopup && announcement &&
+        <div className="announcement-popup-overlay">
+          <div className="announcement-popup">
+            <button
+              className="announcement-popup-close"
+              onClick={() => setShowAnnouncementPopup(false)}
+              aria-label="Close announcement"
+            >
+              ×
+            </button>
+            <div className="announcement-popup-content">
+              <h3>Announcement</h3>
+              <div>{announcement}</div>
+            </div>
+          </div>
+        </div>
+      }
+      {!chatbotMinimized && <div className="app-background" />}
+      <div className={`main ${isSidebarOpen ? "sidebar-open" : "sidebar-collapsed"}`}>
+        <Menu
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+        />
+        <Dashboard isSidebarOpen={isSidebarOpen} />
+        <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+export default App;
