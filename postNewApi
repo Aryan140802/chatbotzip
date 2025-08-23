@@ -394,3 +394,13 @@ export const postForgotPassword = async ({ uid, SecQ, password, answer }) => {
     throw error;
   }
 };
+
+// Place this with your other exported API functions
+export const downloadSwagger = async ({ server, egName, apiName }) => {
+  const response = await axios.post(
+    'https://10.191.171.12:5443/PyPortal/EISHome/getDowloadSwagger',
+    { server, egName, apiName },
+    { responseType: 'json' }
+  );
+  return response.data;
+};
