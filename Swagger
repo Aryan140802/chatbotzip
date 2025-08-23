@@ -442,31 +442,122 @@ const DynamicForm = ({
     }
   };
 
-  // --- DOWNLOAD SWAGGER BUTTON LOGIC ---
   const handleDownloadSwagger = async () => {
-    // For workload forms, extract server, eg, and apiName
-    const { server, eg, apiName, service } = formData;
-    // The eg field used as egName
-    if (!server || !eg || !apiName) {
-      alert("Please fill all required fields for download.");
-      return;
+  // For workload forms, extract server, eg, and apiName
+  const { server, eg, apiName, service } = formData;
+  // The eg field used as egName
+  if (!server || !eg || !apiName) {
+    alert("Please fill all required fields for download.");
+    return;
+  }
+  
+  try {
+    const response = await downloadSwagger({ server, egName: eg, apiName });
+    
+    // Parse the swagger JSON if it comes as a string
+    let swaggerJson;
+    if (typeof response.swaggerJson === 'string') {
+      swaggerJson = JSON.parse(response.swaggerJson);
+    } else {
+      swaggerJson = response.swaggerJson || response;
     }
-    try {
-      const swaggerJson = await downloadSwagger({ server, egName: eg, apiName });
-      const blob = new Blob([JSON.stringify(swaggerJson, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${apiName || service || 'service'}-swagger.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      alert("Failed to download Swagger file.");
-      console.error(err);
-    }
-  };
+    
+    // Custom beautification function for better formatting
+    const beautifySwaggerJson = (obj) => {
+      // Create a beautifully formatted JSON with custom spacing and ordering
+      const formatObject = (data, depth = 0) => {
+        const indent = '  '.repeat(depth);
+        const nextIndent = '  '.repeat(depth + 1);
+        
+        if (data === null) return 'null';
+        if (typeof data === 'boolean') return data.toString();
+        if (typeof data === 'number') return data.toString();
+        if (typeof data === 'string') return `"${data.replace(/"/g, '\\"')}"`;
+        
+        if (Array.isArray(data)) {
+          if (data.length === 0) return '[]';
+          const items = data.map(item => `${nextIndent}${formatObject(item, depth + 1)}`);
+          return `[\n${items.join(',\n')}\n${indent}]`;
+        }
+        
+        if (typeof data === 'object') {
+          const keys = Object.keys(data);
+          if (keys.length === 0) return '{}';
+          
+          // Custom ordering for Swagger properties to make it more readable
+          const propertyOrder = [
+            'swagger', 'openapi', 'info', 'host', 'basePath', 'schemes', 
+            'consumes', 'produces', 'paths', 'definitions', 'components',
+            'title', 'description', 'version', 'contact', 'license',
+            'get', 'post', 'put', 'delete', 'patch', 'options', 'head',
+            'tags', 'summary', 'operationId', 'parameters', 'responses',
+            'type', 'format', 'properties', 'required', 'items', 'enum',
+            '$ref', 'name', 'in', 'schema', 'maxLength', 'minLength'
+          ];
+          
+          // Sort keys with custom order, keeping unordered keys at the end
+          const sortedKeys = keys.sort((a, b) => {
+            const indexA = propertyOrder.indexOf(a);
+            const indexB = propertyOrder.indexOf(b);
+            
+            if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+            return indexA - indexB;
+          });
+          
+          const items = sortedKeys.map(key => {
+            const value = formatObject(data[key], depth + 1);
+            return `${nextIndent}"${key}": ${value}`;
+          });
+          
+          return `{\n${items.join(',\n')}\n${indent}}`;
+        }
+        
+        return String(data);
+      };
+      
+      return formatObject(obj);
+    };
+    
+    // Apply beautification
+    const beautifiedJson = beautifySwaggerJson(swaggerJson);
+    
+    // Add header comment for better documentation
+    const header = `/*
+ * Swagger API Specification
+ * Generated from: ${apiName || service || 'Unknown Service'}
+ * Server: ${server}
+ * Environment: ${eg}
+ * Generated on: ${new Date().toLocaleString()}
+ * 
+ * This file contains the complete API documentation in OpenAPI/Swagger format.
+ * You can use this with tools like Swagger UI, Postman, or code generators.
+ */
+
+`;
+    
+    const finalContent = header + beautifiedJson;
+    
+    // Create and download the beautifully formatted file
+    const blob = new Blob([finalContent], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${apiName || service || 'service'}-swagger-spec.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    // Optional: Show success message
+    console.log(`✅ Successfully downloaded beautified Swagger specification for ${apiName}`);
+    
+  } catch (err) {
+    alert("Failed to download Swagger file.");
+    console.error("Swagger download error:", err);
+  }
+};
 
   return (
     <div className="dynamic-form-container">
