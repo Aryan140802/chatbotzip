@@ -442,7 +442,8 @@ const DynamicForm = ({
     }
   };
 
-  const handleDownloadSwagger = async () => {
+  // Replace the existing handleDownloadSwagger function in your DynamicForm component with this:
+const handleDownloadSwagger = async () => {
   // For workload forms, extract server, eg, and apiName
   const { server, eg, apiName, service } = formData;
   // The eg field used as egName
