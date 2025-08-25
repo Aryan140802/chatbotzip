@@ -534,10 +534,6 @@ const handleDownloadSwagger = async () => {
  * Server: ${server}
  * Environment: ${eg}
  * Generated on: ${new Date().toLocaleString()}
- *
- * This file contains the complete API documentation in OpenAPI/Swagger format.
-
- */
 
 `;
 
@@ -555,7 +551,7 @@ const handleDownloadSwagger = async () => {
     URL.revokeObjectURL(url);
 
     // Optional: Show success message
-    console.log(`✅ Successfully downloaded beautified Swagger specification for ${apiName}`);
+    console.log(`✅ Successfully downloaded Swagger specification for ${apiName}`);
 
    // Clear the form session after successful download
       if (clearFormSession) {
@@ -601,7 +597,7 @@ const handleDownloadSwagger = async () => {
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
               disabled={isSubmitting || isSubmittingFromParent}
-              style={{ marginLeft: 8, background: "#4287f5", color: "white" }}
+              style={{ marginLeft: 8, background: "#007BFF", color: "white", cursor: "pointer", font-size: "14px",border-radius:"4px",                padding: "10px 20px", }}
             >
               Download Swagger
             </button>
