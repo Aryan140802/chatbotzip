@@ -590,18 +590,25 @@ const handleDownloadSwagger = async () => {
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          {/* --- DOWNLOAD SWAGGER BUTTON --- */}
-          {formType === "workload" && allFieldsFilled && (
-            <button
-              type="button"
-              className="download-swagger-button"
-              onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent}
-              style={{ marginLeft: 8, background: "#007BFF", color: "white", cursor: "pointer", font-size: "14px",border-radius:"4px",                padding: "10px 20px", }}
-            >
-              Download Swagger
-            </button>
-          )}
+         {formType === "workload" && allFieldsFilled && (
+  <button
+    type="button"
+    className="download-swagger-button"
+    onClick={handleDownloadSwagger}
+    disabled={isSubmitting || isSubmittingFromParent}
+    style={{
+      marginLeft: 8,
+      background: "#007BFF",
+      color: "white",
+      cursor: "pointer",
+      fontSize: "14px",
+      borderRadius: "4px",
+      padding: "10px 20px",
+    }}
+  >
+    Download Swagger
+  </button>
+)}
         </div>
       </form>
     </div>
