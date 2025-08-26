@@ -275,15 +275,22 @@ const DynamicForm = ({
 
   // Clear entire form when service is empty
   useEffect(() => {
-    if (formType === 'workload' && formData.service === "") {
-      const clearedFormData = {};
-      Object.keys(formData).forEach(key => {
-        clearedFormData[key] = "";
-      });
-      setFormData(clearedFormData);
-      setServiceInputValue("");
-    }
-  }, [formData.service, formType]);
+  if (formType === 'workload' && formData.service === "") {
+    // Clear all form fields
+    const clearedFormData = {};
+    fieldDefs.forEach(f => { clearedFormData[f.name] = ""; });
+    setFormData(clearedFormData);
+
+    // Clear service field UI state
+    setServiceInputValue("");
+    setShowServiceDropdown(false);
+
+    // Optionally clear errors
+    setErrors({});
+  }
+  // Only trigger when service field is cleared
+  // eslint-disable-next-line
+}, [formData.service, formType]);
 
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
