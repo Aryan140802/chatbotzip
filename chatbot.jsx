@@ -7,16 +7,6 @@ import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 import { downloadSwagger } from "../api/PostApi"; // <-- Add this import (adjust if needed)
 
-// Utility: Parse service option to extract name and type
-const parseServiceOption = (service) => {
-  const [name, type = ""] = service.split('-');
-  return {
-    name: name.trim(),
-    type: type.trim().toUpperCase(),
-    fullValue: service
-  };
-};
-
 // Utility: Format dynamic bot message (safe HTML for <b> etc.)
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
@@ -166,6 +156,19 @@ const filterNonEmptyFields = (obj) =>
     )
   );
 
+// Utility function to parse service options
+const parseServiceOption = (serviceValue) => {
+  if (typeof serviceValue !== 'string') return { name: serviceValue, type: 'UNKNOWN' };
+  
+  const parts = serviceValue.split('-');
+  if (parts.length >= 2) {
+    const type = parts[parts.length - 1];
+    const name = parts.slice(0, -1).join('-');
+    return { name, type };
+  }
+  return { name: serviceValue, type: 'UNKNOWN' };
+};
+
 const extractFormFields = (response, currentValues = {}) => {
   if (!hasFormFields(response)) return null;
   return Object.entries(response.message).map(([name, value]) => {
@@ -217,6 +220,9 @@ const DynamicForm = ({
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(null);
+  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+  const [serviceInputValue, setServiceInputValue] = useState("");
+  const [serviceWarning, setServiceWarning] = useState("");
 
   const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
   
@@ -284,21 +290,26 @@ const DynamicForm = ({
     return updated;
   };
 
-  // Handle clearing service and dependent fields
-  const handleClearService = () => {
-    const updatedFormData = {
+  const clearServiceAndDependents = () => {
+    const cleared = {
       ...formData,
       service: "",
       layer: "",
       server: "",
       eg: ""
     };
-    setFormData(updatedFormData);
-    setErrors({});
+    setFormData(cleared);
+    setServiceInputValue("");
+    setServiceWarning("");
+    setShowServiceDropdown(false);
     
-    if (onFieldChange) {
-      onFieldChange(updatedFormData, 'service');
-    }
+    // Update field definitions to reset options
+    setFieldDefs(prev => prev.map(field => {
+      if (['layer', 'server', 'eg'].includes(field.name)) {
+        return { ...field, options: [] };
+      }
+      return field;
+    }));
   };
 
   const handleInputChange = (name, value) => {
@@ -308,26 +319,74 @@ const DynamicForm = ({
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
-  const handleBlur = async (name) => {
+  const handleServiceInputChange = (value) => {
+    setServiceInputValue(value);
+    setServiceWarning("");
+    
+    // Show dropdown when user types
+    if (value.trim()) {
+      setShowServiceDropdown(true);
+    } else {
+      setShowServiceDropdown(false);
+    }
+    
+    // Update form data but don't trigger API call yet
+    const updated = { ...formData, service: value };
+    setFormData(updated);
+    if (errors.service) setErrors(prev => ({ ...prev, service: null }));
+  };
+
+  const handleServiceOptionSelect = async (serviceValue) => {
+    const { name, type } = parseServiceOption(serviceValue);
+    
+    // Check if it's an APPLICATION type
+    if (type.toUpperCase() === 'APPLICATION') {
+      setServiceWarning("Swagger for APPLICATION services is not available. Please select a RESTAPI service.");
+      return;
+    }
+    
+    setServiceInputValue(name);
+    setShowServiceDropdown(false);
+    setServiceWarning("");
+    
+    // Update form data with just the service name
+    let updated = { ...formData, service: name };
+    updated = applyCascadingLogic(updated, 'service');
+    setFormData(updated);
+    
+    if (errors.service) setErrors(prev => ({ ...prev, service: null }));
+    
+    // Trigger API call
     if (onFieldChange) {
+      const filtered = filterNonEmptyFields(updated);
+      await onFieldChange(filtered, 'service');
+    }
+  };
+
+  const handleBlur = async (name) => {
+    if (name === 'service') {
+      // For service field, only trigger API call if there's a valid value
+      if (serviceInputValue.trim()) {
+        const serviceField = fieldDefs.find(f => f.name === 'service');
+        const isValidService = serviceField?.options?.some(opt => {
+          const { name } = parseServiceOption(opt);
+          return name.toLowerCase().includes(serviceInputValue.toLowerCase());
+        });
+        
+        if (isValidService && onFieldChange) {
+          const filtered = filterNonEmptyFields(formData);
+          await onFieldChange(filtered, name);
+        }
+      }
+      setShowServiceDropdown(false);
+    } else if (onFieldChange) {
       const filtered = filterNonEmptyFields(formData);
       await onFieldChange(filtered, name);
     }
   };
 
   const handleSelectChange = async (name, value) => {
-    let updated = { ...formData };
-    
-    if (name === 'service') {
-      const serviceDetails = parseServiceOption(value);
-      if (serviceDetails.type === 'APPLICATION') {
-        alert('Warning: Swagger is not available for Application type services');
-        return;
-      }
-      updated[name] = serviceDetails.name;
-    } else {
-      updated[name] = value;
-    }
+    let updated = { ...formData, [name]: value };
 
     if (formType === 'filter' && name.toLowerCase() === 'filter') {
       updated = applyCascadingLogic(updated, name);
@@ -368,6 +427,23 @@ const DynamicForm = ({
       return;
     }
 
+    // Check for APPLICATION service warning
+    if (formType === 'workload' && formData.service) {
+      const serviceField = fieldDefs.find(f => f.name === 'service');
+      const matchingOption = serviceField?.options?.find(opt => {
+        const { name } = parseServiceOption(opt);
+        return name === formData.service;
+      });
+      
+      if (matchingOption) {
+        const { type } = parseServiceOption(matchingOption);
+        if (type.toUpperCase() === 'APPLICATION') {
+          setServiceWarning("Cannot proceed with APPLICATION service. Swagger is not available.");
+          return;
+        }
+      }
+    }
+
     setIsSubmitting(true);
     await onSubmit(formData, fieldDefs);
     setIsSubmitting(false);
@@ -388,6 +464,155 @@ const DynamicForm = ({
     })
     .every(f => !!formData[f.name]);
 
+  const getFilteredServiceOptions = () => {
+    const serviceField = fieldDefs.find(f => f.name === 'service');
+    if (!serviceField?.options || !serviceInputValue.trim()) return serviceField?.options || [];
+    
+    return serviceField.options.filter(opt => {
+      const { name } = parseServiceOption(opt);
+      return name.toLowerCase().includes(serviceInputValue.toLowerCase());
+    });
+  };
+
+  const renderServiceField = (field) => {
+    const { name, label } = field;
+    const error = errors[name];
+    const isRequiredField = field.required;
+    const filteredOptions = getFilteredServiceOptions();
+
+    return (
+      <div key={name} className="form-field service-field-container">
+        <label className="form-label">
+          {isRequiredField && <span style={{ color: "red" }}>* </span>}
+          {label.replace('* ', '')}
+        </label>
+        
+        <div className="service-input-container" style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="text"
+              value={serviceInputValue}
+              onChange={e => handleServiceInputChange(e.target.value)}
+              onBlur={() => handleBlur(name)}
+              onFocus={() => serviceInputValue.trim() && setShowServiceDropdown(true)}
+              placeholder="Type to search or select from dropdown"
+              className={`form-input${error ? " error" : ""}`}
+              disabled={isSubmitting || isSubmittingFromParent}
+              style={{ flex: 1 }}
+            />
+            
+            {serviceInputValue && (
+              <button
+                type="button"
+                onClick={clearServiceAndDependents}
+                className="clear-service-button"
+                style={{
+                  background: '#ff4757',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  minWidth: '50px'
+                }}
+                disabled={isSubmitting || isSubmittingFromParent}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          
+          {showServiceDropdown && filteredOptions.length > 0 && (
+            <div 
+              className="service-dropdown"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                right: 0,
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: '4px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                zIndex: 1000,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+            >
+              {filteredOptions.map((opt, idx) => {
+                const { name: serviceName, type: serviceType } = parseServiceOption(opt);
+                const isApplication = serviceType.toUpperCase() === 'APPLICATION';
+                
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleServiceOptionSelect(opt)}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: isApplication ? 'not-allowed' : 'pointer',
+                      borderBottom: idx < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      backgroundColor: isApplication ? '#f8f9fa' : 'white',
+                      opacity: isApplication ? 0.7 : 1
+                    }}
+                    className="service-option"
+                    onMouseEnter={e => {
+                      if (!isApplication) {
+                        e.target.style.backgroundColor = '#f5f5f5';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isApplication) {
+                        e.target.style.backgroundColor = 'white';
+                      } else {
+                        e.target.style.backgroundColor = '#f8f9fa';
+                      }
+                    }}
+                  >
+                    <span style={{ flex: 1, fontWeight: '500' }}>{serviceName}</span>
+                    <span 
+                      style={{
+                        background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
+                        color: 'white',
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        marginLeft: '8px'
+                      }}
+                    >
+                      {serviceType.replace('API', ' API')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+        
+        {serviceWarning && (
+          <div style={{ 
+            color: '#e74c3c', 
+            fontSize: '12px', 
+            marginTop: '4px',
+            padding: '8px',
+            background: '#fdf2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '4px'
+          }}>
+            ⚠️ {serviceWarning}
+          </div>
+        )}
+        
+        {error && <span className="error-message">{error}</span>}
+      </div>
+    );
+  };
+
   const renderField = (field) => {
     const {
       name,
@@ -401,6 +626,11 @@ const DynamicForm = ({
     const isService = name === "service";
     const isRequiredField = field.required;
 
+    // Use special rendering for service field in workload forms
+    if (isService && formType === 'workload') {
+      return renderServiceField(field);
+    }
+
     switch (type) {
       case "select":
         return (
@@ -409,84 +639,20 @@ const DynamicForm = ({
               {isRequiredField && <span style={{ color: "red" }}>* </span>}
               {label.replace('* ', '')}
             </label>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <select
-                value={isService ? options.find(opt => opt.includes(value))?.toString() || "" : value}
-                onChange={e => handleSelectChange(name, e.target.value)}
-                className={`form-select${error ? " error" : ""}`}
-                disabled={isSubmitting || isSubmittingFromParent || options.length === 0}
-                style={{ paddingRight: isService && value ? '40px' : '12px' }}
-              >
-                <option value="">Select {label.replace('* ', '').toLowerCase()}</option>
-                {options.map((opt, idx) => {
-                  if (isService) {
-                    const { name, type, fullValue } = parseServiceOption(opt);
-                    return (
-                      <option key={idx} value={fullValue}>
-                        {`${name} ${type ? `(${type})` : ''}`}
-                      </option>
-                    );
-                  }
-                  return (
-                    <option key={idx} value={opt.value || opt}>
-                      {opt.label || opt}
-                    </option>
-                  );
-                })}
-              </select>
-              {isService && value && (
-                <button
-                  type="button"
-                  onClick={handleClearService}
-                  style={{
-                    position: 'absolute',
-                    right: '5px',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '5px',
-                    color: '#666',
-                    fontSize: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '30px',
-                    height: '30px',
-                    borderRadius: '50%',
-                    transition: 'background-color 0.2s'
-                  }}
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+            <select
+              value={value}
+              onChange={e => handleSelectChange(name, e.target.value)}
+              className={`form-select${error ? " error" : ""}`}
+              disabled={isSubmitting || isSubmittingFromParent || options.length === 0}
+            >
+              <option value="">Select {label.replace('* ', '').toLowerCase()}</option>
+              {options.map((opt, idx) => (
+                <option key={idx} value={opt.value || opt}>
+                  {opt.label || opt}
+                </option>
+              ))}
+            </select>
             {error && <span className="error-message">{error}</span>}
-            {isService && value && (
-              <div style={{
-                marginTop: '5px',
-                fontSize: '12px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '4px 8px',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '4px'
-              }}>
-                <span>Selected: {value}</span>
-                {options.find(opt => opt.includes(value))?.split('-')[1] && (
-                  <span style={{
-                    padding: '2px 8px',
-                    borderRadius: '3px',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    backgroundColor: options.find(opt => opt.includes(value))?.split('-')[1].trim().toUpperCase() === 'RESTAPI' ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)',
-                    color: options.find(opt => opt.includes(value))?.split('-')[1].trim().toUpperCase() === 'RESTAPI' ? '#28a745' : '#dc3545'
-                  }}>
-                    {options.find(opt => opt.includes(value))?.split('-')[1].trim().toUpperCase()}
-                  </span>
-                )}
-              </div>
-            )}
           </div>
         );
       case "date":
@@ -684,12 +850,13 @@ const DynamicForm = ({
               isSubmitting ||
               isSubmittingFromParent ||
               (formType === "workload" && !allFieldsFilled) ||
-              (formType === "filter" && !allRequiredFilled)
+              (formType === "filter" && !allRequiredFilled) ||
+              serviceWarning // Disable if there's a service warning
             }
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          {formType === "workload" && allFieldsFilled && (
+          {formType === "workload" && allFieldsFilled && !serviceWarning && (
             <button
               type="button"
               className="download-swagger-button"
@@ -1087,11 +1254,11 @@ const Chatbot = ({ setChatbotMinimized }) => {
                           const displayText = opt.replace(/^\d+\.\s*|^[a-zA-Z]\.\s*/, "").trim().toLowerCase();
                           const isPlainText =
                             displayText.includes("please select one by name") ||
-                             displayText.includes("please select from following options")||
+                            displayText.includes("please select from following options") ||
                             displayText === "DO YOU WANT MORE DETAILS?:" ||
                             displayText === "do you want more details?" ||
                             displayText === "do you want more details" ||
-                            displayText === "do you want more details?:" ;
+                            displayText === "do you want more details?:";
 
                           if (isPlainText) {
                             return (
