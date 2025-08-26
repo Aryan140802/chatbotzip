@@ -160,10 +160,11 @@ const filterNonEmptyFields = (obj) =>
 const parseServiceOption = (serviceValue) => {
   if (typeof serviceValue !== 'string') return { name: serviceValue, type: 'UNKNOWN' };
   
-  const parts = serviceValue.split('-');
-  if (parts.length >= 2) {
-    const type = parts[parts.length - 1];
-    const name = parts.slice(0, -1).join('-');
+  // Check if service value contains -RESTAPI or -APPLICATION
+  if (serviceValue.includes('-')) {
+    const lastHyphenIndex = serviceValue.lastIndexOf('-');
+    const name = serviceValue.substring(0, lastHyphenIndex);
+    const type = serviceValue.substring(lastHyphenIndex + 1);
     return { name, type };
   }
   return { name: serviceValue, type: 'UNKNOWN' };
@@ -433,6 +434,12 @@ const handleServiceInputChange = (value) => {
     const error = errors[name];
     const isRequiredField = field.required;
     const filteredOptions = getFilteredServiceOptions();
+    
+    const handleSearchClick = () => {
+      if (serviceInputValue.trim()) {
+        handleBlur('service');
+      }
+    };
 
     return (
       <div key={name} className="form-field service-field-container">
@@ -441,23 +448,35 @@ const handleServiceInputChange = (value) => {
           {label.replace('* ', '')}
         </label>
         
-        <div className="service-input-container" style={{ position: 'relative' }}>
-          <input
-            type="text"
-            value={serviceInputValue}
-            onChange={e => handleServiceInputChange(e.target.value)}
-            onBlur={() => handleBlur(name)}
-            onFocus={() => serviceInputValue.trim() && setShowServiceDropdown(true)}
-            placeholder="Type to search or select from dropdown"
-            className={`form-input${error ? " error" : ""}`}
-            disabled={isSubmitting || isSubmittingFromParent}
-            style={{ 
-              width: '100%',
-              paddingRight: field.options?.length > 0 ? '30px' : '12px'
-            }}
-          />
-          
-          {/* Dropdown symbol */}
+          <div className="service-input-container" style={{ position: 'relative', display: 'flex' }}>
+            <input
+              type="text"
+              value={serviceInputValue}
+              onChange={e => handleServiceInputChange(e.target.value)}
+              onBlur={() => handleBlur(name)}
+              onFocus={() => serviceInputValue.trim() && setShowServiceDropdown(true)}
+              placeholder="Type to search or select from dropdown"
+              className={`form-input${error ? " error" : ""}`}
+              disabled={isSubmitting || isSubmittingFromParent}
+              style={{ 
+                flex: 1,
+                paddingRight: field.options?.length > 0 ? '30px' : '12px'
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSearchClick}
+              className="search-icon-button"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '8px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              <i className="fas fa-search"></i>
+            </button>          {/* Dropdown symbol */}
           {field.options?.length > 0 && (
             <div
               style={{
@@ -648,20 +667,28 @@ const handleServiceInputChange = (value) => {
 
   // Updated handleDownloadSwagger function
   const handleDownloadSwagger = async () => {
-    // For workload forms, extract server, eg, and apiName
     const { server, eg, apiName, service } = formData;
     
-    if (!server || !eg || !service) {
-      alert("Please fill all required fields for download.");
-      return;
-    }
-
-    // Check if it's an APPLICATION type and show warning
+    // Check if it's an APPLICATION type before doing anything else
     const serviceField = fieldDefs.find(f => f.name === 'service');
     const matchingOption = serviceField?.options?.find(opt => {
       const { name } = parseServiceOption(opt);
       return name === service;
     });
+    
+    if (matchingOption) {
+      const { type } = parseServiceOption(matchingOption);
+      if (type.toUpperCase() === 'APPLICATION') {
+        return; // Silently do nothing for applications
+      }
+    }
+
+    if (!server || !eg || !service) {
+      alert("Please fill all required fields for download.");
+      return;
+    }
+
+    // No need to check APPLICATION type again since we already checked above
     
     if (matchingOption) {
       const { type } = parseServiceOption(matchingOption);
@@ -673,80 +700,12 @@ const handleServiceInputChange = (value) => {
 
     try {
       const response = await downloadSwagger({ server, egName: eg, apiName: service });
-      // Parse the swagger JSON if it comes as a string
-      let swaggerJson;
-      if (typeof response.swaggerJson === 'string') {
-        swaggerJson = JSON.parse(response.swaggerJson);
-      } else {
-        swaggerJson = response.swaggerJson || response;
-      }
-
-      // Custom beautification function for better formatting
-      const beautifySwaggerJson = (obj) => {
-        // Create a beautifully formatted JSON with custom spacing and ordering
-        const formatObject = (data, depth = 0) => {
-          const indent = '  '.repeat(depth);
-          const nextIndent = '  '.repeat(depth + 1);
-
-          if (data === null) return 'null';
-          if (typeof data === 'boolean') return data.toString();
-          if (typeof data === 'number') return data.toString();
-
-          if (Array.isArray(data)) {
-            if (data.length === 0) return '[]';
-            const items = data.map(item => `${nextIndent}${formatObject(item, depth + 1)}`);
-            return `[\n${items.join(',\n')}\n${indent}]`;
-          }
-
-          if (typeof data === 'object') {
-            const keys = Object.keys(data);
-            if (keys.length === 0) return '{}';
-
-            // Custom ordering for Swagger properties to make it more readable
-            const propertyOrder = [
-              'swagger', 'openapi', 'info', 'host', 'basePath', 'schemes',
-              'consumes', 'produces', 'paths', 'definitions', 'components',
-              'title', 'description', 'version', 'contact', 'license',
-              'get', 'post', 'put', 'delete', 'patch', 'options', 'head',
-              'tags', 'summary', 'operationId', 'parameters', 'responses',
-              'type', 'format', 'properties', 'required', 'items', 'enum',
-              '$ref', 'name', 'in', 'schema', 'maxLength', 'minLength'
-            ];
-
-            // Sort keys with custom order, keeping unordered keys at the end
-            const sortedKeys = keys.sort((a, b) => {
-              const indexA = propertyOrder.indexOf(a);
-              const indexB = propertyOrder.indexOf(b);
-
-              if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-              if (indexA === -1) return 1;
-              if (indexB === -1) return -1;
-              return indexA - indexB;
-            });
-
-            const items = sortedKeys.map(key => {
-              const value = formatObject(data[key], depth + 1);
-              return `${nextIndent}"${key}": ${value}`;
-            });
-
-            return `{\n${items.join(',\n')}\n${indent}}`;
-          }
-
-          return String(data);
-        };
-
-        return formatObject(obj);
-      };
-
-      // Apply beautification
-      const beautifiedJson = beautifySwaggerJson(swaggerJson);
-
-     
-
-      const finalContent = header + beautifiedJson;
+      // Create download file directly from response, removing any backslashes
+      const swaggerContent = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+      const cleanedContent = swaggerContent.replace(/\\/g, '');
 
       // Create and download the beautifully formatted file
-      const blob = new Blob([finalContent], { type: "application/json" });
+      const blob = new Blob([cleanedContent], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -800,16 +759,18 @@ const handleServiceInputChange = (value) => {
               type="button"
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent}
+              disabled={isSubmitting || isSubmittingFromParent || (formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION')}
               style={{
                 marginLeft: 8,
                 background: "#007BFF",
                 color: "white",
-                cursor: "pointer",
+                cursor: formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 borderRadius: "4px",
                 padding: "10px 20px",
+                opacity: formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "0.6" : "1",
               }}
+              title={formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "Swagger file doesn't exist for applications" : "Download Swagger"}
             >
               Download Swagger
             </button>
