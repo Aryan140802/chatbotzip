@@ -469,7 +469,7 @@ const handleServiceInputChange = (value) => {
               disabled={isSubmitting || isSubmittingFromParent}
               style={{ 
                 flex: 1,
-                paddingRight: field.options?.length > 0 ? '30px' : '12px'
+                paddingRight: '12px'
               }}
             />
             <button
@@ -501,12 +501,13 @@ const handleServiceInputChange = (value) => {
             <div
               style={{
                 position: 'absolute',
-                right: '8px',
+                left: '92%',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 pointerEvents: 'none',
                 color: '#666',
-                fontSize: '12px'
+                fontSize: '12px',
+                zIndex: 1
               }}
             >
               ▼
@@ -778,24 +779,21 @@ const handleServiceInputChange = (value) => {
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          {formType === "workload" && allFieldsFilled && (() => {
-            const currentOption = getCurrentServiceOption();
-            const isApplication = currentOption && parseServiceOption(currentOption)?.type?.toUpperCase() === 'APPLICATION';
-            return (
+          {formType === "workload" && allFieldsFilled && (
             <button
               type="button"
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent || isApplication}
+              disabled={isSubmitting || isSubmittingFromParent || (getCurrentServiceOption() && parseServiceOption(getCurrentServiceOption())?.type?.toUpperCase() === 'APPLICATION')}
               style={{
                 marginLeft: 8,
                 background: "#007BFF",
                 color: "white",
-                cursor: isApplication ? "not-allowed" : "pointer",
+                cursor: (getCurrentServiceOption() && parseServiceOption(getCurrentServiceOption())?.type?.toUpperCase() === 'APPLICATION') ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 borderRadius: "4px",
                 padding: "10px 20px",
-                opacity: isApplication ? "0.6" : "1",
+                opacity: (getCurrentServiceOption() && parseServiceOption(getCurrentServiceOption())?.type?.toUpperCase() === 'APPLICATION') ? "0.6" : "1",
               }}
               title={formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "Swagger file doesn't exist for applications" : "Download Swagger"}
             >
