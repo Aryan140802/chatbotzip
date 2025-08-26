@@ -1,47 +1,13 @@
-TypeError at /EISHome/forgotPassword/
-Object of type set is not JSON serializable
-Request Method:	POST
-Request URL:	http://10.191.171.12/PyPortal/EISHome/forgotPassword/
-Django Version:	4.2.18
-Exception Type:	TypeError
-Exception Value:	
-Object of type set is not JSON serializable
-Exception Location:	/usr/lib64/python3.9/json/encoder.py, line 179, in default
-Raised during:	EISHome.views.forgotPassword
-Python Executable:	/var/www/cgi-bin/djangovenv/venv/bin/python3.9
-Python Version:	3.9.21
-Python Path:	
-['/var/www/cgi-bin/PyPortal',
- '/usr/lib64/python39.zip',
- '/usr/lib64/python3.9',
- '/usr/lib64/python3.9/lib-dynload',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/Django-4.2.16-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/asgiref-3.8.0-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/pytz-2024.1-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/nltk-3.9.1-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/tqdm-2.2.3-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/regex-2024.9.11-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/UNKNOWN-0.0.0-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/click-8.1.7-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/cx_Oracle-8.3.0-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/rsa-4.9-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/pyasn1-0.5.1-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/cffi-1.17.0-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/llama_cpp_python-0.1.9-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/Django-4.2.16-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/asgiref-3.8.0-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/pytz-2024.1-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/nltk-3.9.1-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/tqdm-2.2.3-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/regex-2024.9.11-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/UNKNOWN-0.0.0-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/click-8.1.7-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/cx_Oracle-8.3.0-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/rsa-4.9-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/pyasn1-0.5.1-py3.9.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/cffi-1.17.0-py3.9-linux-x86_64.egg',
- '/var/www/cgi-bin/djangovenv/venv/lib/python3.9/site-packages/llama_cpp_python-0.1.9-py3.9-linux-x86_64.egg']
-Server time:	Tue, 01 Jul 2025 17:42:17 +0530
-https://teams.microsoft.com/l/meetup-join/19%3ameeting_N2FkNzY4OGUtMGQ5MC00MjlmLWJmNDEtNGMzODdiZGZiMTBm%40thread.v2/0?context=%7b%22Tid%22%3a%22404b1967-6507-45ab-8a6d-7374a3f478be%22%2c%22Oid%22%3a%227d5c5940-3615-4c75-b203-fa30f5c96a66%22%7d
+
+eg
+: 
+["AADHAR_EXP_01", "PAN_EXP_03", "AADHAR_EXP_02", "PAN_EXP_01", "PAN_EXP_05", "AADHAR_EXP_04",…]
+layer
+: 
+["AADHAR_SYS", "AADHAR_EXP", "ACCOUNT_EXP"]
+server
+: 
+["25_192", "24_14", "25_13", "25_190", "24_192", "25_196", "24_11", "25_10", "24_194", "24_195",…]
+service
+: 
+["panEnquiryPassThrough_expDs-RESTAPI"]
