@@ -586,6 +586,15 @@ const handleServiceInputChange = (value) => {
     );
   };
 
+  // Get current service option
+  const getCurrentServiceOption = () => {
+    const serviceField = fieldDefs.find(f => f.name === 'service');
+    return serviceField?.options?.find(opt => {
+      const { name } = parseServiceOption(opt);
+      return name === formData.service;
+    });
+  };
+
   const renderField = (field) => {
     const {
       name,
@@ -688,34 +697,19 @@ const handleServiceInputChange = (value) => {
   // Updated handleDownloadSwagger function
   const handleDownloadSwagger = async () => {
     const { server, eg, apiName, service } = formData;
+    const currentOption = getCurrentServiceOption();
     
-    // Check if it's an APPLICATION type before doing anything else
-    const serviceField = fieldDefs.find(f => f.name === 'service');
-    const matchingOption = serviceField?.options?.find(opt => {
-      const { name } = parseServiceOption(opt);
-      return name === service;
-    });
-    
-    if (matchingOption) {
-      const { type } = parseServiceOption(matchingOption);
+    if (currentOption) {
+      const { type } = parseServiceOption(currentOption);
       if (type.toUpperCase() === 'APPLICATION') {
-        return; // Silently do nothing for applications
+        alert("Swagger file doesn't exist for applications");
+        return;
       }
     }
 
     if (!server || !eg || !service) {
       alert("Please fill all required fields for download.");
       return;
-    }
-
-    // No need to check APPLICATION type again since we already checked above
-    
-    if (matchingOption) {
-      const { type } = parseServiceOption(matchingOption);
-      if (type.toUpperCase() === 'APPLICATION') {
-        alert("Swagger file doesn't exist for applications");
-        return;
-      }
     }
 
     try {
@@ -784,21 +778,24 @@ const handleServiceInputChange = (value) => {
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          {formType === "workload" && allFieldsFilled && (
+          {formType === "workload" && allFieldsFilled && (() => {
+            const currentOption = getCurrentServiceOption();
+            const isApplication = currentOption && parseServiceOption(currentOption)?.type?.toUpperCase() === 'APPLICATION';
+            return (
             <button
               type="button"
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent || (matchingOption && parseServiceOption(matchingOption)?.type?.toUpperCase() === 'APPLICATION')}
+              disabled={isSubmitting || isSubmittingFromParent || isApplication}
               style={{
                 marginLeft: 8,
                 background: "#007BFF",
                 color: "white",
-                cursor: matchingOption && parseServiceOption(matchingOption)?.type?.toUpperCase() === 'APPLICATION' ? "not-allowed" : "pointer",
+                cursor: isApplication ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 borderRadius: "4px",
                 padding: "10px 20px",
-                opacity: matchingOption && parseServiceOption(matchingOption)?.type?.toUpperCase() === 'APPLICATION' ? "0.6" : "1",
+                opacity: isApplication ? "0.6" : "1",
               }}
               title={formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "Swagger file doesn't exist for applications" : "Download Swagger"}
             >
