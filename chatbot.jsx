@@ -435,9 +435,18 @@ const handleServiceInputChange = (value) => {
     const isRequiredField = field.required;
     const filteredOptions = getFilteredServiceOptions();
     
-    const handleSearchClick = () => {
+    const handleSearchClick = async () => {
       if (serviceInputValue.trim()) {
-        handleBlur('service');
+        // Update form data with current input value
+        let updated = { ...formData, service: serviceInputValue };
+        updated = applyCascadingLogic(updated, 'service');
+        setFormData(updated);
+        
+        // Trigger API call
+        if (onFieldChange) {
+          const filtered = filterNonEmptyFields(updated);
+          await onFieldChange(filtered, 'service');
+        }
       }
     };
 
@@ -466,16 +475,27 @@ const handleServiceInputChange = (value) => {
             <button
               type="button"
               onClick={handleSearchClick}
-              className="search-icon-button"
+              className="search-button"
               style={{
-                background: 'none',
+                background: '#007BFF',
                 border: 'none',
-                padding: '8px',
+                borderRadius: '4px',
+                padding: '8px 16px',
                 cursor: 'pointer',
-                color: '#666'
+                color: 'white',
+                marginLeft: '8px',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'background-color 0.2s',
+              }}
+              onMouseEnter={e => {
+                e.target.style.backgroundColor = '#0056b3';
+              }}
+              onMouseLeave={e => {
+                e.target.style.backgroundColor = '#007BFF';
               }}
             >
-              <i className="fas fa-search"></i>
+              Search
             </button>          {/* Dropdown symbol */}
           {field.options?.length > 0 && (
             <div
@@ -700,12 +720,22 @@ const handleServiceInputChange = (value) => {
 
     try {
       const response = await downloadSwagger({ server, egName: eg, apiName: service });
-      // Create download file directly from response, removing any backslashes
-      const swaggerContent = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
-      const cleanedContent = swaggerContent.replace(/\\/g, '');
+      
+      // Parse and format the swagger JSON
+      let parsedJson;
+      try {
+        parsedJson = typeof response === 'string' ? JSON.parse(response) : response;
+      } catch (e) {
+        parsedJson = response;
+      }
+      
+      // Pretty print the JSON and remove backslashes
+      const formattedJson = JSON.stringify(parsedJson, null, 2)
+        .replace(/\\/g, '')
+        .replace(/\u0000/g, '');
 
       // Create and download the beautifully formatted file
-      const blob = new Blob([cleanedContent], { type: "application/json" });
+      const blob = new Blob([formattedJson], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -759,16 +789,16 @@ const handleServiceInputChange = (value) => {
               type="button"
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent || (formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION')}
+              disabled={isSubmitting || isSubmittingFromParent || (matchingOption && parseServiceOption(matchingOption)?.type?.toUpperCase() === 'APPLICATION')}
               style={{
                 marginLeft: 8,
                 background: "#007BFF",
                 color: "white",
-                cursor: formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "not-allowed" : "pointer",
+                cursor: matchingOption && parseServiceOption(matchingOption)?.type?.toUpperCase() === 'APPLICATION' ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 borderRadius: "4px",
                 padding: "10px 20px",
-                opacity: formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "0.6" : "1",
+                opacity: matchingOption && parseServiceOption(matchingOption)?.type?.toUpperCase() === 'APPLICATION' ? "0.6" : "1",
               }}
               title={formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "Swagger file doesn't exist for applications" : "Download Swagger"}
             >
