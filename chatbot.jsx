@@ -222,7 +222,6 @@ const DynamicForm = ({
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [serviceInputValue, setServiceInputValue] = useState("");
-  const [serviceWarning, setServiceWarning] = useState("");
 
   const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
   
@@ -274,6 +273,18 @@ const DynamicForm = ({
     }
   }, [formData.filter, formType, selectedFilter]);
 
+  // Clear entire form when service is empty
+  useEffect(() => {
+    if (formType === 'workload' && formData.service === "") {
+      const clearedFormData = {};
+      Object.keys(formData).forEach(key => {
+        clearedFormData[key] = "";
+      });
+      setFormData(clearedFormData);
+      setServiceInputValue("");
+    }
+  }, [formData.service, formType]);
+
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
       if (name === "service") {
@@ -299,7 +310,6 @@ const DynamicForm = ({
 
   const handleServiceInputChange = (value) => {
     setServiceInputValue(value);
-    setServiceWarning("");
     
     // Show dropdown when user types
     if (value.trim()) {
@@ -315,17 +325,10 @@ const DynamicForm = ({
   };
 
   const handleServiceOptionSelect = async (serviceValue) => {
-    const { name, type } = parseServiceOption(serviceValue);
-    
-    // Check if it's an APPLICATION type
-    if (type.toUpperCase() === 'APPLICATION') {
-      setServiceWarning("Swagger for APPLICATION services is not available. Please select a RESTAPI service.");
-      return;
-    }
+    const { name } = parseServiceOption(serviceValue);
     
     setServiceInputValue(name);
     setShowServiceDropdown(false);
-    setServiceWarning("");
     
     // Update form data with just the service name
     let updated = { ...formData, service: name };
@@ -397,23 +400,6 @@ const DynamicForm = ({
       return;
     }
 
-    // Check for APPLICATION service warning
-    if (formType === 'workload' && formData.service) {
-      const serviceField = fieldDefs.find(f => f.name === 'service');
-      const matchingOption = serviceField?.options?.find(opt => {
-        const { name } = parseServiceOption(opt);
-        return name === formData.service;
-      });
-      
-      if (matchingOption) {
-        const { type } = parseServiceOption(matchingOption);
-        if (type.toUpperCase() === 'APPLICATION') {
-          setServiceWarning("Cannot proceed with APPLICATION service. Swagger is not available.");
-          return;
-        }
-      }
-    }
-
     setIsSubmitting(true);
     await onSubmit(formData, fieldDefs);
     setIsSubmitting(false);
@@ -467,8 +453,28 @@ const DynamicForm = ({
             placeholder="Type to search or select from dropdown"
             className={`form-input${error ? " error" : ""}`}
             disabled={isSubmitting || isSubmittingFromParent}
-            style={{ width: '100%' }}
+            style={{ 
+              width: '100%',
+              paddingRight: field.options?.length > 0 ? '30px' : '12px'
+            }}
           />
+          
+          {/* Dropdown symbol */}
+          {field.options?.length > 0 && (
+            <div
+              style={{
+                position: 'absolute',
+                right: '8px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                pointerEvents: 'none',
+                color: '#666',
+                fontSize: '12px'
+              }}
+            >
+              ▼
+            </div>
+          )}
           
           {showServiceDropdown && filteredOptions.length > 0 && (
             <div 
@@ -489,7 +495,6 @@ const DynamicForm = ({
             >
               {filteredOptions.map((opt, idx) => {
                 const { name: serviceName, type: serviceType } = parseServiceOption(opt);
-                const isApplication = serviceType.toUpperCase() === 'APPLICATION';
                 
                 return (
                   <div
@@ -501,27 +506,20 @@ const DynamicForm = ({
                     }}
                     style={{
                       padding: '12px 16px',
-                      cursor: isApplication ? 'not-allowed' : 'pointer',
+                      cursor: 'pointer',
                       borderBottom: idx < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      backgroundColor: isApplication ? '#f8f9fa' : 'white',
-                      opacity: isApplication ? 0.7 : 1,
+                      backgroundColor: 'white',
                       color: '#000000'
                     }}
                     className="service-option"
                     onMouseEnter={e => {
-                      if (!isApplication) {
-                        e.target.style.backgroundColor = '#f5f5f5';
-                      }
+                      e.target.style.backgroundColor = '#f5f5f5';
                     }}
                     onMouseLeave={e => {
-                      if (!isApplication) {
-                        e.target.style.backgroundColor = 'white';
-                      } else {
-                        e.target.style.backgroundColor = '#f8f9fa';
-                      }
+                      e.target.style.backgroundColor = 'white';
                     }}
                   >
                     <span style={{ flex: 1, fontWeight: '500', color: '#000000' }}>{serviceName}</span>
@@ -545,20 +543,6 @@ const DynamicForm = ({
             </div>
           )}
         </div>
-        
-        {serviceWarning && (
-          <div style={{ 
-            color: '#e74c3c', 
-            fontSize: '12px', 
-            marginTop: '4px',
-            padding: '8px',
-            background: '#fdf2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '4px'
-          }}>
-            ⚠️ {serviceWarning}
-          </div>
-        )}
         
         {error && <span className="error-message">{error}</span>}
       </div>
@@ -664,14 +648,29 @@ const DynamicForm = ({
     }
   };
 
-  // Replace the existing handleDownloadSwagger function in your DynamicForm component with this:
+  // Updated handleDownloadSwagger function
   const handleDownloadSwagger = async () => {
     // For workload forms, extract server, eg, and apiName
     const { server, eg, apiName, service } = formData;
-    // The eg field used as egName
+    
     if (!server || !eg || !service) {
       alert("Please fill all required fields for download.");
       return;
+    }
+
+    // Check if it's an APPLICATION type and show warning
+    const serviceField = fieldDefs.find(f => f.name === 'service');
+    const matchingOption = serviceField?.options?.find(opt => {
+      const { name } = parseServiceOption(opt);
+      return name === service;
+    });
+    
+    if (matchingOption) {
+      const { type } = parseServiceOption(matchingOption);
+      if (type.toUpperCase() === 'APPLICATION') {
+        alert("Swagger file doesn't exist for applications");
+        return;
+      }
     }
 
     try {
@@ -780,7 +779,7 @@ const DynamicForm = ({
       alert("Failed to download Swagger file.");
       console.error("Swagger download error:", err);
 
-      // Clear the form session after successful download
+      // Clear the form session after error
       if (clearFormSession) {
         clearFormSession();
       }
@@ -802,13 +801,12 @@ const DynamicForm = ({
               isSubmitting ||
               isSubmittingFromParent ||
               (formType === "workload" && !allFieldsFilled) ||
-              (formType === "filter" && !allRequiredFilled) ||
-              serviceWarning // Disable if there's a service warning
+              (formType === "filter" && !allRequiredFilled)
             }
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          {formType === "workload" && allFieldsFilled && !serviceWarning && (
+          {formType === "workload" && allFieldsFilled && (
             <button
               type="button"
               className="download-swagger-button"
