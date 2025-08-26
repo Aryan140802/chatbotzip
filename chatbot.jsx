@@ -290,28 +290,6 @@ const DynamicForm = ({
     return updated;
   };
 
-  const clearServiceAndDependents = () => {
-    const cleared = {
-      ...formData,
-      service: "",
-      layer: "",
-      server: "",
-      eg: ""
-    };
-    setFormData(cleared);
-    setServiceInputValue("");
-    setServiceWarning("");
-    setShowServiceDropdown(false);
-    
-    // Update field definitions to reset options
-    setFieldDefs(prev => prev.map(field => {
-      if (['layer', 'server', 'eg'].includes(field.name)) {
-        return { ...field, options: [] };
-      }
-      return field;
-    }));
-  };
-
   const handleInputChange = (name, value) => {
     let updated = { ...formData, [name]: value };
     updated = applyCascadingLogic(updated, name);
@@ -356,7 +334,7 @@ const DynamicForm = ({
     
     if (errors.service) setErrors(prev => ({ ...prev, service: null }));
     
-    // Trigger API call
+    // Trigger API call immediately after selection
     if (onFieldChange) {
       const filtered = filterNonEmptyFields(updated);
       await onFieldChange(filtered, 'service');
@@ -365,20 +343,12 @@ const DynamicForm = ({
 
   const handleBlur = async (name) => {
     if (name === 'service') {
-      // For service field, only trigger API call if there's a valid value
-      if (serviceInputValue.trim()) {
-        const serviceField = fieldDefs.find(f => f.name === 'service');
-        const isValidService = serviceField?.options?.some(opt => {
-          const { name } = parseServiceOption(opt);
-          return name.toLowerCase().includes(serviceInputValue.toLowerCase());
-        });
-        
-        if (isValidService && onFieldChange) {
-          const filtered = filterNonEmptyFields(formData);
-          await onFieldChange(filtered, name);
-        }
-      }
       setShowServiceDropdown(false);
+      // Trigger API call when user clicks off the service field
+      if (serviceInputValue.trim() && onFieldChange) {
+        const filtered = filterNonEmptyFields(formData);
+        await onFieldChange(filtered, name);
+      }
     } else if (onFieldChange) {
       const filtered = filterNonEmptyFields(formData);
       await onFieldChange(filtered, name);
@@ -488,40 +458,17 @@ const DynamicForm = ({
         </label>
         
         <div className="service-input-container" style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <input
-              type="text"
-              value={serviceInputValue}
-              onChange={e => handleServiceInputChange(e.target.value)}
-              onBlur={() => handleBlur(name)}
-              onFocus={() => serviceInputValue.trim() && setShowServiceDropdown(true)}
-              placeholder="Type to search or select from dropdown"
-              className={`form-input${error ? " error" : ""}`}
-              disabled={isSubmitting || isSubmittingFromParent}
-              style={{ flex: 1 }}
-            />
-            
-            {serviceInputValue && (
-              <button
-                type="button"
-                onClick={clearServiceAndDependents}
-                className="clear-service-button"
-                style={{
-                  background: '#ff4757',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  minWidth: '50px'
-                }}
-                disabled={isSubmitting || isSubmittingFromParent}
-              >
-                Clear
-              </button>
-            )}
-          </div>
+          <input
+            type="text"
+            value={serviceInputValue}
+            onChange={e => handleServiceInputChange(e.target.value)}
+            onBlur={() => handleBlur(name)}
+            onFocus={() => serviceInputValue.trim() && setShowServiceDropdown(true)}
+            placeholder="Type to search or select from dropdown"
+            className={`form-input${error ? " error" : ""}`}
+            disabled={isSubmitting || isSubmittingFromParent}
+            style={{ width: '100%' }}
+          />
           
           {showServiceDropdown && filteredOptions.length > 0 && (
             <div 
@@ -547,7 +494,11 @@ const DynamicForm = ({
                 return (
                   <div
                     key={idx}
-                    onClick={() => handleServiceOptionSelect(opt)}
+                    onMouseDown={(e) => {
+                      // Prevent blur event from firing before click
+                      e.preventDefault();
+                      handleServiceOptionSelect(opt);
+                    }}
                     style={{
                       padding: '12px 16px',
                       cursor: isApplication ? 'not-allowed' : 'pointer',
@@ -556,7 +507,8 @@ const DynamicForm = ({
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       backgroundColor: isApplication ? '#f8f9fa' : 'white',
-                      opacity: isApplication ? 0.7 : 1
+                      opacity: isApplication ? 0.7 : 1,
+                      color: '#000000'
                     }}
                     className="service-option"
                     onMouseEnter={e => {
@@ -572,7 +524,7 @@ const DynamicForm = ({
                       }
                     }}
                   >
-                    <span style={{ flex: 1, fontWeight: '500' }}>{serviceName}</span>
+                    <span style={{ flex: 1, fontWeight: '500', color: '#000000' }}>{serviceName}</span>
                     <span 
                       style={{
                         background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
