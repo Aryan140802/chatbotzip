@@ -7,6 +7,16 @@ import logo from "../assets/logobot.jpg";
 import { getPost, postMessage } from "../api/PostApi";
 import { downloadSwagger } from "../api/PostApi"; // <-- Add this import (adjust if needed)
 
+// Utility: Parse service option to extract name and type
+const parseServiceOption = (service) => {
+  const [name, type = ""] = service.split('-');
+  return {
+    name: name.trim(),
+    type: type.trim().toUpperCase(),
+    fullValue: service
+  };
+};
+
 // Utility: Format dynamic bot message (safe HTML for <b> etc.)
 const formatDynamicMessage = (text) => {
   if (!text || typeof text !== "string") return text;
@@ -209,6 +219,7 @@ const DynamicForm = ({
   const [selectedFilter, setSelectedFilter] = useState(null);
 
   const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
+  
   useEffect(() => {
     setFieldDefs(fields);
     setFormData(current => {
@@ -273,6 +284,23 @@ const DynamicForm = ({
     return updated;
   };
 
+  // Handle clearing service and dependent fields
+  const handleClearService = () => {
+    const updatedFormData = {
+      ...formData,
+      service: "",
+      layer: "",
+      server: "",
+      eg: ""
+    };
+    setFormData(updatedFormData);
+    setErrors({});
+    
+    if (onFieldChange) {
+      onFieldChange(updatedFormData, 'service');
+    }
+  };
+
   const handleInputChange = (name, value) => {
     let updated = { ...formData, [name]: value };
     updated = applyCascadingLogic(updated, name);
@@ -288,7 +316,18 @@ const DynamicForm = ({
   };
 
   const handleSelectChange = async (name, value) => {
-    let updated = { ...formData, [name]: value };
+    let updated = { ...formData };
+    
+    if (name === 'service') {
+      const serviceDetails = parseServiceOption(value);
+      if (serviceDetails.type === 'APPLICATION') {
+        alert('Warning: Swagger is not available for Application type services');
+        return;
+      }
+      updated[name] = serviceDetails.name;
+    } else {
+      updated[name] = value;
+    }
 
     if (formType === 'filter' && name.toLowerCase() === 'filter') {
       updated = applyCascadingLogic(updated, name);
@@ -370,20 +409,84 @@ const DynamicForm = ({
               {isRequiredField && <span style={{ color: "red" }}>* </span>}
               {label.replace('* ', '')}
             </label>
-            <select
-              value={value}
-              onChange={e => handleSelectChange(name, e.target.value)}
-              className={`form-select${error ? " error" : ""}`}
-              disabled={isSubmitting || isSubmittingFromParent || options.length === 0}
-            >
-              <option value="">Select {label.replace('* ', '').toLowerCase()}</option>
-              {options.map((opt, idx) => (
-                <option key={idx} value={opt.value || opt}>
-                  {opt.label || opt}
-                </option>
-              ))}
-            </select>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <select
+                value={isService ? options.find(opt => opt.includes(value))?.toString() || "" : value}
+                onChange={e => handleSelectChange(name, e.target.value)}
+                className={`form-select${error ? " error" : ""}`}
+                disabled={isSubmitting || isSubmittingFromParent || options.length === 0}
+                style={{ paddingRight: isService && value ? '40px' : '12px' }}
+              >
+                <option value="">Select {label.replace('* ', '').toLowerCase()}</option>
+                {options.map((opt, idx) => {
+                  if (isService) {
+                    const { name, type, fullValue } = parseServiceOption(opt);
+                    return (
+                      <option key={idx} value={fullValue}>
+                        {`${name} ${type ? `(${type})` : ''}`}
+                      </option>
+                    );
+                  }
+                  return (
+                    <option key={idx} value={opt.value || opt}>
+                      {opt.label || opt}
+                    </option>
+                  );
+                })}
+              </select>
+              {isService && value && (
+                <button
+                  type="button"
+                  onClick={handleClearService}
+                  style={{
+                    position: 'absolute',
+                    right: '5px',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '5px',
+                    color: '#666',
+                    fontSize: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    transition: 'background-color 0.2s'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {error && <span className="error-message">{error}</span>}
+            {isService && value && (
+              <div style={{
+                marginTop: '5px',
+                fontSize: '12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '4px 8px',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px'
+              }}>
+                <span>Selected: {value}</span>
+                {options.find(opt => opt.includes(value))?.split('-')[1] && (
+                  <span style={{
+                    padding: '2px 8px',
+                    borderRadius: '3px',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    backgroundColor: options.find(opt => opt.includes(value))?.split('-')[1].trim().toUpperCase() === 'RESTAPI' ? 'rgba(40, 167, 69, 0.1)' : 'rgba(220, 53, 69, 0.1)',
+                    color: options.find(opt => opt.includes(value))?.split('-')[1].trim().toUpperCase() === 'RESTAPI' ? '#28a745' : '#dc3545'
+                  }}>
+                    {options.find(opt => opt.includes(value))?.split('-')[1].trim().toUpperCase()}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         );
       case "date":
@@ -443,132 +546,128 @@ const DynamicForm = ({
     }
   };
 
-
-
-
-
-        // Replace the existing handleDownloadSwagger function in your DynamicForm component with this:
-const handleDownloadSwagger = async () => {
-  // For workload forms, extract server, eg, and apiName
-  const { server, eg,apiName,service} = formData;
-  // The eg field used as egName
-  if (!server || !eg || !service) {
-    alert("Please fill all required fields for download.");
-    return;
-  }
-
-  try {
-    const response = await downloadSwagger({ server, egName: eg, apiName: service });
-    // Parse the swagger JSON if it comes as a string
-    let swaggerJson;
-    if (typeof response.swaggerJson === 'string') {
-      swaggerJson = JSON.parse(response.swaggerJson);
-    } else {
-      swaggerJson = response.swaggerJson || response;
+  // Replace the existing handleDownloadSwagger function in your DynamicForm component with this:
+  const handleDownloadSwagger = async () => {
+    // For workload forms, extract server, eg, and apiName
+    const { server, eg, apiName, service } = formData;
+    // The eg field used as egName
+    if (!server || !eg || !service) {
+      alert("Please fill all required fields for download.");
+      return;
     }
 
-    // Custom beautification function for better formatting
-    const beautifySwaggerJson = (obj) => {
-      // Create a beautifully formatted JSON with custom spacing and ordering
-      const formatObject = (data, depth = 0) => {
-        const indent = '  '.repeat(depth);
-        const nextIndent = '  '.repeat(depth + 1);
+    try {
+      const response = await downloadSwagger({ server, egName: eg, apiName: service });
+      // Parse the swagger JSON if it comes as a string
+      let swaggerJson;
+      if (typeof response.swaggerJson === 'string') {
+        swaggerJson = JSON.parse(response.swaggerJson);
+      } else {
+        swaggerJson = response.swaggerJson || response;
+      }
 
-        if (data === null) return 'null';
-        if (typeof data === 'boolean') return data.toString();
-        if (typeof data === 'number') return data.toString();
+      // Custom beautification function for better formatting
+      const beautifySwaggerJson = (obj) => {
+        // Create a beautifully formatted JSON with custom spacing and ordering
+        const formatObject = (data, depth = 0) => {
+          const indent = '  '.repeat(depth);
+          const nextIndent = '  '.repeat(depth + 1);
 
-        if (Array.isArray(data)) {
-          if (data.length === 0) return '[]';
-          const items = data.map(item => `${nextIndent}${formatObject(item, depth + 1)}`);
-          return `[\n${items.join(',\n')}\n${indent}]`;
-        }
+          if (data === null) return 'null';
+          if (typeof data === 'boolean') return data.toString();
+          if (typeof data === 'number') return data.toString();
 
-        if (typeof data === 'object') {
-          const keys = Object.keys(data);
-          if (keys.length === 0) return '{}';
+          if (Array.isArray(data)) {
+            if (data.length === 0) return '[]';
+            const items = data.map(item => `${nextIndent}${formatObject(item, depth + 1)}`);
+            return `[\n${items.join(',\n')}\n${indent}]`;
+          }
 
-          // Custom ordering for Swagger properties to make it more readable
-          const propertyOrder = [
-            'swagger', 'openapi', 'info', 'host', 'basePath', 'schemes',
-            'consumes', 'produces', 'paths', 'definitions', 'components',
-            'title', 'description', 'version', 'contact', 'license',
-            'get', 'post', 'put', 'delete', 'patch', 'options', 'head',
-            'tags', 'summary', 'operationId', 'parameters', 'responses',
-            'type', 'format', 'properties', 'required', 'items', 'enum',
-            '$ref', 'name', 'in', 'schema', 'maxLength', 'minLength'
-          ];
+          if (typeof data === 'object') {
+            const keys = Object.keys(data);
+            if (keys.length === 0) return '{}';
 
-          // Sort keys with custom order, keeping unordered keys at the end
-          const sortedKeys = keys.sort((a, b) => {
-            const indexA = propertyOrder.indexOf(a);
-            const indexB = propertyOrder.indexOf(b);
+            // Custom ordering for Swagger properties to make it more readable
+            const propertyOrder = [
+              'swagger', 'openapi', 'info', 'host', 'basePath', 'schemes',
+              'consumes', 'produces', 'paths', 'definitions', 'components',
+              'title', 'description', 'version', 'contact', 'license',
+              'get', 'post', 'put', 'delete', 'patch', 'options', 'head',
+              'tags', 'summary', 'operationId', 'parameters', 'responses',
+              'type', 'format', 'properties', 'required', 'items', 'enum',
+              '$ref', 'name', 'in', 'schema', 'maxLength', 'minLength'
+            ];
 
-            if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-            if (indexA === -1) return 1;
-            if (indexB === -1) return -1;
-            return indexA - indexB;
-          });
+            // Sort keys with custom order, keeping unordered keys at the end
+            const sortedKeys = keys.sort((a, b) => {
+              const indexA = propertyOrder.indexOf(a);
+              const indexB = propertyOrder.indexOf(b);
 
-          const items = sortedKeys.map(key => {
-            const value = formatObject(data[key], depth + 1);
-            return `${nextIndent}"${key}": ${value}`;
-          });
+              if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+              if (indexA === -1) return 1;
+              if (indexB === -1) return -1;
+              return indexA - indexB;
+            });
 
-          return `{\n${items.join(',\n')}\n${indent}}`;
-        }
+            const items = sortedKeys.map(key => {
+              const value = formatObject(data[key], depth + 1);
+              return `${nextIndent}"${key}": ${value}`;
+            });
 
-        return String(data);
+            return `{\n${items.join(',\n')}\n${indent}}`;
+          }
+
+          return String(data);
+        };
+
+        return formatObject(obj);
       };
 
-      return formatObject(obj);
-    };
+      // Apply beautification
+      const beautifiedJson = beautifySwaggerJson(swaggerJson);
 
-    // Apply beautification
-    const beautifiedJson = beautifySwaggerJson(swaggerJson);
-
-    // Add header comment for better documentation
-    const header = `/*
+      // Add header comment for better documentation
+      const header = `/*
  * Swagger API Specification
  * Generated from: ${apiName || service || 'Unknown Service'}
  * Server: ${server}
  * Environment: ${eg}
  * Generated on: ${new Date().toLocaleString()}
+ */
 
 `;
 
-    const finalContent = header + beautifiedJson;
+      const finalContent = header + beautifiedJson;
 
-    // Create and download the beautifully formatted file
-    const blob = new Blob([finalContent], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${apiName || service || 'service'}-swagger-spec.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Create and download the beautifully formatted file
+      const blob = new Blob([finalContent], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${apiName || service || 'service'}-swagger-spec.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
 
-    // Optional: Show success message
-    console.log(`✅ Successfully downloaded Swagger specification for ${apiName}`);
+      // Optional: Show success message
+      console.log(`✅ Successfully downloaded Swagger specification for ${apiName}`);
 
-   // Clear the form session after successful download
+      // Clear the form session after successful download
       if (clearFormSession) {
         clearFormSession();
       }
 
+    } catch (err) {
+      alert("Failed to download Swagger file.");
+      console.error("Swagger download error:", err);
 
-  } catch (err) {
-    alert("Failed to download Swagger file.");
-    console.error("Swagger download error:", err);
-
-// Clear the form session after successful download
+      // Clear the form session after successful download
       if (clearFormSession) {
         clearFormSession();
       }
-  }
-};
+    }
+  };
 
   return (
     <div className="dynamic-form-container">
@@ -590,33 +689,30 @@ const handleDownloadSwagger = async () => {
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-         {formType === "workload" && allFieldsFilled && (
-  <button
-    type="button"
-    className="download-swagger-button"
-    onClick={handleDownloadSwagger}
-    disabled={isSubmitting || isSubmittingFromParent}
-    style={{
-      marginLeft: 8,
-      background: "#007BFF",
-      color: "white",
-      cursor: "pointer",
-      fontSize: "14px",
-      borderRadius: "4px",
-      padding: "10px 20px",
-    }}
-  >
-    Download Swagger
-  </button>
-)}
+          {formType === "workload" && allFieldsFilled && (
+            <button
+              type="button"
+              className="download-swagger-button"
+              onClick={handleDownloadSwagger}
+              disabled={isSubmitting || isSubmittingFromParent}
+              style={{
+                marginLeft: 8,
+                background: "#007BFF",
+                color: "white",
+                cursor: "pointer",
+                fontSize: "14px",
+                borderRadius: "4px",
+                padding: "10px 20px",
+              }}
+            >
+              Download Swagger
+            </button>
+          )}
         </div>
       </form>
     </div>
   );
 };
-
-
-
 
 const Chatbot = ({ setChatbotMinimized }) => {
   const [messages, setMessages] = useState([]);
@@ -639,8 +735,7 @@ const Chatbot = ({ setChatbotMinimized }) => {
     }
   };
 
-
-const clearFormSession = () => {
+  const clearFormSession = () => {
     setActiveForm(null);
     setCurrentFormType(null);
     setCurrentFormFields(null);
