@@ -315,21 +315,12 @@ const DynamicForm = ({
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
-  const handleServiceInputChange = (value) => {
-    setServiceInputValue(value);
-    
-    // Show dropdown when user types
-    if (value.trim()) {
-      setShowServiceDropdown(true);
-    } else {
-      setShowServiceDropdown(false);
-    }
-    
-    // Update form data but don't trigger API call yet
-    const updated = { ...formData, service: value };
-    setFormData(updated);
-    if (errors.service) setErrors(prev => ({ ...prev, service: null }));
-  };
+const handleServiceInputChange = (value) => {
+  setServiceInputValue(value);
+  setShowServiceDropdown(!!value.trim());
+  setFormData(prev => ({ ...prev, service: value }));
+  if (errors.service) setErrors(prev => ({ ...prev, service: null }));
+};
 
   const handleServiceOptionSelect = async (serviceValue) => {
     const { name } = parseServiceOption(serviceValue);
@@ -750,16 +741,7 @@ const DynamicForm = ({
       // Apply beautification
       const beautifiedJson = beautifySwaggerJson(swaggerJson);
 
-      // Add header comment for better documentation
-      const header = `/*
- * Swagger API Specification
- * Generated from: ${apiName || service || 'Unknown Service'}
- * Server: ${server}
- * Environment: ${eg}
- * Generated on: ${new Date().toLocaleString()}
- */
-
-`;
+     
 
       const finalContent = header + beautifiedJson;
 
