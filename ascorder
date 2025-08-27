@@ -1,36 +1,435 @@
-85
-: 
-{sender: "You", message: {service: "PASSBOOK_DB_LOGGER_DPG"}}
-message
-: 
-{service: "PASSBOOK_DB_LOGGER_DPG"}
-service
-: 
-"PASSBOOK_DB_LOGGER_DPG"
-sender
-: 
-"You"
-86
-: 
-{sender: "Bot",…}
-message
-: 
-{service: ["PASSBOOK_DB_LOGGER_DPG-Application"], layer: ["AADHAR_SYS", "AADHAR_EXP"],…}
-eg
-: 
-["Passbook_DB"]
-layer
-: 
-["AADHAR_SYS", "AADHAR_EXP"]
-server
-: 
-["24_197", "24_194", "24_192", "25_196", "24_191", "24_195", "25_190", "25_192", "24_190", "25_191",…]
-service
-: 
-["PASSBOOK_DB_LOGGER_DPG-Application"]
-options
-: 
-["y.Back", "z.Main Menu"]
-sender
-: 
-"Bot"
+{
+            "sender": "You",
+            "message": {
+                "service": "Dynat"
+            }
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "service": [
+                    "Dynatrace_Logger-Application",
+                    "Dynatrace_SYS_Logger-Application"
+                ],
+                "layer": [
+                    "AADHAR_EXP",
+                    "MISC_EXP",
+                    "ACCOUNT_EXP",
+                    "NON_GEN5",
+                    "IVR_EXP",
+                    "CUSTOMER_EXP",
+                    "MISC_SYS",
+                    "CUSTOMER_SYS",
+                    "PAYMENT_EXP",
+                    "AADHAR_SYS"
+                ],
+                "server": [
+                    "25_190",
+                    "25_166",
+                    "24_44",
+                    "24_145",
+                    "24_65",
+                    "25_34",
+                    "24_34",
+                    "24_190",
+                    "24_74",
+                    "25_10",
+                    "24_43",
+                    "24_165",
+                    "24_194",
+                    "24_12",
+                    "24_66",
+                    "25_197",
+                    "25_33",
+                    "24_42",
+                    "25_141",
+                    "25_32",
+                    "25_164",
+                    "24_45",
+                    "25_145",
+                    "24_41",
+                    "24_101",
+                    "24_31",
+                    "24_33",
+                    "25_14",
+                    "25_31",
+                    "25_144",
+                    "25_75",
+                    "25_101",
+                    "25_13",
+                    "25_73",
+                    "24_196",
+                    "25_146",
+                    "24_64",
+                    "24_166",
+                    "25_194",
+                    "24_14",
+                    "25_66",
+                    "24_164",
+                    "24_11",
+                    "25_165",
+                    "25_192",
+                    "25_143",
+                    "24_13",
+                    "25_41",
+                    "24_73",
+                    "24_75",
+                    "25_45",
+                    "24_191",
+                    "24_10",
+                    "24_144",
+                    "25_11",
+                    "25_74",
+                    "24_192",
+                    "24_63",
+                    "24_146",
+                    "25_142",
+                    "25_64",
+                    "24_195",
+                    "24_142",
+                    "25_65",
+                    "24_32",
+                    "24_197",
+                    "25_44",
+                    "25_42",
+                    "24_143",
+                    "25_191",
+                    "25_12",
+                    "25_63",
+                    "25_196",
+                    "24_163",
+                    "25_163",
+                    "24_141",
+                    "25_43",
+                    "25_195"
+                ],
+                "eg": [
+                    "Payment_E_01",
+                    "Misc_S_01",
+                    "Passbook_S_01",
+                    "Misc_E_04",
+                    "Customer_S_01",
+                    "GCC_E_01",
+                    "IVR_E_01",
+                    "Misc_E_01",
+                    "PAN_EXP_01",
+                    "AADHAR_EXP_01",
+                    "Passbook_E_01",
+                    "NP_E_01",
+                    "CUSTOMER_SPECIAL_E_01",
+                    "Account_E_01",
+                    "Customer_E_01"
+                ]
+            },
+            "options": [
+                "y.Back",
+                "z.Main Menu"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": {
+                "service": "Dynat"
+            }
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "service": [
+                    "Dynatrace_Logger-Application",
+                    "Dynatrace_SYS_Logger-Application"
+                ],
+                "layer": [
+                    "AADHAR_EXP",
+                    "MISC_EXP",
+                    "ACCOUNT_EXP",
+                    "NON_GEN5",
+                    "IVR_EXP",
+                    "CUSTOMER_EXP",
+                    "MISC_SYS",
+                    "CUSTOMER_SYS",
+                    "PAYMENT_EXP",
+                    "AADHAR_SYS"
+                ],
+                "server": [
+                    "25_190",
+                    "25_166",
+                    "24_44",
+                    "24_145",
+                    "24_65",
+                    "25_34",
+                    "24_34",
+                    "24_190",
+                    "24_74",
+                    "25_10",
+                    "24_43",
+                    "24_165",
+                    "24_194",
+                    "24_12",
+                    "24_66",
+                    "25_197",
+                    "25_33",
+                    "24_42",
+                    "25_141",
+                    "25_32",
+                    "25_164",
+                    "24_45",
+                    "25_145",
+                    "24_41",
+                    "24_101",
+                    "24_31",
+                    "24_33",
+                    "25_14",
+                    "25_31",
+                    "25_144",
+                    "25_75",
+                    "25_101",
+                    "25_13",
+                    "25_73",
+                    "24_196",
+                    "25_146",
+                    "24_64",
+                    "24_166",
+                    "25_194",
+                    "24_14",
+                    "25_66",
+                    "24_164",
+                    "24_11",
+                    "25_165",
+                    "25_192",
+                    "25_143",
+                    "24_13",
+                    "25_41",
+                    "24_73",
+                    "24_75",
+                    "25_45",
+                    "24_191",
+                    "24_10",
+                    "24_144",
+                    "25_11",
+                    "25_74",
+                    "24_192",
+                    "24_63",
+                    "24_146",
+                    "25_142",
+                    "25_64",
+                    "24_195",
+                    "24_142",
+                    "25_65",
+                    "24_32",
+                    "24_197",
+                    "25_44",
+                    "25_42",
+                    "24_143",
+                    "25_191",
+                    "25_12",
+                    "25_63",
+                    "25_196",
+                    "24_163",
+                    "25_163",
+                    "24_141",
+                    "25_43",
+                    "25_195"
+                ],
+                "eg": [
+                    "Payment_E_01",
+                    "Misc_S_01",
+                    "Passbook_S_01",
+                    "Misc_E_04",
+                    "Customer_S_01",
+                    "GCC_E_01",
+                    "IVR_E_01",
+                    "Misc_E_01",
+                    "PAN_EXP_01",
+                    "AADHAR_EXP_01",
+                    "Passbook_E_01",
+                    "NP_E_01",
+                    "CUSTOMER_SPECIAL_E_01",
+                    "Account_E_01",
+                    "Customer_E_01"
+                ]
+            },
+            "options": [
+                "y.Back",
+                "z.Main Menu"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": {
+                "service": "Dynatrace_Logger"
+            }
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "service": [
+                    "Dynatrace_Logger-Application"
+                ],
+                "layer": [
+                    "AADHAR_EXP",
+                    "MISC_EXP",
+                    "ACCOUNT_EXP",
+                    "NON_GEN5",
+                    "CUSTOMER_EXP",
+                    "AADHAR_SYS",
+                    "PAYMENT_EXP",
+                    "IVR_EXP"
+                ],
+                "server": [
+                    "25_73",
+                    "25_190",
+                    "24_196",
+                    "24_63",
+                    "24_44",
+                    "24_64",
+                    "25_64",
+                    "24_65",
+                    "24_195",
+                    "25_34",
+                    "25_65",
+                    "24_32",
+                    "24_197",
+                    "24_34",
+                    "24_41",
+                    "25_194",
+                    "24_14",
+                    "24_101",
+                    "25_66",
+                    "24_190",
+                    "25_44",
+                    "24_11",
+                    "25_192",
+                    "24_74",
+                    "24_13",
+                    "25_10",
+                    "25_42",
+                    "25_191",
+                    "24_43",
+                    "25_12",
+                    "24_31",
+                    "24_33",
+                    "25_14",
+                    "25_63",
+                    "25_41",
+                    "24_73",
+                    "24_75",
+                    "24_194",
+                    "24_12",
+                    "25_31",
+                    "25_196",
+                    "25_45",
+                    "25_75",
+                    "24_66",
+                    "25_197",
+                    "24_191",
+                    "24_10",
+                    "25_33",
+                    "25_11",
+                    "25_43",
+                    "25_101",
+                    "24_42",
+                    "25_74",
+                    "24_192",
+                    "25_13",
+                    "25_32",
+                    "25_195",
+                    "24_45"
+                ],
+                "eg": [
+                    "Payment_E_01",
+                    "Misc_E_04",
+                    "GCC_E_01",
+                    "IVR_E_01",
+                    "Misc_E_01",
+                    "PAN_EXP_01",
+                    "AADHAR_EXP_01",
+                    "Passbook_E_01",
+                    "NP_E_01",
+                    "CUSTOMER_SPECIAL_E_01",
+                    "Account_E_01",
+                    "Customer_E_01"
+                ]
+            },
+            "options": [
+                "y.Back",
+                "z.Main Menu"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": {
+                "service": "Dynatrace_Logger",
+                "layer": "AADHAR_EXP"
+            }
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "service": "Dynatrace_Logger-Application",
+                "layer": "AADHAR_EXP",
+                "server": [
+                    "25_190",
+                    "24_191",
+                    "24_190",
+                    "25_192",
+                    "24_192",
+                    "25_191"
+                ],
+                "eg": [
+                    "PAN_EXP_01",
+                    "AADHAR_EXP_01",
+                    "Passbook_E_01"
+                ]
+            },
+            "options": [
+                "y.Back",
+                "z.Main Menu"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": {
+                "service": "Dynatrace_Logger",
+                "layer": "AADHAR_EXP",
+                "server": "25_190"
+            }
+        },
+        {
+            "sender": "Bot",
+            "message": {
+                "service": "Dynatrace_Logger-Application",
+                "layer": [
+                    "AADHAR_EXP"
+                ],
+                "server": "25_190",
+                "eg": [
+                    "PAN_EXP_01",
+                    "AADHAR_EXP_01",
+                    "Passbook_E_01"
+                ]
+            },
+            "options": [
+                "y.Back",
+                "z.Main Menu"
+            ]
+        },
+        {
+            "sender": "You",
+            "message": {
+                "service": "Dynatrace_Logger",
+                "layer": "AADHAR_EXP",
+                "server": "25_190",
+                "eg": "PAN_EXP_01"
+            }
+        },
+        {
+            "sender": "Bot",
+            "message": "Layer: <b>AADHAR_EXP</b>\n Server <b>25_190</b> has service <b>Dynatrace_Logger-Application</b> running in execution group <b>PAN_EXP_01</b>,which is configured with following parameters: \n Additional Instances: <b>120</b>\n Thread Capacity: <b>120</b> \n Threads In Use: <b>1</b>\n TimeOut: <b>No_Data</b> ",
+            "options": [
+                "y.Back",
+                "z.Main Menu"
+            ]
+        }
+    ]
+}
