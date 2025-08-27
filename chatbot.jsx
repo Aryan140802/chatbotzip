@@ -496,10 +496,10 @@ const DynamicForm = ({
     const error = errors[name];
     const isRequiredField = field.required;
     const filteredOptions = getFilteredServiceOptions();
-    const isSearchEnabled = serviceInputValue.trim().length >= 5; // Enable search after 5 characters
+    const isSearchEnabled = serviceInputValue.trim().length >= 4; // Enable search after 5 characters
 
     const handleSearchClick = async () => {
-      if (serviceInputValue.trim().length >= 5) {
+      if (serviceInputValue.trim().length >= 4) {
         // Update form data with current input value
         let updated = { ...formData, service: serviceInputValue };
         updated = applyCascadingLogic(updated, 'service');
@@ -672,7 +672,7 @@ const DynamicForm = ({
     if (serviceOption) {
       const { type } = parseServiceOption(serviceOption);
       return { 
-        isApplication: type.toUpperCase() === 'APPLICATION', 
+        isApplication === 'Application', 
         serviceOption 
       };
     }
