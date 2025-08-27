@@ -1,13 +1,36 @@
-
-eg
+85
 : 
-["AADHAR_EXP_01", "PAN_EXP_03", "AADHAR_EXP_02", "PAN_EXP_01", "PAN_EXP_05", "AADHAR_EXP_04",…]
-layer
+{sender: "You", message: {service: "PASSBOOK_DB_LOGGER_DPG"}}
+message
 : 
-["AADHAR_SYS", "AADHAR_EXP", "ACCOUNT_EXP"]
-server
-: 
-["25_192", "24_14", "25_13", "25_190", "24_192", "25_196", "24_11", "25_10", "24_194", "24_195",…]
+{service: "PASSBOOK_DB_LOGGER_DPG"}
 service
 : 
-["panEnquiryPassThrough_expDs-RESTAPI"]
+"PASSBOOK_DB_LOGGER_DPG"
+sender
+: 
+"You"
+86
+: 
+{sender: "Bot",…}
+message
+: 
+{service: ["PASSBOOK_DB_LOGGER_DPG-Application"], layer: ["AADHAR_SYS", "AADHAR_EXP"],…}
+eg
+: 
+["Passbook_DB"]
+layer
+: 
+["AADHAR_SYS", "AADHAR_EXP"]
+server
+: 
+["24_197", "24_194", "24_192", "25_196", "24_191", "24_195", "25_190", "25_192", "24_190", "25_191",…]
+service
+: 
+["PASSBOOK_DB_LOGGER_DPG-Application"]
+options
+: 
+["y.Back", "z.Main Menu"]
+sender
+: 
+"Bot"
