@@ -620,9 +620,9 @@ const DynamicForm = ({
 
     if (serviceOption) {
       const { type } = parseServiceOption(serviceOption);
-      return { 
-        isApplication: type.toUpperCase() === 'APPLICATION', 
-        serviceOption 
+      return {
+        isApplication: type.toUpperCase() === 'APPLICATION',
+        serviceOption
       };
     }
 
@@ -762,32 +762,14 @@ const DynamicForm = ({
         parsedJson = response;
       }
 
-      // Ensure proper Swagger structure
-      if (parsedJson && typeof parsedJson === 'object') {
-        // Add required Swagger fields if missing
-        if (!parsedJson.swagger && !parsedJson.openapi) {
-          parsedJson.swagger = '2.0';
-        }
-        if (!parsedJson.info) {
-          parsedJson.info = {
-            title: service || 'API Documentation',
-            version: '1.0.0'
-          };
-        }
-        if (!parsedJson.host && server) {
-          parsedJson.host = server;
-        }
-        if (!parsedJson.basePath) {
-          parsedJson.basePath = '/';
-        }
-      }
+
 
       // Format as clean JSON without extra escaping
       const formattedJson = JSON.stringify(parsedJson, null, 2);
 
       // Create and download the file
-      const blob = new Blob([formattedJson], { 
-        type: "application/json;charset=utf-8" 
+      const blob = new Blob([formattedJson], {
+        type: "application/json;charset=utf-8"
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
