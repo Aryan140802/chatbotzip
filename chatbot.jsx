@@ -274,6 +274,7 @@ const DynamicForm = ({
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [serviceInputValue, setServiceInputValue] = useState("");
+  const [serviceTypeInfo, setServiceTypeInfo] = useState({ isApplication: false, serviceOption: null });
 
   const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
 
@@ -337,6 +338,9 @@ const DynamicForm = ({
       setServiceInputValue("");
       setShowServiceDropdown(false);
 
+      // Clear service type info
+      setServiceTypeInfo({ isApplication: false, serviceOption: null });
+
       // Clear errors
       setErrors({});
 
@@ -382,14 +386,24 @@ const DynamicForm = ({
   const handleServiceInputChange = (value) => {
     setServiceInputValue(value);
     setFormData(prev => ({ ...prev, service: value }));
+    
+    // Clear service type info when service input is cleared or changed manually
+    if (!value.trim()) {
+      setServiceTypeInfo({ isApplication: false, serviceOption: null });
+    }
+    
     if (errors.service) setErrors(prev => ({ ...prev, service: null }));
   };
 
   const handleServiceOptionSelect = async (serviceValue) => {
-    const { name } = parseServiceOption(serviceValue);
+    const { name, type } = parseServiceOption(serviceValue);
 
     setServiceInputValue(name);
     setShowServiceDropdown(false);
+
+    // Store service type information when service is selected
+    const isApplication = type.toUpperCase() === 'APPLICATION';
+    setServiceTypeInfo({ isApplication, serviceOption: serviceValue });
 
     // Update form data with just the service name
     let updated = { ...formData, service: name };
@@ -658,27 +672,8 @@ const DynamicForm = ({
     );
   };
 
-  // FIXED: Get current service option and determine if it's an application
-  const getCurrentServiceInfo = () => {
-    const serviceField = fieldDefs.find(f => f.name === 'service');
-    if (!serviceField?.options || !formData.service) return { isApplication: false, serviceOption: null };
-
-    // Find the service option that matches the current service name
-    const serviceOption = serviceField.options.find(opt => {
-      const { name } = parseServiceOption(opt);
-      return name === formData.service;
-    });
-
-    if (serviceOption) {
-      const { type } = parseServiceOption(serviceOption);
-      return { 
-        isApplication === 'Application', 
-        serviceOption 
-      };
-    }
-
-    return { isApplication: false, serviceOption: null };
-  };
+  // Use serviceTypeInfo state instead of calculating each time
+  const { isApplication } = serviceTypeInfo;
 
   const renderField = (field) => {
     const {
@@ -782,9 +777,8 @@ const DynamicForm = ({
   // FIXED: handleDownloadSwagger function with clean JSON formatting
   const handleDownloadSwagger = async () => {
     const { server, eg, service } = formData;
-    const { isApplication } = getCurrentServiceInfo();
 
-    if (isApplication) {
+    if (serviceTypeInfo.isApplication) {
       alert("Swagger file doesn't exist for applications");
       return;
     }
@@ -844,7 +838,7 @@ const DynamicForm = ({
     }
   };
 
-  const { isApplication } = getCurrentServiceInfo();
+  const isApp = serviceTypeInfo.isApplication;
 
   return (
     <div className="dynamic-form-container">
@@ -871,25 +865,25 @@ const DynamicForm = ({
               type="button"
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent || isApplication}
+              disabled={isSubmitting || isSubmittingFromParent || isApp}
               style={{
                 marginLeft: 8,
-                background: isApplication ? "#ccc" : "#007BFF",
+                background: isApp ? "#ccc" : "#007BFF",
                 color: "white",
-                cursor: isApplication ? "not-allowed" : "pointer",
+                cursor: isApp ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 borderRadius: "4px",
                 padding: "10px 20px",
-                opacity: isApplication ? "0.6" : "1",
+                opacity: isApp ? "0.6" : "1",
                 border: "none"
               }}
-              title={isApplication ? "Swagger file doesn't exist for applications" : "Download Swagger"}
+              title={isApp ? "Swagger file doesn't exist for applications" : "Download Swagger"}
             >
               Download Swagger
             </button>
           )}
           {/* Show application notice */}
-          {formType === "workload" && allFieldsFilled && isApplication && (
+          {formType === "workload" && allFieldsFilled && isApp && (
             <div style={{
               marginTop: "8px",
               padding: "8px 12px",
