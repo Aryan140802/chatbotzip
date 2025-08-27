@@ -274,24 +274,36 @@ const DynamicForm = ({
     }
   }, [formData.filter, formType, selectedFilter]);
 
-  // Clear entire form when service is empty
+  // Clear entire form when service is empty - FIXED
   useEffect(() => {
-  if (formType === 'workload' && formData.service === "") {
-    // Clear all form fields
-    const clearedFormData = {};
-    fieldDefs.forEach(f => { clearedFormData[f.name] = ""; });
-    setFormData(clearedFormData);
+    if (formType === 'workload' && formData.service === "") {
+      // Clear all form fields
+      const clearedFormData = {};
+      fieldDefs.forEach(f => { clearedFormData[f.name] = ""; });
+      setFormData(clearedFormData);
 
-    // Clear service field UI state
-    setServiceInputValue("");
-    setShowServiceDropdown(false);
+      // Clear service field UI state
+      setServiceInputValue("");
+      setShowServiceDropdown(false);
 
-    // Optionally clear errors
-    setErrors({});
-  }
-  // Only trigger when service field is cleared
-  // eslint-disable-next-line
-}, [formData.service, formType]);
+      // Clear errors
+      setErrors({});
+
+      // Update field definitions to reset options
+      setFieldDefs(prevFields =>
+        prevFields.map(field => {
+          if (field.name !== 'service') {
+            return {
+              ...field,
+              options: [], // Clear options for non-service fields
+              value: ""
+            };
+          }
+          return field;
+        })
+      );
+    }
+  }, [formData.service, formType, fieldDefs]);
 
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
@@ -316,12 +328,11 @@ const DynamicForm = ({
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
-const handleServiceInputChange = (value) => {
-  setServiceInputValue(value);
-  setShowServiceDropdown(!!value.trim());
-  setFormData(prev => ({ ...prev, service: value }));
-  if (errors.service) setErrors(prev => ({ ...prev, service: null }));
-};
+  const handleServiceInputChange = (value) => {
+    setServiceInputValue(value);
+    setFormData(prev => ({ ...prev, service: value }));
+    if (errors.service) setErrors(prev => ({ ...prev, service: null }));
+  };
 
   const handleServiceOptionSelect = async (serviceValue) => {
     const { name } = parseServiceOption(serviceValue);
@@ -345,7 +356,7 @@ const handleServiceInputChange = (value) => {
 
   const handleBlur = async (name) => {
     if (name === 'service') {
-      setShowServiceDropdown(false);
+      // Don't hide dropdown on blur, only when user clicks away or selects
       // Trigger API call when user clicks off the service field
       if (serviceInputValue.trim() && onFieldChange) {
         const filtered = filterNonEmptyFields(formData);
@@ -434,13 +445,17 @@ const handleServiceInputChange = (value) => {
     const error = errors[name];
     const isRequiredField = field.required;
     const filteredOptions = getFilteredServiceOptions();
+    const isSearchEnabled = serviceInputValue.trim().length >= 5; // Enable search after 5 characters
 
     const handleSearchClick = async () => {
-      if (serviceInputValue.trim()) {
+      if (serviceInputValue.trim().length >= 5) {
         // Update form data with current input value
         let updated = { ...formData, service: serviceInputValue };
         updated = applyCascadingLogic(updated, 'service');
         setFormData(updated);
+
+        // Show dropdown after search
+        setShowServiceDropdown(true);
 
         // Trigger API call
         if (onFieldChange) {
@@ -457,47 +472,51 @@ const handleServiceInputChange = (value) => {
           {label.replace('* ', '')}
         </label>
 
-          <div className="service-input-container" style={{ position: 'relative', display: 'flex' }}>
-            <input
-              type="text"
-              value={serviceInputValue}
-              onChange={e => handleServiceInputChange(e.target.value)}
-              onBlur={() => handleBlur(name)}
-              onFocus={() => serviceInputValue.trim() && setShowServiceDropdown(true)}
-              placeholder="Type to search or select from dropdown"
-              className={`form-input${error ? " error" : ""}`}
-              disabled={isSubmitting || isSubmittingFromParent}
-              style={{
-                flex: 1,
-                paddingRight: '12px'
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleSearchClick}
-              className="search-button"
-              style={{
-                background: '#007BFF',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '8px 16px',
-                cursor: 'pointer',
-                color: 'white',
-                marginLeft: '8px',
-                fontSize: '14px',
-                fontWeight: '500',
-                transition: 'background-color 0.2s',
-              }}
-              onMouseEnter={e => {
+        <div className="service-input-container" style={{ position: 'relative', display: 'flex' }}>
+          <input
+            type="text"
+            value={serviceInputValue}
+            onChange={e => handleServiceInputChange(e.target.value)}
+            onBlur={() => handleBlur(name)}
+            placeholder="Type to search (minimum 5 characters)"
+            className={`form-input${error ? " error" : ""}`}
+            disabled={isSubmitting || isSubmittingFromParent}
+            style={{
+              flex: 1,
+              paddingRight: '12px'
+            }}
+          />
+          <button
+            type="button"
+            onClick={handleSearchClick}
+            className="search-button"
+            disabled={!isSearchEnabled} // Disable until 5 characters
+            style={{
+              background: isSearchEnabled ? '#007BFF' : '#ccc',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '8px 16px',
+              cursor: isSearchEnabled ? 'pointer' : 'not-allowed',
+              color: 'white',
+              marginLeft: '8px',
+              fontSize: '14px',
+              fontWeight: '500',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={e => {
+              if (isSearchEnabled) {
                 e.target.style.backgroundColor = '#0056b3';
-              }}
-              onMouseLeave={e => {
-                e.target.style.backgroundColor = '#007BFF';
-              }}
-            >
-              Search
-            </button>          {/* Dropdown symbol */}
-          {field.options?.length > 0 && (
+              }
+            }}
+            onMouseLeave={e => {
+              e.target.style.backgroundColor = isSearchEnabled ? '#007BFF' : '#ccc';
+            }}
+          >
+            Search
+          </button>
+
+          {/* Dropdown symbol - only show when dropdown is visible */}
+          {showServiceDropdown && field.options?.length > 0 && (
             <div
               style={{
                 position: 'absolute',
@@ -514,6 +533,7 @@ const handleServiceInputChange = (value) => {
             </div>
           )}
 
+          {/* Only show dropdown when search is clicked and options exist */}
           {showServiceDropdown && filteredOptions.length > 0 && (
             <div
               className="service-dropdown"
@@ -587,13 +607,26 @@ const handleServiceInputChange = (value) => {
     );
   };
 
-  // Get current service option
-  const getCurrentServiceOption = () => {
+  // Get current service option and determine if it's an application
+  const getCurrentServiceInfo = () => {
     const serviceField = fieldDefs.find(f => f.name === 'service');
-    return serviceField?.options?.find(opt => {
+    if (!serviceField?.options || !formData.service) return { isApplication: false, serviceOption: null };
+
+    // Find the service option that matches the current service name
+    const serviceOption = serviceField.options.find(opt => {
       const { name } = parseServiceOption(opt);
       return name === formData.service;
     });
+
+    if (serviceOption) {
+      const { type } = parseServiceOption(serviceOption);
+      return { 
+        isApplication: type.toUpperCase() === 'APPLICATION', 
+        serviceOption 
+      };
+    }
+
+    return { isApplication: false, serviceOption: null };
   };
 
   const renderField = (field) => {
@@ -695,17 +728,14 @@ const handleServiceInputChange = (value) => {
     }
   };
 
-  // Updated handleDownloadSwagger function
+  // Updated handleDownloadSwagger function with better JSON formatting
   const handleDownloadSwagger = async () => {
-    const { server, eg, apiName, service } = formData;
-    const currentOption = getCurrentServiceOption();
+    const { server, eg, service } = formData;
+    const { isApplication } = getCurrentServiceInfo();
 
-    if (currentOption) {
-      const { type } = parseServiceOption(currentOption);
-      if (type.toUpperCase() === 'APPLICATION') {
-        alert("Swagger file doesn't exist for applications");
-        return;
-      }
+    if (isApplication) {
+      alert("Swagger file doesn't exist for applications");
+      return;
     }
 
     if (!server || !eg || !service) {
@@ -716,7 +746,7 @@ const handleServiceInputChange = (value) => {
     try {
       const response = await downloadSwagger({ server, egName: eg, apiName: service });
 
-      // Parse and format the swagger JSON
+      // Parse and format the swagger JSON for validation
       let parsedJson;
       try {
         parsedJson = typeof response === 'string' ? JSON.parse(response) : response;
@@ -724,24 +754,49 @@ const handleServiceInputChange = (value) => {
         parsedJson = response;
       }
 
-      // Pretty print the JSON and remove backslashes
-      const formattedJson = JSON.stringify(parsedJson, null, 2)
-        .replace(/\\/g, '')
-        .replace(/\u0000/g, '');
+      // Ensure proper Swagger structure for validation
+      if (parsedJson && typeof parsedJson === 'object') {
+        // Add required Swagger fields if missing
+        if (!parsedJson.swagger && !parsedJson.openapi) {
+          parsedJson.swagger = '2.0';
+        }
+        if (!parsedJson.info) {
+          parsedJson.info = {
+            title: service || 'API Documentation',
+            version: '1.0.0'
+          };
+        }
+        if (!parsedJson.host && server) {
+          parsedJson.host = server;
+        }
+        if (!parsedJson.basePath) {
+          parsedJson.basePath = '/';
+        }
+      }
 
-      // Create and download the beautifully formatted file
-      const blob = new Blob([formattedJson], { type: "application/json" });
+      // Pretty print with proper indentation and clean formatting
+      const formattedJson = JSON.stringify(parsedJson, null, 2)
+        .replace(/\\\\/g, '\\')  // Remove double backslashes
+        .replace(/\\"/g, '"')    // Remove escaped quotes where not needed
+        .replace(/\u0000/g, '')  // Remove null characters
+        .replace(/\\n/g, '\n')   // Convert \n to actual newlines in strings
+        .replace(/\\t/g, '\t');  // Convert \t to actual tabs in strings
+
+      // Create and download the formatted file
+      const blob = new Blob([formattedJson], { 
+        type: "application/json;charset=utf-8" 
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${apiName || service || 'service'}-swagger-spec.json`;
+      a.download = `${service}-swagger-spec.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // Optional: Show success message
-      console.log(`✅ Successfully downloaded Swagger specification for ${apiName}`);
+      // Success message
+      console.log(`✅ Successfully downloaded Swagger specification for ${service}`);
 
       // Clear the form session after successful download
       if (clearFormSession) {
@@ -758,6 +813,8 @@ const handleServiceInputChange = (value) => {
       }
     }
   };
+
+  const { isApplication } = getCurrentServiceInfo();
 
   return (
     <div className="dynamic-form-container">
@@ -784,21 +841,39 @@ const handleServiceInputChange = (value) => {
               type="button"
               className="download-swagger-button"
               onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent || (getCurrentServiceOption() && parseServiceOption(getCurrentServiceOption())?.type?.toUpperCase() === 'APPLICATION')}
+              disabled={isSubmitting || isSubmittingFromParent || isApplication}
               style={{
                 marginLeft: 8,
-                background: "#007BFF",
+                background: isApplication ? "#ccc" : "#007BFF",
                 color: "white",
-                cursor: (getCurrentServiceOption() && parseServiceOption(getCurrentServiceOption())?.type?.toUpperCase() === 'APPLICATION') ? "not-allowed" : "pointer",
+                cursor: isApplication ? "not-allowed" : "pointer",
                 fontSize: "14px",
                 borderRadius: "4px",
                 padding: "10px 20px",
-                opacity: (getCurrentServiceOption() && parseServiceOption(getCurrentServiceOption())?.type?.toUpperCase() === 'APPLICATION') ? "0.6" : "1",
+                opacity: isApplication ? "0.6" : "1",
+                border: "none"
               }}
-              title={formData.service && parseServiceOption(formData.service)?.type?.toUpperCase() === 'APPLICATION' ? "Swagger file doesn't exist for applications" : "Download Swagger"}
+              title={isApplication ? "Swagger file doesn't exist for applications" : "Download Swagger"}
             >
               Download Swagger
             </button>
+          )}
+          {/* Show application notice */}
+          {formType === "workload" && allFieldsFilled && isApplication && (
+            <div style={{
+              marginTop: "8px",
+              padding: "8px 12px",
+              backgroundColor: "#fff3cd",
+              color: "#856404",
+              border: "1px solid #ffeaa7",
+              borderRadius: "4px",
+              fontSize: "14px",
+              display: "flex",
+              alignItems: "center"
+            }}>
+              <span style={{ marginRight: "8px" }}>ℹ️</span>
+              Applications don't have swagger files available for download.
+            </div>
           )}
         </div>
       </form>
@@ -1248,3 +1323,4 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
+              
