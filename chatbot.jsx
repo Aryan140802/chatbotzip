@@ -156,11 +156,11 @@ const filterNonEmptyFields = (obj) =>
     )
   );
 
-// Utility function to parse service options
+// Utility function to parse service options - FIXED VERSION
 const parseServiceOption = (serviceValue) => {
   if (typeof serviceValue !== 'string') return { name: serviceValue, type: 'UNKNOWN' };
 
-  // Check if service value contains -RESTAPI or -APPLICATION
+  // Check if service value contains -Application or -RESTAPI
   if (serviceValue.includes('-')) {
     const lastHyphenIndex = serviceValue.lastIndexOf('-');
     const name = serviceValue.substring(0, lastHyphenIndex);
@@ -607,7 +607,7 @@ const DynamicForm = ({
     );
   };
 
-  // Get current service option and determine if it's an application
+  // Get current service option and determine if it's an application - FIXED VERSION
   const getCurrentServiceInfo = () => {
     const serviceField = fieldDefs.find(f => f.name === 'service');
     if (!serviceField?.options || !formData.service) return { isApplication: false, serviceOption: null };
@@ -728,7 +728,7 @@ const DynamicForm = ({
     }
   };
 
-  // Updated handleDownloadSwagger function with better JSON formatting
+  // FIXED handleDownloadSwagger function with clean JSON formatting
   const handleDownloadSwagger = async () => {
     const { server, eg, service } = formData;
     const { isApplication } = getCurrentServiceInfo();
@@ -746,15 +746,23 @@ const DynamicForm = ({
     try {
       const response = await downloadSwagger({ server, egName: eg, apiName: service });
 
-      // Parse and format the swagger JSON for validation
+      // Parse and clean the swagger JSON
       let parsedJson;
       try {
-        parsedJson = typeof response === 'string' ? JSON.parse(response) : response;
+        // Handle string responses by parsing them
+        if (typeof response === 'string') {
+          // Remove any backslashes and clean up the string
+          const cleanedResponse = response.replace(/\\/g, '');
+          parsedJson = JSON.parse(cleanedResponse);
+        } else {
+          parsedJson = response;
+        }
       } catch (e) {
+        // If parsing fails, use response as is
         parsedJson = response;
       }
 
-      // Ensure proper Swagger structure for validation
+      // Ensure proper Swagger structure
       if (parsedJson && typeof parsedJson === 'object') {
         // Add required Swagger fields if missing
         if (!parsedJson.swagger && !parsedJson.openapi) {
@@ -774,15 +782,10 @@ const DynamicForm = ({
         }
       }
 
-      // Pretty print with proper indentation and clean formatting
-      const formattedJson = JSON.stringify(parsedJson, null, 2)
-        .replace(/\\\\/g, '\\')  // Remove double backslashes
-        .replace(/\\"/g, '"')    // Remove escaped quotes where not needed
-        .replace(/\u0000/g, '')  // Remove null characters
-        .replace(/\\n/g, '\n')   // Convert \n to actual newlines in strings
-        .replace(/\\t/g, '\t');  // Convert \t to actual tabs in strings
+      // Format as clean JSON without extra escaping
+      const formattedJson = JSON.stringify(parsedJson, null, 2);
 
-      // Create and download the formatted file
+      // Create and download the file
       const blob = new Blob([formattedJson], { 
         type: "application/json;charset=utf-8" 
       });
@@ -795,7 +798,6 @@ const DynamicForm = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // Success message
       console.log(`✅ Successfully downloaded Swagger specification for ${service}`);
 
       // Clear the form session after successful download
@@ -1323,4 +1325,3 @@ const Chatbot = ({ setChatbotMinimized }) => {
 };
 
 export default Chatbot;
-              
