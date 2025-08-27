@@ -156,7 +156,7 @@ const filterNonEmptyFields = (obj) =>
     )
   );
 
-// Utility function to parse service options - FIXED VERSION
+// FIXED: Utility function to parse service options
 const parseServiceOption = (serviceValue) => {
   if (typeof serviceValue !== 'string') return { name: serviceValue, type: 'UNKNOWN' };
 
@@ -168,6 +168,57 @@ const parseServiceOption = (serviceValue) => {
     return { name, type };
   }
   return { name: serviceValue, type: 'UNKNOWN' };
+};
+
+// FIXED: Clean and format swagger JSON response
+const cleanSwaggerJson = (swaggerResponse) => {
+  try {
+    let swaggerJson;
+    
+    // If response has swaggerJson property (wrapped in an object)
+    if (swaggerResponse && swaggerResponse.swaggerJson) {
+      // Parse the stringified JSON
+      if (typeof swaggerResponse.swaggerJson === 'string') {
+        // Remove any escape characters and parse
+        const cleanedString = swaggerResponse.swaggerJson.replace(/\\/g, '');
+        swaggerJson = JSON.parse(cleanedString);
+      } else {
+        swaggerJson = swaggerResponse.swaggerJson;
+      }
+    }
+    // If response is directly a swagger object or string
+    else if (typeof swaggerResponse === 'string') {
+      const cleanedString = swaggerResponse.replace(/\\/g, '');
+      swaggerJson = JSON.parse(cleanedString);
+    } else {
+      swaggerJson = swaggerResponse;
+    }
+
+    // Ensure proper Swagger structure
+    if (swaggerJson && typeof swaggerJson === 'object') {
+      // Add required Swagger fields if missing
+      if (!swaggerJson.swagger && !swaggerJson.openapi) {
+        swaggerJson.swagger = '2.0';
+      }
+      if (!swaggerJson.info) {
+        swaggerJson.info = {
+          title: 'API Documentation',
+          version: '1.0.0'
+        };
+      }
+      if (!swaggerJson.basePath) {
+        swaggerJson.basePath = '/';
+      }
+      if (!swaggerJson.schemes || swaggerJson.schemes.length === 0) {
+        swaggerJson.schemes = ['http'];
+      }
+    }
+
+    return swaggerJson;
+  } catch (error) {
+    console.error('Error cleaning swagger JSON:', error);
+    return swaggerResponse;
+  }
 };
 
 const extractFormFields = (response, currentValues = {}) => {
@@ -607,7 +658,7 @@ const DynamicForm = ({
     );
   };
 
-  // Get current service option and determine if it's an application - FIXED VERSION
+  // FIXED: Get current service option and determine if it's an application
   const getCurrentServiceInfo = () => {
     const serviceField = fieldDefs.find(f => f.name === 'service');
     if (!serviceField?.options || !formData.service) return { isApplication: false, serviceOption: null };
@@ -620,9 +671,9 @@ const DynamicForm = ({
 
     if (serviceOption) {
       const { type } = parseServiceOption(serviceOption);
-      return {
-        isApplication: type.toUpperCase() === 'APPLICATION',
-        serviceOption
+      return { 
+        isApplication: type.toUpperCase() === 'APPLICATION', 
+        serviceOption 
       };
     }
 
@@ -728,7 +779,7 @@ const DynamicForm = ({
     }
   };
 
-  // FIXED handleDownloadSwagger function with clean JSON formatting
+  // FIXED: handleDownloadSwagger function with clean JSON formatting
   const handleDownloadSwagger = async () => {
     const { server, eg, service } = formData;
     const { isApplication } = getCurrentServiceInfo();
@@ -746,30 +797,25 @@ const DynamicForm = ({
     try {
       const response = await downloadSwagger({ server, egName: eg, apiName: service });
 
-      // Parse and clean the swagger JSON
-      let parsedJson;
-      try {
-        // Handle string responses by parsing them
-        if (typeof response === 'string') {
-          // Remove any backslashes and clean up the string
-          const cleanedResponse = response.replace(/\\/g, '');
-          parsedJson = JSON.parse(cleanedResponse);
-        } else {
-          parsedJson = response;
+      // Clean and format the swagger JSON using the new function
+      const cleanedSwaggerJson = cleanSwaggerJson(response);
+
+      // Add service-specific info to the swagger if available
+      if (cleanedSwaggerJson && typeof cleanedSwaggerJson === 'object') {
+        if (!cleanedSwaggerJson.info.title || cleanedSwaggerJson.info.title === 'API Documentation') {
+          cleanedSwaggerJson.info.title = `${service} API Documentation` || 'API Documentation';
         }
-      } catch (e) {
-        // If parsing fails, use response as is
-        parsedJson = response;
+        if (!cleanedSwaggerJson.host && server) {
+          cleanedSwaggerJson.host = server;
+        }
       }
 
-
-
       // Format as clean JSON without extra escaping
-      const formattedJson = JSON.stringify(parsedJson, null, 2);
+      const formattedJson = JSON.stringify(cleanedSwaggerJson, null, 2);
 
       // Create and download the file
-      const blob = new Blob([formattedJson], {
-        type: "application/json;charset=utf-8"
+      const blob = new Blob([formattedJson], { 
+        type: "application/json;charset=utf-8" 
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
