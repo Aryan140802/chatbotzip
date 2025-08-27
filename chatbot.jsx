@@ -159,7 +159,7 @@ const filterNonEmptyFields = (obj) =>
 // Utility function to parse service options
 const parseServiceOption = (serviceValue) => {
   if (typeof serviceValue !== 'string') return { name: serviceValue, type: 'UNKNOWN' };
-  
+
   // Check if service value contains -RESTAPI or -APPLICATION
   if (serviceValue.includes('-')) {
     const lastHyphenIndex = serviceValue.lastIndexOf('-');
@@ -225,7 +225,7 @@ const DynamicForm = ({
   const [serviceInputValue, setServiceInputValue] = useState("");
 
   const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
-  
+
   useEffect(() => {
     setFieldDefs(fields);
     setFormData(current => {
@@ -325,17 +325,17 @@ const handleServiceInputChange = (value) => {
 
   const handleServiceOptionSelect = async (serviceValue) => {
     const { name } = parseServiceOption(serviceValue);
-    
+
     setServiceInputValue(name);
     setShowServiceDropdown(false);
-    
+
     // Update form data with just the service name
     let updated = { ...formData, service: name };
     updated = applyCascadingLogic(updated, 'service');
     setFormData(updated);
-    
+
     if (errors.service) setErrors(prev => ({ ...prev, service: null }));
-    
+
     // Trigger API call immediately after selection
     if (onFieldChange) {
       const filtered = filterNonEmptyFields(updated);
@@ -422,7 +422,7 @@ const handleServiceInputChange = (value) => {
   const getFilteredServiceOptions = () => {
     const serviceField = fieldDefs.find(f => f.name === 'service');
     if (!serviceField?.options || !serviceInputValue.trim()) return serviceField?.options || [];
-    
+
     return serviceField.options.filter(opt => {
       const { name } = parseServiceOption(opt);
       return name.toLowerCase().includes(serviceInputValue.toLowerCase());
@@ -434,14 +434,14 @@ const handleServiceInputChange = (value) => {
     const error = errors[name];
     const isRequiredField = field.required;
     const filteredOptions = getFilteredServiceOptions();
-    
+
     const handleSearchClick = async () => {
       if (serviceInputValue.trim()) {
         // Update form data with current input value
         let updated = { ...formData, service: serviceInputValue };
         updated = applyCascadingLogic(updated, 'service');
         setFormData(updated);
-        
+
         // Trigger API call
         if (onFieldChange) {
           const filtered = filterNonEmptyFields(updated);
@@ -456,7 +456,7 @@ const handleServiceInputChange = (value) => {
           {isRequiredField && <span style={{ color: "red" }}>* </span>}
           {label.replace('* ', '')}
         </label>
-        
+
           <div className="service-input-container" style={{ position: 'relative', display: 'flex' }}>
             <input
               type="text"
@@ -467,7 +467,7 @@ const handleServiceInputChange = (value) => {
               placeholder="Type to search or select from dropdown"
               className={`form-input${error ? " error" : ""}`}
               disabled={isSubmitting || isSubmittingFromParent}
-              style={{ 
+              style={{
                 flex: 1,
                 paddingRight: '12px'
               }}
@@ -501,7 +501,7 @@ const handleServiceInputChange = (value) => {
             <div
               style={{
                 position: 'absolute',
-                left: '92%',
+                left: '81%',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 pointerEvents: 'none',
@@ -513,9 +513,9 @@ const handleServiceInputChange = (value) => {
               ▼
             </div>
           )}
-          
+
           {showServiceDropdown && filteredOptions.length > 0 && (
-            <div 
+            <div
               className="service-dropdown"
               style={{
                 position: 'absolute',
@@ -533,7 +533,7 @@ const handleServiceInputChange = (value) => {
             >
               {filteredOptions.map((opt, idx) => {
                 const { name: serviceName, type: serviceType } = parseServiceOption(opt);
-                
+
                 return (
                   <div
                     key={idx}
@@ -561,7 +561,7 @@ const handleServiceInputChange = (value) => {
                     }}
                   >
                     <span style={{ flex: 1, fontWeight: '500', color: '#000000' }}>{serviceName}</span>
-                    <span 
+                    <span
                       style={{
                         background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
                         color: 'white',
@@ -581,7 +581,7 @@ const handleServiceInputChange = (value) => {
             </div>
           )}
         </div>
-        
+
         {error && <span className="error-message">{error}</span>}
       </div>
     );
@@ -699,7 +699,7 @@ const handleServiceInputChange = (value) => {
   const handleDownloadSwagger = async () => {
     const { server, eg, apiName, service } = formData;
     const currentOption = getCurrentServiceOption();
-    
+
     if (currentOption) {
       const { type } = parseServiceOption(currentOption);
       if (type.toUpperCase() === 'APPLICATION') {
@@ -715,7 +715,7 @@ const handleServiceInputChange = (value) => {
 
     try {
       const response = await downloadSwagger({ server, egName: eg, apiName: service });
-      
+
       // Parse and format the swagger JSON
       let parsedJson;
       try {
@@ -723,7 +723,7 @@ const handleServiceInputChange = (value) => {
       } catch (e) {
         parsedJson = response;
       }
-      
+
       // Pretty print the JSON and remove backslashes
       const formattedJson = JSON.stringify(parsedJson, null, 2)
         .replace(/\\/g, '')
