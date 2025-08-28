@@ -194,25 +194,7 @@ const cleanSwaggerJson = (swaggerResponse) => {
       swaggerJson = swaggerResponse;
     }
 
-    // Ensure proper Swagger structure
-    if (swaggerJson && typeof swaggerJson === 'object') {
-      // Add required Swagger fields if missing
-      if (!swaggerJson.swagger && !swaggerJson.openapi) {
-        swaggerJson.swagger = '2.0';
-      }
-      if (!swaggerJson.info) {
-        swaggerJson.info = {
-          title: 'API Documentation',
-          version: '1.0.0'
-        };
-      }
-      if (!swaggerJson.basePath) {
-        swaggerJson.basePath = '/';
-      }
-      if (!swaggerJson.schemes || swaggerJson.schemes.length === 0) {
-        swaggerJson.schemes = ['http'];
-      }
-    }
+   
 
     return swaggerJson;
   } catch (error) {
@@ -384,15 +366,26 @@ const DynamicForm = ({
   };
 
   const handleServiceInputChange = (value) => {
+    // Update both states synchronously
     setServiceInputValue(value);
     setFormData(prev => ({ ...prev, service: value }));
     
-    // Clear service type info when service input is cleared or changed manually
+    // Show dropdown if there are enough characters
+    if (value.trim().length >= 4) {
+      setShowServiceDropdown(true);
+    } else {
+      setShowServiceDropdown(false);
+    }
+    
+    // Clear service type info when input is cleared
     if (!value.trim()) {
       setServiceTypeInfo({ isApplication: false, serviceOption: null });
     }
     
-    if (errors.service) setErrors(prev => ({ ...prev, service: null }));
+    // Clear any existing errors
+    if (errors.service) {
+      setErrors(prev => ({ ...prev, service: null }));
+    }
   };
 
   const handleServiceOptionSelect = async (serviceValue) => {
@@ -542,20 +535,23 @@ const DynamicForm = ({
             type="text"
             value={serviceInputValue}
             onChange={e => handleServiceInputChange(e.target.value)}
-            onBlur={() => handleBlur(name)}
-            placeholder="Type to search (minimum 5 characters)"
+            onBlur={() => setTimeout(() => handleBlur(name), 200)}
+            placeholder="Type to search (minimum 4 characters)"
+            autoComplete="off"
             className={`form-input${error ? " error" : ""}`}
             disabled={isSubmitting || isSubmittingFromParent}
             style={{
               flex: 1,
-              paddingRight: '12px'
+              paddingRight: '12px',
+              fontSize: '14px',
+              height: '38px'
             }}
           />
           <button
             type="button"
             onClick={handleSearchClick}
             className="search-button"
-            disabled={!isSearchEnabled} // Disable until 5 characters
+            disabled={!isSearchEnabled} 
             style={{
               background: isSearchEnabled ? '#007BFF' : '#ccc',
               border: 'none',
@@ -860,45 +856,68 @@ const DynamicForm = ({
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          {formType === "workload" && allFieldsFilled && (
-            <button
-              type="button"
-              className="download-swagger-button"
-              onClick={handleDownloadSwagger}
-              disabled={isSubmitting || isSubmittingFromParent || isApp}
-              style={{
-                marginLeft: 8,
-                background: isApp ? "#ccc" : "#007BFF",
-                color: "white",
-                cursor: isApp ? "not-allowed" : "pointer",
-                fontSize: "14px",
-                borderRadius: "4px",
-                padding: "10px 20px",
-                opacity: isApp ? "0.6" : "1",
-                border: "none"
-              }}
-              title={isApp ? "Swagger file doesn't exist for applications" : "Download Swagger"}
-            >
-              Download Swagger
-            </button>
-          )}
-          {/* Show application notice */}
-          {formType === "workload" && allFieldsFilled && isApp && (
-            <div style={{
-              marginTop: "8px",
-              padding: "8px 12px",
-              backgroundColor: "#fff3cd",
-              color: "#856404",
-              border: "1px solid #ffeaa7",
-              borderRadius: "4px",
-              fontSize: "14px",
-              display: "flex",
-              alignItems: "center"
-            }}>
-              <span style={{ marginRight: "8px" }}>ℹ️</span>
-              Applications don't have swagger files available for download.
-            </div>
-          )}
+          
+         {formType === "workload" && allFieldsFilled && (
+  <div style={{ position: 'relative', display: 'inline-block' }}>
+    <button
+      type="button"
+      className="download-swagger-button"
+      onClick={handleDownloadSwagger}
+      disabled={isSubmitting || isSubmittingFromParent || isApp}
+      style={{
+        marginLeft: 8,
+        background: isApp ? "#ccc" : "#007BFF",
+        color: "white",
+        cursor: isApp ? "not-allowed" : "pointer",
+        fontSize: "14px",
+        borderRadius: "4px",
+        padding: "10px 20px",
+        opacity: isApp ? "0.6" : "1",
+        border: "none",
+        position: 'relative'
+      }}
+      title={isApp ? "Swagger file doesn't exist for applications" : "Download Swagger"}
+    >
+      Download Swagger
+      {isApp && (
+        <div style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 10px)', // Position above button
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#fff3cd',
+          color: '#856404',
+          padding: '8px 12px',
+          border: '1px solid #ffeaa7',
+          borderRadius: '4px',
+          fontSize: '14px',
+          whiteSpace: 'nowrap',
+          display: 'none',
+          alignItems: 'center',
+          zIndex: 1000,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          ':after': {
+            content: '""',
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            marginLeft: '-8px',
+            border: '8px solid transparent',
+            borderTopColor: '#ffeaa7'
+          }
+        }}>
+          <span style={{ marginRight: "8px" }}>ℹ️</span>
+          Applications don't have swagger files available for download.
+        </div>
+      )}
+    </button>
+    <style>{`
+      .download-swagger-button:hover > div {
+        display: flex !important;
+      }
+    `}</style>
+  </div>
+)}
         </div>
       </form>
     </div>
