@@ -310,15 +310,11 @@ const DynamicForm = ({
 
   // Clear entire form when service is empty - FIXED
   useEffect(() => {
-    if (formType === 'workload' && formData.service === "") {
-      // Clear all form fields
+    if (formType === 'workload' && !serviceInputValue.trim() && formData.service !== "") {
+      // Only clear when service input is actually empty AND form data still has service
       const clearedFormData = {};
       fieldDefs.forEach(f => { clearedFormData[f.name] = ""; });
       setFormData(clearedFormData);
-
-      // Clear service field UI state
-      setServiceInputValue("");
-      setShowServiceDropdown(false);
 
       // Clear service type info
       setServiceTypeInfo({ isApplication: false, serviceOption: null });
@@ -332,7 +328,7 @@ const DynamicForm = ({
           if (field.name !== 'service') {
             return {
               ...field,
-              options: [], // Clear options for non-service fields
+              options: [], 
               value: ""
             };
           }
@@ -340,14 +336,19 @@ const DynamicForm = ({
         })
       );
     }
-  }, [formData.service, formType, fieldDefs]);
+  }, [serviceInputValue, formType]); // Remove formData.service and fieldDefs from dependencies
 
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
       if (name === "service") {
-        updated.layer = "";
-        updated.server = "";
-        updated.eg = "";
+        // Only clear if the service value actually changed
+        const currentService = formData.service || '';
+        const newService = updated.service || '';
+        if (currentService !== newService) {
+          updated.layer = "";
+          updated.server = "";
+          updated.eg = "";
+        }
       } else if (name === "layer") {
         updated.server = "";
         updated.eg = "";
@@ -366,20 +367,19 @@ const DynamicForm = ({
   };
 
   const handleServiceInputChange = (value) => {
-    // Update both states synchronously
+    // Only update the input value state - don't trigger form data update on every keystroke
     setServiceInputValue(value);
-    setFormData(prev => ({ ...prev, service: value }));
-    
-    // Show dropdown if there are enough characters
-    if (value.trim().length >= 4) {
-      setShowServiceDropdown(true);
-    } else {
-      setShowServiceDropdown(false);
-    }
     
     // Clear service type info when input is cleared
     if (!value.trim()) {
       setServiceTypeInfo({ isApplication: false, serviceOption: null });
+    }
+    
+    // Show/hide dropdown based on input length
+    if (value.trim().length >= 4) {
+      setShowServiceDropdown(true);
+    } else {
+      setShowServiceDropdown(false);
     }
     
     // Clear any existing errors
@@ -414,11 +414,17 @@ const DynamicForm = ({
 
   const handleBlur = async (name) => {
     if (name === 'service') {
-      // Don't hide dropdown on blur, only when user clicks away or selects
-      // Trigger API call when user clicks off the service field
-      if (serviceInputValue.trim() && onFieldChange) {
-        const filtered = filterNonEmptyFields(formData);
-        await onFieldChange(filtered, name);
+      // Only update form data when user finishes typing (on blur)
+      if (serviceInputValue.trim()) {
+        let updated = { ...formData, service: serviceInputValue.trim() };
+        updated = applyCascadingLogic(updated, 'service');
+        setFormData(updated);
+        
+        // Trigger API call only if there's actual content and field change handler exists
+        if (onFieldChange) {
+          const filtered = filterNonEmptyFields(updated);
+          await onFieldChange(filtered, name);
+        }
       }
     } else if (onFieldChange) {
       const filtered = filterNonEmptyFields(formData);
