@@ -174,7 +174,7 @@ const parseServiceOption = (serviceValue) => {
 const cleanSwaggerJson = (swaggerResponse) => {
   try {
     let swaggerJson;
-    
+
     // If response has swaggerJson property (wrapped in an object)
     if (swaggerResponse && swaggerResponse.swaggerJson) {
       // Parse the stringified JSON
@@ -194,7 +194,7 @@ const cleanSwaggerJson = (swaggerResponse) => {
       swaggerJson = swaggerResponse;
     }
 
-   
+
 
     return swaggerJson;
   } catch (error) {
@@ -251,16 +251,23 @@ const DynamicForm = ({
   const [formData, setFormData] = useState(() =>
     Object.fromEntries(fields.map(f => [f.name, f.value || ""]))
   );
+  const serviceFieldInitialValue = fields.find(f => f.name === "service")?.value || "";
+  const [serviceInputValue, setServiceInputValue] = useState(
+  fields.find(f => f.name === "service")?.value || ""
+);
+const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value || "");
+
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(null);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
-  const [serviceInputValue, setServiceInputValue] = useState("");
   const [serviceTypeInfo, setServiceTypeInfo] = useState({ isApplication: false, serviceOption: null });
 
   const allFieldsFilled = fieldDefs.every(f => !!formData[f.name]);
 
-  useEffect(() => {
+
+
+   useEffect(() => {
     setFieldDefs(fields);
     setFormData(current => {
       const merged = {};
@@ -279,7 +286,15 @@ const DynamicForm = ({
       });
       return merged;
     });
-  }, [fields]);
+
+     // Only reset serviceInputValue if service field truly changed (form reset or new form)
+  const newService = fields.find(f => f.name === "service")?.value || "";
+  if (prevServiceFieldRef.current !== newService) {
+    setServiceInputValue(newService);
+    prevServiceFieldRef.current = newService;
+  }
+}, [fields]);
+
 
   useEffect(() => {
     if (formType === 'filter' && formData.filter) {
@@ -310,11 +325,15 @@ const DynamicForm = ({
 
   // Clear entire form when service is empty - FIXED
   useEffect(() => {
-    if (formType === 'workload' && !serviceInputValue.trim() && formData.service !== "") {
-      // Only clear when service input is actually empty AND form data still has service
+    if (formType === 'workload' && formData.service === "") {
+      // Clear all form fields
       const clearedFormData = {};
       fieldDefs.forEach(f => { clearedFormData[f.name] = ""; });
       setFormData(clearedFormData);
+
+      // Clear service field UI state
+      setServiceInputValue("");
+      setShowServiceDropdown(false);
 
       // Clear service type info
       setServiceTypeInfo({ isApplication: false, serviceOption: null });
@@ -328,7 +347,7 @@ const DynamicForm = ({
           if (field.name !== 'service') {
             return {
               ...field,
-              options: [], 
+              options: [], // Clear options for non-service fields
               value: ""
             };
           }
@@ -336,19 +355,14 @@ const DynamicForm = ({
         })
       );
     }
-  }, [serviceInputValue, formType]); // Remove formData.service and fieldDefs from dependencies
+  }, [formData.service, formType, fieldDefs]);
 
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
       if (name === "service") {
-        // Only clear if the service value actually changed
-        const currentService = formData.service || '';
-        const newService = updated.service || '';
-        if (currentService !== newService) {
-          updated.layer = "";
-          updated.server = "";
-          updated.eg = "";
-        }
+        updated.layer = "";
+        updated.server = "";
+        updated.eg = "";
       } else if (name === "layer") {
         updated.server = "";
         updated.eg = "";
@@ -366,27 +380,14 @@ const DynamicForm = ({
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
   };
 
+
   const handleServiceInputChange = (value) => {
-    // Only update the input value state - don't trigger form data update on every keystroke
-    setServiceInputValue(value);
-    
-    // Clear service type info when input is cleared
-    if (!value.trim()) {
-      setServiceTypeInfo({ isApplication: false, serviceOption: null });
-    }
-    
-    // Show/hide dropdown based on input length
-    if (value.trim().length >= 4) {
-      setShowServiceDropdown(true);
-    } else {
-      setShowServiceDropdown(false);
-    }
-    
-    // Clear any existing errors
-    if (errors.service) {
-      setErrors(prev => ({ ...prev, service: null }));
-    }
-  };
+  setServiceInputValue(value);
+  setFormData(prev => ({ ...prev, service: value }));
+  if (errors.service) setErrors(prev => ({ ...prev, service: null }));
+  if (!value.trim()) setServiceTypeInfo({ isApplication: false, serviceOption: null });
+  setShowServiceDropdown(value.trim().length >= 4);
+};
 
   const handleServiceOptionSelect = async (serviceValue) => {
     const { name, type } = parseServiceOption(serviceValue);
@@ -414,17 +415,11 @@ const DynamicForm = ({
 
   const handleBlur = async (name) => {
     if (name === 'service') {
-      // Only update form data when user finishes typing (on blur)
-      if (serviceInputValue.trim()) {
-        let updated = { ...formData, service: serviceInputValue.trim() };
-        updated = applyCascadingLogic(updated, 'service');
-        setFormData(updated);
-        
-        // Trigger API call only if there's actual content and field change handler exists
-        if (onFieldChange) {
-          const filtered = filterNonEmptyFields(updated);
-          await onFieldChange(filtered, name);
-        }
+      // Don't hide dropdown on blur, only when user clicks away or selects
+      // Trigger API call when user clicks off the service field
+      if (serviceInputValue.trim() && onFieldChange) {
+        const filtered = filterNonEmptyFields(formData);
+        await onFieldChange(filtered, name);
       }
     } else if (onFieldChange) {
       const filtered = filterNonEmptyFields(formData);
@@ -538,26 +533,26 @@ const DynamicForm = ({
 
         <div className="service-input-container" style={{ position: 'relative', display: 'flex' }}>
           <input
-            type="text"
-            value={serviceInputValue}
-            onChange={e => handleServiceInputChange(e.target.value)}
-            onBlur={() => setTimeout(() => handleBlur(name), 200)}
-            placeholder="Type to search (minimum 4 characters)"
-            autoComplete="off"
-            className={`form-input${error ? " error" : ""}`}
-            disabled={isSubmitting || isSubmittingFromParent}
-            style={{
-              flex: 1,
-              paddingRight: '12px',
-              fontSize: '14px',
-              height: '38px'
-            }}
-          />
+                type="text"
+                value={serviceInputValue}
+                onChange={e => handleServiceInputChange(e.target.value)}
+                onBlur={() => setTimeout(() => handleBlur(name), 200)}
+                placeholder="Type to search (minimum 4 characters)"
+                autoComplete="off"
+                className={`form-input${error ? " error" : ""}`}
+                disabled={isSubmitting || isSubmittingFromParent}
+                style={{
+                 flex: 1,
+                 paddingRight: '12px',
+                 fontSize: '14px',
+                 height: '38px'
+                 }}
+                />
           <button
             type="button"
             onClick={handleSearchClick}
             className="search-button"
-            disabled={!isSearchEnabled} 
+            disabled={!isSearchEnabled}
             style={{
               background: isSearchEnabled ? '#007BFF' : '#ccc',
               border: 'none',
@@ -719,23 +714,7 @@ const DynamicForm = ({
             {error && <span className="error-message">{error}</span>}
           </div>
         );
-      case "date":
-        return (
-          <div key={name} className="form-field">
-            <label className="form-label">
-              {isRequiredField && <span style={{ color: "red" }}>* </span>}
-              {label.replace('* ', '')}
-            </label>
-            <input
-              type="date"
-              value={value}
-              onChange={e => handleInputChange(name, e.target.value)}
-              className={`form-input${error ? " error" : ""}`}
-              disabled={isSubmitting || isSubmittingFromParent}
-            />
-            {error && <span className="error-message">{error}</span>}
-          </div>
-        );
+
       case "textarea":
         return (
           <div key={name} className="form-field">
@@ -810,8 +789,8 @@ const DynamicForm = ({
       const formattedJson = JSON.stringify(cleanedSwaggerJson, null, 2);
 
       // Create and download the file
-      const blob = new Blob([formattedJson], { 
-        type: "application/json;charset=utf-8" 
+      const blob = new Blob([formattedJson], {
+        type: "application/json;charset=utf-8"
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -862,7 +841,7 @@ const DynamicForm = ({
           >
             {isSubmitting || isSubmittingFromParent ? "Processing..." : "Submit"}
           </button>
-          
+
          {formType === "workload" && allFieldsFilled && (
   <div style={{ position: 'relative', display: 'inline-block' }}>
     <button
@@ -875,7 +854,7 @@ const DynamicForm = ({
         background: isApp ? "#ccc" : "#007BFF",
         color: "white",
         cursor: isApp ? "not-allowed" : "pointer",
-        fontSize: "14px",
+        fontSize: "15px",
         borderRadius: "4px",
         padding: "10px 20px",
         opacity: isApp ? "0.6" : "1",
@@ -885,41 +864,12 @@ const DynamicForm = ({
       title={isApp ? "Swagger file doesn't exist for applications" : "Download Swagger"}
     >
       Download Swagger
-      {isApp && (
-        <div style={{
-          position: 'absolute',
-          bottom: 'calc(100% + 10px)', // Position above button
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#fff3cd',
-          color: '#856404',
-          padding: '8px 12px',
-          border: '1px solid #ffeaa7',
-          borderRadius: '4px',
-          fontSize: '14px',
-          whiteSpace: 'nowrap',
-          display: 'none',
-          alignItems: 'center',
-          zIndex: 1000,
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          ':after': {
-            content: '""',
-            position: 'absolute',
-            top: '100%',
-            left: '50%',
-            marginLeft: '-8px',
-            border: '8px solid transparent',
-            borderTopColor: '#ffeaa7'
-          }
-        }}>
-          <span style={{ marginRight: "8px" }}>ℹ️</span>
-          Applications don't have swagger files available for download.
-        </div>
-      )}
+      {isApp}
     </button>
     <style>{`
       .download-swagger-button:hover > div {
         display: flex !important;
+        fontSize: "50px"
       }
     `}</style>
   </div>
