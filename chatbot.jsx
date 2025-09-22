@@ -256,7 +256,7 @@ const DynamicForm = ({
   fields.find(f => f.name === "service")?.value || ""
 );
 const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value || "");
-
+ const serviceInputRef = useRef(null);
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState(null);
@@ -267,27 +267,27 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
 
 
 
-   useEffect(() => {
-    setFieldDefs(fields);
-    setFormData(current => {
-      const merged = {};
-      fields.forEach(f => {
-        if (
-          typeof current[f.name] !== "undefined" &&
-          current[f.name] !== "" &&
-          (typeof f.value === "undefined" || f.value === null || f.value === "")
-        ) {
-          merged[f.name] = current[f.name];
-        } else if (typeof f.value !== "undefined" && f.value !== null) {
-          merged[f.name] = f.value;
-        } else {
-          merged[f.name] = "";
-        }
-      });
-      return merged;
+  useEffect(() => {
+  setFieldDefs(fields);
+  setFormData(current => {
+    const merged = {};
+    fields.forEach(f => {
+      if (
+        typeof current[f.name] !== "undefined" &&
+        current[f.name] !== "" &&
+        (typeof f.value === "undefined" || f.value === null || f.value === "")
+      ) {
+        merged[f.name] = current[f.name];
+      } else if (typeof f.value !== "undefined" && f.value !== null) {
+        merged[f.name] = f.value;
+      } else {
+        merged[f.name] = "";
+      }
     });
+    return merged;
+  });
 
-     // Only reset serviceInputValue if service field truly changed (form reset or new form)
+  // Only reset serviceInputValue if service field truly changed (form reset or new form)
   const newService = fields.find(f => f.name === "service")?.value || "";
   if (prevServiceFieldRef.current !== newService) {
     setServiceInputValue(newService);
@@ -295,67 +295,6 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
   }
 }, [fields]);
 
-
-  useEffect(() => {
-    if (formType === 'filter' && formData.filter) {
-      const newSelectedFilter = formData.filter.toLowerCase();
-      if (newSelectedFilter !== selectedFilter) {
-        setSelectedFilter(newSelectedFilter);
-
-        setFieldDefs(prevFields =>
-          prevFields.map(field => {
-            if (field.name.toLowerCase() === 'expires') {
-              return {
-                ...field,
-                required: newSelectedFilter.includes('filterexpired')
-              };
-            }
-            if (field.name.toLowerCase() === 'created') {
-              return {
-                ...field,
-                required: newSelectedFilter.includes('filtercreated')
-              };
-            }
-            return field;
-          })
-        );
-      }
-    }
-  }, [formData.filter, formType, selectedFilter]);
-
-  // Clear entire form when service is empty - FIXED
-  useEffect(() => {
-    if (formType === 'workload' && formData.service === "") {
-      // Clear all form fields
-      const clearedFormData = {};
-      fieldDefs.forEach(f => { clearedFormData[f.name] = ""; });
-      setFormData(clearedFormData);
-
-      // Clear service field UI state
-      setServiceInputValue("");
-      setShowServiceDropdown(false);
-
-      // Clear service type info
-      setServiceTypeInfo({ isApplication: false, serviceOption: null });
-
-      // Clear errors
-      setErrors({});
-
-      // Update field definitions to reset options
-      setFieldDefs(prevFields =>
-        prevFields.map(field => {
-          if (field.name !== 'service') {
-            return {
-              ...field,
-              options: [], // Clear options for non-service fields
-              value: ""
-            };
-          }
-          return field;
-        })
-      );
-    }
-  }, [formData.service, formType, fieldDefs]);
 
   const applyCascadingLogic = (updated, name) => {
     if (formType === "workload") {
@@ -381,12 +320,28 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
   };
 
 
-  const handleServiceInputChange = (value) => {
+const handleServiceInputChange = async (value) => {
   setServiceInputValue(value);
   setFormData(prev => ({ ...prev, service: value }));
   if (errors.service) setErrors(prev => ({ ...prev, service: null }));
   if (!value.trim()) setServiceTypeInfo({ isApplication: false, serviceOption: null });
-  setShowServiceDropdown(value.trim().length >= 4);
+
+  // Auto-trigger API call when user types 4+ characters
+  if (value.trim().length >= 4) {
+    setShowServiceDropdown(true);
+
+    // Trigger API call automatically
+    if (onFieldChange) {
+      let updated = { ...formData, service: value };
+      updated = applyCascadingLogic(updated, 'service');
+      setFormData(updated);
+
+      const filtered = filterNonEmptyFields(updated);
+      await onFieldChange(filtered, 'service');
+    }
+  } else {
+    setShowServiceDropdown(false);
+  }
 };
 
   const handleServiceOptionSelect = async (serviceValue) => {
@@ -499,29 +454,47 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
     });
   };
 
-  const renderServiceField = (field) => {
+const renderServiceField = (field) => {
     const { name, label } = field;
     const error = errors[name];
     const isRequiredField = field.required;
     const filteredOptions = getFilteredServiceOptions();
-    const isSearchEnabled = serviceInputValue.trim().length >= 4; // Enable search after 5 characters
 
-    const handleSearchClick = async () => {
-      if (serviceInputValue.trim().length >= 4) {
-        // Update form data with current input value
-        let updated = { ...formData, service: serviceInputValue };
+    const handleServiceInputChange = async (value) => {
+      setServiceInputValue(value);
+      setFormData(prev => ({ ...prev, service: value }));
+      if (errors.service) {
+        setErrors(prev => ({ ...prev, service: null }));
+      }
+
+      // Auto-trigger search after 4 characters
+      if (value.trim().length >= 4) {
+        setShowServiceDropdown(true);
+        // Update form data and trigger search
+        let updated = { ...formData, service: value };
         updated = applyCascadingLogic(updated, 'service');
         setFormData(updated);
 
-        // Show dropdown after search
-        setShowServiceDropdown(true);
-
-        // Trigger API call
+        // Trigger API call for search
         if (onFieldChange) {
           const filtered = filterNonEmptyFields(updated);
-          await onFieldChange(filtered, 'service');
+          try {
+            await onFieldChange(filtered, 'service');
+          } catch (error) {
+            console.error('Search error:', error);
+          }
+          // Keep focus on input after API call
+          serviceInputRef.current?.focus();
         }
+      } else {
+        setShowServiceDropdown(false);
       }
+    };
+
+    // Handle dropdown container clicks
+    const handleDropdownContainerClick = (e) => {
+      e.stopPropagation();
+      serviceInputRef.current?.focus();
     };
 
     return (
@@ -531,74 +504,29 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
           {label.replace('* ', '')}
         </label>
 
-        <div className="service-input-container" style={{ position: 'relative', display: 'flex' }}>
+        <div className="service-input-container" style={{ position: 'relative' }}>
           <input
-                type="text"
-                value={serviceInputValue}
-                onChange={e => handleServiceInputChange(e.target.value)}
-                onBlur={() => setTimeout(() => handleBlur(name), 200)}
-                placeholder="Type to search (minimum 4 characters)"
-                autoComplete="off"
-                className={`form-input${error ? " error" : ""}`}
-                disabled={isSubmitting || isSubmittingFromParent}
-                style={{
-                 flex: 1,
-                 paddingRight: '12px',
-                 fontSize: '14px',
-                 height: '38px'
-                 }}
-                />
-          <button
-            type="button"
-            onClick={handleSearchClick}
-            className="search-button"
-            disabled={!isSearchEnabled}
+            ref={serviceInputRef}
+            type="text"
+            value={serviceInputValue}
+            onChange={e => handleServiceInputChange(e.target.value)}
+            placeholder="Type to search (minimum 4 characters)"
+            autoComplete="off"
+            className={`form-input${error ? " error" : ""}`}
+            disabled={isSubmitting || isSubmittingFromParent}
             style={{
-              background: isSearchEnabled ? '#007BFF' : '#ccc',
-              border: 'none',
-              borderRadius: '4px',
-              padding: '8px 16px',
-              cursor: isSearchEnabled ? 'pointer' : 'not-allowed',
-              color: 'white',
-              marginLeft: '8px',
+              width: '100%',
+              paddingRight: '12px',
               fontSize: '14px',
-              fontWeight: '500',
-              transition: 'background-color 0.2s',
+              height: '38px'
             }}
-            onMouseEnter={e => {
-              if (isSearchEnabled) {
-                e.target.style.backgroundColor = '#0056b3';
-              }
-            }}
-            onMouseLeave={e => {
-              e.target.style.backgroundColor = isSearchEnabled ? '#007BFF' : '#ccc';
-            }}
-          >
-            Search
-          </button>
+          />
 
-          {/* Dropdown symbol - only show when dropdown is visible */}
-          {showServiceDropdown && field.options?.length > 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                left: '81%',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: '#666',
-                fontSize: '12px',
-                zIndex: 1
-              }}
-            >
-              ▼
-            </div>
-          )}
-
-          {/* Only show dropdown when search is clicked and options exist */}
+          {/* Dropdown section */}
           {showServiceDropdown && filteredOptions.length > 0 && (
             <div
               className="service-dropdown"
+              onClick={handleDropdownContainerClick}
               style={{
                 position: 'absolute',
                 top: '100%',
@@ -611,18 +539,16 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
                 overflowY: 'auto',
                 zIndex: 1000,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}
-            >
+              }}>
               {filteredOptions.map((opt, idx) => {
                 const { name: serviceName, type: serviceType } = parseServiceOption(opt);
-
                 return (
                   <div
                     key={idx}
-                    onMouseDown={(e) => {
-                      // Prevent blur event from firing before click
-                      e.preventDefault();
+                    onClick={(e) => {
+                      e.stopPropagation();
                       handleServiceOptionSelect(opt);
+                      serviceInputRef.current?.focus();
                     }}
                     style={{
                       padding: '12px 16px',
@@ -635,26 +561,19 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
                       color: '#000000'
                     }}
                     className="service-option"
-                    onMouseEnter={e => {
-                      e.target.style.backgroundColor = '#f5f5f5';
-                    }}
-                    onMouseLeave={e => {
-                      e.target.style.backgroundColor = 'white';
-                    }}
-                  >
+                    onMouseEnter={e => { e.target.style.backgroundColor = '#f5f5f5'; }}
+                    onMouseLeave={e => { e.target.style.backgroundColor = 'white'; }}>
                     <span style={{ flex: 1, fontWeight: '500', color: '#000000' }}>{serviceName}</span>
-                    <span
-                      style={{
-                        background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
-                        color: 'white',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        textTransform: 'uppercase',
-                        marginLeft: '8px'
-                      }}
-                    >
+                    <span style={{
+                      background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
+                      color: 'white',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      textTransform: 'uppercase',
+                      marginLeft: '8px'
+                    }}>
                       {serviceType.replace('API', ' API')}
                     </span>
                   </div>
@@ -663,11 +582,11 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
             </div>
           )}
         </div>
-
         {error && <span className="error-message">{error}</span>}
       </div>
     );
   };
+
 
   // Use serviceTypeInfo state instead of calculating each time
   const { isApplication } = serviceTypeInfo;
