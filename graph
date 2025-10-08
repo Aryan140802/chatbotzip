@@ -96,25 +96,30 @@ const commonTooltipStyle = {
 };
 
 function getDownloadPathForChart(index, totalCharts) {
-  switch (index) {
+  const portalCount = 2; // Number of portal charts
+  const farCount = 1;
+  
+  // Skip portals and FAR
+  if (index < portalCount) return null; // Portals
+  if (index === portalCount) return { path: "FAR_EXPIRY_ALL" }; // FAR
+  
+  const adjustedIndex = index - portalCount - farCount;
+  
+  switch (adjustedIndex) {
     case 0: return { path: "EISHome/servicewise_top5_FiveM/EXP/" };
     case 1: return { path: "EISHome/servicewise_top5_FiveM/SYS/" };
     case 2: return { path: "EISHome/ipwise_top5_FiveM/EXP/" };
     case 3: return { path: "EISHome/ipwise_top5_FiveM/SYS/" };
     case 4: return { path: "EISHome/portwise_top5_FiveM/EXP/" };
     case 5: return { path: "EISHome/portwise_top5_FiveM/SYS/" };
-    // MQ charts (6-11)
+    // MQ charts
     case 6: return { path: "EISHome/mqOverall/", layer: "exp" };
     case 7: return { path: "EISHome/mqOverall/", layer: "sys" };
     case 8: return { path: "EISHome/mqSource/", layer: "exp" };
     case 9: return { path: "EISHome/mqSource/", layer: "sys" };
     case 10: return { path: "EISHome/mqHourly/", layer: "exp" };
     case 11: return { path: "EISHome/mqHourly/", layer: "sys" };
-    // FAR Pie is always last
-    default: {
-      if (index === totalCharts - 1) return { path: "FAR_EXPIRY_ALL" };
-      return null;
-    }
+    default: return null;
   }
 }
 
@@ -197,6 +202,7 @@ const GraphCarousel = () => {
   const [charts, setCharts] = useState([]);
   const [mqCharts, setMqCharts] = useState([]);
   const [farChart, setFarChart] = useState(null);
+  const [portalCharts, setPortalCharts] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [mqHourlyDropdownOpen, setMqHourlyDropdownOpen] = useState(false);
@@ -599,8 +605,123 @@ const GraphCarousel = () => {
     })();
   }, [mqHour]);
 
-  // --- Fetch FAR chart (now always at end) ---
+  // --- Fetch FAR chart ---
   useEffect(() => {
+    // Initialize portal charts
+    const portals = [
+      {
+        baseTitle: 'Port Monitoring Overview',
+        url: 'https://10.191.171.12:5443/EIS/port_monitring',
+        chart: (
+          <div 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '8px',
+              border: '2px solid #f285c1'
+            }}
+            onClick={() => window.open('https://10.191.171.12:5443/EIS/port_monitring', '_blank')}
+            title="Click to open Port Monitoring in new tab"
+          >
+            <iframe
+              src="https://10.191.171.12:5443/EIS/port_monitring"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                borderRadius: '6px',
+                pointerEvents: 'none'
+              }}
+              title="Port Monitoring Overview"
+            />
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'transparent',
+              zIndex: 1
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '10px',
+              right: '10px',
+              background: 'rgba(242, 133, 193, 0.9)',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              pointerEvents: 'none',
+              zIndex: 2
+            }}>
+              Click to Open →
+            </div>
+          </div>
+        )
+      },
+      {
+        baseTitle: 'MQ Monitoring Overview',
+        url: 'https://10.191.171.12:5443/EIS/MQ_monitoring',
+        chart: (
+          <div 
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              cursor: 'pointer',
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: '8px',
+              border: '2px solid #f285c1'
+            }}
+            onClick={() => window.open('https://10.191.171.12:5443/EIS/MQ_monitoring', '_blank')}
+            title="Click to open MQ Monitoring in new tab"
+          >
+            <iframe
+              src="https://10.191.171.12:5443/EIS/MQ_monitoring"
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                borderRadius: '6px',
+                pointerEvents: 'none'
+              }}
+              title="MQ Monitoring Overview"
+            />
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'transparent',
+              zIndex: 1
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '10px',
+              right: '10px',
+              background: 'rgba(242, 133, 193, 0.9)',
+              color: '#fff',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              pointerEvents: 'none',
+              zIndex: 2
+            }}>
+              Click to Open →
+            </div>
+          </div>
+        )
+      }
+    ];
+    setPortalCharts(portals);
+
     (async () => {
       setIsLoading(true);
       const farResp = await getFARExpires();
@@ -628,12 +749,14 @@ const GraphCarousel = () => {
     })();
   }, []);
 
-  // --- Combine all charts for carousel. FAR Pie always last. ---
-  const allCharts = [...charts, ...mqCharts, ...(farChart ? [farChart] : [])];
+  // --- Combine all charts for carousel. Order: Portals, FAR, then rest ---
+  const allCharts = [...portalCharts, ...(farChart ? [farChart] : []), ...charts, ...mqCharts];
   const totalCharts = allCharts.length;
-  const isMQ = currentIndex >= charts.length && currentIndex < charts.length + mqCharts.length;
-  const isMQHourly = currentIndex === charts.length + 4 || currentIndex === charts.length + 5;
-  const isFarData = currentIndex === totalCharts - 1;
+  const isPortal = currentIndex < portalCharts.length;
+  const isFarData = currentIndex === portalCharts.length;
+  const adjustedIndex = currentIndex - portalCharts.length - (farChart ? 1 : 0);
+  const isMQ = adjustedIndex >= charts.length && adjustedIndex < charts.length + mqCharts.length;
+  const isMQHourly = adjustedIndex === charts.length + 4 || adjustedIndex === charts.length + 5;
 
   // Time range selector handlers for service-wise
   const handleTimeChange = (option) => {
@@ -732,11 +855,51 @@ const GraphCarousel = () => {
 
     const path = downloadInfo.path;
     const layer = downloadInfo.layer;
+    
+    const portalCount = 2;
+    const farCount = 1;
+    const adjustedIndex = currentIndex - portalCount - farCount;
+
+    // FAR Pie
+    if (path === "FAR_EXPIRY_ALL" && farChart?.rawData) {
+      try {
+        setIsLoading(true);
+        const farMonths = farChart.rawData.map(item => item.name);
+        const allDetailsResponses = await Promise.all(
+          farMonths.map(month => getFARDetailsSpecific(month))
+        );
+        const allDetails = allDetailsResponses.flatMap(resp =>
+          resp.data?.MonthlyDetails || []
+        );
+        if (!allDetails.length) {
+          alert("No FAR details available for download.");
+          setIsLoading(false);
+          return;
+        }
+        // Dynamic headers for FAR data
+        const headers = allDetails.length > 0 ? Object.keys(allDetails[0]) : [];
+        const csv = convertToCSV(allDetails, { headers });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `FAR_Details_ALL.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert("Download failed.");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
 
     // MQ Overall/Source: Use downloadMqGraph
     if (
-      (currentIndex === charts.length + 0 || currentIndex === charts.length + 1) || // MQ Overall
-      (currentIndex === charts.length + 2 || currentIndex === charts.length + 3)    // MQ Source
+      (adjustedIndex === charts.length + 0 || adjustedIndex === charts.length + 1) || // MQ Overall
+      (adjustedIndex === charts.length + 2 || adjustedIndex === charts.length + 3)    // MQ Source
     ) {
       try {
         setIsLoading(true);
@@ -767,7 +930,7 @@ const GraphCarousel = () => {
     }
 
     // MQ Hourly: Use downloadMqHourly
-    if (currentIndex === charts.length + 4 || currentIndex === charts.length + 5) {
+    if (adjustedIndex === charts.length + 4 || adjustedIndex === charts.length + 5) {
       try {
         setIsLoading(true);
         let apiPath = path + (layer || "") + "/";
@@ -784,42 +947,6 @@ const GraphCarousel = () => {
         const link = document.createElement('a');
         link.href = url;
         link.setAttribute('download', `${allCharts[currentIndex]?.baseTitle || 'chart'}-${mqHour}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        alert("Download failed.");
-      } finally {
-        setIsLoading(false);
-      }
-      return;
-    }
-
-    // FAR Pie (last chart)
-    if (path === "FAR_EXPIRY_ALL" && farChart?.rawData) {
-      try {
-        setIsLoading(true);
-        const farMonths = farChart.rawData.map(item => item.name);
-        const allDetailsResponses = await Promise.all(
-          farMonths.map(month => getFARDetailsSpecific(month))
-        );
-        const allDetails = allDetailsResponses.flatMap(resp =>
-          resp.data?.MonthlyDetails || []
-        );
-        if (!allDetails.length) {
-          alert("No FAR details available for download.");
-          setIsLoading(false);
-          return;
-        }
-        // Dynamic headers for FAR data
-        const headers = allDetails.length > 0 ? Object.keys(allDetails[0]) : [];
-        const csv = convertToCSV(allDetails, { headers });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `FAR_Details_ALL.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -923,9 +1050,9 @@ const GraphCarousel = () => {
     ? Object.keys(filteredFarDetails[0])
     : [];
 
-  // Compose heading for selected range; do NOT add time for FAR data (last index)
+  // Compose heading for selected range; do NOT add time for FAR data or portals
   const effectiveTimeLabel =
-    (currentIndex < charts.length + mqCharts.length && !isFarData)
+    (!isPortal && !isFarData && adjustedIndex < charts.length + mqCharts.length)
       ? selectedTimeLabel
       : (isMQHourly ? `${mqHour}:00` : "");
   const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}`;
@@ -933,8 +1060,8 @@ const GraphCarousel = () => {
   return (
     <div className="carousel-container" style={{ position: "relative" }}>
       <div className="carousel-header">
-        {/* Time selector for Service-wise and IP/Port-wise */}
-        {(currentIndex < 6) && (
+        {/* Time selector for Service-wise and IP/Port-wise (skip portals and FAR) */}
+        {!isPortal && !isFarData && (adjustedIndex < 6) && (
           <div className="timeline-selector">
             <div className="dropdown" onClick={e => e.stopPropagation()}>
               <button
@@ -970,7 +1097,7 @@ const GraphCarousel = () => {
           </div>
         )}
         {/* MQ Hourly time selector only for MQ Hourly charts */}
-        {isMQHourly && (
+        {!isPortal && !isFarData && isMQHourly && (
           <div className="timeline-selector" style={{ marginLeft: 8 }}>
             <div className="dropdown" onClick={e => e.stopPropagation()}>
               <button
@@ -1000,51 +1127,48 @@ const GraphCarousel = () => {
         </h2>
 
         <div className="download-button-wrapper" style={{ position: "relative", display: "inline-block" }}>
-          <button
-            className="download-button"
-            onClick={handleDownloadClick}
-            disabled={isLoading || !getDownloadPathForChart(currentIndex, totalCharts)}
-            onMouseEnter={e => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setDownloadTooltip({
-                show: true,
-                text: 'Click to download complete data',
-                x: rect.left + rect.width / 2,
-                y: rect.top,
-              });
-            }}
-            onMouseMove={e => {
-              const rect = e.currentTarget.getBoundingClientRect();
-              setDownloadTooltip(t =>
-                t.show
-                  ? {
-                      ...t,
-                      x: rect.left + rect.width / 2,
-                      y: rect.top,
-                    }
-                  : t
-              );
-            }}
-            onMouseLeave={() => setDownloadTooltip(t => ({ ...t, show: false }))}
-          >
-            <img
-              className="logo"
-              src={Download}
-              alt="Download Icon"
-              style={{ height: '36px', marginRight: '3px' }}
-            />
-          </button>
+          {!isPortal && (
+            <button
+              className="download-button"
+              onClick={handleDownloadClick}
+              disabled={isLoading || !getDownloadPathForChart(currentIndex, totalCharts)}
+              onMouseEnter={e => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setDownloadTooltip({
+                  show: true,
+                  text: 'Click to download complete data',
+                  x: rect.left + rect.width / 2,
+                  y: rect.top,
+                });
+              }}
+              onMouseMove={e => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setDownloadTooltip(t =>
+                  t.show
+                    ? {
+                        ...t,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top,
+                      }
+                    : t
+                );
+              }}
+              onMouseLeave={() => setDownloadTooltip(t => ({ ...t, show: false }))}
+            >
+              <img
+                className="logo"
+                src={Download}
+                alt="Download Icon"
+                style={{ height: '36px', marginRight: '3px' }}
+              />
+            </button>
+          )}
         </div>
       </div>
 
-
-
-
-
       <div
         className="carousel-graph"
-
-          onMouseEnter={() => setPaused(true)}
+        onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => {
           if (!dropdownOpen && !calendarOpen && !mqHourlyDropdownOpen) setPaused(false);
         }}
@@ -1067,10 +1191,7 @@ const GraphCarousel = () => {
         )}
       </div>
 
-
-
-
-           {/* Carousel dots */}
+      {/* Carousel dots */}
       <div className="carousel-dots" style={{ textAlign: "center", marginTop: 10 }}>
         {allCharts.map((item, index) => (
           <span
@@ -1104,9 +1225,7 @@ const GraphCarousel = () => {
         ))}
       </div>
 
-
-
-         {/* Download Tooltip */}
+      {/* Download Tooltip */}
       {downloadTooltip.show && (
         <div
           style={{
@@ -1158,8 +1277,6 @@ const GraphCarousel = () => {
           {dotTooltip.text}
         </div>
       )}
-
-
 
       {showFarDetails && (
         <div className="far-details-modal">
