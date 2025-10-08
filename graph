@@ -264,8 +264,8 @@ const GraphCarousel = () => {
                 <XAxis
                   dataKey="Service_name"
                   {...commonXAxisProps}
-                  tick={({ x, y, payload }) => (
-                    <foreignObject x={x - 55} y={y + 10} width={110} height={38}>
+                   tick={({ x, y, payload }) => (
+                      <foreignObject x={x - 55} y={y + 10} width={110} height={38}>
                       <div
                         style={{
                           fontSize: 14,
@@ -282,7 +282,9 @@ const GraphCarousel = () => {
                         {trimLabel(payload.value)}
                       </div>
                     </foreignObject>
+
                   )}
+
                   stroke="#fff"
                 />
                   <defs>
@@ -926,7 +928,7 @@ const GraphCarousel = () => {
     (currentIndex < charts.length + mqCharts.length && !isFarData)
       ? selectedTimeLabel
       : (isMQHourly ? `${mqHour}:00` : "");
-  const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}${effectiveTimeLabel ? ` (${effectiveTimeLabel})` : ""}`;
+  const effectiveHeading = `${allCharts[currentIndex]?.baseTitle || ''}`;
 
   return (
     <div className="carousel-container" style={{ position: "relative" }}>
@@ -994,7 +996,7 @@ const GraphCarousel = () => {
 
         {/* Heading with range */}
         <h2>
-          {isLoading ? `Loading ${allCharts[currentIndex]?.baseTitle || ''}...` : effectiveHeading}
+          {isLoading ? `${allCharts[currentIndex]?.baseTitle || '' }`: effectiveHeading}
         </h2>
 
         <div className="download-button-wrapper" style={{ position: "relative", display: "inline-block" }}>
@@ -1109,8 +1111,8 @@ const GraphCarousel = () => {
         <div
           style={{
             position: 'fixed',
-            left: downloadTooltip.x,
-            top: downloadTooltip.y,
+            left: downloadTooltip.x - 500,
+            top: downloadTooltip.y - 110,
             transform: 'translate(-50%, -100%)',
             background: '#2e1a3b',
             color: '#fff',
@@ -1136,7 +1138,7 @@ const GraphCarousel = () => {
         <div
           style={{
             position: 'fixed',
-            left: dotTooltip.x - 50 ,
+            left: dotTooltip.x - 300 ,
             top: dotTooltip.y - 130,
             transform: 'translate(-50%, -100%)',
             background: '#18152a',
