@@ -1,435 +1,174 @@
-{
-            "sender": "You",
-            "message": {
-                "service": "Dynat"
-            }
-        },
-        {
-            "sender": "Bot",
-            "message": {
-                "service": [
-                    "Dynatrace_Logger-Application",
-                    "Dynatrace_SYS_Logger-Application"
-                ],
-                "layer": [
-                    "AADHAR_EXP",
-                    "MISC_EXP",
-                    "ACCOUNT_EXP",
-                    "NON_GEN5",
-                    "IVR_EXP",
-                    "CUSTOMER_EXP",
-                    "MISC_SYS",
-                    "CUSTOMER_SYS",
-                    "PAYMENT_EXP",
-                    "AADHAR_SYS"
-                ],
-                "server": [
-                    "25_190",
-                    "25_166",
-                    "24_44",
-                    "24_145",
-                    "24_65",
-                    "25_34",
-                    "24_34",
-                    "24_190",
-                    "24_74",
-                    "25_10",
-                    "24_43",
-                    "24_165",
-                    "24_194",
-                    "24_12",
-                    "24_66",
-                    "25_197",
-                    "25_33",
-                    "24_42",
-                    "25_141",
-                    "25_32",
-                    "25_164",
-                    "24_45",
-                    "25_145",
-                    "24_41",
-                    "24_101",
-                    "24_31",
-                    "24_33",
-                    "25_14",
-                    "25_31",
-                    "25_144",
-                    "25_75",
-                    "25_101",
-                    "25_13",
-                    "25_73",
-                    "24_196",
-                    "25_146",
-                    "24_64",
-                    "24_166",
-                    "25_194",
-                    "24_14",
-                    "25_66",
-                    "24_164",
-                    "24_11",
-                    "25_165",
-                    "25_192",
-                    "25_143",
-                    "24_13",
-                    "25_41",
-                    "24_73",
-                    "24_75",
-                    "25_45",
-                    "24_191",
-                    "24_10",
-                    "24_144",
-                    "25_11",
-                    "25_74",
-                    "24_192",
-                    "24_63",
-                    "24_146",
-                    "25_142",
-                    "25_64",
-                    "24_195",
-                    "24_142",
-                    "25_65",
-                    "24_32",
-                    "24_197",
-                    "25_44",
-                    "25_42",
-                    "24_143",
-                    "25_191",
-                    "25_12",
-                    "25_63",
-                    "25_196",
-                    "24_163",
-                    "25_163",
-                    "24_141",
-                    "25_43",
-                    "25_195"
-                ],
-                "eg": [
-                    "Payment_E_01",
-                    "Misc_S_01",
-                    "Passbook_S_01",
-                    "Misc_E_04",
-                    "Customer_S_01",
-                    "GCC_E_01",
-                    "IVR_E_01",
-                    "Misc_E_01",
-                    "PAN_EXP_01",
-                    "AADHAR_EXP_01",
-                    "Passbook_E_01",
-                    "NP_E_01",
-                    "CUSTOMER_SPECIAL_E_01",
-                    "Account_E_01",
-                    "Customer_E_01"
-                ]
-            },
-            "options": [
-                "y.Back",
-                "z.Main Menu"
-            ]
-        },
-        {
-            "sender": "You",
-            "message": {
-                "service": "Dynat"
-            }
-        },
-        {
-            "sender": "Bot",
-            "message": {
-                "service": [
-                    "Dynatrace_Logger-Application",
-                    "Dynatrace_SYS_Logger-Application"
-                ],
-                "layer": [
-                    "AADHAR_EXP",
-                    "MISC_EXP",
-                    "ACCOUNT_EXP",
-                    "NON_GEN5",
-                    "IVR_EXP",
-                    "CUSTOMER_EXP",
-                    "MISC_SYS",
-                    "CUSTOMER_SYS",
-                    "PAYMENT_EXP",
-                    "AADHAR_SYS"
-                ],
-                "server": [
-                    "25_190",
-                    "25_166",
-                    "24_44",
-                    "24_145",
-                    "24_65",
-                    "25_34",
-                    "24_34",
-                    "24_190",
-                    "24_74",
-                    "25_10",
-                    "24_43",
-                    "24_165",
-                    "24_194",
-                    "24_12",
-                    "24_66",
-                    "25_197",
-                    "25_33",
-                    "24_42",
-                    "25_141",
-                    "25_32",
-                    "25_164",
-                    "24_45",
-                    "25_145",
-                    "24_41",
-                    "24_101",
-                    "24_31",
-                    "24_33",
-                    "25_14",
-                    "25_31",
-                    "25_144",
-                    "25_75",
-                    "25_101",
-                    "25_13",
-                    "25_73",
-                    "24_196",
-                    "25_146",
-                    "24_64",
-                    "24_166",
-                    "25_194",
-                    "24_14",
-                    "25_66",
-                    "24_164",
-                    "24_11",
-                    "25_165",
-                    "25_192",
-                    "25_143",
-                    "24_13",
-                    "25_41",
-                    "24_73",
-                    "24_75",
-                    "25_45",
-                    "24_191",
-                    "24_10",
-                    "24_144",
-                    "25_11",
-                    "25_74",
-                    "24_192",
-                    "24_63",
-                    "24_146",
-                    "25_142",
-                    "25_64",
-                    "24_195",
-                    "24_142",
-                    "25_65",
-                    "24_32",
-                    "24_197",
-                    "25_44",
-                    "25_42",
-                    "24_143",
-                    "25_191",
-                    "25_12",
-                    "25_63",
-                    "25_196",
-                    "24_163",
-                    "25_163",
-                    "24_141",
-                    "25_43",
-                    "25_195"
-                ],
-                "eg": [
-                    "Payment_E_01",
-                    "Misc_S_01",
-                    "Passbook_S_01",
-                    "Misc_E_04",
-                    "Customer_S_01",
-                    "GCC_E_01",
-                    "IVR_E_01",
-                    "Misc_E_01",
-                    "PAN_EXP_01",
-                    "AADHAR_EXP_01",
-                    "Passbook_E_01",
-                    "NP_E_01",
-                    "CUSTOMER_SPECIAL_E_01",
-                    "Account_E_01",
-                    "Customer_E_01"
-                ]
-            },
-            "options": [
-                "y.Back",
-                "z.Main Menu"
-            ]
-        },
-        {
-            "sender": "You",
-            "message": {
-                "service": "Dynatrace_Logger"
-            }
-        },
-        {
-            "sender": "Bot",
-            "message": {
-                "service": [
-                    "Dynatrace_Logger-Application"
-                ],
-                "layer": [
-                    "AADHAR_EXP",
-                    "MISC_EXP",
-                    "ACCOUNT_EXP",
-                    "NON_GEN5",
-                    "CUSTOMER_EXP",
-                    "AADHAR_SYS",
-                    "PAYMENT_EXP",
-                    "IVR_EXP"
-                ],
-                "server": [
-                    "25_73",
-                    "25_190",
-                    "24_196",
-                    "24_63",
-                    "24_44",
-                    "24_64",
-                    "25_64",
-                    "24_65",
-                    "24_195",
-                    "25_34",
-                    "25_65",
-                    "24_32",
-                    "24_197",
-                    "24_34",
-                    "24_41",
-                    "25_194",
-                    "24_14",
-                    "24_101",
-                    "25_66",
-                    "24_190",
-                    "25_44",
-                    "24_11",
-                    "25_192",
-                    "24_74",
-                    "24_13",
-                    "25_10",
-                    "25_42",
-                    "25_191",
-                    "24_43",
-                    "25_12",
-                    "24_31",
-                    "24_33",
-                    "25_14",
-                    "25_63",
-                    "25_41",
-                    "24_73",
-                    "24_75",
-                    "24_194",
-                    "24_12",
-                    "25_31",
-                    "25_196",
-                    "25_45",
-                    "25_75",
-                    "24_66",
-                    "25_197",
-                    "24_191",
-                    "24_10",
-                    "25_33",
-                    "25_11",
-                    "25_43",
-                    "25_101",
-                    "24_42",
-                    "25_74",
-                    "24_192",
-                    "25_13",
-                    "25_32",
-                    "25_195",
-                    "24_45"
-                ],
-                "eg": [
-                    "Payment_E_01",
-                    "Misc_E_04",
-                    "GCC_E_01",
-                    "IVR_E_01",
-                    "Misc_E_01",
-                    "PAN_EXP_01",
-                    "AADHAR_EXP_01",
-                    "Passbook_E_01",
-                    "NP_E_01",
-                    "CUSTOMER_SPECIAL_E_01",
-                    "Account_E_01",
-                    "Customer_E_01"
-                ]
-            },
-            "options": [
-                "y.Back",
-                "z.Main Menu"
-            ]
-        },
-        {
-            "sender": "You",
-            "message": {
-                "service": "Dynatrace_Logger",
-                "layer": "AADHAR_EXP"
-            }
-        },
-        {
-            "sender": "Bot",
-            "message": {
-                "service": "Dynatrace_Logger-Application",
-                "layer": "AADHAR_EXP",
-                "server": [
-                    "25_190",
-                    "24_191",
-                    "24_190",
-                    "25_192",
-                    "24_192",
-                    "25_191"
-                ],
-                "eg": [
-                    "PAN_EXP_01",
-                    "AADHAR_EXP_01",
-                    "Passbook_E_01"
-                ]
-            },
-            "options": [
-                "y.Back",
-                "z.Main Menu"
-            ]
-        },
-        {
-            "sender": "You",
-            "message": {
-                "service": "Dynatrace_Logger",
-                "layer": "AADHAR_EXP",
-                "server": "25_190"
-            }
-        },
-        {
-            "sender": "Bot",
-            "message": {
-                "service": "Dynatrace_Logger-Application",
-                "layer": [
-                    "AADHAR_EXP"
-                ],
-                "server": "25_190",
-                "eg": [
-                    "PAN_EXP_01",
-                    "AADHAR_EXP_01",
-                    "Passbook_E_01"
-                ]
-            },
-            "options": [
-                "y.Back",
-                "z.Main Menu"
-            ]
-        },
-        {
-            "sender": "You",
-            "message": {
-                "service": "Dynatrace_Logger",
-                "layer": "AADHAR_EXP",
-                "server": "25_190",
-                "eg": "PAN_EXP_01"
-            }
-        },
-        {
-            "sender": "Bot",
-            "message": "Layer: <b>AADHAR_EXP</b>\n Server <b>25_190</b> has service <b>Dynatrace_Logger-Application</b> running in execution group <b>PAN_EXP_01</b>,which is configured with following parameters: \n Additional Instances: <b>120</b>\n Thread Capacity: <b>120</b> \n Threads In Use: <b>1</b>\n TimeOut: <b>No_Data</b> ",
-            "options": [
-                "y.Back",
-                "z.Main Menu"
-            ]
-        }
-    ]
+from django.shortcuts import render,redirect
+import subprocess
+from datetime import date
+import ast
+import datetime
+import os
+from django.http import HttpResponse
+
+
+def curl_view(request):
+    new_result=""
+    arg1=""
+    arg2=""
+    curl_command=""
+    now=datetime.datetime.now().strftime('%d-%m-%Y')
+    cache_now=datetime.datetime.now().strftime('%d-%m-%Y')
+    field_list=[]
+    command=f"su - eisuser -c ' ssh -tq 10.191.171.80 \" python /home/scripts/CONFIG/field_list.py \" '"
+    result=subprocess.run(command,capture_output=True,shell=True,text=True)
+    new_res=result.stdout.strip()
+    field_list=ast.literal_eval(new_res)
+    cache_count=len(field_list)
+    if request.method == "POST":
+        if request.POST.get("action") == "search":
+            arg1 = request.POST.get('arg1','').strip()
+            arg2 = request.POST.get('arg2','').strip()
+            script_path=f"/home/scripts/CONFIG/curl_search.py"
+            command=f'python {script_path} "{arg1}" "{arg2}"'
+            result=subprocess.run(command,capture_output=True,shell=True,text=True)
+            resout=result.stdout.strip()
+            reserr=result.stderr.strip()
+            get_result=resout or reserr
+            if arg2 not in field_list:
+                get_result="No such Field."
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                curl_command = x_forwarded_for.split(',')[0]
+            else:
+                curl_command = request.META.get('REMOTE_ADDR')
+            curl= f'curl -k -X GET http://{arg1}:8002/cache/v1/loadCache?"FIELD_NAME"="{arg2}"'
+            full_time=datetime.datetime.now().strftime('%c')
+            now=datetime.datetime.now().strftime('%d-%m-%Y')
+            files_dir=f'/var/www/cgi-bin/PyPortal/curl_search/curl_logs/'
+            os.makedirs(files_dir, exist_ok=True)
+            os.chmod(files_dir,0o777)
+            files_path=f"{files_dir}logs_{now}"
+            fw=open(files_path,'a')
+            fw.write(curl_command+","+full_time+","+curl+","+get_result+"\n")
+            fw.close()
+
+            request.session['get_result']=get_result
+            return redirect('curl_search')
+
+        elif request.POST.get("post_value") == "POST":
+            arg3 = request.POST.get('arg3','').strip()
+            script_path=f"/home/scripts/CONFIG/curl_post.py"
+            command=f'python {script_path} "{arg3}" '
+            result=subprocess.run(command,capture_output=True,shell=True,text=True)
+            resout=result.stdout.strip()
+            reserr=result.stderr.strip()
+            post_result=resout or reserr
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                curl_command = x_forwarded_for.split(',')[0]
+            else:
+                curl_command = request.META.get('REMOTE_ADDR')
+            curl=f"curl -k -X POST '{arg3}'"
+            full_time=datetime.datetime.now().strftime('%c')
+            now=datetime.datetime.now().strftime('%d-%m-%Y')
+            files_dir=f'/var/www/cgi-bin/PyPortal/curl_search/curl_logs/'
+            os.makedirs(files_dir, exist_ok=True)
+            os.chmod(files_dir,0o777)
+            files_path=f"{files_dir}logs_{now}"
+            fw=open(files_path,'a')
+            fw.write(curl_command+","+full_time+","+curl+","+post_result+"\n")
+            fw.close()
+
+            request.session['post_result']=post_result
+            return redirect('curl_search')
+    new_get_result=request.session.pop("get_result",None)
+    new_result=request.session.pop("post_result",None)
+    return render(request,'curl_search/curl_search.html',{"new_result":new_result,"new_get_result":new_get_result, "curl_command":curl_command , "field_list":field_list,"cache_count":cache_count,"arg1":arg1,"arg2":arg2,"now":now,"cache_now":cache_now})
+
+
+def curl_logs(request,pk):
+    files_dir=f'/var/www/cgi-bin/PyPortal/curl_search/curl_logs/'
+    files_path=f"{files_dir}logs_{pk}"
+    log_entries=[]
+    if os.path.exists(files_path):
+        fw=open(files_path,'r')
+        for line in fw:
+            log_dict=[]
+            new_line=line.strip().split(",")
+            log_entries.append(new_line)
+        log_entries=sorted(log_entries,reverse=True)
+    else:
+        log_entries=[]
+
+    days_list=[]
+    now_date=datetime.datetime.now().strftime('%d_%m_%y')
+    for i in range(5):
+        day=datetime.datetime.now() - datetime.timedelta(days=i)
+        new_day=day.strftime('%d-%m-%Y')
+        days_list.append(new_day)
+
+
+    return render(request, 'curl_search/curl_logs.html',{"logs":log_entries,"selected_date":pk,"days_list":days_list})
+
+def test(request,pk):
+    path=f"/home/scripts/CONFIG/cache_field.py"
+    command=f" su - eisuser -c ' ssh -tq 10.191.171.80 \" python {path} {pk} \" '  "
+    result=subprocess.run(command,capture_output=True,shell=True,text=True)
+    new_result=result.stdout.strip()
+    new_dict={}
+    updated_list=[]
+    for line in new_result.splitlines():
+        if "extra" in line:
+            new_line=line.split("=")
+            new_dict=new_line[1].strip()
+            new_dict = ast.literal_eval(new_dict)
+        if "update" in line:
+            new_line=line.split("=")
+            update_dict=new_line[1].strip()
+            updated_dict=ast.literal_eval(update_dict)
+    days_list=[]
+    for i in range(5):
+        day=datetime.datetime.now() - datetime.timedelta(days=i)
+        new_day=day.strftime('%d-%m-%Y')
+        days_list.append(new_day)
+
+    return render(request, 'curl_search/updates.html', {"new_dict":new_dict,"updated_dict":updated_dict,"days_list":days_list,"selected_date":pk})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener("DOMContentLoaded",async ()=> {
+var uid=localStorage.getItem('uidd');
+var sessionId=localStorage.getItem('sessionid');
+  try{
+     const response  = await fetch('https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal/',{
+     method:'POST',
+     headers:{
+             'Content-Type':'application/json',
+             'Authorization': `Bearer ${sessionId}`
+
+    },
+    body: JSON.stringify({uid})
+    });
+    const data = await response.json();
+    if(data.status==302){
+            console.log("login successfull");
+    }
+    else{
+            console.log(data.status)
+          window.location.href='https://10.191.171.12:5443/EISHOME/';
+    }
+  }
+catch(e){
+console.log("an error occured for login"+e)
+
 }
+});
