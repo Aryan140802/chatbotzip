@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/Login.css';
 import Header from './Header';
 import Footer from './Footer';
 import { postLogin } from "../api/loginApi";
-import { postGetSecurityQuestion, postForgotPassword } from "../api/postNewApi";
+import { postGetSecurityQuestion, postForgotPassword } from "../api/PostApi";
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -20,6 +20,92 @@ function Login({ onLogin }) {
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [newPwd, setNewPwd] = useState('');
   const [forgotPwdMsg, setForgotPwdMsg] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (forgotPwdMsg) {
+      const timer = setTimeout(() => {
+        setForgotPwdMsg('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [forgotPwdMsg]);
+
+  // Check for redirect URL on component mount
+  useEffect(() => {
+    console.log("Login page loaded - checking for redirect URL");
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('return_url');
+
+    if (returnUrl) {
+      console.log("Found return URL in parameters:", returnUrl);
+      localStorage.setItem('post_login_redirect', returnUrl);
+    } else {
+      console.log("No return URL found in parameters");
+    }
+  }, []);
+
+  // Check authentication on page refresh
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const uid = localStorage.getItem('uidd');
+      const sessionId = localStorage.getItem('sessionid');
+
+      // Only proceed if both uid and sessionId exist
+      if (uid && sessionId) {
+        console.log("Found session data, validating...");
+        try {
+          const response = await fetch('https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${sessionId}`
+            },
+            body: JSON.stringify({ uid: uid })
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.status === 'success') {
+            // Session is valid, proceed with login
+            console.log("Session validated successfully");
+            handleLoginSuccess(uid);
+          } else {
+            // Session is invalid, clear local storage
+            console.log("Session validation failed, clearing storage");
+            localStorage.removeItem('uidd');
+            localStorage.removeItem('sessionid');
+          }
+        } catch (error) {
+          console.error("Error validating session:", error);
+          // Clear storage on error
+          localStorage.removeItem('uidd');
+          localStorage.removeItem('sessionid');
+        }
+      } else {
+        console.log("No session data found in local storage");
+      }
+    };
+
+    checkAuthentication();
+  }, []); // Run once on component mount (page load/refresh)
+
+  const handleLoginSuccess = (username) => {
+    // Check if there's a redirect URL stored
+    const redirectUrl = localStorage.getItem('post_login_redirect');
+    console.log("Login successful - checking redirect URL:", redirectUrl);
+
+    if (redirectUrl) {
+      // Clear the stored URL and redirect back
+      localStorage.removeItem('post_login_redirect');
+      console.log("Redirecting back to:", redirectUrl);
+      window.location.href = redirectUrl;
+    } else {
+      // No redirect URL, proceed with normal login flow
+      console.log("No redirect URL - proceeding with normal login");
+      onLogin(username);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,12 +114,12 @@ function Login({ onLogin }) {
     try {
       const response = await postLogin(username, password);
       if (response.data.status === 302) {
-        onLogin(response.data.username);
+        handleLoginSuccess(response.data.username);
       } else {
         setError('Invalid credentials');
       }
     } catch (error) {
-      setError('Unable to connect to server');
+      setError('Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -54,23 +140,18 @@ function Login({ onLogin }) {
     setForgotPwdMsg('');
     try {
       const res = await postGetSecurityQuestion(empId);
-      console.log('Security Question Response:', res.data); // Debug log
-      
-      // Accept typo key first, then correct key
-      const secQ = res.data.securtiyQuestion ?? res.data.securityQuestion;
-      
-      // Check if we got a valid response and security question
-      if (res.data && (secQ !== undefined && secQ !== null && secQ !== '')) {
+      const secQ = res.data.securityQuestion;
+
+      if (res.data && (secQ !== null && secQ !== '')) {
         setSecurityQ(secQ);
         setShowEmpIdModal(false);
         setShowSecQModal(true);
         setSecurityAnswer('');
         setNewPwd('');
-        setForgotPwdMsg(''); // Clear any previous messages
+        setForgotPwdMsg('');
       } else {
-        // Handle case where employee ID is valid but no security question is set
         if (res.data && (secQ === '' || secQ === null)) {
-          setSecurityQ(''); // Set empty security question
+          setSecurityQ('');
           setShowEmpIdModal(false);
           setShowSecQModal(true);
           setSecurityAnswer('');
@@ -96,7 +177,7 @@ function Login({ onLogin }) {
     try {
       const res = await postForgotPassword({
         uid: empId,
-        SecQ: securityQ,
+        securityQuestion: securityQ,
         password: newPwd,
         answer: securityAnswer
       });
@@ -121,12 +202,12 @@ function Login({ onLogin }) {
   };
 
   const handleRegisterRedirect = () => {
-    window.location.href = 'https://10.191.171.12:5443/EISInfra/EIS/EIS/Registration.php';
+    window.open('https://10.191.171.12:5443/EISInfra/EIS/EIS/Registration.php', '_blank');
   };
 
   return (
     <div className={darkMode ? 'dark-mode' : ''}>
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Header darkMode={darkMode} setDarkMode={setDarkMode} hideMarqueeAndAlertIcon={true} />
       <div className="login-container">
         <div className="bubble"></div>
         <div className="bubble"></div>
@@ -140,13 +221,22 @@ function Login({ onLogin }) {
             onChange={(e) => setUsername(e.target.value)}
             required
           />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+
+          <div className="password-wrapper">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="password-input"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <span
+              className={`toggle-password ${showPassword ? "active" : ""}`}
+              onClick={() => setShowPassword(!showPassword)}
+            ></span>
+          </div>
+
           <button type="submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
@@ -210,7 +300,7 @@ function Login({ onLogin }) {
             <h3>Reset Password</h3>
             <form onSubmit={handleSecQSubmit}>
               {forgotPwdMsg && <div className="modal-error-message">{forgotPwdMsg}</div>}
-              
+
               <label>Employee ID:</label>
               <input
                 type="text"
@@ -218,7 +308,7 @@ function Login({ onLogin }) {
                 readOnly
                 className="modal-input readonly"
               />
-              
+
               <label>Security Question:</label>
               <input
                 type="text"
@@ -226,16 +316,16 @@ function Login({ onLogin }) {
                 readOnly
                 className="modal-input readonly"
               />
-              
+
               {securityQ === "" && (
                 <div className="modal-info-message">
                   No security question set for this user. Please contact admin if you cannot reset your password.
                 </div>
               )}
-              
+
               <label>Your Answer:</label>
               <input
-                type="text"
+                type="password"
                 placeholder="Enter your answer"
                 value={securityAnswer}
                 onChange={e => setSecurityAnswer(e.target.value)}
@@ -243,7 +333,7 @@ function Login({ onLogin }) {
                 disabled={securityQ === ""}
                 className="modal-input"
               />
-              
+
               <label>New Password:</label>
               <input
                 type="password"
@@ -253,7 +343,7 @@ function Login({ onLogin }) {
                 required
                 className="modal-input"
               />
-              
+
               <div className="modal-actions">
                 <button className="modal-btn" type="submit" disabled={secQLoading || !securityQ}>
                   {secQLoading ? 'Submitting...' : 'Submit'}
@@ -267,215 +357,6 @@ function Login({ onLogin }) {
         </div>
       )}
 
-      {/* Enhanced Modal Styling */}
-      <style>{`
-        .modal-overlay {
-          position: fixed; 
-          top: 0; 
-          left: 0; 
-          width: 100vw; 
-          height: 100vh;
-          background: rgba(0,0,0,0.6); 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          z-index: 2000;
-          animation: modal-bg-fade 0.3s ease-out;
-        }
-        
-        .modal-box {
-          background: #fff;
-          padding: 2em 2.5em 2em 2.5em;
-          border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-          min-width: 380px;
-          max-width: 90vw;
-          animation: modal-fadein 0.3s ease-out;
-          position: relative;
-          max-height: 90vh;
-          overflow-y: auto;
-        }
-        
-        .modal-box.security-modal {
-          min-width: 420px;
-        }
-        
-        .modal-box h3 {
-          margin-top: 0;
-          margin-bottom: 1.5em;
-          font-size: 1.4em;
-          text-align: center;
-          color: #333;
-          font-weight: 600;
-        }
-        
-        .modal-box label {
-          display: block;
-          margin-bottom: 0.5em;
-          font-weight: 500;
-          color: #555;
-          font-size: 0.95em;
-        }
-        
-        .modal-input {
-          width: 100%;
-          padding: 0.75em 1em;
-          border: 1.5px solid #ddd;
-          border-radius: 6px;
-          margin-bottom: 1.2em;
-          font-size: 1em;
-          background: #fff;
-          transition: all 0.2s ease;
-          box-sizing: border-box;
-        }
-        
-        .modal-input:focus {
-          border-color: #1976d2;
-          outline: none;
-          box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
-        }
-        
-        .modal-input.readonly {
-          background: #f8f9fa;
-          color: #666;
-          cursor: not-allowed;
-          border-color: #e9ecef;
-        }
-        
-        .modal-actions {
-          margin-top: 1.5em;
-          display: flex;
-          gap: 1em;
-          justify-content: flex-end;
-        }
-        
-        .modal-btn {
-          background: #1976d2;
-          color: #fff;
-          border: none;
-          padding: 0.7em 1.5em;
-          border-radius: 6px;
-          font-size: 1em;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-weight: 500;
-          min-width: 80px;
-        }
-        
-        .modal-btn:hover:not(:disabled) {
-          background: #1565c0;
-          transform: translateY(-1px);
-        }
-        
-        .modal-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-          transform: none;
-        }
-        
-        .modal-btn.cancel {
-          background: #dc3545;
-        }
-        
-        .modal-btn.cancel:hover:not(:disabled) {
-          background: #c82333;
-        }
-        
-        .modal-info-message {
-          color: #ff9800;
-          margin: 1em 0;
-          font-size: 0.9em;
-          text-align: center;
-          padding: 0.8em;
-          background: #fff3cd;
-          border: 1px solid #ffeaa7;
-          border-radius: 6px;
-        }
-        
-        .modal-error-message {
-          color: #dc3545;
-          margin: 1em 0;
-          font-size: 0.9em;
-          text-align: center;
-          padding: 0.8em;
-          background: #f8d7da;
-          border: 1px solid #f5c6cb;
-          border-radius: 6px;
-        }
-        
-        .info-message {
-          color: #1976d2;
-          margin-top: 1em;
-          font-size: 1em;
-          text-align: center;
-          padding: 1em;
-          background: #e3f2fd;
-          border-radius: 6px;
-          border: 1px solid #bbdefb;
-        }
-        
-        .error-message {
-          color: #dc3545;
-          margin-top: 1em;
-          font-size: 1em;
-          text-align: center;
-          padding: 1em;
-          background: #f8d7da;
-          border-radius: 6px;
-          border: 1px solid #f5c6cb;
-        }
-        
-        @keyframes modal-fadein {
-          from { 
-            transform: translateY(-30px) scale(0.95); 
-            opacity: 0; 
-          }
-          to { 
-            transform: translateY(0) scale(1); 
-            opacity: 1; 
-          }
-        }
-        
-        @keyframes modal-bg-fade {
-          from { 
-            background: rgba(0,0,0,0); 
-          }
-          to { 
-            background: rgba(0,0,0,0.6); 
-          }
-        }
-        
-        /* Dark Mode Support */
-        .dark-mode .modal-box {
-          background: #2d3748;
-          color: #e2e8f0;
-        }
-        
-        .dark-mode .modal-box h3 {
-          color: #e2e8f0;
-        }
-        
-        .dark-mode .modal-box label {
-          color: #cbd5e0;
-        }
-        
-        .dark-mode .modal-input {
-          background: #4a5568;
-          border-color: #718096;
-          color: #e2e8f0;
-        }
-        
-        .dark-mode .modal-input.readonly {
-          background: #2d3748;
-          color: #a0aec0;
-          border-color: #4a5568;
-        }
-        
-        .dark-mode .modal-input:focus {
-          border-color: #4299e1;
-          box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-        }
-      `}</style>
     </div>
   );
 }
