@@ -45,51 +45,6 @@ function Login({ onLogin }) {
     }
   }, []);
 
-  // Check authentication on page refresh
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      const uid = localStorage.getItem('uidd');
-      const sessionId = localStorage.getItem('sessionid');
-
-      // Only proceed if both uid and sessionId exist
-      if (uid && sessionId) {
-        console.log("Found session data, validating...");
-        try {
-          const response = await fetch('https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${sessionId}`
-            },
-            body: JSON.stringify({ uid: uid })
-          });
-
-          const data = await response.json();
-
-          if (response.ok && data.status === 'success') {
-            // Session is valid, proceed with login
-            console.log("Session validated successfully");
-            handleLoginSuccess(uid);
-          } else {
-            // Session is invalid, clear local storage
-            console.log("Session validation failed, clearing storage");
-            localStorage.removeItem('uidd');
-            localStorage.removeItem('sessionid');
-          }
-        } catch (error) {
-          console.error("Error validating session:", error);
-          // Clear storage on error
-          localStorage.removeItem('uidd');
-          localStorage.removeItem('sessionid');
-        }
-      } else {
-        console.log("No session data found in local storage");
-      }
-    };
-
-    checkAuthentication();
-  }, []); // Run once on component mount (page load/refresh)
-
   const handleLoginSuccess = (username) => {
     // Check if there's a redirect URL stored
     const redirectUrl = localStorage.getItem('post_login_redirect');
