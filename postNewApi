@@ -1,13 +1,45 @@
+PostApi.jsx
+-rwxr-x--- 1 root    root    11643 Nov  6 18:53 PostApi.jsx_061125
+-rwxr-xr-x 1 root    root     8240 Jun 25 13:11 PostApi.jsx_250625
+-rwxr-xr-x 1 eisuser eisuser  1378 Nov 10 17:21 loginApi.jsx
+-rwxr-x--- 1 root    root     1227 Nov  6 18:58 loginApi.jsx_061125
+[root@eispr-prt1-01 api]# cat PostApi.jsx
 import axios from 'axios';
 
 // Create axios instance with custom configuration
 const api = axios.create({
-  baseURL: 'https://10.191.171.12:5443/PyPortal/',
+  baseURL: 'https://10.191.171.12:5443/EISHOME/',
+ // baseURL: 'https://10.191.171.12:5443/EISHOME/'
   timeout: 100000,
   headers: {
     'Content-Type': 'application/json',
   }
 });
+
+
+
+// === AXIOS REQUEST INTERCEPTOR ===
+// Add a request interceptor to attach the Authorization header automatically
+api.interceptors.request.use(
+  (config) => {
+    // Get the session ID from localStorage just before the request is made
+    const sessionId = localStorage.getItem('sessionid');
+
+    // If a sessionId exists, attach the Authorization header
+    if (sessionId) {
+      config.headers.Authorization = `Bearer ${sessionId}`;
+    }
+
+    return config;
+  },
+  (error) => {
+    // Do something with request error
+    return Promise.reject(error);
+  }
+);
+// === END INTERCEPTOR ===
+
+
 
 // Modified postMessage to always send data under "message"
 export const postMessage = (data) => {
@@ -79,9 +111,31 @@ export const getPortWiseSys5 = () => {
   return api.get('EISHome/portwise_top5_sys/');
 };
 
-export const getFARExpires = () => {
+/*export const getFARExpires = () => {
   return api.get('EISHome/farExpiresNext5M/');
+};*/
+
+
+
+// NEW: Add the FAR details specific API function
+export const getFARExpires = async (dataFilter) => {
+  try {
+    const userId = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+
+    const response = await api.post('EISHome/farExpiresNext5M/', {
+      "data_filter": dataFilter,
+      "userId": userId,
+      "password": password
+    });
+    return response;
+  } catch (error) {
+    console.error('Could not fetch FAR details:', error);
+    throw error;
+  }
 };
+
+
 
 // NEW: Add the FAR details specific API function
 export const getFARDetailsSpecific = async (dataFilter) => {
@@ -90,9 +144,10 @@ export const getFARDetailsSpecific = async (dataFilter) => {
     const password = localStorage.getItem('password');
 
     const response = await api.post('EISHome/farSpecificAll/', {
-      "data_filter": dataFilter,
+
       "userId": userId,
-      "password": password
+      "password": password,
+       "data_filter": dataFilter
     });
     return response;
   } catch (error) {
@@ -354,10 +409,10 @@ export const fetchLatestAnnouncement = async () => {
 // === ALERT MODAL API ===
 export const fetchPortalAlerts = async () => {
   try {
-    const userId = localStorage.getItem('uidd');
+    const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const response = await api.post('EISHome/getPortalAlerts/', {
-      userId,
+      uid,
       password
     });
     return response;
@@ -371,7 +426,10 @@ export const fetchPortalAlerts = async () => {
 export const postGetSecurityQuestion = async (uid) => {
   try {
     const response = await axios.post(
-      'https://10.191.171.12:5443/PyPortal/EISHome/getSecurityQuestion/',
+      'https://10.191.171.12:5443/EISHOME/EISHome/getSecurityQuestion/',
+    // const response = await axios.post(
+    //  'https://10.191.171.12:5443/EISHOME/EISHome/getSecurityQuestion/',
+
       { uid },
       { headers: { 'Content-Type': 'application/json' } }
     );
@@ -382,11 +440,12 @@ export const postGetSecurityQuestion = async (uid) => {
 };
 
 // Add API for forgot password
-export const postForgotPassword = async ({ uid, SecQ, password, answer }) => {
+export const postForgotPassword = async ({ uid, securityQuestion, password,answer }) => {
   try {
     const response = await axios.post(
-      'https://10.191.171.12:5443/PyPortal/EISHome/forgotPassword/',
-      { uid, SecQ, password, answer },
+      'https://10.191.171.12:5443/EISHOME/EISHome/forgotPassword/',
+     // 'https://10.191.171.12:5443/EISHOME/EISHome/forgotPassword/',
+      { uid, securityQuestion, password ,answer },
       { headers: { 'Content-Type': 'application/json' } }
     );
     return response;
@@ -395,12 +454,166 @@ export const postForgotPassword = async ({ uid, SecQ, password, answer }) => {
   }
 };
 
-// Place this with your other exported API functions
+
+
+export const downloadSwagger1 = async ({ server , egName , apiName  }) => {
+  try {
+    const response = await axios.post(
+      'https://10.191.171.12:5443/EISHOME/EISHome/getDowloadSwagger/',
+     // 'https://10.191.171.12:5443/EISHOME/EISHome/forgotPassword/',
+      { server , egName , apiName   },
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
 export const downloadSwagger = async ({ server, egName, apiName }) => {
   const response = await axios.post(
-    'https://10.191.171.12:5443/PyPortal/EISHome/getDowloadSwagger',
+    'https://10.191.171.12:5443/EISHOME/EISHome/getDowloadSwagger/',
     { server, egName, apiName },
     { responseType: 'json' }
   );
   return response.data;
 };
+
+
+
+
+
+export const apiFetchFavorites = async () => {
+  try {
+    const userId = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+
+    const res = await api.post('/EISHome/postFavourites/', {
+      userId: userId,
+      password: password,
+    });
+
+    // If using axios (which api.post likely is), response data is in res.data
+    const data = res.data;
+    const favData = data.favourites;
+    let favArray = [];
+
+    // Ensure favData is handled correctly whether it's an array or a comma-separated string
+    if (Array.isArray(favData)) {
+      favArray = favData;
+    } else if (typeof favData === 'string') {
+      favArray = favData.split(',').map(item => item.trim()).filter(Boolean);
+    }
+
+    return favArray;
+  } catch (err) {
+    console.error('Failed to load favorites:', err);
+    throw err;
+  }
+};
+
+export const apiUpdateFavorites = async (updatedFavorites) => {
+  try {
+    const userId = localStorage.getItem('uidd');
+    const password = localStorage.getItem('password');
+
+    // Ensure updatedFavorites is always an array
+    const favList = Array.isArray(updatedFavorites) ? updatedFavorites : [];
+
+    const res = await api.post('/EISHome/postFavourites/', {
+      userId: userId,
+      password: password,
+      favList: favList, // This must be an array
+    });
+
+    // If using axios, you don't need to check res.ok or call res.json()
+    return res.data;
+  } catch (error) {
+    console.error('Failed to update favorites:', error);
+    throw error;
+  }
+};
+
+
+
+export async function authenticatePortal() {
+  try {
+    const response = await fetch(
+      'https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal/',
+      {
+       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+
+      }
+    );
+
+    const data = await response.json();
+
+    return {
+      success: response.status === 302 && data.Response === "login successfull",
+      status: response.status,
+      message: data.Response,
+      data: data
+    };
+  } catch (error) {
+    console.error('Error authenticating portal:', error);
+    return {
+      success: false,
+      status: 0,
+      message: error.message,
+      data: null
+    };
+  }
+}
+
+export async function loginApi(username, password) {
+  const response = await fetch(
+    'https://10.191.171.12:5443/EISHOME/awthenticationService/newLogin/',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ username, password })
+    }
+  );
+
+  return response.json();
+}
+
+export async function callLogoutAPI(username) {
+  try {
+    const sessionId = localStorage.getItem('sessionid');
+
+    if (!sessionId) {
+      console.warn('No session ID found in local storage. Skipping API call.');
+      return;
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${sessionId}`
+    };
+
+    const response = await fetch(
+      'https://10.191.171.12:5443/EISHOME/awthenticationService/newLogout/',
+      {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          username: username,
+          timestamp: new Date().toISOString()
+        })
+      }
+    );
+
+    if (!response.ok) {
+      console.warn('Logout API call failed:', response.status, response.statusText);
+    } else {
+      console.log('Logout API call successful');
+      localStorage.removeItem('sessionId');
+    }
+  } catch (error) {
+    console.error('Error calling logout API:', error);
+  }
+}
