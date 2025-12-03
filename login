@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import '../styles/Login.css';
 import Header from './Header';
@@ -11,6 +12,8 @@ function Login({ onLogin }) {
   const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
   // Forgot password popup states
   const [showEmpIdModal, setShowEmpIdModal] = useState(false);
   const [empId, setEmpId] = useState('');
@@ -31,49 +34,151 @@ function Login({ onLogin }) {
     }
   }, [forgotPwdMsg]);
 
-  // Check for redirect URL on component mount
+  // Check for redirect URL and validate session on component mount
   useEffect(() => {
-    console.log("Login page loaded - checking for redirect URL");
-    const urlParams = new URLSearchParams(window.location.search);
-    const returnUrl = urlParams.get('return_url');
+    // Only run once
+    if (sessionChecked) return;
 
-    if (returnUrl) {
-      console.log("Found return URL in parameters:", returnUrl);
-      localStorage.setItem('post_login_redirect', returnUrl);
-    } else {
-      console.log("No return URL found in parameters");
-    }
-  }, []);
+    const validateAndRestoreSession = async () => {
+      try {
+        console.log("Login page loaded - checking for redirect URL and session");
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('return_url');
 
-  const handleLoginSuccess = (username) => {
-    // Check if there's a redirect URL stored
-    const redirectUrl = localStorage.getItem('post_login_redirect');
-    console.log("Login successful - checking redirect URL:", redirectUrl);
+        if (returnUrl) {
+          console.log("Found return URL in parameters:", returnUrl);
+          localStorage.setItem('post_login_redirect', returnUrl);
+        }
 
-    if (redirectUrl) {
-      // Clear the stored URL and redirect back
-      localStorage.removeItem('post_login_redirect');
-      console.log("Redirecting back to:", redirectUrl);
-      window.location.href = redirectUrl;
-    } else {
-      // No redirect URL, proceed with normal login flow
-      console.log("No redirect URL - proceeding with normal login");
-      onLogin(username);
-    }
-  };
+        // Check for existing session
+        const sessionId = localStorage.getItem('sessionid');
+        const uid = localStorage.getItem('uidd');
+        const storedUsername = localStorage.getItem('username');
+
+        console.log("Checking for existing session - sessionId:", !!sessionId, "uid:", !!uid, "username:", storedUsername);
+
+        if (sessionId && uid) {
+          console.log("Found session credentials in localStorage");
+          setSessionLoading(true);
+
+          try {
+            // Call authenticatePortal endpoint for session validation
+            const response = await fetch(
+              'https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal/',
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${sessionId}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ uid: uid })
+              }
+            );
+
+            const data = await response.json();
+            console.log("Session validation response:", data, "Status:", response.status);
+
+            if (response.ok && (data.status === 200 || data.status === 302)) {
+              console.log("Session is valid - proceeding with auto-login");
+
+              // Get username from stored data or response
+              const validatedUsername = storedUsername || data.username || data.user || uid;
+
+              // Prepare login data from validation response
+              const loginData = {
+                username: validatedUsername,
+                userLevel: data.userLevel || localStorage.getItem('userlevel') || '',
+                sessionid: sessionId,
+                uid: uid,
+                status: data.status
+              };
+
+              console.log("Auto-login with username:", validatedUsername, "Full data:", loginData);
+
+              // Mark session as checked to prevent loop
+              setSessionChecked(true);
+
+              // Directly call onLogin without going through handleLoginSuccess
+              // to avoid redirect issues
+              const redirectUrl = localStorage.getItem('post_login_redirect');
+              if (redirectUrl) {
+                localStorage.removeItem('post_login_redirect');
+                console.log("Redirecting back to:", redirectUrl);
+                window.location.href = redirectUrl;
+              } else {
+                console.log("Calling onLogin for auto-login");
+                onLogin(validatedUsername, loginData);
+              }
+            } else {
+              console.log("Session validation failed - clearing invalid session");
+              localStorage.removeItem('sessionid');
+              localStorage.removeItem('uidd');
+              setSessionLoading(false);
+              setSessionChecked(true);
+            }
+          } catch (err) {
+            console.error('Error validating session:', err);
+            localStorage.removeItem('sessionid');
+            localStorage.removeItem('uidd');
+            setSessionLoading(false);
+            setSessionChecked(true);
+          }
+        } else {
+          console.log("No session credentials found in localStorage");
+          setSessionLoading(false);
+          setSessionChecked(true);
+        }
+      } catch (err) {
+        console.error('Error in session validation:', err);
+        setSessionLoading(false);
+        setSessionChecked(true);
+      }
+    };
+
+    validateAndRestoreSession();
+  }, [sessionChecked, onLogin]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    console.log("Form submitted with username:", username);
+
     try {
+      // This calls newLogin endpoint and stores data in localStorage
       const response = await postLogin(username, password);
-      if (response.data.status === 302) {
-        handleLoginSuccess(response.data.username);
+
+      console.log("Login API response:", response);
+      console.log("Response data:", response.data);
+      console.log("Response status:", response.data?.status);
+
+      // Check for successful login status codes
+      if (response.data.status === 302 || response.data.status === 200) {
+        console.log("Login successful! Status:", response.data.status);
+
+        // Get the username from response (postLogin already stored it)
+        const loginUsername = response.data.username || username;
+
+        console.log("Manual login with username:", loginUsername);
+
+        // Check if there's a redirect URL stored
+        const redirectUrl = localStorage.getItem('post_login_redirect');
+        if (redirectUrl) {
+          localStorage.removeItem('post_login_redirect');
+          console.log("Redirecting back to:", redirectUrl);
+          window.location.href = redirectUrl;
+        } else {
+          // Call onLogin with the response data
+          console.log("Calling onLogin for manual login");
+          onLogin(loginUsername, response.data);
+        }
       } else {
+        console.error("Login failed - invalid status:", response.data.status);
         setError('Invalid credentials');
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError('Invalid credentials');
     } finally {
       setLoading(false);
@@ -159,6 +264,21 @@ function Login({ onLogin }) {
   const handleRegisterRedirect = () => {
     window.open('https://10.191.171.12:5443/EISInfra/EIS/EIS/Registration.php', '_blank');
   };
+
+  // Show loading state while checking session
+  if (sessionLoading) {
+    return (
+      <div className={darkMode ? 'dark-mode' : ''}>
+        <Header darkMode={darkMode} setDarkMode={setDarkMode} hideMarqueeAndAlertIcon={true} />
+        <div className="login-container">
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <p>Validating session...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className={darkMode ? 'dark-mode' : ''}>
