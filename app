@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer';
 import Menu from './components/Menu';
@@ -7,25 +6,14 @@ import Dashboard from './components/Dashboard';
 import Chatbot from './components/ChatBot';
 import Login from './components/Login';
 import './App.css';
-import { fetchLatestAnnouncement } from './api/PostApi';
-
-// Robust function to clear all cookies (within JS limitations)
-function clearAllCookies() {
-  const cookies = document.cookie.split(";");
-  for (const cookie of cookies) {
-    const eqPos = cookie.indexOf("=");
-    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-    // Remove cookie for root path
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-    // Attempt to remove cookie for every path segment
-    const pathSegments = window.location.pathname.split('/');
-    let path = '';
-    for (let i = 0; i < pathSegments.length; i++) {
-      path += (path.endsWith('/') ? '' : '/') + pathSegments[i];
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path};`;
-    }
-  }
-}
+import { 
+  fetchLatestAnnouncement, 
+  validateSession, 
+  hasSessionData, 
+  clearAllStorage,
+  setLogoutHandler,
+  checkSession 
+} from './api/PostApi';
 
 // Function to conditionally disable inspect element
 function useDisableInspectElement(enabled) {
@@ -74,46 +62,6 @@ function useDisableInspectElement(enabled) {
   }, [enabled]);
 }
 
-// Logout API call
-async function callLogoutAPI(username) {
-  try {
-    // 1. Retrieve the session ID from local storage
-    const sessionId = localStorage.getItem('sessionid');
-
-    // Check if session ID exists before proceeding
-    if (!sessionId) {
-      console.warn('No session ID found in local storage. Skipping API call.');
-      return;
-    }
-
-    // 2. Prepare the headers object with the correct Authorization format
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${sessionId}`
-    };
-
-    const response = await fetch('https://10.191.171.12:5443/EISHOME/awthenticationService/newLogout/',
-      {
-        method: 'POST',
-        headers: headers,
-        credentials: 'include',
-        body: JSON.stringify({
-          username: username,
-          timestamp: new Date().toISOString()
-        })
-      }
-    );
-
-    if (!response.ok) {
-      console.warn('Logout API call failed:', response.status, response.statusText);
-    } else {
-      console.log('Logout API call successful');
-    }
-  } catch (error) {
-    console.error('Error calling logout API:', error);
-  }
-}
-
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [chatbotMinimized, setChatbotMinimized] = useState(false);
@@ -124,10 +72,15 @@ function App() {
   const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false);
   const [userLevel, setUserLevel] = useState('');
   const [appLoading, setAppLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
   const inactivityTimer = useRef(null);
+  const sessionCheckTimer = useRef(null);
+  const heartbeatTimer = useRef(null);
 
   // Inactivity time limit in ms (60 minutes)
   const INACTIVITY_LIMIT = 60 * 60 * 1000;
+  // Session check interval (5 minutes)
+  const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
 
   // Define allowed user levels for Chatbot access
   const CHATBOT_ALLOWED_LEVELS = ['ADMIN', 'L2', 'Banker','L1'];
@@ -140,39 +93,90 @@ function App() {
   // Only disable inspect for users other than ADMIN
   useDisableInspectElement(userLevel && userLevel !== 'ADMIN');
 
-  // Check for existing login session on app load
+  // Function to perform logout with cleanup
+  const performLogout = useCallback(async (showAlert = true, reason = 'Session expired') => {
+    console.log(`Performing logout: ${reason}`);
+    
+    // Prevent multiple logout calls
+    if (sessionExpired) return;
+    
+    setSessionExpired(true);
+    
+    if (showAlert && reason === 'Session expired') {
+      alert('Your session has expired. Please log in again.');
+    }
+    
+    setIsLoggedIn(false);
+    setUsername('');
+    setUserLevel('');
+    setAnnouncement('');
+    
+    // Clear all storage
+    clearAllStorage();
+    
+    // Clear all timers
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    if (sessionCheckTimer.current) clearInterval(sessionCheckTimer.current);
+    if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
+    
+    console.log('Logout complete');
+  }, [sessionExpired]);
+
+  // Setup logout handler for API interceptor
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    const storedLoginTime = localStorage.getItem('loginTime');
-    const storedUserLevel = localStorage.getItem('userlevel'); // Note: lowercase 'userlevel' as stored by postLogin
-    const storedSessionId = localStorage.getItem('sessionid');
+    setLogoutHandler((reason) => performLogout(true, reason));
+  }, [performLogout]);
 
-    console.log('App.js - Checking stored session:', {
-      storedUsername,
-      storedUserLevel,
-      hasSessionId: !!storedSessionId,
-      hasLoginTime: !!storedLoginTime
-    });
-
-    // Only restore session if we have all required data
-    if (storedUsername && storedUserLevel && storedSessionId) {
-      console.log('App.js - Restoring session with username:', storedUsername);
-      setUsername(storedUsername);
-      setUserLevel(storedUserLevel);
-      setIsLoggedIn(true);
-
-      // Set login time if not already set
-      if (!storedLoginTime) {
-        localStorage.setItem('loginTime', Date.now().toString());
+  // Check for existing login session on app load with validation
+  useEffect(() => {
+    const checkAndRestoreSession = async () => {
+      // First check if session data exists
+      if (!hasSessionData()) {
+        console.log('App.js - No session data found');
+        setAppLoading(false);
+        return;
       }
 
-      console.log('App.js - Session restored successfully');
-    } else {
-      console.log('App.js - No valid session found, showing login');
-    }
+      const storedUsername = localStorage.getItem('username');
+      const storedUserLevel = localStorage.getItem('userlevel');
+      const storedSessionId = localStorage.getItem('sessionid');
 
-    setAppLoading(false);
-  }, []);
+      console.log('App.js - Validating stored session:', {
+        storedUsername,
+        storedUserLevel,
+        hasSessionId: !!storedSessionId
+      });
+
+      // Validate the session before restoring
+      try {
+        const sessionCheck = await validateSession();
+        
+        if (sessionCheck.isValid) {
+          console.log('App.js - Session valid, restoring...');
+          setUsername(storedUsername);
+          setUserLevel(storedUserLevel);
+          setIsLoggedIn(true);
+
+          // Set login time if not already set
+          if (!localStorage.getItem('loginTime')) {
+            localStorage.setItem('loginTime', Date.now().toString());
+          }
+
+          console.log('App.js - Session restored successfully');
+        } else {
+          console.log('App.js - Session invalid:', sessionCheck.reason);
+          await performLogout(false, 'Invalid session on load');
+        }
+      } catch (error) {
+        console.error('App.js - Session validation error:', error);
+        await performLogout(false, 'Session validation failed');
+      }
+
+      setAppLoading(false);
+    };
+
+    checkAndRestoreSession();
+  }, [performLogout]);
 
   // On login from persisted session, fetch announcement
   useEffect(() => {
@@ -189,31 +193,62 @@ function App() {
     }
   }, [isLoggedIn, announcement]);
 
-  // Handle login from Login component (receives username and response data)
+  // Start session validation timer
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const startSessionCheck = () => {
+      // Clear any existing timer
+      if (sessionCheckTimer.current) clearInterval(sessionCheckTimer.current);
+      
+      // Set up new interval to check session validity
+      sessionCheckTimer.current = setInterval(async () => {
+        try {
+          // First check if session data still exists
+          if (!hasSessionData()) {
+            console.log('Session data missing during check');
+            await performLogout(true, 'Session data missing');
+            return;
+          }
+
+          const sessionCheck = await checkSession();
+          if (!sessionCheck.isValid) {
+            console.log('Session check failed:', sessionCheck.reason);
+            await performLogout(true, 'Session validation failed');
+          } else {
+            console.log('Session check passed');
+          }
+        } catch (error) {
+          console.error('Session check error:', error);
+          await performLogout(true, 'Session check error');
+        }
+      }, SESSION_CHECK_INTERVAL);
+    };
+
+    startSessionCheck();
+
+    return () => {
+      if (sessionCheckTimer.current) clearInterval(sessionCheckTimer.current);
+    };
+  }, [isLoggedIn, performLogout]);
+
+  // Handle login from Login component
   const handleLogin = async (user, loginData = {}) => {
     try {
       console.log('App.js - handleLogin called with:', { user, loginData });
 
       const now = Date.now();
-
-      // Extract userLevel from loginData, fallback to what's in localStorage
       const level = loginData.userLevel || localStorage.getItem('userlevel') || '';
-
-      console.log('App.js - Setting username:', user, 'userLevel:', level);
 
       // Store all data to localStorage
       localStorage.setItem('username', user);
       localStorage.setItem('userlevel', level);
       localStorage.setItem('loginTime', now.toString());
 
-      // Session data should already be stored by postLogin or session validation
-      // But just in case, store it if provided
       if (loginData.sessionid) {
-        console.log('App.js - Updating sessionid from loginData');
         localStorage.setItem('sessionid', loginData.sessionid);
       }
       if (loginData.uid) {
-        console.log('App.js - Updating uid from loginData');
         localStorage.setItem('uidd', loginData.uid);
       }
 
@@ -221,9 +256,9 @@ function App() {
       setUsername(user);
       setUserLevel(level);
       setIsLoggedIn(true);
+      setSessionExpired(false);
 
-      console.log('App.js - Login successful, state updated');
-      console.log('App.js - Final state - isLoggedIn: true, username:', user, 'userLevel:', level);
+      console.log('App.js - Login successful');
 
     } catch (err) {
       console.error('App.js - Login error:', err);
@@ -231,44 +266,11 @@ function App() {
     }
   };
 
-  // Logout and flush session storage, local storage, cookies, and caches
+  // Updated logout handler
   const handleLogout = async () => {
-    console.log('App.js - Logout initiated for user:', username);
-    await callLogoutAPI(username);
-
-    setIsLoggedIn(false);
-    setUsername('');
-    setUserLevel('');
-    setAnnouncement('');
-    localStorage.clear();
-    sessionStorage.clear();
-    clearAllCookies();
-
-    console.log('App.js - Logout successful - all data cleared');
+    console.log('App.js - Manual logout initiated for user:', username);
+    await performLogout(false, 'User manually logged out');
   };
-
-  // --- Cross-Tab Storage Listener Logic ---
-  useEffect(() => {
-    const handleStorageChange = (event) => {
-      // Check if the session ID was removed in another tab
-      if (event.key === 'sessionid' && !event.newValue) {
-        console.log("Session ID removed in another tab. Triggering logout.");
-        handleLogout();
-      }
-
-      // Check if username was removed in another tab
-      if (event.key === 'username' && !event.newValue) {
-        console.log("Username removed in another tab. Triggering logout.");
-        handleLogout();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [username]);
 
   // Auto logout after 60 min of inactivity
   useEffect(() => {
@@ -301,6 +303,24 @@ function App() {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
   }, [isLoggedIn]);
+
+  // Heartbeat check for session data
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const checkSessionData = () => {
+      if (!hasSessionData()) {
+        console.log('Heartbeat check: Session data missing');
+        performLogout(true, 'Session data lost');
+      }
+    };
+
+    heartbeatTimer.current = setInterval(checkSessionData, 30000);
+
+    return () => {
+      if (heartbeatTimer.current) clearInterval(heartbeatTimer.current);
+    };
+  }, [isLoggedIn, performLogout]);
 
   // Show loading state while checking for existing session
   if (appLoading) {
