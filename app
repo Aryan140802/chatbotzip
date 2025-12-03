@@ -124,9 +124,13 @@ function App() {
   const [userLevel, setUserLevel] = useState('');
   const [appLoading, setAppLoading] = useState(true);
   const inactivityTimer = useRef(null);
+  const sessionValidationTimer = useRef(null);
 
   // Inactivity time limit in ms (60 minutes)
   const INACTIVITY_LIMIT = 60 * 60 * 1000;
+  
+  // Session validation interval in ms (5 minutes)
+  const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
 
   // Define allowed user levels for Chatbot access
   const CHATBOT_ALLOWED_LEVELS = ['ADMIN', 'L2', 'Banker','L1'];
@@ -243,6 +247,10 @@ function App() {
     sessionStorage.clear();
     clearAllCookies();
 
+    // Clear timers
+    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    if (sessionValidationTimer.current) clearInterval(sessionValidationTimer.current);
+
     console.log('App.js - Logout successful - all data cleared');
   };
 
@@ -298,6 +306,85 @@ function App() {
         window.removeEventListener(event, resetInactivityTimer, true)
       );
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+    };
+  }, [isLoggedIn]);
+
+  // Periodic session validation (every 5 minutes)
+  useEffect(() => {
+    if (!isLoggedIn) {
+      // Clear interval if user is not logged in
+      if (sessionValidationTimer.current) {
+        clearInterval(sessionValidationTimer.current);
+      }
+      return;
+    }
+
+    const validateSession = async () => {
+      try {
+        const sessionId = localStorage.getItem('sessionid');
+        const uid = localStorage.getItem('uidd');
+        
+        console.log('Validating session...', { hasSessionId: !!sessionId, hasUid: !!uid });
+
+        // If no session data, logout immediately
+        if (!sessionId || !uid) {
+          console.warn('Session validation failed: missing credentials');
+          alert('Your session has expired. Please login again.');
+          handleLogout();
+          return;
+        }
+
+        // Call authenticatePortal endpoint to validate session
+        const response = await fetch(
+          'https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal/',
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${sessionId}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ uid })
+          }
+        );
+
+        const data = await response.json();
+        console.log('Session validation response:', { status: response.status, data });
+
+        // Check if session is invalid
+        if (!response.ok || response.status === 401 || response.status === 403) {
+          console.warn('Session validation failed: unauthorized');
+          alert('Your session has expired. Please login again.');
+          handleLogout();
+          return;
+        }
+
+        // Check response data for session validity
+        if (data.status !== 200 && data.status !== 302) {
+          console.warn('Session validation failed: invalid status in response');
+          alert('Your session has expired. Please login again.');
+          handleLogout();
+          return;
+        }
+
+        console.log('Session validation successful');
+      } catch (error) {
+        console.error('Session validation error:', error);
+        // On network errors, we might want to be lenient and not logout immediately
+        // However, if this persists, the user will be logged out on next API call
+        // due to the response interceptor in PostApi.jsx
+      }
+    };
+
+    // Validate session immediately on mount
+    validateSession();
+
+    // Then check every 5 minutes
+    sessionValidationTimer.current = setInterval(validateSession, SESSION_CHECK_INTERVAL);
+    
+    return () => {
+      if (sessionValidationTimer.current) {
+        clearInterval(sessionValidationTimer.current);
+      }
     };
   }, [isLoggedIn]);
 
