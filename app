@@ -125,6 +125,7 @@ function App() {
   const [appLoading, setAppLoading] = useState(true);
   const inactivityTimer = useRef(null);
   const sessionValidationTimer = useRef(null);
+  const isLoggingOutRef = useRef(false);
 
   // Inactivity time limit in ms (60 minutes)
   const INACTIVITY_LIMIT = 60 * 60 * 1000;
@@ -179,7 +180,7 @@ function App() {
 
   // On login from persisted session, fetch announcement
   useEffect(() => {
-    if (isLoggedIn && !announcement) {
+    if (isLoggedIn && !announcement && !isLoggingOutRef.current) {
       (async () => {
         try {
           const ann = await fetchLatestAnnouncement();
@@ -187,6 +188,7 @@ function App() {
           if (ann) setShowAnnouncementPopup(true);
         } catch (err) {
           console.error('Error fetching announcement:', err);
+          // Don't show error if we're logging out
         }
       })();
     }
@@ -220,6 +222,9 @@ function App() {
         localStorage.setItem('uidd', loginData.uid);
       }
 
+      // Reset logout flag
+      isLoggingOutRef.current = false;
+
       // Set local state
       setUsername(user);
       setUserLevel(level);
@@ -236,20 +241,38 @@ function App() {
 
   // Logout and flush session storage, local storage, cookies, and caches
   const handleLogout = async () => {
+    // Prevent multiple simultaneous logout calls
+    if (isLoggingOutRef.current) {
+      console.log('App.js - Logout already in progress, skipping');
+      return;
+    }
+
+    isLoggingOutRef.current = true;
     console.log('App.js - Logout initiated for user:', username);
+
+    // Clear timers first to prevent any further validations
+    if (inactivityTimer.current) {
+      clearTimeout(inactivityTimer.current);
+      inactivityTimer.current = null;
+    }
+    if (sessionValidationTimer.current) {
+      clearInterval(sessionValidationTimer.current);
+      sessionValidationTimer.current = null;
+    }
+
+    // Call logout API
     await callLogoutAPI(username);
 
+    // Clear state
     setIsLoggedIn(false);
     setUsername('');
     setUserLevel('');
     setAnnouncement('');
+
+    // Clear storage
     localStorage.clear();
     sessionStorage.clear();
     clearAllCookies();
-
-    // Clear timers
-    if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    if (sessionValidationTimer.current) clearInterval(sessionValidationTimer.current);
 
     console.log('App.js - Logout successful - all data cleared');
   };
@@ -257,6 +280,9 @@ function App() {
   // --- Cross-Tab Storage Listener Logic ---
   useEffect(() => {
     const handleStorageChange = (event) => {
+      // Ignore if already logging out
+      if (isLoggingOutRef.current) return;
+
       // Check if the session ID was removed in another tab
       if (event.key === 'sessionid' && !event.newValue) {
         console.log("Session ID removed in another tab. Triggering logout.");
@@ -279,13 +305,17 @@ function App() {
 
   // Auto logout after 60 min of inactivity
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn || isLoggingOutRef.current) return;
 
     const resetInactivityTimer = () => {
+      if (isLoggingOutRef.current) return;
+      
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
-        alert('You have been logged out due to 60 minutes of inactivity.');
-        handleLogout();
+        if (!isLoggingOutRef.current) {
+          alert('You have been logged out due to 60 minutes of inactivity.');
+          handleLogout();
+        }
       }, INACTIVITY_LIMIT);
     };
 
@@ -311,15 +341,22 @@ function App() {
 
   // Periodic session validation (every 5 minutes)
   useEffect(() => {
-    if (!isLoggedIn) {
-      // Clear interval if user is not logged in
+    if (!isLoggedIn || isLoggingOutRef.current) {
+      // Clear interval if user is not logged in or logging out
       if (sessionValidationTimer.current) {
         clearInterval(sessionValidationTimer.current);
+        sessionValidationTimer.current = null;
       }
       return;
     }
 
     const validateSession = async () => {
+      // Skip validation if logging out
+      if (isLoggingOutRef.current) {
+        console.log('Skipping session validation - logout in progress');
+        return;
+      }
+
       try {
         const sessionId = localStorage.getItem('sessionid');
         const uid = localStorage.getItem('uidd');
@@ -329,8 +366,10 @@ function App() {
         // If no session data, logout immediately
         if (!sessionId || !uid) {
           console.warn('Session validation failed: missing credentials');
-          alert('Your session has expired. Please login again.');
-          handleLogout();
+          if (!isLoggingOutRef.current) {
+            alert('Your session has expired. Please login again.');
+            handleLogout();
+          }
           return;
         }
 
@@ -353,16 +392,20 @@ function App() {
         // Check if session is invalid
         if (!response.ok || response.status === 401 || response.status === 403) {
           console.warn('Session validation failed: unauthorized');
-          alert('Your session has expired. Please login again.');
-          handleLogout();
+          if (!isLoggingOutRef.current) {
+            alert('Your session has expired. Please login again.');
+            handleLogout();
+          }
           return;
         }
 
         // Check response data for session validity
         if (data.status !== 200 && data.status !== 302) {
           console.warn('Session validation failed: invalid status in response');
-          alert('Your session has expired. Please login again.');
-          handleLogout();
+          if (!isLoggingOutRef.current) {
+            alert('Your session has expired. Please login again.');
+            handleLogout();
+          }
           return;
         }
 
@@ -384,6 +427,7 @@ function App() {
     return () => {
       if (sessionValidationTimer.current) {
         clearInterval(sessionValidationTimer.current);
+        sessionValidationTimer.current = null;
       }
     };
   }, [isLoggedIn]);
