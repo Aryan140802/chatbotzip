@@ -1,221 +1,44 @@
-:root {
-  --background-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --border-color: rgba(255, 255, 255, 0.2);
-  --primary-color: #6c5ce7;
-  --primary-hover: #5649c0;
-  --text-color: #fff;
-  --input-bg: rgba(255, 255, 255, 0.1);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
 
-.dark-mode {
-  --background-gradient: linear-gradient(135deg, #1e1e2e 0%, #2d1b33 100%);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --input-bg: rgba(255, 255, 255, 0.05);
-}
+import axios from 'axios';
 
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 90vh;
-  background: var(--background-gradient);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Animated Background Elements */
-.login-container::before,
-.login-container::after,
-.bubble {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  filter: blur(5px);
-  z-index: 0;
-  animation: float 15s infinite linear;
-}
-
-.login-container::before {
-  width: 300px;
-  height: 300px;
-  top: -100px;
-  left: -100px;
-  animation-delay: 0s;
-}
-
-.login-container::after {
-  width: 200px;
-  height: 200px;
-  bottom: -50px;
-  right: -50px;
-  animation-delay: 3s;
-}
-
-.bubble {
-  width: 150px;
-  height: 150px;
-}
-
-.bubble:nth-child(1) {
-  top: 20%;
-  left: 10%;
-  animation-delay: 2s;
-  animation-duration: 20s;
-}
-
-.bubble:nth-child(2) {
-  top: 60%;
-  left: 80%;
-  animation-delay: 5s;
-  animation-duration: 25s;
-}
-
-.bubble:nth-child(3) {
-  top: 80%;
-  left: 30%;
-  animation-delay: 7s;
-  animation-duration: 15s;
-}
-
-@keyframes float {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
+// Create axios instance with proper configuration
+const api = axios.create({
+  baseURL: 'https://10.191.171.12:5443/EISHOME/',
+ // baseURL: 'https://10.191.171.12:5443/EISHOME/',
+  timeout: 10000,  // Reasonable timeout
+  headers: {
+    'Content-Type': 'application/json',
   }
-  25% {
-    transform: translate(50px, 50px) rotate(90deg);
+});
+
+
+// Login API function - clean implementation
+//
+export const postLogin = async (uid, password) => {
+  try {
+    const response = await api.post('awthenticationService/newLogin/', { "uid":uid, "password":password });
+    const uidd = response.data.userId;
+    const passwordd=response.data.password;
+    console.log("this is username ")
+    console.log(response.data.username)
+    const username=response.data.username;
+    const userlevel=response.data.userLevel;
+    const sessionToken = response.data.session_token;
+    console.log("this is runign");
+     console.log(userlevel);
+
+    if(uidd && passwordd){
+      localStorage.setItem('uidd',uidd);
+      localStorage.setItem('password',passwordd);
+      localStorage.setItem('username',username);
+      localStorage.setItem('userlevel',userlevel);
+      console.log(localStorage.getItem('uidd'));
+      localStorage.setItem('sessionid', sessionToken);
+    }
+    return response;
+
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error; // Re-throw to allow component-level handling
   }
-  50% {
-    transform: translate(100px, 0) rotate(180deg);
-  }
-  75% {
-    transform: translate(50px, -50px) rotate(270deg);
-  }
-  100% {
-    transform: translate(0, 0) rotate(360deg);
-  }
-}
-
-
-
-.login-form {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 2.5rem;
-  border-radius: 15px;
-  box-shadow: var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-  width: 100%;
-  max-width: 400px;
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  z-index: 1;
-  transform: translateY(0);
-  transition: all 0.3s ease;
-  /*animation: pulse 8s infinite ease-in-out;*/
-}
-
-.login-form:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-  animation: none; /* Disable pulse on hover */
-}
-
-.login-form h2 {
-  text-align: center;
-  margin-bottom: 0.5rem;
-  font-size: 2rem;
-  font-weight: 600;
-  color: white;
-}
-
-.login-form input {
-  padding: 1rem;
-  border-radius: 8px;
-  border: none;
-  background: var(--input-bg);
-  color: var(--text-color);
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  border: 1px solid var(--border-color);
-}
-
-.login-form input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.login-form input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.login-form button {
-  padding: 1rem;
-  border-radius: 8px;
-
-  background: var(--primary-hover);
-  color: white;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  margin-top: 0.5rem;
-}
-
-.login-form button:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.login-form button:active {
-  transform: translateY(0);
-}
-
-/* Animation for form elements */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.login-form h2 {
-  animation: fadeIn 0.6s ease forwards;
-}
-
-.login-form input:nth-child(2) {
-  animation: fadeIn 0.6s ease 0.2s forwards;
-  opacity: 0;
-}
-
-.login-form input:nth-child(3) {
-  animation: fadeIn 0.6s ease 0.4s forwards;
-  opacity: 0;
-}
-
-.login-form button {
-  animation: fadeIn 0.6s ease 0.6s forwards;
-  opacity: 0;
-}
-
-/* Responsive adjustments */
-@media (max-width: 480px) {
-  .login-form {
-    padding: 2rem 1.5rem;
-    margin: 0 1rem;
-  }
-
-  .bubble, .login-container::before, .login-container::after {
-    display: none; /* Remove animations on small screens */
-  }
-}
-securtiyQuestion
-: 
-"Your Favourite Sport?"
+};
