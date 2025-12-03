@@ -73,32 +73,35 @@ function useDisableInspectElement(enabled) {
   }, [enabled]);
 }
 
-// Login API call to get userLevel and other details
-async function loginApi(username, password) {
-  const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogin/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ username, password })
-  });
-
-  return response.json(); // should contain userLevel and other info
-}
-
 // Logout API call
 async function callLogoutAPI(username) {
   try {
-    const response = await fetch('https://10.191.171.12:5443/PyPortal/EISHome/newLogout/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        username: username,
-        timestamp: new Date().toISOString()
-      })
-    });
+    // 1. Retrieve the session ID from local storage
+    const sessionId = localStorage.getItem('sessionid');
+
+    // Check if session ID exists before proceeding
+    if (!sessionId) {
+      console.warn('No session ID found in local storage. Skipping API call.');
+      return;
+    }
+
+    // 2. Prepare the headers object with the correct Authorization format
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${sessionId}`
+    };
+
+    const response = await fetch('https://10.191.171.12:5443/EISHOME/awthenticationService/newLogout/',
+      {
+        method: 'POST',
+        headers: headers,
+        credentials: 'include',
+        body: JSON.stringify({
+          username: username,
+          timestamp: new Date().toISOString()
+        })
+      }
+    );
 
     if (!response.ok) {
       console.warn('Logout API call failed:', response.status, response.statusText);
@@ -107,7 +110,6 @@ async function callLogoutAPI(username) {
     }
   } catch (error) {
     console.error('Error calling logout API:', error);
-    // Don't prevent logout even if API call fails
   }
 }
 
@@ -120,10 +122,19 @@ function App() {
   const [announcement, setAnnouncement] = useState('');
   const [showAnnouncementPopup, setShowAnnouncementPopup] = useState(false);
   const [userLevel, setUserLevel] = useState('');
+  const [appLoading, setAppLoading] = useState(true);
   const inactivityTimer = useRef(null);
 
-  // Inactivity time limit in ms (30 minutes)
-  const INACTIVITY_LIMIT = 30 * 60 * 1000;
+  // Inactivity time limit in ms (60 minutes)
+  const INACTIVITY_LIMIT = 60 * 60 * 1000;
+
+  // Define allowed user levels for Chatbot access
+  const CHATBOT_ALLOWED_LEVELS = ['ADMIN', 'L2', 'Banker','L1'];
+  const CHATBOT_BLOCKED_LEVELS = ['Support'];
+
+  // Check if current user has access to chatbot
+  const hasChatbotAccess = CHATBOT_ALLOWED_LEVELS.includes(userLevel) &&
+    !CHATBOT_BLOCKED_LEVELS.includes(userLevel);
 
   // Only disable inspect for users other than ADMIN
   useDisableInspectElement(userLevel && userLevel !== 'ADMIN');
@@ -132,82 +143,140 @@ function App() {
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
     const storedLoginTime = localStorage.getItem('loginTime');
-    const storedUserLevel = localStorage.getItem('userlevel');
-    if (storedUsername && storedLoginTime && storedUserLevel) {
+    const storedUserLevel = localStorage.getItem('userlevel'); // Note: lowercase 'userlevel' as stored by postLogin
+    const storedSessionId = localStorage.getItem('sessionid');
+
+    console.log('App.js - Checking stored session:', {
+      storedUsername,
+      storedUserLevel,
+      hasSessionId: !!storedSessionId,
+      hasLoginTime: !!storedLoginTime
+    });
+
+    // Only restore session if we have all required data
+    if (storedUsername && storedUserLevel && storedSessionId) {
+      console.log('App.js - Restoring session with username:', storedUsername);
       setUsername(storedUsername);
-      setUserLevel(storedUserLevel); // <- ensure userLevel is set!
+      setUserLevel(storedUserLevel);
       setIsLoggedIn(true);
+
+      // Set login time if not already set
+      if (!storedLoginTime) {
+        localStorage.setItem('loginTime', Date.now().toString());
+      }
+
+      console.log('App.js - Session restored successfully');
+    } else {
+      console.log('App.js - No valid session found, showing login');
     }
+
+    setAppLoading(false);
   }, []);
-
-  // Set login timestamp and userLevel on login
-  const handleLogin = async (user, password) => {
-    try {
-      const loginData = await loginApi(user, password);
-      const now = Date.now();
-      setUsername(user);
-
-      // Set userLevel from response!
-      setUserLevel(loginData.userLevel);
-      localStorage.setItem('userlevel', loginData.userLevel);
-
-      setIsLoggedIn(true);
-      localStorage.setItem('username', user);
-
-      localStorage.setItem('loginTime', now.toString());
-      sessionStorage.setItem('loginTime', now.toString());
-
-      // Fetch announcement and show popup
-      const ann = await fetchLatestAnnouncement();
-      setAnnouncement(ann);
-      if (ann) setShowAnnouncementPopup(true);
-    } catch (err) {
-      alert('Login failed: ' + err.message);
-    }
-  };
 
   // On login from persisted session, fetch announcement
   useEffect(() => {
     if (isLoggedIn && !announcement) {
       (async () => {
-        const ann = await fetchLatestAnnouncement();
-        setAnnouncement(ann);
-        if (ann) setShowAnnouncementPopup(true);
+        try {
+          const ann = await fetchLatestAnnouncement();
+          setAnnouncement(ann);
+          if (ann) setShowAnnouncementPopup(true);
+        } catch (err) {
+          console.error('Error fetching announcement:', err);
+        }
       })();
     }
-    // eslint-disable-next-line
-  }, [isLoggedIn]);
+  }, [isLoggedIn, announcement]);
+
+  // Handle login from Login component (receives username and response data)
+  const handleLogin = async (user, loginData = {}) => {
+    try {
+      console.log('App.js - handleLogin called with:', { user, loginData });
+
+      const now = Date.now();
+
+      // Extract userLevel from loginData, fallback to what's in localStorage
+      const level = loginData.userLevel || localStorage.getItem('userlevel') || '';
+
+      console.log('App.js - Setting username:', user, 'userLevel:', level);
+
+      // Store all data to localStorage
+      localStorage.setItem('username', user);
+      localStorage.setItem('userlevel', level);
+      localStorage.setItem('loginTime', now.toString());
+
+      // Session data should already be stored by postLogin or session validation
+      // But just in case, store it if provided
+      if (loginData.sessionid) {
+        console.log('App.js - Updating sessionid from loginData');
+        localStorage.setItem('sessionid', loginData.sessionid);
+      }
+      if (loginData.uid) {
+        console.log('App.js - Updating uid from loginData');
+        localStorage.setItem('uidd', loginData.uid);
+      }
+
+      // Set local state
+      setUsername(user);
+      setUserLevel(level);
+      setIsLoggedIn(true);
+
+      console.log('App.js - Login successful, state updated');
+      console.log('App.js - Final state - isLoggedIn: true, username:', user, 'userLevel:', level);
+
+    } catch (err) {
+      console.error('App.js - Login error:', err);
+      alert('Login failed: ' + err.message);
+    }
+  };
 
   // Logout and flush session storage, local storage, cookies, and caches
   const handleLogout = async () => {
+    console.log('App.js - Logout initiated for user:', username);
     await callLogoutAPI(username);
 
     setIsLoggedIn(false);
     setUsername('');
     setUserLevel('');
-
+    setAnnouncement('');
     localStorage.clear();
     sessionStorage.clear();
     clearAllCookies();
 
-    if ('caches' in window) {
-      caches.keys().then((names) => {
-        for (let name of names) {
-          caches.delete(name);
-        }
-      });
-    }
-    // Optionally, redirect or show a message here
+    console.log('App.js - Logout successful - all data cleared');
   };
 
-  // Auto logout after 30 min of inactivity
+  // --- Cross-Tab Storage Listener Logic ---
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      // Check if the session ID was removed in another tab
+      if (event.key === 'sessionid' && !event.newValue) {
+        console.log("Session ID removed in another tab. Triggering logout.");
+        handleLogout();
+      }
+
+      // Check if username was removed in another tab
+      if (event.key === 'username' && !event.newValue) {
+        console.log("Username removed in another tab. Triggering logout.");
+        handleLogout();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [username]);
+
+  // Auto logout after 60 min of inactivity
   useEffect(() => {
     if (!isLoggedIn) return;
 
     const resetInactivityTimer = () => {
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
-        alert('You have been logged out due to 30 minutes of inactivity.');
+        alert('You have been logged out due to 60 minutes of inactivity.');
         handleLogout();
       }, INACTIVITY_LIMIT);
     };
@@ -232,8 +301,20 @@ function App() {
     };
   }, [isLoggedIn]);
 
+  // Show loading state while checking for existing session
+  if (appLoading) {
+    return (
+      <div>
+        <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          <p>Loading...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!isLoggedIn) {
-    // Login component must now provide both username and password to handleLogin
     return <Login onLogin={handleLogin} />;
   }
 
@@ -270,7 +351,10 @@ function App() {
           setIsSidebarOpen={setIsSidebarOpen}
         />
         <Dashboard isSidebarOpen={isSidebarOpen} />
-        <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
+        {/* Conditionally render Chatbot only for specific user levels */}
+        {hasChatbotAccess && (
+          <Chatbot setChatbotMinimized={setChatbotMinimized} username={username} />
+        )}
       </div>
       <Footer />
     </div>
