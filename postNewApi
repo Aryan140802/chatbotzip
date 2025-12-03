@@ -1,8 +1,5 @@
 import axios from 'axios';
 
-// Flag to prevent multiple simultaneous logout actions
-let isLoggingOut = false;
-
 // Create axios instance with custom configuration
 const api = axios.create({
   baseURL: 'https://10.191.171.12:5443/EISHOME/',
@@ -12,8 +9,120 @@ const api = axios.create({
   }
 });
 
-// === AXIOS REQUEST INTERCEPTOR ===
-// Add a request interceptor to attach the Authorization header automatically
+// ==================== SESSION MANAGEMENT UTILITIES ====================
+
+// Robust function to clear all cookies (within JS limitations)
+function clearAllCookies() {
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+    // Remove cookie for root path
+    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    // Attempt to remove cookie for every path segment
+    const pathSegments = window.location.pathname.split('/');
+    let path = '';
+    for (let i = 0; i < pathSegments.length; i++) {
+      path += (path.endsWith('/') ? '' : '/') + pathSegments[i];
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=${path};`;
+    }
+  }
+}
+
+// Enhanced function to clear all storage
+function clearAllStorage() {
+  // Clear localStorage
+  localStorage.clear();
+  
+  // Clear sessionStorage
+  sessionStorage.clear();
+  
+  // Clear all cookies
+  clearAllCookies();
+  
+  // Clear IndexedDB (if needed)
+  if (window.indexedDB && indexedDB.databases) {
+    indexedDB.databases().then(databases => {
+      databases.forEach(db => {
+        if (db.name) indexedDB.deleteDatabase(db.name);
+      });
+    });
+  }
+  
+  // Clear Service Worker cache (if applicable)
+  if ('caches' in window) {
+    caches.keys().then(names => names.forEach(name => caches.delete(name)));
+  }
+}
+
+// Function to check if session data exists in localStorage
+function hasSessionData() {
+  const sessionId = localStorage.getItem('sessionid');
+  const username = localStorage.getItem('username');
+  const userLevel = localStorage.getItem('userlevel');
+  
+  return !!(sessionId && username && userLevel);
+}
+
+// Global logout handler reference
+let globalLogoutHandler = null;
+
+// Function to set global logout handler
+export function setLogoutHandler(handler) {
+  globalLogoutHandler = handler;
+}
+
+// Function to trigger logout from anywhere
+export function triggerLogout(reason = 'Session expired') {
+  console.log(`Triggering logout: ${reason}`);
+  
+  if (globalLogoutHandler) {
+    globalLogoutHandler(reason);
+  } else {
+    // Fallback: clear storage and reload
+    clearAllStorage();
+    window.location.reload();
+  }
+}
+
+// Function to validate session
+export async function validateSession() {
+  try {
+    const sessionId = localStorage.getItem('sessionid');
+    const username = localStorage.getItem('username');
+    
+    if (!sessionId || !username) {
+      return { isValid: false, reason: 'Missing session data' };
+    }
+
+    // Call session validation API
+    const response = await api.post('awthenticationService/validateSession/', {
+      username: username,
+      timestamp: new Date().toISOString()
+    }, {
+      headers: {
+        'Authorization': `Bearer ${sessionId}`
+      }
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      return { isValid: false, reason: 'Session expired or invalid' };
+    }
+
+    if (response.data.isValid === false || response.data.status === 'expired' || response.data.error) {
+      return { isValid: false, reason: 'Session expired' };
+    }
+    
+    return { isValid: true };
+  } catch (error) {
+    console.error('Error validating session:', error);
+    return { isValid: false, reason: 'Validation error' };
+  }
+}
+
+// ==================== AXIOS INTERCEPTORS ====================
+
+// Request interceptor to attach Authorization header
 api.interceptors.request.use(
   (config) => {
     // Get the session ID from localStorage just before the request is made
@@ -27,66 +136,70 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    // Do something with request error
     return Promise.reject(error);
   }
 );
 
-// === AXIOS RESPONSE INTERCEPTOR ===
-// Add a response interceptor to handle session expiry
+// Response interceptor to handle authentication errors
 api.interceptors.response.use(
   (response) => {
-    // If response is successful, return it as-is
     return response;
   },
   (error) => {
-    // Prevent multiple logout actions
-    if (isLoggingOut) {
-      return Promise.reject(error);
-    }
-
-    // Check for session expiry indicators
-    const isSessionExpired = 
-      error.response?.status === 401 || // Unauthorized
-      error.response?.status === 403 || // Forbidden
-      error.response?.data?.message?.toLowerCase().includes('session') ||
-      error.response?.data?.message?.toLowerCase().includes('expired') ||
-      error.response?.data?.message?.toLowerCase().includes('unauthorized') ||
-      error.response?.data?.Response?.toLowerCase().includes('session') ||
-      error.response?.data?.Response?.toLowerCase().includes('expired');
-
-    if (isSessionExpired) {
-      console.warn('Session expired detected. Clearing session and redirecting to login.');
+    // Check for authentication errors
+    if (error.response) {
+      const { status } = error.response;
       
-      // Set flag to prevent multiple logout actions
-      isLoggingOut = true;
-
-      // Clear all session data
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Clear cookies
-      const cookies = document.cookie.split(";");
-      for (const cookie of cookies) {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-        document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+      // Handle 401 (Unauthorized) and 403 (Forbidden) errors
+      if (status === 401 || status === 403) {
+        console.log(`API authentication error (${status}):`, error.response.data);
+        
+        // Check if we're not already on login page to avoid infinite loops
+        if (!window.location.pathname.includes('login') && !window.location.pathname.includes('Login')) {
+          // Trigger logout after a short delay
+          setTimeout(() => {
+            triggerLogout(`API authentication failed (${status})`);
+          }, 100);
+        }
+        
+        // Return a rejected promise with a specific error type
+        return Promise.reject({
+          ...error,
+          isAuthError: true,
+          status: status
+        });
       }
       
-      // Show alert to user
-      alert('Your session has expired. Please login again.');
-      
-      // Reset flag and redirect after a short delay
-      setTimeout(() => {
-        isLoggingOut = false;
-        window.location.href = '/'; // Redirect to home/login page
-      }, 100);
+      // Check for specific session expired messages in response
+      if (error.response.data && 
+          (error.response.data.message?.toLowerCase().includes('session') ||
+           error.response.data.error?.toLowerCase().includes('session') ||
+           error.response.data.Response?.toLowerCase().includes('session'))) {
+        console.log('Session expired detected in response:', error.response.data);
+        
+        setTimeout(() => {
+          triggerLogout('Session expired detected in API response');
+        }, 100);
+        
+        return Promise.reject({
+          ...error,
+          isSessionExpired: true,
+          status: status
+        });
+      }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('Network error or no response:', error.request);
+    } else {
+      // Something happened in setting up the request
+      console.error('Request setup error:', error.message);
     }
-
+    
     return Promise.reject(error);
   }
 );
-// === END INTERCEPTOR ===
+
+// ==================== EXISTING API FUNCTIONS ====================
 
 // Modified postMessage to always send data under "message"
 export const postMessage = (data) => {
@@ -212,7 +325,7 @@ export const postGraphDownload = async ({ path, time }) => {
   }
 };
 
-// Time-based post functions remain unchanged
+// Time-based post functions
 export const postServiceWiseExp5 = async (time) => {
   try {
     const uid = localStorage.getItem('uidd');
@@ -309,7 +422,7 @@ export const postPortWiseSys5 = async (time) => {
   }
 };
 
-// === UPDATED MQ API FUNCTIONS BELOW ===
+// === UPDATED MQ API FUNCTIONS ===
 
 // POST to EISHome/mqOverall/<layer>/ with { username, password }
 export const postMqOverall = async (layer) => {
@@ -365,6 +478,7 @@ export const downloadMqGraph = async (path) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
+    // Ensure the path ends with a slash
     if (!path.endsWith('/')) {
       path += '/';
     }
@@ -373,6 +487,7 @@ export const downloadMqGraph = async (path) => {
       password,
       download: true
     };
+    // If the API returns a file, use responseType: 'blob'
     const response = await api.post(path, payload, { responseType: 'blob' });
     return response;
   } catch (error) {
@@ -386,6 +501,7 @@ export const downloadMqHourly = async (path, hour) => {
   try {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
+    // Ensure the path ends with a slash
     if (!path.endsWith('/')) {
       path += '/';
     }
@@ -395,6 +511,7 @@ export const downloadMqHourly = async (path, hour) => {
       hour,
       download: true
     };
+    // If the API returns a file, use responseType: 'blob'
     const response = await api.post(path, payload, { responseType: 'blob' });
     return response;
   } catch (error) {
@@ -432,6 +549,7 @@ export const fetchLatestAnnouncement = async () => {
     const uid = localStorage.getItem('uidd');
     const password = localStorage.getItem('password');
     const res = await api.post('EISHome/announcement/', { uid, password });
+    // Assuming the response is { announcement: "..." }
     return res.data.announcement || "";
   } catch (error) {
     console.error('Could not fetch announcement:', error);
@@ -627,9 +745,24 @@ export async function callLogoutAPI(username) {
       console.warn('Logout API call failed:', response.status, response.statusText);
     } else {
       console.log('Logout API call successful');
-      localStorage.removeItem('sessionId');
     }
   } catch (error) {
     console.error('Error calling logout API:', error);
   }
 }
+
+// ==================== SESSION MANAGEMENT FUNCTIONS ====================
+
+// Export the storage utilities
+export { clearAllStorage, hasSessionData };
+
+// Export the axios instance for direct use if needed
+export { api };
+
+// Export a function to check session on demand
+export const checkSession = async () => {
+  if (!hasSessionData()) {
+    return { isValid: false, reason: 'No session data' };
+  }
+  return await validateSession();
+};
