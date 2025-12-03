@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Flag to prevent multiple simultaneous logout actions
+let isLoggingOut = false;
+
 // Create axios instance with custom configuration
 const api = axios.create({
   baseURL: 'https://10.191.171.12:5443/EISHOME/',
@@ -37,6 +40,11 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Prevent multiple logout actions
+    if (isLoggingOut) {
+      return Promise.reject(error);
+    }
+
     // Check for session expiry indicators
     const isSessionExpired = 
       error.response?.status === 401 || // Unauthorized
@@ -50,6 +58,9 @@ api.interceptors.response.use(
     if (isSessionExpired) {
       console.warn('Session expired detected. Clearing session and redirecting to login.');
       
+      // Set flag to prevent multiple logout actions
+      isLoggingOut = true;
+
       // Clear all session data
       localStorage.clear();
       sessionStorage.clear();
@@ -65,8 +76,11 @@ api.interceptors.response.use(
       // Show alert to user
       alert('Your session has expired. Please login again.');
       
-      // Redirect to login by reloading the page
-      window.location.reload();
+      // Reset flag and redirect after a short delay
+      setTimeout(() => {
+        isLoggingOut = false;
+        window.location.href = '/'; // Redirect to home/login page
+      }, 100);
     }
 
     return Promise.reject(error);
