@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer';
@@ -124,14 +125,9 @@ function App() {
   const [userLevel, setUserLevel] = useState('');
   const [appLoading, setAppLoading] = useState(true);
   const inactivityTimer = useRef(null);
-  const sessionValidationTimer = useRef(null);
-  const isLoggingOutRef = useRef(false);
 
   // Inactivity time limit in ms (60 minutes)
   const INACTIVITY_LIMIT = 60 * 60 * 1000;
-  
-  // Session validation interval in ms (5 minutes)
-  const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
 
   // Define allowed user levels for Chatbot access
   const CHATBOT_ALLOWED_LEVELS = ['ADMIN', 'L2', 'Banker','L1'];
@@ -180,7 +176,7 @@ function App() {
 
   // On login from persisted session, fetch announcement
   useEffect(() => {
-    if (isLoggedIn && !announcement && !isLoggingOutRef.current) {
+    if (isLoggedIn && !announcement) {
       (async () => {
         try {
           const ann = await fetchLatestAnnouncement();
@@ -188,7 +184,6 @@ function App() {
           if (ann) setShowAnnouncementPopup(true);
         } catch (err) {
           console.error('Error fetching announcement:', err);
-          // Don't show error if we're logging out
         }
       })();
     }
@@ -222,9 +217,6 @@ function App() {
         localStorage.setItem('uidd', loginData.uid);
       }
 
-      // Reset logout flag
-      isLoggingOutRef.current = false;
-
       // Set local state
       setUsername(user);
       setUserLevel(level);
@@ -241,35 +233,13 @@ function App() {
 
   // Logout and flush session storage, local storage, cookies, and caches
   const handleLogout = async () => {
-    // Prevent multiple simultaneous logout calls
-    if (isLoggingOutRef.current) {
-      console.log('App.js - Logout already in progress, skipping');
-      return;
-    }
-
-    isLoggingOutRef.current = true;
     console.log('App.js - Logout initiated for user:', username);
-
-    // Clear timers first to prevent any further validations
-    if (inactivityTimer.current) {
-      clearTimeout(inactivityTimer.current);
-      inactivityTimer.current = null;
-    }
-    if (sessionValidationTimer.current) {
-      clearInterval(sessionValidationTimer.current);
-      sessionValidationTimer.current = null;
-    }
-
-    // Call logout API
     await callLogoutAPI(username);
 
-    // Clear state
     setIsLoggedIn(false);
     setUsername('');
     setUserLevel('');
     setAnnouncement('');
-
-    // Clear storage
     localStorage.clear();
     sessionStorage.clear();
     clearAllCookies();
@@ -280,9 +250,6 @@ function App() {
   // --- Cross-Tab Storage Listener Logic ---
   useEffect(() => {
     const handleStorageChange = (event) => {
-      // Ignore if already logging out
-      if (isLoggingOutRef.current) return;
-
       // Check if the session ID was removed in another tab
       if (event.key === 'sessionid' && !event.newValue) {
         console.log("Session ID removed in another tab. Triggering logout.");
@@ -305,17 +272,13 @@ function App() {
 
   // Auto logout after 60 min of inactivity
   useEffect(() => {
-    if (!isLoggedIn || isLoggingOutRef.current) return;
+    if (!isLoggedIn) return;
 
     const resetInactivityTimer = () => {
-      if (isLoggingOutRef.current) return;
-      
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
       inactivityTimer.current = setTimeout(() => {
-        if (!isLoggingOutRef.current) {
-          alert('You have been logged out due to 60 minutes of inactivity.');
-          handleLogout();
-        }
+        alert('You have been logged out due to 60 minutes of inactivity.');
+        handleLogout();
       }, INACTIVITY_LIMIT);
     };
 
@@ -336,99 +299,6 @@ function App() {
         window.removeEventListener(event, resetInactivityTimer, true)
       );
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
-    };
-  }, [isLoggedIn]);
-
-  // Periodic session validation (every 5 minutes)
-  useEffect(() => {
-    if (!isLoggedIn || isLoggingOutRef.current) {
-      // Clear interval if user is not logged in or logging out
-      if (sessionValidationTimer.current) {
-        clearInterval(sessionValidationTimer.current);
-        sessionValidationTimer.current = null;
-      }
-      return;
-    }
-
-    const validateSession = async () => {
-      // Skip validation if logging out
-      if (isLoggingOutRef.current) {
-        console.log('Skipping session validation - logout in progress');
-        return;
-      }
-
-      try {
-        const sessionId = localStorage.getItem('sessionid');
-        const uid = localStorage.getItem('uidd');
-        
-        console.log('Validating session...', { hasSessionId: !!sessionId, hasUid: !!uid });
-
-        // If no session data, logout immediately
-        if (!sessionId || !uid) {
-          console.warn('Session validation failed: missing credentials');
-          if (!isLoggingOutRef.current) {
-            alert('Your session has expired. Please login again.');
-            handleLogout();
-          }
-          return;
-        }
-
-        // Call authenticatePortal endpoint to validate session
-        const response = await fetch(
-          'https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal/',
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${sessionId}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ uid })
-          }
-        );
-
-        const data = await response.json();
-        console.log('Session validation response:', { status: response.status, data });
-
-        // Check if session is invalid
-        if (!response.ok || response.status === 401 || response.status === 403) {
-          console.warn('Session validation failed: unauthorized');
-          if (!isLoggingOutRef.current) {
-            alert('Your session has expired. Please login again.');
-            handleLogout();
-          }
-          return;
-        }
-
-        // Check response data for session validity
-        if (data.status !== 200 && data.status !== 302) {
-          console.warn('Session validation failed: invalid status in response');
-          if (!isLoggingOutRef.current) {
-            alert('Your session has expired. Please login again.');
-            handleLogout();
-          }
-          return;
-        }
-
-        console.log('Session validation successful');
-      } catch (error) {
-        console.error('Session validation error:', error);
-        // On network errors, we might want to be lenient and not logout immediately
-        // However, if this persists, the user will be logged out on next API call
-        // due to the response interceptor in PostApi.jsx
-      }
-    };
-
-    // Validate session immediately on mount
-    validateSession();
-
-    // Then check every 5 minutes
-    sessionValidationTimer.current = setInterval(validateSession, SESSION_CHECK_INTERVAL);
-    
-    return () => {
-      if (sessionValidationTimer.current) {
-        clearInterval(sessionValidationTimer.current);
-        sessionValidationTimer.current = null;
-      }
     };
   }, [isLoggedIn]);
 
