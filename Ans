@@ -1,3 +1,4 @@
+
 {% load static %}
 {% load custom_filter %}
 
@@ -10,368 +11,397 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{%  static 'brokeregapi/index.css' %}">
     <style>
-        /* Make header fixed */
+        /* Reset body padding for fixed header */
         body {
-            padding-top: 140px; /* Adjust based on header height */
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            background: inherit; /* Keep original background */
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
         
+        /* Slim Fixed Header */
         .fixed-header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            background: linear-gradient(135deg, #000107 0%, #1a1a2e 100%);
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(0, 1, 7, 0.95);
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
         }
         
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 10px;
         }
         
         .welcome-section {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
         
         .welcome-section h5 {
             margin: 0;
             color: white;
-            font-weight: 500;
+            font-weight: 400;
+            font-size: 1rem;
         }
         
         .logout-btn {
             background: rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 8px 20px;
+            padding: 6px 15px;
             text-decoration: none;
-            border-radius: 20px;
-            transition: all 0.3s;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 0.9rem;
         }
         
         .logout-btn:hover {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            transform: translateY(-1px);
+            text-decoration: none;
         }
         
-        .main-title {
-            text-align: center;
-            color: white;
-            margin: 10px 0 20px 0;
-            font-size: 2.2rem;
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
-        
-        /* Search form styling */
-        .search-container {
-            max-width: 500px;
-            margin: 0 auto 25px auto;
-            position: relative;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: 12px 20px;
-            padding-right: 50px;
-            border-radius: 25px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: #4dabf7;
-            box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .search-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            color: #4dabf7;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 5px;
-        }
-        
-        /* Notification styles */
         .notification-wrapper {
             position: relative;
         }
         
-        .notification-bell {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .notification-btn {
+            background: linear-gradient(to right, #007bff, #0056b3);
             color: white;
-            padding: 10px 16px;
-            border-radius: 20px;
+            padding: 6px 15px;
+            border-radius: 4px;
             text-decoration: none;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.9rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
         }
         
-        .notification-bell:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-        
-        .bell-icon {
-            animation: Shake 0.5s linear infinite;
-        }
-        
-        @keyframes Shake {
-            0% { transform: rotate(10deg); }
-            25% { transform: rotate(-10deg); }
-            50% { transform: rotate(10deg); }
-            75% { transform: rotate(-10deg); }
-            100% { transform: rotate(10deg); }
+        .notification-btn:hover {
+            background: linear-gradient(to right, #0069d9, #004a9c);
+            color: white;
+            text-decoration: none;
+            transform: translateY(-1px);
         }
         
         .notification-badge {
             position: absolute;
             top: -8px;
             right: -8px;
-            background: #ff4757;
+            background: #dc3545;
             color: white;
-            padding: 3px 8px;
+            padding: 2px 6px;
             border-radius: 10px;
-            font-size: 0.75rem;
-            min-width: 20px;
+            font-size: 0.7rem;
+            min-width: 18px;
             text-align: center;
             font-weight: bold;
-            border: 2px solid #000107;
+            border: 2px solid rgba(0, 1, 7, 0.95);
         }
         
-        /* Cards container */
+        .bell-icon {
+            font-size: 0.9rem;
+        }
+        
+        /* Header Bottom - Title and Search */
+        .header-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .page-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        .search-container {
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 8px 15px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #007bff;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .search-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        
+        .search-btn:hover {
+            background: #0069d9;
+        }
+        
+        /* Main Content Area */
+        .main-content {
+            margin-top: 120px; /* Space for fixed header */
+            padding: 20px;
+        }
+        
+        /* Cards Container */
         #div {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-            max-width: 1200px;
+            gap: 20px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
         }
         
+        /* Card Styling */
         .card-backgrounds {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border-radius: 15px;
+            background: 0% 0% / 400px rgba(255, 255, 255, 0.13);
+            border-radius: 8px;
             padding: 20px;
             color: white;
             cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(10px);
+            text-align: center;
             display: flex;
             flex-direction: column;
-            height: 240px; /* Fixed height */
+            height: 220px; /* Fixed height */
+            min-width: 350px;
+            max-height: 220px;
             overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .card-backgrounds:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border-color: rgba(77, 171, 247, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Card Content Structure */
+        .card-header {
+            margin-bottom: 12px;
         }
         
         .card-title {
             font-size: 1.1rem;
             font-weight: 600;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        /* IP Container with 4-line limit */
+        /* IP Container with 4 lines */
         .ips-container {
             flex: 1;
             margin-bottom: 15px;
             overflow: hidden;
-            position: relative;
         }
         
-        .ips-list {
+        .ips-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 8px;
-            max-height: 90px; /* Limit to 4 lines */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            max-height: 80px; /* Exactly 4 lines */
             overflow: hidden;
         }
         
         .ip-item {
-            background: rgba(77, 171, 247, 0.15);
+            background: rgba(255, 255, 255, 0.08);
             padding: 4px 8px;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 0.8rem;
-            text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            border: 1px solid rgba(77, 171, 247, 0.2);
-        }
-        
-        /* Show count for truncated IPs */
-        .more-ips {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-            padding: 20px 0 5px 0;
             text-align: center;
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        .card-link {
+        /* Card Footer */
+        .card-footer {
             margin-top: auto;
-            text-align: center;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .card-link a {
-            display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: block;
+            background: rgba(255, 255, 255, 0.1);
             color: white;
-            padding: 8px 20px;
-            border-radius: 20px;
+            padding: 8px;
             text-decoration: none;
-            font-size: 0.85rem;
-            transition: all 0.3s;
-            width: 100%;
-            text-align: center;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
         }
         
         .card-link a:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-bottom {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .search-container {
+                max-width: 100%;
+            }
+            
+            #div {
+                grid-template-columns: 1fr;
+            }
+            
+            .card-backgrounds {
+                min-width: auto;
+            }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-    <!-- Fixed Header -->
+    <!-- Fixed Slim Header -->
     <div class="fixed-header">
-        <div class="header-content">
+        <div class="header-top">
             <div class="welcome-section">
-                <h5>Welcome, {{ request.session.username }} !!</h5>
+                <h5>Welcome, {{ request.session.username }}!</h5>
                 <a class="logout-btn" href="{% url 'logout' %}">
-                    Log out <i class="fa fa-sign-out"></i>
+                    <i class="fa fa-sign-out"></i> Logout
                 </a>
             </div>
             
             <div class="notification-wrapper">
-                {% if notification %}
-                <a href="{% url 'approval' %}" class="notification-bell" aria-label="alert">
-                    <i class="fa fa-bell bell-icon"></i> Alert
+                <a href="{% url 'approval' %}" class="notification-btn" aria-label="alert">
+                    {% if notification %}
+                        <i class="fa fa-bell bell-icon"></i> Alert
+                    {% else %}
+                        Pending Reflects
+                    {% endif %}
                 </a>
-                {% else %}
-                <a href="{% url 'approval' %}" class="notification-bell" aria-label="alert">
-                    Pending Reflects
-                </a>
-                {% endif %}
                 <span class="notification-badge">
                     {% if notification %}{{ lennote }}{% else %}{{ pendings }}{% endif %}
                 </span>
             </div>
         </div>
         
-        <h1 class="main-title">API Details Monitoring</h1>
-        
-        <!-- Search Form -->
-        <form method="POST" action="{% url 'index-api' %}" id="editform">
-            {% csrf_token %}
+        <div class="header-bottom">
+            <h1 class="page-title">API Details Monitoring</h1>
+            
             <div class="search-container">
-                <input type="text" 
-                       name="service" 
-                       class="search-input" 
-                       placeholder="Search Service..." 
-                       id="searchbar">
-                <button type="submit" class="search-btn">
-                    <i class="fa fa-search"></i>
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Cards Container -->
-    <div id="div">
-        {% for data in data_list %}
-        <div class="card-backgrounds">
-            <div class="card-title">{{ data.layerName }}</div>
-            
-            <div class="ips-container">
-                <div class="ips-list">
-                    {% for value in data.layerIps|slice:":8" %}
-                        {% if value %}
-                        <div class="ip-item">10.xxx.{{ value.serverIp }}</div>
-                        {% endif %}
-                    {% endfor %}
-                </div>
-                
-                {% if data.layerIps|length > 8 %}
-                <div class="more-ips">
-                    +{{ data.layerIps|length|add:"-8" }} more IPs
-                </div>
-                {% endif %}
-            </div>
-            
-            <div class="card-link">
-                {% for ip in data.layerIps %}
-                    {% if forloop.first %}
-                    <a href='{% url 'api_server' data.layerName ip.serverIp %}' target="_blank">
-                        Go To {{ data.layerName }}
-                    </a>
-                    {% endif %}
-                {% endfor %}
+                <form method="POST" action="{% url 'index-api' %}" class="search-form" id="editform">
+                    {% csrf_token %}
+                    <input type="text" 
+                           name="service" 
+                           class="search-input" 
+                           placeholder="Search Service..." 
+                           id="searchbar">
+                    <button type="submit" class="search-btn">
+                        <i class="fa fa-search"></i> Search
+                    </button>
+                </form>
             </div>
         </div>
-        {% endfor %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div id="div">
+            {% for data in data_list %}
+            <div class="card-backgrounds">
+                <div class="card-header">
+                    <h5 class="card-title">{{ data.layerName }}</h5>
+                </div>
+                
+                <div class="ips-container">
+                    <div class="ips-grid">
+                        {% for value in data.layerIps|slice:":8" %}
+                            {% if value %}
+                            <div class="ip-item">10.xxx.{{ value.serverIp }}</div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="card-link">
+                        {% for ip in data.layerIps %}
+                            {% if forloop.first %}
+                            <a href='{% url 'api_server' data.layerName ip.serverIp %}' target="_blank">
+                                Go To {{ data.layerName }}
+                            </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 
     <script>
-        // Make search form submission smoother
+        // Smooth form submission
         document.getElementById('editform').addEventListener('submit', function(e) {
             const searchValue = document.getElementById('searchbar').value.trim();
             if (!searchValue) {
                 e.preventDefault();
+                document.getElementById('searchbar').focus();
                 return false;
             }
         });
         
-        // Add subtle animation to cards on load
+        // Add fade-in animation to cards
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.card-backgrounds');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
+                card.style.transform = 'translateY(10px)';
                 
                 setTimeout(() => {
-                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
                 }, index * 50);
