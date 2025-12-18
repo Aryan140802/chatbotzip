@@ -6,51 +6,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Details Dashboard</title>
+    <title>API Details Monitoring</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{%  static 'brokeregapi/index.css' %}">
     <style>
-        /* Main container for cards */
-        #div {
+        /* Make header fixed */
+        body {
+            padding-top: 140px; /* Adjust based on header height */
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+        }
+        
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, #000107 0%, #1a1a2e 100%);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .welcome-section {
+            display: flex;
+            align-items: center;
             gap: 20px;
-            justify-content: center;
+        }
+        
+        .welcome-section h5 {
+            margin: 0;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 20px;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .main-title {
+            text-align: center;
+            color: white;
+            margin: 10px 0 20px 0;
+            font-size: 2.2rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+        
+        /* Search form styling */
+        .search-container {
+            max-width: 500px;
+            margin: 0 auto 25px auto;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 20px;
+            padding-right: 50px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 2px rgba(77, 171, 247, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #4dabf7;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+        
+        /* Notification styles */
+        .notification-wrapper {
+            position: relative;
+        }
+        
+        .notification-bell {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .notification-bell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .bell-icon {
+            animation: Shake 0.5s linear infinite;
+        }
+        
+        @keyframes Shake {
+            0% { transform: rotate(10deg); }
+            25% { transform: rotate(-10deg); }
+            50% { transform: rotate(10deg); }
+            75% { transform: rotate(-10deg); }
+            100% { transform: rotate(10deg); }
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4757;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            min-width: 20px;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid #000107;
+        }
+        
+        /* Cards container */
+        #div {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
         }
         
         .card-backgrounds {
-            max-width: 350px;
-            min-width: 350px;
-            height: 250px; /* Fixed height for all cards */
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border-radius: 15px;
             padding: 20px;
             color: white;
-            background: 0% 0% / 400px rgba(255, 255, 255, 0.13);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden; /* Prevent content from overflowing */
-        }
-        
-        .card-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+            height: 240px; /* Fixed height */
             overflow: hidden;
         }
         
+        .card-backgrounds:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(77, 171, 247, 0.3);
+        }
+        
         .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
             margin-bottom: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         
+        /* IP Container with 4-line limit */
         .ips-container {
             flex: 1;
             margin-bottom: 15px;
@@ -59,238 +216,136 @@
         }
         
         .ips-list {
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 4; /* Show max 4 IP lines */
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            max-height: 90px; /* Limit to 4 lines */
+            overflow: hidden;
+        }
+        
+        .ip-item {
+            background: rgba(77, 171, 247, 0.15);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            text-align: center;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            line-height: 1.4;
-            max-height: 80px; /* Adjust based on your font size */
+            border: 1px solid rgba(77, 171, 247, 0.2);
         }
         
-        .ips-list.expanded {
-            -webkit-line-clamp: unset;
-            max-height: none;
-            overflow-y: auto;
-        }
-        
-        .show-more-btn {
-            background: transparent;
-            border: none;
-            color: #4dabf7;
-            cursor: pointer;
+        /* Show count for truncated IPs */
+        .more-ips {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            padding: 20px 0 5px 0;
+            text-align: center;
             font-size: 0.8rem;
-            margin-top: 5px;
-            padding: 0;
-            text-decoration: underline;
+            color: rgba(255, 255, 255, 0.7);
         }
         
         .card-link {
             margin-top: auto;
-            padding: 10px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
         }
         
         .card-link a {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 4px;
             display: inline-block;
-            transition: background 0.3s;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
         }
         
         .card-link a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Rest of your existing styles remain the same */
-        .popup {
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-            display: none;
-        }
-        .popup-content {
-            background-color:  #000107;
-                color: #dfddeb;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888888;
-            width: 30%;
-            font-weight: bolder;
-        }
-        .popup-content button {
-            display: block;
-            margin: 0 auto;
-        }
-        .show {
-            display: block;
-        }
-        div.searchhistorybtn, div.popbuttons{
-                display:flex;
-                }
-        .notification {
-            background: linear-gradient(to right, #f21313, #f76911);
-            color: white;
-            text-decoration: none;
-            padding: 16px 13px;
-            position: relative;
-            display: inline-block;
-            border-radius: 2px;
-            float: right;
-            margin-right: 5%;
-        }
-        .hide  {
-            background: linear-gradient(to right, rgb(242, 46, 7), #eda226);
-        }
-        a{
-            background: 0% 0% / 400px rgba(255, 255, 255, 0.13);
-            color: white;
-            padding: 10px;
-            text-decoration: none;
-            margin: 10px;
-        }
-        .bell {
-            animation: Shake 0.5s linear infinite;
-        }
-
-        /*Using keyframes for shaking an image*/
-        @keyframes Shake {
-            0% {
-                transform: rotate(10deg);
-            }
-
-            25% {
-                transform: rotate(-20deg);
-            }
-
-            50% {
-                transform: rotate(10deg);
-            }
-
-            75% {
-                transform: rotate(-20deg);
-            }
-
-            100% {
-                transform: rotate(10deg);
-            }
-        }
-        .note{
-            float: right;
-            margin-right: 5%;
-        }
-        .notification-box a{
-            border: 50%;
-            padding: 0px;
-        }
-        .note #badge {
-            position: absolute;
-            top: 107px;
-            right: 98px;
-            padding: 2px 5px;
-            border-radius: 50%;
-            background-color: red;
-            color: white;
-        }
-        .notification-box{
-            position: fixed;
-            top:10%;
-            right: 5%;
-            width: 100px;
-            padding: 10px;
-            background-color : #007bff;
-            color: white;
-            text-align: center;
-            border-radius: 8px;
-        }
-        .notification-badge{
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background-color: red;
-            color: white;
-            padding: 10px 6px;
-            border-radius: 50%;
-            font-size: 12px;
-            min-width: 20px;
-            text-align:center;
-            line-height: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-    <h5>Welcome, {{ request.session.username }} !!
-        <a class="nav-item nav-link" href="{% url 'logout' %}">
-            Log out <i class="fa fa-sign-out"></i>
-        </a>
-    </h5>
-    
-    <h1>API Details Monitoring</h1>
-    
-    {% if notification %}
-    <div class="notification-box">
-        <a href="{% url 'approval' %}" aria-label="alert">
-            Alert <i class="fa fa-bell bell" aria-label="alert" style="font-size:24px;"></i>
-        </a>
-        <span class="notification-badge">{{ lennote }}</span>
+    <!-- Fixed Header -->
+    <div class="fixed-header">
+        <div class="header-content">
+            <div class="welcome-section">
+                <h5>Welcome, {{ request.session.username }} !!</h5>
+                <a class="logout-btn" href="{% url 'logout' %}">
+                    Log out <i class="fa fa-sign-out"></i>
+                </a>
+            </div>
+            
+            <div class="notification-wrapper">
+                {% if notification %}
+                <a href="{% url 'approval' %}" class="notification-bell" aria-label="alert">
+                    <i class="fa fa-bell bell-icon"></i> Alert
+                </a>
+                {% else %}
+                <a href="{% url 'approval' %}" class="notification-bell" aria-label="alert">
+                    Pending Reflects
+                </a>
+                {% endif %}
+                <span class="notification-badge">
+                    {% if notification %}{{ lennote }}{% else %}{{ pendings }}{% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <h1 class="main-title">API Details Monitoring</h1>
+        
+        <!-- Search Form -->
+        <form method="POST" action="{% url 'index-api' %}" id="editform">
+            {% csrf_token %}
+            <div class="search-container">
+                <input type="text" 
+                       name="service" 
+                       class="search-input" 
+                       placeholder="Search Service..." 
+                       id="searchbar">
+                <button type="submit" class="search-btn">
+                    <i class="fa fa-search"></i>
+                </button>
+            </div>
+        </form>
     </div>
-    {% else %}
-    <div class="notification-box" style="width:130px;">
-        <a href="{% url 'approval' %}" aria-label="alert">Pending Reflects</a>
-        <span class="notification-badge" style="top:-16px;">{{ pendings }}</span>
-    </div>
-    {% endif %}
-    
-    <form method="POST" action="{% url 'index-api' %}" id="editform">
-        {% csrf_token %}
-        <input style="margin-left: 42%;" id="searchbar" type="text" name="service" placeholder="Search Service...">
-        <button id="servicelayer" onclick="ToggleEdit()" style="padding: 9px; margin:5px;width: 7%;border-radius: 10px;position:absolute;" type="submit">
-            search <i class="fa fa-search" style="color:green"></i>
-        </button>
-    </form>
-    
+
+    <!-- Cards Container -->
     <div id="div">
         {% for data in data_list %}
         <div class="card-backgrounds">
-            <div class="card-content">
-                <h5 class="card-title">{{ data.layerName }}</h5>
-                
-                <div class="ips-container">
-                    <div class="ips-list" id="ips-list-{{ forloop.counter }}">
-                        {% for value in data.layerIps %}
-                            {% if value %}
-                                {% if forloop.counter == 1 %}
-                                    10.xxx.{{ value.serverIp }}
-                                {% else %}
-                                    , 10.xxx.{{ value.serverIp }}
-                                {% endif %}
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    
-                    {% if data.layerIps|length > 3 %}
-                    <button class="show-more-btn" onclick="toggleIPs({{ forloop.counter }})" id="toggle-btn-{{ forloop.counter }}">
-                        Show more...
-                    </button>
-                    {% endif %}
+            <div class="card-title">{{ data.layerName }}</div>
+            
+            <div class="ips-container">
+                <div class="ips-list">
+                    {% for value in data.layerIps|slice:":8" %}
+                        {% if value %}
+                        <div class="ip-item">10.xxx.{{ value.serverIp }}</div>
+                        {% endif %}
+                    {% endfor %}
                 </div>
+                
+                {% if data.layerIps|length > 8 %}
+                <div class="more-ips">
+                    +{{ data.layerIps|length|add:"-8" }} more IPs
+                </div>
+                {% endif %}
             </div>
             
             <div class="card-link">
                 {% for ip in data.layerIps %}
                     {% if forloop.first %}
-                        <a href='{% url 'api_server' data.layerName ip.serverIp %}' target="_blank">
-                            Go To {{ data.layerName }}
-                        </a>
+                    <a href='{% url 'api_server' data.layerName ip.serverIp %}' target="_blank">
+                        Go To {{ data.layerName }}
+                    </a>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -299,18 +354,29 @@
     </div>
 
     <script>
-        function toggleIPs(cardId) {
-            const ipsList = document.getElementById(`ips-list-${cardId}`);
-            const toggleBtn = document.getElementById(`toggle-btn-${cardId}`);
-            
-            if (ipsList.classList.contains('expanded')) {
-                ipsList.classList.remove('expanded');
-                toggleBtn.textContent = 'Show more...';
-            } else {
-                ipsList.classList.add('expanded');
-                toggleBtn.textContent = 'Show less';
+        // Make search form submission smoother
+        document.getElementById('editform').addEventListener('submit', function(e) {
+            const searchValue = document.getElementById('searchbar').value.trim();
+            if (!searchValue) {
+                e.preventDefault();
+                return false;
             }
-        }
+        });
+        
+        // Add subtle animation to cards on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card-backgrounds');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+        });
     </script>
 </body>
 </html>
