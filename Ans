@@ -1,27 +1,229 @@
-The below checklist are pending for regularization of the EIS Dashboard applications (Support and Infra).
+{% load static %}
+{% load custom_filter %}
 
-Process Flow Architecture :
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Details Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="{%  static 'brokeregapi/index.css' %}">
+    <style>
 
-Information Flow Diagram:     
+        
+.card-backgrounds {
+max-width: 350px;
+max-height: 250px;
+min-width: 350px;
+min-height: 140px;
+border-radius: 8px;
+cursor: pointer;
+text-align: center;
+padding: 10px;
+color:white;
+    overflow: auto;
+    overflow-x: hidden;
+}
 
-Architecture Diagram:   
 
-Network Diagram:
+.popup {
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+            display: none;
+        }
+        .popup-content {
+            background-color:  #000107;
+                color: #dfddeb;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888888;
+            width: 30%;
+            font-weight: bolder;
+        }
+        .popup-content button {
+            display: block;
+            margin: 0 auto;
+        }
+        .show {
+            display: block;
+        }
+        div.searchhistorybtn, div.popbuttons{
+                display:flex;
+                }
+.notification {
+    background: linear-gradient(to right, #f21313, #f76911);
+    color: white;
+    text-decoration: none;
+    padding: 16px 13px;
+    position: relative;
+    display: inline-block;
+    border-radius: 2px;
+    float: right;
+    margin-right: 5%;
+}
+.hide  {
+    background: linear-gradient(to right, rgb(242, 46, 7), #eda226);
+}
+    a{
+               background: 0% 0% / 400px rgba(255, 255, 255, 0.13);
+    color: white;
+    padding: 10px;
+    text-decoration: none;
+    margin: 10px;}
+.bell {
+    animation: Shake 0.5s linear infinite;
+}
 
-Technical Flow Diagram
+/*Using keyframes for shaking an image*/
+@keyframes Shake {
+    0% {
+        transform: rotate(10deg);
+    }
 
-OS(VA,SCD,SIEM, DAM, PAM integration)
+    25% {
+        transform: rotate(-20deg);
+    }
 
-Application(VA/SCD/Source Code)
+    50% {
+        transform: rotate(10deg);
+    }
 
-Solution Document.
+    75% {
+        transform: rotate(-20deg);
+    }
 
-Details of end users of application:      
+    100% {
+        transform: rotate(10deg);
+    }
+}
+.note{
+float: right;
+    margin-right: 5%;
+}
+.notification-box a{
+border: 50%;
+padding: 0px;
+}
+.note #badge {
+            position: absolute;
+    top: 107px;
+    right: 98px;
+    padding: 2px 5px;
+    border-radius: 50%;
+    background-color: red;
+    color: white;
+}
+.notification-box{
+position: fixed;
+top:10%;
+right: 5%;
+width: 100px;
+padding: 10px;
+background-color : #007bff;
+color: white;
+text-align: center;
+border-radius: 8px;
+}
+.notification-badge{
+position: absolute;
+top: -5px;
+right: -5px;
+background-color: red;
+color: white;
+padding: 10px 6px;
+border-radius: 50%;
+font-size: 12px;
+min-width: 20px;
+text-align:center;
+line-height: 1;
+}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+        <h5>Welcome, {{ request.session.username }} !!
+ <a class="nav-item nav-link" href="{% url 'logout' %}">
+        Log out <i class="fa fa-sign-out"></i>
+    </a></h5>
+   <!--  <h1>API Status Monitoring </h1> -->
+ <h1>API Details Monitoring </h1>
+<!-- input tag -->
+{% if notification %}
+<div class="notification-box"><a href="{% url 'approval' %}" aria-label="alert">Alert <i class="fa fa-bell bell"  aria-label="alert" style="font-size:24px;"></i></a><span class="notification-badge">{{ lennote }}</span>
+</div>
+{% else %}
+<div class="notification-box" style="width:130px;"><a href="{% url 'approval' %}" aria-label="alert">Pending Reflects </a><span class="notification-badge" style="top:-16px;">{{ pendings }}</span>
+</div>
+{% endif %}
+<form method="POST" action="{% url 'index-api' %}" id="editform" >
+                                                        {% csrf_token %}
+ <input style="margin-left: 42%;" id="searchbar"  type="text" name="service" placeholder="Search Service...">
+<button id="servicelayer" onclick="ToggleEdit()" style="padding: 9px; margin:5px;width: 7%;border-radius: 10px;position:absolute;"  type="submit" >search <i class="fa fa-search" style="color:green"></i></button>
+</form>
+   <div id="div">
+           {% for data in data_list %}
+<div class="card-backgrounds" style="background:  0% 0% / 400px rgba(255, 255, 255, 0.13); color: white;">
+        <h5 class="card-title">{{ data.layerName }}</h5>
+{% for value in data.layerIps %}
+{% if value %}
 
-DR Availability:  
+{% if forloop.counter  == 1 %}
+ 10.xxx.{{ value.serverIp }}
+ {% else %}
+,10.xxx.{{ value.serverIp }}
+ {% endif %}
+  {% endif %}
+{% endfor %}
+</br>
+</br>
+ {% for ip in data.layerIps %}
+{% if forloop.first %}
+<a href='{% url 'api_server' data.layerName ip.serverIp %}' target="_blank">Go To {{ data.layerName }}  </a>
+{% endif %}
+{% endfor %}
+</div>
+{% endfor %}
 
-Application Architecture:*    (1,2,3 tier)
+</div>
+<!---<script>
+document.addEventListener("DOMContentLoaded",async ()=> {
+var uid=localStorage.getItem('uidd');
+var sessionId=localStorage.getItem('sessionid');
+  try{
+     const response  = await fetch('https://10.191.171.12:5443/EISHOME/awthenticationService/authenticatePortal/',{
+     method:'POST',
+     headers:{
+             'Content-Type':'application/json',
+             'Authorization': `Bearer ${sessionId}`
 
-Implementation Plan:*   
+    },
+    body: JSON.stringify({uid})
+    });
+    const data = await response.json();
+    if(data.status==302){
+            console.log("login successfull");
+    }
+    else{
+            console.log(data.status)
+          window.location.href='https://10.191.171.12:5443/EISHOME/';
+    }
+  }
+catch(e){
+console.log("an error occured for login"+e)
 
-User Requirement Form:  
+}
+});
+
+</script>
+-->
+
+
+</body>
+</html>
