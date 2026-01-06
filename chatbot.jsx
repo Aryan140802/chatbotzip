@@ -320,17 +320,16 @@ const prevServiceFieldRef = useRef(fields.find(f => f.name === "service")?.value
   };
 
 
-const handleServiceInputChange = async (value) => {
+
+
+  const handleServiceInputChange = async (value) => {
   setServiceInputValue(value);
   setFormData(prev => ({ ...prev, service: value }));
   if (errors.service) setErrors(prev => ({ ...prev, service: null }));
   if (!value.trim()) setServiceTypeInfo({ isApplication: false, serviceOption: null });
 
-  // Auto-trigger API call when user types 4+ characters
   if (value.trim().length >= 4) {
     setShowServiceDropdown(true);
-
-    // Trigger API call automatically
     if (onFieldChange) {
       let updated = { ...formData, service: value };
       updated = applyCascadingLogic(updated, 'service');
@@ -339,10 +338,15 @@ const handleServiceInputChange = async (value) => {
       const filtered = filterNonEmptyFields(updated);
       await onFieldChange(filtered, 'service');
     }
+    // Always refocus after async logic
+    setTimeout(() => {
+      serviceInputRef.current?.focus();
+    }, 0);
   } else {
     setShowServiceDropdown(false);
   }
 };
+
 
   const handleServiceOptionSelect = async (serviceValue) => {
     const { name, type } = parseServiceOption(serviceValue);
@@ -454,139 +458,134 @@ const handleServiceInputChange = async (value) => {
     });
   };
 
-const renderServiceField = (field) => {
-    const { name, label } = field;
-    const error = errors[name];
-    const isRequiredField = field.required;
-    const filteredOptions = getFilteredServiceOptions();
 
-    const handleServiceInputChange = async (value) => {
-      setServiceInputValue(value);
-      setFormData(prev => ({ ...prev, service: value }));
-      if (errors.service) {
-        setErrors(prev => ({ ...prev, service: null }));
-      }
+  const renderServiceField = (field) => {
+  const { name, label } = field;
+  const error = errors[name];
+  const isRequiredField = field.required;
+  const filteredOptions = getFilteredServiceOptions();
 
-      // Auto-trigger search after 4 characters
-      if (value.trim().length >= 4) {
-        setShowServiceDropdown(true);
-        // Update form data and trigger search
-        let updated = { ...formData, service: value };
-        updated = applyCascadingLogic(updated, 'service');
-        setFormData(updated);
-
-        // Trigger API call for search
-        if (onFieldChange) {
-          const filtered = filterNonEmptyFields(updated);
-          try {
-            await onFieldChange(filtered, 'service');
-          } catch (error) {
-            console.error('Search error:', error);
-          }
-          // Keep focus on input after API call
-          serviceInputRef.current?.focus();
-        }
-      } else {
-        setShowServiceDropdown(false);
-      }
-    };
-
-    // Handle dropdown container clicks
-    const handleDropdownContainerClick = (e) => {
-      e.stopPropagation();
-      serviceInputRef.current?.focus();
-    };
-
-    return (
-      <div key={name} className="form-field service-field-container">
-        <label className="form-label">
-          {isRequiredField && <span style={{ color: "red" }}>* </span>}
-          {label.replace('* ', '')}
-        </label>
-
-        <div className="service-input-container" style={{ position: 'relative' }}>
-          <input
-            ref={serviceInputRef}
-            type="text"
-            value={serviceInputValue}
-            onChange={e => handleServiceInputChange(e.target.value)}
-            placeholder="Type to search (minimum 4 characters)"
-            autoComplete="off"
-            className={`form-input${error ? " error" : ""}`}
-            disabled={isSubmitting || isSubmittingFromParent}
-            style={{
-              width: '100%',
-              paddingRight: '12px',
-              fontSize: '14px',
-              height: '38px'
-            }}
-          />
-
-          {/* Dropdown section */}
-          {showServiceDropdown && filteredOptions.length > 0 && (
-            <div
-              className="service-dropdown"
-              onClick={handleDropdownContainerClick}
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                background: 'white',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                maxHeight: '200px',
-                overflowY: 'auto',
-                zIndex: 1000,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}>
-              {filteredOptions.map((opt, idx) => {
-                const { name: serviceName, type: serviceType } = parseServiceOption(opt);
-                return (
-                  <div
-                    key={idx}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleServiceOptionSelect(opt);
-                      serviceInputRef.current?.focus();
-                    }}
-                    style={{
-                      padding: '12px 16px',
-                      cursor: 'pointer',
-                      borderBottom: idx < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      backgroundColor: 'white',
-                      color: '#000000'
-                    }}
-                    className="service-option"
-                    onMouseEnter={e => { e.target.style.backgroundColor = '#f5f5f5'; }}
-                    onMouseLeave={e => { e.target.style.backgroundColor = 'white'; }}>
-                    <span style={{ flex: 1, fontWeight: '500', color: '#000000' }}>{serviceName}</span>
-                    <span style={{
-                      background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
-                      color: 'white',
-                      padding: '2px 8px',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      textTransform: 'uppercase',
-                      marginLeft: '8px'
-                    }}>
-                      {serviceType.replace('API', ' API')}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-        {error && <span className="error-message">{error}</span>}
-      </div>
-    );
+  // Prevent losing focus when clicking dropdown
+  const handleDropdownClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    serviceInputRef.current?.focus();
   };
 
+  return (
+    <div key={name} className="form-field service-field-container">
+      <label className="form-label">
+        {isRequiredField && <span style={{ color: "red" }}>* </span>}
+        {label.replace('* ', '')}
+      </label>
+
+      <div className="service-input-container" style={{ position: 'relative' }}>
+        <input
+  ref={serviceInputRef}
+  type="text"
+  value={serviceInputValue}
+  onChange={e => handleServiceInputChange(e.target.value)} // <-- use the main handler
+  placeholder="Type to search (minimum 4 characters)"
+  autoComplete="off"
+  className={`form-input${error ? " error" : ""}`}
+  disabled={isSubmitting || isSubmittingFromParent}
+  style={{
+    width: '100%',
+    paddingRight: '12px',
+    fontSize: '14px',
+    height: '38px'
+  }}
+/>
+        {/* Suggestions dropdown */}
+        {showServiceDropdown && filteredOptions.length > 0 && (
+          <div
+            className="service-dropdown"
+            onClick={handleDropdownClick}
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              maxHeight: '200px',
+              overflowY: 'auto',
+              zIndex: 1000,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
+            {filteredOptions.map((opt, idx) => {
+              const { name: serviceName, type: serviceType } = parseServiceOption(opt);
+              return (
+                <div
+                  key={idx}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleServiceOptionSelect(opt);
+                    // Keep focus after selection
+                    serviceInputRef.current?.focus();
+                  }}
+                  style={{
+                    padding: '12px 16px',
+                    cursor: 'pointer',
+                    borderBottom: idx < filteredOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: 'white',
+                    color: '#000000'
+                  }}
+                  className="service-option"
+                  onMouseEnter={e => { e.target.style.backgroundColor = '#f5f5f5'; }}
+                  onMouseLeave={e => { e.target.style.backgroundColor = 'white'; }}>
+                  <span style={{ flex: 1, fontWeight: '500', color: '#000000' }}>
+                    {highlightMatch(serviceName, serviceInputValue)}
+                  </span>
+                  <span style={{
+                    background: serviceType.toUpperCase() === 'RESTAPI' ? '#27ae60' : '#e74c3c',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '11px',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    marginLeft: '8px'
+                  }}>
+                    {serviceType.replace('API', ' API')}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {error && <span className="error-message">{error}</span>}
+    </div>
+  );
+};
+
+
+// Add this utility function to highlight matching text
+const highlightMatch = (text, query) => {
+  if (!query || query.length < 4) return text;
+
+  const regex = new RegExp(`(${query})`, 'gi');
+  const parts = text.split(regex);
+
+  return (
+    <span>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <mark key={i} style={{ backgroundColor: '#fff3cd', padding: 0 }}>
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
+};
 
   // Use serviceTypeInfo state instead of calculating each time
   const { isApplication } = serviceTypeInfo;
