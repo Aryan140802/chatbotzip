@@ -63,3 +63,13 @@ cat /home/scripts/Rohit_PORT/BROKER_PORT.txt  > /home/scripts/Rohit_PORT/`hostna
 echo "/home/scripts/Rohit_PORT/`hostname -i`_Port_Data.json" > /home/scripts/Rohit_PORT/FILE_NAME_PORT
 
 timeout 2s    echo " put `cat /home/scripts/Rohit_PORT/FILE_NAME_PORT`  /home/scripts/Rohit_portal/Port_Data/ " | sftp -q 10.188.24.100
+
+
+
+
+
+
+
+ISOLATOR:9980
+ACCOUNT_EXP_01:4001
+ACCOUNT_EXP_HT:4018
