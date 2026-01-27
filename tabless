@@ -1,67 +1,65 @@
+#!/bin/bash
+
+ . /opt/IBM/ace/server/bin/mqsiprofile
+
+> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+>/home/scripts/BROKERLIST.txt
+> /home/scripts/Rohit_PORT/FILE_NAME_PORT
+
+for i in `ls /var/mqsi/components/`; do for j in `ls /var/mqsi/components/$i/servers/`; do echo "$i:$j";done  ; done  >> /home/scripts/BROKERLIST.txt
+
+for i in `cat /home/scripts/BROKERLIST.txt  |grep -i HEART_BEAT | grep -i isolator  | cut -d ":" -f2`
+do
+BK=$i
 
 
-mysql> desc UserMaster;
-+---------------+--------------+------+-----+---------+-------+
-| Field         | Type         | Null | Key | Default | Extra |
-+---------------+--------------+------+-----+---------+-------+
-| Uid           | int unsigned | NO   | PRI | 0       |       |
-| EmpName       | varchar(80)  | NO   |     | NULL    |       |
-| Pwd           | varchar(45)  | NO   |     | NULL    |       |
-| SecQ          | varchar(45)  | NO   |     | NULL    |       |
-| SecA          | varchar(45)  | NO   |     | NULL    |       |
-| Project       | varchar(45)  | NO   |     | NULL    |       |
-| Team          | varchar(45)  | NO   |     | NULL    |       |
-| Rid           | int unsigned | YES  | MUL | NULL    |       |
-| Level         | varchar(10)  | YES  |     | NULL    |       |
-| Contact       | varchar(11)  | YES  |     | NULL    |       |
-| Mandatory     | varchar(10)  | YES  |     | NULL    |       |
-| SuperLevel    | varchar(10)  | YES  |     | NULL    |       |
-| Tid           | int          | YES  |     | NULL    |       |
-| Enable        | int          | YES  |     | NULL    |       |
-| TcsDoj        | varchar(20)  | YES  |     | NULL    |       |
-| SbiDoj        | varchar(20)  | YES  |     | NULL    |       |
-| TcsEmail      | varchar(80)  | YES  | UNI | NULL    |       |
-| SbiEmail      | varchar(80)  | YES  |     | NULL    |       |
-| AdId          | varchar(30)  | YES  | UNI | NULL    |       |
-| IdCard        | varchar(30)  | YES  | UNI | NULL    |       |
-| AccessCard    | varchar(30)  | YES  | UNI | NULL    |       |
-| Onboarding    | varchar(20)  | YES  |     | NULL    |       |
-| OnboardedOn   | date         | YES  |     | NULL    |       |
-| PvcAppId      | varchar(30)  | YES  | UNI | NULL    |       |
-| PvcStatus     | varchar(30)  | YES  |     | NULL    |       |
-| PvcActionDate | varchar(30)  | YES  |     | NULL    |       |
-| BACompany     | varchar(80)  | YES  |     | NULL    |       |
-| Phone         | varchar(4)   | YES  |     | NULL    |       |
-| Position      | varchar(20)  | YES  |     | NULL    |       |
-+---------------+--------------+------+-----+---------+-------+
-29 rows in set (0.00 sec)
+PORT=$( mqsireportproperties HEART_BEAT -e $i  -o HTTPConnector -r  | grep -i ListenerPort | cut -d "'" -f2 | sort -u )
 
-mysql> desc FarDetailsAll;
-+----------------------------+----------+------+-----+---------+-------+
-| Field                      | Type     | Null | Key | Default | Extra |
-+----------------------------+----------+------+-----+---------+-------+
-| Far_Id                     | int      | NO   | PRI | NULL    |       |
-| Subject                    | longtext | YES  |     | NULL    |       |
-| Status                     | longtext | NO   |     | NULL    |       |
-| Created                    | longtext | NO   |     | NULL    |       |
-| Expires                    | longtext | YES  |     | NULL    |       |
-| Requested_Source           | longtext | NO   |     | NULL    |       |
-| Requested_Destination      | longtext | NO   |     | NULL    |       |
-| Requested_Service          | longtext | NO   |     | NULL    |       |
-| Requested_Source_NAT       | longtext | YES  |     | NULL    |       |
-| Requested_Destination_NAT  | longtext | YES  |     | NULL    |       |
-| Requested_Port_Translation | longtext | YES  |     | NULL    |       |
-| Change_Source              | longtext | YES  |     | NULL    |       |
-| Change_Destination         | longtext | YES  |     | NULL    |       |
-| Change_Service             | longtext | YES  |     | NULL    |       |
-| Change_Source_NAT          | longtext | YES  |     | NULL    |       |
-| Change_Destination_NAT     | longtext | YES  |     | NULL    |       |
-| Translated_Destination     | longtext | YES  |     | NULL    |       |
-| Translated_Service         | longtext | YES  |     | NULL    |       |
-| Dependent_application      | longtext | YES  |     | NULL    |       |
-| Permanent_Rule             | longtext | YES  |     | NULL    |       |
-| ZONE                       | longtext | YES  |     | NULL    |       |
-| Created_op                 | longtext | YES  |     | NULL    |       |
-| Expires_op                 | longtext | YES  |     | NULL    |       |
-+----------------------------+----------+------+-----+---------+-------+
-23 rows in set (0.00 sec)
+chk=`sh /home/scripts/Rohit_PORT/CHK4D.sh ${PORT}`
+
+if [ "${chk}" == "1" ]
+then
+        echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+else
+        PORT=`cat /var/mqsi/components/HEART_BEAT/servers/$i/server.conf.yaml  | grep -i HTTPConnector: -A5 | grep -i "ListenerPort" | cut -d ":" -f2 | awk '{print $1}'`
+        chk=`sh /home/scripts/Rohit_PORT/CHK4D.sh ${PORT}`
+        if [ "${chk}" == "1" ]
+                then
+                        echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+                else
+                         PORT=`cat  /var/mqsi/components/HEART_BEAT/servers/$i/overrides/server.conf.yaml  | grep -i  HTTPConnector: -A2`
+                         if [ "${chk}" == "1" ]
+                                then
+                                        echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+                                else
+                                        echo "${i}:9980" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+                         fi
+        fi
+fi
+
+
+#echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+
+done
+#---------------------------------------------------ISOLATOREND------------------------------
+for i in `cat /home/scripts/BROKERLIST.txt | cut -d ":" -f1 | sort -u | grep -v CACHE  | grep -v HEART_BEAT`
+do
+BK=$i
+PORT=$(mqsireportproperties $i  -b httplistener -o HTTPConnector -a  | grep -i Listenerport | cut -d "'" -f2)
+if [ "${PORT}" == "" ]
+then
+  echo ;
+else
+echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+fi
+done
+
+chmod 777 /home/scripts/Rohit_PORT/BROKER_PORT.txt;
+
+
+sh /home/scripts/Rohit_PORT/GET_UDPPORT.sh
+cat /home/scripts/Rohit_PORT/BROKER_PORT.txt  > /home/scripts/Rohit_PORT/`hostname -i`_Port_Data.json
+
+echo "/home/scripts/Rohit_PORT/`hostname -i`_Port_Data.json" > /home/scripts/Rohit_PORT/FILE_NAME_PORT
+
+timeout 2s    echo " put `cat /home/scripts/Rohit_PORT/FILE_NAME_PORT`  /home/scripts/Rohit_portal/Port_Data/ " | sftp -q 10.188.24.100
