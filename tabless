@@ -1,10 +1,13 @@
 #!/bin/bash
 
- . /opt/IBM/ace/server/bin/mqsiprofile
+. /opt/IBM/ace/server/bin/mqsiprofile
 
 > /home/scripts/Rohit_PORT/BROKER_PORT.txt
 >/home/scripts/BROKERLIST.txt
 > /home/scripts/Rohit_PORT/FILE_NAME_PORT
+
+# Get the IP address
+IP_ADDR=$(hostname -i)
 
 for i in `ls /var/mqsi/components/`; do for j in `ls /var/mqsi/components/$i/servers/`; do echo "$i:$j";done  ; done  >> /home/scripts/BROKERLIST.txt
 
@@ -12,34 +15,29 @@ for i in `cat /home/scripts/BROKERLIST.txt  |grep -i HEART_BEAT | grep -i isolat
 do
 BK=$i
 
-
 PORT=$( mqsireportproperties HEART_BEAT -e $i  -o HTTPConnector -r  | grep -i ListenerPort | cut -d "'" -f2 | sort -u )
 
 chk=`sh /home/scripts/Rohit_PORT/CHK4D.sh ${PORT}`
 
 if [ "${chk}" == "1" ]
 then
-        echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+        echo "${IP_ADDR}:${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
 else
         PORT=`cat /var/mqsi/components/HEART_BEAT/servers/$i/server.conf.yaml  | grep -i HTTPConnector: -A5 | grep -i "ListenerPort" | cut -d ":" -f2 | awk '{print $1}'`
         chk=`sh /home/scripts/Rohit_PORT/CHK4D.sh ${PORT}`
         if [ "${chk}" == "1" ]
                 then
-                        echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+                        echo "${IP_ADDR}:${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
                 else
                          PORT=`cat  /var/mqsi/components/HEART_BEAT/servers/$i/overrides/server.conf.yaml  | grep -i  HTTPConnector: -A2`
                          if [ "${chk}" == "1" ]
                                 then
-                                        echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+                                        echo "${IP_ADDR}:${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
                                 else
-                                        echo "${i}:9980" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+                                        echo "${IP_ADDR}:${i}:9980" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
                          fi
         fi
 fi
-
-
-#echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
-
 done
 #---------------------------------------------------ISOLATOREND------------------------------
 for i in `cat /home/scripts/BROKERLIST.txt | cut -d ":" -f1 | sort -u | grep -v CACHE  | grep -v HEART_BEAT`
@@ -50,12 +48,11 @@ if [ "${PORT}" == "" ]
 then
   echo ;
 else
-echo "${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
+echo "${IP_ADDR}:${i}:${PORT}" >> /home/scripts/Rohit_PORT/BROKER_PORT.txt
 fi
 done
 
 chmod 777 /home/scripts/Rohit_PORT/BROKER_PORT.txt;
-
 
 sh /home/scripts/Rohit_PORT/GET_UDPPORT.sh
 cat /home/scripts/Rohit_PORT/BROKER_PORT.txt  > /home/scripts/Rohit_PORT/`hostname -i`_Port_Data.json
@@ -63,13 +60,3 @@ cat /home/scripts/Rohit_PORT/BROKER_PORT.txt  > /home/scripts/Rohit_PORT/`hostna
 echo "/home/scripts/Rohit_PORT/`hostname -i`_Port_Data.json" > /home/scripts/Rohit_PORT/FILE_NAME_PORT
 
 timeout 2s    echo " put `cat /home/scripts/Rohit_PORT/FILE_NAME_PORT`  /home/scripts/Rohit_portal/Port_Data/ " | sftp -q 10.188.24.100
-
-
-
-
-
-
-
-ISOLATOR:9980
-ACCOUNT_EXP_01:4001
-ACCOUNT_EXP_HT:4018
