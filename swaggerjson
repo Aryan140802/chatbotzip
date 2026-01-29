@@ -1,459 +1,255 @@
+all_port_data.json
+[root@eispr-prt1-01 Portdata]# cat all_port_data.json
 {
-  "swagger": "2.0",
-  "info": {
-    "description": "Developers may use this swagger specification to create an API for Name Screening Matching.This would require to pass the Reference Number,Last Name and other details to fetch the Name Screening Details .Kindly check description of individual API methods for Night enable information.",
-    "version": "1.0.0",
-    "title": "Swagger Specification for Name Screening Matching Sys V1.0",
-    "termsOfService": "NA",
-    "contact": {
-      "email": "apisupport.eis@sbi.co.in"
-    }
-  },
-  "basePath": "/amlockNameScreening/CCSID/enquiry",
-  "schemes": [
-    "http"
-  ],
-  "consumes": [
-    "application/json"
-  ],
-  "produces": [
-    "application/json"
-  ],
-  "paths": {
-    "/customers": {
-      "post": {
-        "tags": [
-          "NameScreeningDetails"
-        ],
-        "summary": "NameScreeningDetails",
-        "description": "This operation will fetch Name Screening Matching",
-        "operationId": "AmlockNameScreeningMatching_sys",
-        "parameters": [
-          {
-            "name": "NameScreeningDetails",
-            "description": "This operation will fetch Name Screening Matching",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/PlainJSONRequest"
-            },
-            "in": "body"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "schema": {
-              "$ref": "#/definitions/PlainJSONResponse"
-            }
-          }
-        }
-      }
-    }
-  },
-  "definitions": {
-    "PlainJSONRequest": {
-      "properties": {
-        "REQUEST_ID": {
-          "description": "Unique reference number to be passed to AMLOCK",
-          "type": "string",
-          "maxLength": 25
-        },
-        "LAST_NAME": {
-          "description": "Last Name for person, Company Name for entity",
-          "type": "string",
-          "maxLength": 60
-        },
-        "FIRST_NAME": {
-          "description": "First Name for person",
-          "type": "string",
-          "maxLength": 40
-        },
-        "MIDDLE_NAME": {
-          "description": "Middle Name",
-          "type": "string",
-          "maxLength": 40
-        },
-        "BIRTH_DATE": {
-          "type": "string",
-          "description": "Birth Date / Date of Incorporation (YYYYMMDD)",
-          "maxLength": 8
-        },
-        "BIRTH_COUNTRY": {
-          "type": "string",
-          "description": "Country Code For Person : Birth place For Entity: Place of Incorporation(2 character ISO code)",
-          "maxLength": 2
-        },
-        "NAT_COUNTRY": {
-          "type": "string",
-          "description": "Nationality for person (2 character ISO code) ",
-          "maxLength": 2
-        },
-        "LOCATION_CENSUS": {
-          "type": "string",
-          "description": "City Of Person or Entity",
-          "maxLength": 64
-        },
-        "H_COUNTRY": {
-          "type": "string",
-          "description": "Country code of Current  Mail or Shipping Address (2 character ISO code) ",
-          "maxLength": 2
-        },
-        "INDIVIDUAL_FLAG": {
-          "type": "string",
-          "description": "Flag for person or entity (P= Person,E= Entity)",
-          "maxLength": 1
-        },
-        "FATHERS_NAME": {
-          "type": "string",
-          "description": "Fathers Name",
-          "maxLength": 40
-        },
-        "SPOUSE_NAME": {
-          "type": "string",
-          "description": "Spouse Name",
-          "maxLength": 40
-        },
-        "PAN": {
-          "type": "string",
-          "description": "Permanent Account Number for person income tax reporting ",
-          "maxLength": 10
-        },
-        "PROFESSION": {
-          "type": "string",
-          "description": "Profession for person",
-          "maxLength": 32
-        },
-        "ID_NUMBER": {
-          "type": "string",
-          "description": "Company registration number for entity",
-          "maxLength": 17
-        },
-        "BRANCH_CODE": {
-          "type": "string",
-          "description": "Branch No to which Transaction to be posted ",
-          "maxLength": 5
-        },
-        "REQUEST_TELLER_ID": {
-          "type": "string",
-          "description": "Unique id of teller (Maker ID) ",
-          "maxLength": 7
-        },
-        "SEARCH_MODE": {
-          "type": "string",
-          "description": "Refer to the Search Mode",
-          "maxLength": 9
-        },
-        "USER_NAME": {
-          "type": "string",
-          "description": "User Name to access Amlock Base64 encrypted value."
-        },
-        "PASS": {
-          "type": "string",
-          "description": "Password to access Amlock Base64 encrypted value"
-        },
-        "TYPE": {
-          "type": "string",
-          "description": "Tenant Type."
-        },
-        "SOURCE_ID": {
-          "description": "Channel Identifier shared by EIS.",
-          "type": "string"
-        },
-        "REQUEST_REFERENCE_NUMBER": {
-          "type": "string",
-          "description": "Unique Reference Number ",
-          "maxLength": 25
-        }
-      },
-      "required": [
-        "REQUEST_REFERENCE_NUMBER",
-        "REQUEST_ID",
-        "LAST_NAME",
-        "INDIVIDUAL_FLAG",
-        "BRANCH_CODE",
-        "REQUEST_TELLER_ID",
-        "SEARCH_MODE",
-        "USER_NAME",
-        "PASS",
-        "SOURCE_ID"
-      ]
-    },
-    "PlainJSONResponse": {
-      "properties": {
-        "ERROR_CODE": {
-          "type": "string",
-          "description": "Error Code",
-          "maxLength": 5
-        },
-        "ERROR_DESCRIPTION": {
-          "description": "Error Description",
-          "type": "string",
-          "maxLength": 100
-        },
-        "RESPONSE_STATUS": {
-          "type": "string",
-          "description": "Code to judge the response. Appended by EIS",
-          "enum": [
-            "0:Success",
-            "1:Failure(Business and Technical)"
-          ],
-          "maxLength": 1
-        },
-        "PERSON_PARENT": {
-          "description": "Parent of person details",
-          "items": {
-            "$ref": "#/definitions/PersonParent"
-          }
-        },
-        "REQUEST_ID": {
-          "description": "Request ID used for enquiry.",
-          "type": "string",
-          "maxLength": 20
-        },
-        "REQUEST_REFERENCE_NUMBER": {
-          "type": "string",
-          "description": "Unique Reference Number ",
-          "maxLength": 25
-        },
-        "RESPONSE_DATE": {
-          "format": "date",
-          "type": "string",
-          "description": "Response Date (dd-mm-yyyy HH:MM:SS)",
-          "maxLength": 19
-        }
-      },
-      "required": [
-        "ERROR_CODE",
-        "ERROR_DESCRIPTION",
-        "RESPONSE_STATUS",
-        "REQUEST_REFERENCE_NUMBER",
-        "RESPONSE_DATE",
-        "REQUEST_ID"
-      ]
-    },
-    "PersonParent": {
-      "properties": {
-        "AVERAGE_SCORE": {
-          "description": "Average Score of this sanction list entry",
-          "type": "string"
-        },
-        "CHANNEL": {
-          "description": "Channel of the list entry",
-          "type": "string"
-        },
-        "COMMENT": {
-          "description": "Comment of the list entry",
-          "type": "string"
-        },
-        "PEP_VALUE": {
-          "description": "Pep value of the list entry",
-          "type": "string"
-        },
-        "PERSON_CHILD": {
-          "description": "List if person details. ",
-          "items": {
-            "$ref": "#/definitions/PersonChild"
-          }
-        },
-        "STATUS": {
-          "description": "Status of the list entry",
-          "type": "string"
-        },
-        "STATUS_DET": {
-          "description": "Status Details of the list entry",
-          "type": "string"
-        }
-      }
-    },
-    "PersonChild": {
-      "properties": {
-        "LIST_MATCH": {
-          "description": "List of Matches. This will be repeat ",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ListMatch"
-          }
-        },
-        "MATCHES": {
-          "description": "Matches of this sanction list entry",
-          "type": "string"
-        }
-      }
-    },
-    "ListMatch": {
-      "properties": {
-        "SCORE": {
-          "description": "Score of this sanction list entry",
-          "type": "string",
-          "maxLength": 4
-        },
-        "LIST_NAME": {
-          "description": "List name of the list entry",
-          "type": "string",
-          "maxLength": 20
-        },
-        "LIST_ID": {
-          "description": "List ID of the list entry",
-          "type": "string",
-          "maxLength": 10
-        },
-        "INSTUTION_ID": {
-          "description": "Instution Id of the list entry",
-          "type": "string"
-        },
-        "HIT_WORD": {
-          "description": "List if Hits. This will be repeat",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/HitWord"
-          }
-        },
-        "WATCHLIST_DATA": {
-          "description": "List of Watchlist Data",
-          "items": {
-            "$ref": "#/definitions/WatchListData"
-          }
-        }
-      }
-    },
-    "HitWord": {
-      "properties": {
-        "FIELD_ID": {
-          "description": "ID of the field in the transaction data, where the word triggered the hit.",
-          "type": "string",
-          "maxLength": 20
-        },
-        "MATCHED_WORD": {
-          "description": "Found word on the list data",
-          "type": "string",
-          "maxLength": 20
-        },
-        "SEARCHED_WORD": {
-          "description": "Searched word from the customer data",
-          "type": "string",
-          "maxLength": 20
-        },
-        "SCORE": {
-          "description": "Score for this field",
-          "type": "string",
-          "maxLength": 4
-        }
-      }
-    },
-    "WatchListData": {
-      "properties": {
-        "ADDRESS": {
-          "description": "Search List Address",
-          "items": {
-            "$ref": "#/definitions/Address"
-          }
-        },
-        "BIRTHS": {
-          "description": "Search List Birth",
-          "items": {
-            "$ref": "#/definitions/Births"
-          }
-        },
-        "CITIZS": {
-          "description": "Search List Citiz",
-          "items": {
-            "$ref": "#/definitions/Citizs"
-          }
-        },
-        "NAMES": {
-          "description": "Search List Name",
-          "items": {
-            "$ref": "#/definitions/Names"
-          }
-        },
-        "PASSPORT_NO": {
-          "description": "Search List Pass Number",
-          "items": {
-            "$ref": "#/definitions/PassportNo"
-          }
-        }
-      }
-    },
-    "Address": {
-      "properties": {
-        "CITY": {
-          "description": "City of the Customer if record found in search list",
-          "type": "string"
-        },
-        "COUNTRY": {
-          "description": "Country of the Customer if record found in search list",
-          "type": "string"
-        },
-        "STREET": {
-          "description": "Street of the Customer if record found in search list",
-          "type": "string"
-        },
-        "STREET_NUMBER": {
-          "description": "Street number of the Customer if record found in search list",
-          "type": "string"
-        },
-        "ZIP": {
-          "description": "Pincode of the Customer if record found in search list",
-          "type": "string"
-        }
-      }
-    },
-    "Births": {
-      "properties": {
-        "BIRTH_DATE": {
-          "description": "Birth date of the Customer if record found in search list",
-          "type": "string"
-        },
-        "COUNTRY": {
-          "description": "Country of the Customer if record found in search list",
-          "type": "string"
-        },
-        "PLACE": {
-          "description": "Place of the Customer if record found in search list",
-          "type": "string"
-        }
-      }
-    },
-    "Citizs": {
-      "properties": {
-        "COUNTRY": {
-          "description": "Country of the Customer if record found in search list",
-          "type": "string"
-        }
-      }
-    },
-    "Names": {
-      "properties": {
-        "FIRST_NAME": {
-          "description": "First Name of the Customer if record found in search list",
-          "type": "string"
-        },
-        "LAST_NAME": {
-          "description": "Last Name of the Customer if record found in search list",
-          "type": "string"
-        },
-        "MIDDLE_NAME": {
-          "description": "Middle Name of the Customer if record found in search list",
-          "type": "string"
-        },
-        "WHOLE_NAME": {
-          "description": "Whole Name of the Customer if record found in search list",
-          "type": "string"
-        }
-      }
-    },
-    "PassportNo": {
-      "properties": {
-        "PASSPORT_NUMBER": {
-          "description": "PassNo of the Customer if record found in search list",
-          "type": "string"
-        },
-        "COUNTRY": {
-          "description": "Country of the Customer if record found in search list",
-          "type": "string"
-        }
-      }
-    }
-  },
-  "host": "eisprcustsys-01:5021"
+  "10.177.40.10": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.40.110": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.40.111": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.40.112": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.40.113": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.40.114": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.40.115": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.40.11": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.40.12": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.40.131": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.40.132": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.40.133": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.40.134": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.40.135": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.40.13": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.40.141": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.40.142": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.40.143": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.40.144": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.40.145": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.40.146": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.40.14": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.40.155": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.40.156": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.40.157": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.40.158": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.40.159": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.40.15": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.40.160": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.40.163": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.177.40.164": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.177.40.165": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.177.40.167": [{"ISOLATOR":9980},{"ISOLATOR2":9980},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"Y2_LOGIN_SYS_01":5037},{"Y2_LOGIN_SYS_02":5034},{"Y2_LOGIN_SYS_03":5035},{"Y2_LOGIN_SYS_04":5036}],
+  "10.177.40.173": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.40.174": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.40.175": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.40.176": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.40.190": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.177.40.191": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.177.40.192": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.177.40.194": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.40.195": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.40.196": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.40.197": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.40.31": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.40.32": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.40.33": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.40.34": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.40.41": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.40.42": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.40.43": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.40.44": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.40.56": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.40.57": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.40.58": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.40.59": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.40.63": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.177.40.64": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.177.40.65": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.177.40.67": [{"ISOLATOR":9980},{"MISC_EXP_UPI":4022}],
+  "10.177.40.73": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.177.40.74": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.177.40.75": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.177.41.10": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.41.110": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.41.112": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.41.113": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.41.114": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.41.115": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.177.41.12": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.41.132": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.41.133": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.41.134": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.41.135": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.177.41.13": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.41.142": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.41.143": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.41.144": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.41.145": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.41.146": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.177.41.14": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.41.156": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009},{"Y2_LOGIN_SYS_01":5037},{"Y2_LOGIN_SYS_02":5034},{"Y2_LOGIN_SYS_03":5035},{"Y2_LOGIN_SYS_04":5036}],
+  "10.177.41.157": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.41.158": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.41.159": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.41.15": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.177.41.160": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.177.41.164": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.177.41.165": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.177.41.166": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.177.41.167": [{"ISOLATOR":9980},{"ISOLATOR2":9980},{"MISC_SYS_UPI":5022},{"YONO_SYS_03":5037},{"YONO_SYS_04":5034},{"YONO_SYS_05":5035},{"YONO_SYS_06":5036}],
+  "10.177.41.174": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.41.175": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.41.176": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.177.41.191": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.177.41.192": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.177.41.194": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.41.196": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.41.197": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.177.41.32": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.41.33": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.41.34": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.177.41.42": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.41.43": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.41.44": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.41.45": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.177.41.56": [{"ISOLATOR":9980},{"LOGGING_EXP":4009},{"Y2_LOGIN_EXP_01":4037},{"Y2_LOGIN_EXP_02":4034},{"Y2_LOGIN_EXP_03":4035},{"Y2_LOGIN_EXP_04":4036}],
+  "10.177.41.57": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.41.58": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.41.59": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.177.41.64": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.177.41.65": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.177.41.66": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.177.41.67": [{"ISOLATOR":9980},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022}],
+  "10.177.41.74": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.177.41.75": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.188.24.10": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.24.110": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.24.111": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.24.112": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.24.113": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.24.114": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.24.115": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.24.11": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.24.12": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.24.131": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.24.132": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.24.133": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.24.134": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.24.135": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.24.13": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.24.141": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.24.142": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.24.143": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.24.144": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.24.145": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.24.146": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.24.14": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.24.155": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.24.156": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.24.157": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.24.158": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.24.159": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.24.15": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.24.160": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.24.163": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.24.164": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.24.165": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.24.166": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.24.167": [{"ISOLATOR":9980},{"ISOLATOR2":9980},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"Y2_LOGIN_SYS_01":5037},{"Y2_LOGIN_SYS_02":5034},{"Y2_LOGIN_SYS_03":5035},{"Y2_LOGIN_SYS_04":5036}],
+  "10.188.24.173": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.24.174": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.24.175": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.24.176": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.24.190": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.188.24.191": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.188.24.192": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.188.24.194": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.24.195": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.24.196": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.24.197": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.24.31": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.24.32": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.24.33": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.24.34": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.24.41": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.24.42": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.24.43": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.24.44": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.24.45": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.24.55": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.24.56": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.24.57": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.24.58": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.24.59": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.24.63": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.24.64": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.24.65": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.24.66": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.24.67": [{"ISOLATOR":9980},{"MISC_EXP_UPI":4022}],
+  "10.188.24.73": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.188.24.74": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.188.24.75": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.188.25.10": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.25.110": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.25.111": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.25.112": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.25.113": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.25.114": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.25.115": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"ACCOUNT_SYS_01":5001},{"ACCOUNT_SYS_02":5101},{"ACCOUNT_SYS_HT":5018}],
+  "10.188.25.11": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.25.12": [{"ISOLATOR":9980},{"ACCOUNT_EXP_01":4001},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.25.131": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.25.132": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.25.133": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.25.134": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.25.135": [{"ISOLATOR":9980},{"PAYMENT_SYS":5006}],
+  "10.188.25.13": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.25.141": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.25.142": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.25.143": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.25.144": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.25.145": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.25.146": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUSTOMER_1208_SYS":5021},{"CUSTOMER_SPECIAL_SYS":5015},{"CUSTOMER_SYS":5005},{"CUST_NCBS_SYS":5202}],
+  "10.188.25.14": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.25.155": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009},{"Y2_LOGIN_SYS_01":5037},{"Y2_LOGIN_SYS_02":5034},{"Y2_LOGIN_SYS_03":5035},{"Y2_LOGIN_SYS_04":5036}],
+  "10.188.25.156": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009},{"Y2_LOGIN_SYS_01":5037},{"Y2_LOGIN_SYS_02":5034},{"Y2_LOGIN_SYS_03":5035},{"Y2_LOGIN_SYS_04":5036}],
+  "10.188.25.157": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.25.158": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.25.159": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.25.15": [{"ISOLATOR":9980},{"ACCOUNT_EXP_02":4101},{"ACCOUNT_EXP_HT":4018}],
+  "10.188.25.160": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"LOGGING_SYS":5009}],
+  "10.188.25.163": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.25.164": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.25.165": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.25.166": [{"ISOLATOR":9980},{"ISOLATOR2":9980},{"CUST_NCBS_SYS":5202},{"GCC_SYS":5014},{"JANSURAKSHA_SYS":5055},{"MISC_1208_SYS":5020},{"MISC_SYS":5011},{"MISC_SYS_UPI":5022},{"NON_CBS_ACCOUNT_SYS":5201},{"NP_SYS":5017},{"THIRD_PARTY_SYS":5012},{"WEB_APP_BROKER_SYS":5023},{"WEB_APP_EKYC_SYS":5038},{"YONO_SYS_01":5024},{"YONO_SYS_02":5025}],
+  "10.188.25.167": [{"ISOLATOR":9980},{"ISOLATOR2":9980},{"MISC_SYS":5011}],
+  "10.188.25.173": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.25.174": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.25.175": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.25.176": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"IVR_SYS":5016},{"LOGGING_SYS":5009},{"MISC_SYS_UPI":5022}],
+  "10.188.25.190": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.188.25.191": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.188.25.192": [{"ISOLATOR":9980},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_EXP":4010}],
+  "10.188.25.194": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.25.195": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.25.196": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.25.197": [{"ISOLATOR":9980},{"ISOLATOR2":9981},{"AADHAR_EXP":4113},{"PAN_EXP":4013},{"PASSBOOK_SYS":5010}],
+  "10.188.25.31": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.25.32": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.25.33": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.25.34": [{"ISOLATOR":9980},{"PAYMENT_EXP":4003}],
+  "10.188.25.41": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.25.42": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.25.43": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.25.44": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.25.45": [{"ISOLATOR":9980},{"CUSTOMER_1208_EXP":4021},{"CUSTOMER_EXP":4002},{"CUSTOMER_SPECIAL_EXP":4015},{"CUST_NCBS_EXP":4202}],
+  "10.188.25.55": [{"ISOLATOR":9980},{"LOGGING_EXP":4009},{"Y2_LOGIN_EXP_01":4037},{"Y2_LOGIN_EXP_02":4034},{"Y2_LOGIN_EXP_03":4035},{"Y2_LOGIN_EXP_04":4036}],
+  "10.188.25.56": [{"ISOLATOR":9980},{"LOGGING_EXP":4009},{"Y2_LOGIN_EXP_01":4037},{"Y2_LOGIN_EXP_02":4034},{"Y2_LOGIN_EXP_03":4035},{"Y2_LOGIN_EXP_04":4036}],
+  "10.188.25.57": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.25.58": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.25.59": [{"ISOLATOR":9980},{"LOGGING_EXP":4009}],
+  "10.188.25.63": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_02":4111},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.25.64": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.25.65": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"GCC_EXP":4014},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.25.66": [{"ISOLATOR":9980},{"CUST_NCBS_EXP":4202},{"JANSURAKSHA_EXP":4055},{"MISC_1208_EXP":4020},{"MISC_EXP":4011},{"MISC_EXP_UPI":4022},{"NON_CBS_ACCOUNT_EXP":4201},{"NP_EXP":4017},{"NP_SPL":4019},{"WEB_APP_BROKER_EXP":4023},{"WEB_APP_EKYC_EXP":4038},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025}],
+  "10.188.25.67": [{"ISOLATOR":9980},{"Y2_LOGIN_EXP_01":7080},{"Y2_LOGIN_EXP_02":7080},{"Y2_LOGIN_EXP_03":7080},{"Y2_LOGIN_EXP_04":7080}],
+  "10.188.25.68": [{"ISOLATOR":9980},{"Misc_E_HV":4040},{"Misc_E_HV":4040},{"Misc_E_MRTECH_01":4039},{"Misc_E_MRTECH_01":4039},{"Misc_E_CBSMS_01":4030},{"Misc_E_CBSMS_01":4030},{"Misc_E_CBSMS_02":4031},{"Misc_E_CBSMS_02":4031},{"Misc_E_CBSMS_03":4032},{"Misc_E_CBSMS_03":4032},{"Misc_E_CKYC_01":4027},{"Misc_E_CKYC_01":4027},{"Misc_E_CRM_01":4028},{"Misc_E_CRM_01":4028},{"Misc_E_HRMS_01":4026},{"Misc_E_HRMS_01":4026},{"Misc_E_SP2_01":4029},{"Misc_E_SP2_01":4029},{"MISC_NESL_EXP_01":4033},{"MISC_NESL_EXP_01":4033},{"YONO_EXP_01":4024},{"YONO_EXP_01":4024},{"YONO_EXP_02":4025},{"YONO_EXP_02":4025}],
+  "10.188.25.73": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.188.25.74": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}],
+  "10.188.25.75": [{"ISOLATOR":9980},{"IVR_EXP":4016},{"LOGGING_EXP":4009},{"MISC_EXP_UPI":4022}]
 }
