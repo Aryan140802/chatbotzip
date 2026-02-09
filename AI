@@ -2,157 +2,154 @@
 
 import os
 import json
-import socket
 import subprocess
-import platform
 from datetime import datetime
 
-# ================== CONFIG ==================
-
-OUTPUT_DIR = "./sync"
-ENDPOINT_PUBLIC_PATH = "/opt/IBM/EndPoint_Public"
-
-# TEMP testing credentials (REMOVE LATER)
+# ==============================
+# HARD-CODED (TEST ONLY)
+# ==============================
 ACE_USER = "v1019468"
 ACE_PASS = "Eisking@1234567"
 
-# ============================================
+CERT_DIRS = [
+    "/opt/IBM/EndPoint_Public",
+    "/opt/IBM/EndPoint_Private"
+]
 
+OUTPUT_DIR = "/home/scripts/output"
+HOSTNAME = os.uname().nodename
 
+# Ensure output dir
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# ==============================
+# UTILS
+# ==============================
 def run(cmd):
-    return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
+    return subprocess.check_output(
+        cmd,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
 
+# ==============================
+# CERTIFICATE HANDLING
+# ==============================
+def read_x509(cert):
+    try:
+        out = run(["openssl", "x509", "-in", cert, "-noout", "-dates", "-fingerprint", "-sha1"])
+        data = {}
+        for line in out.splitlines():
+            if line.startswith("notBefore"):
+                data["valid_from"] = line.split("=", 1)[1]
+            elif line.startswith("notAfter"):
+                data["valid_to"] = line.split("=", 1)[1]
+            elif "Fingerprint" in line:
+                data["sha1"] = line.split("=", 1)[1]
+        return data
+    except:
+        return {"error": "Unable to read"}
 
-# ---------- SYSTEM INFO ----------
-
-def get_system_info():
-    return {
-        "hostname": socket.gethostname(),
-        "ip": socket.gethostbyname(socket.gethostname()),
-        "os": platform.platform(),
-        "uptime": run(["uptime"]).strip(),
-    }
-
-
-# ---------- CERTIFICATE READING ----------
-
-def parse_openssl_output(out):
-    data = {}
+def parse_keytool(out):
+    certs = []
+    current = {}
     for line in out.splitlines():
-        if line.startswith("notBefore="):
-            data["valid_from"] = line.split("=")[1]
-        elif line.startswith("notAfter="):
-            data["valid_to"] = line.split("=")[1]
-        elif "SHA1 Fingerprint" in line:
-            data["sha1"] = line.split("=")[1]
-    return data
-
-
-def parse_keytool_output(out):
-    certs = {}
-    alias = None
-
-    for line in out.splitlines():
+        line = line.strip()
         if line.startswith("Alias name:"):
-            alias = line.split(":")[1].strip()
-            certs[alias] = {}
-        elif "Valid from" in line and alias:
-            parts = line.split("until:")
-            certs[alias]["valid_from"] = parts[0].split("from")[1].strip()
-            certs[alias]["valid_to"] = parts[1].strip()
-        elif "SHA1:" in line and alias:
-            certs[alias]["sha1"] = line.split("SHA1:")[1].strip()
-
+            if current:
+                certs.append(current)
+            current = {"alias": line.split(":", 1)[1].strip()}
+        elif line.startswith("Valid from:"):
+            parts = line.replace("Valid from:", "").split("until:")
+            current["valid_from"] = parts[0].strip()
+            current["valid_to"] = parts[1].strip()
+        elif line.startswith("SHA1:"):
+            current["sha1"] = line.split(":", 1)[1].strip()
+    if current:
+        certs.append(current)
     return certs
 
-
-def read_endpoint_certs():
-    data = {}
-
-    if not os.path.isdir(ENDPOINT_PUBLIC_PATH):
-        return data
-
-    for f in os.listdir(ENDPOINT_PUBLIC_PATH):
-        full = os.path.join(ENDPOINT_PUBLIC_PATH, f)
-
+def read_jks(jks):
+    passwords = ["changeit", "password", "ibmwebspheremq"]
+    for pwd in passwords:
         try:
-            if f.endswith(".jks"):
-                out = run([
-                    "keytool", "-list", "-v",
-                    "-keystore", full,
-                    "-storepass", "password"
-                ])
-                data[f] = parse_keytool_output(out)
-
-            elif f.endswith((".crt", ".cer", ".pem")):
-                out = run([
-                    "openssl", "x509", "-in", full,
-                    "-noout", "-startdate", "-enddate", "-fingerprint"
-                ])
-                data[f] = parse_openssl_output(out)
+            out = run([
+                "keytool", "-list", "-v",
+                "-keystore", jks,
+                "-storepass", pwd
+            ])
+            return {
+                "storepass": pwd,
+                "certs": parse_keytool_output(out)
+            }
         except:
-            data[f] = {"error": "Unable to read"}
+            continue
+    return {"error": "Invalid keystore password"}
 
-    return data
+def collect_certificates():
+    result = {}
+    for d in CERT_DIRS:
+        if not os.path.isdir(d):
+            continue
+        for f in os.listdir(d):
+            full = os.path.join(d, f)
+            if not os.path.isfile(full):
+                continue
+            if f.endswith((".cer", ".crt", ".pem")):
+                result[f] = read_x509(full)
+            elif f.endswith(".jks"):
+                result[f] = read_jks(full)
+    return result
 
+# ==============================
+# ACE HANDLING (NO MQ)
+# ==============================
+def collect_ace():
+    ace = {}
 
-# ---------- IBM ACE / IIB ----------
-
-def get_ace_info():
-    info = {}
     try:
         nodes = run(["mqsilist"]).splitlines()
-        for node in nodes:
-            node = node.strip()
-            info[node] = {"execution_groups": []}
+    except:
+        return {"error": "mqsilist failed"}
 
+    for node in nodes:
+        node = node.strip()
+        if not node or node.startswith("BIP"):
+            continue
+
+        ace[node] = {"execution_groups": []}
+
+        try:
             egs = run(["mqsilist", node]).splitlines()
             for eg in egs:
-                info[node]["execution_groups"].append(eg.strip())
-    except:
-        info["error"] = "ACE not accessible"
+                eg = eg.strip()
+                if eg and not eg.startswith("BIP"):
+                    ace[node]["execution_groups"].append(eg)
+        except:
+            ace[node]["execution_groups_error"] = "Unable to list EGs"
 
-    return info
+    return ace
 
-
-# ---------- IBM MQ ----------
-
-def get_mq_info():
-    info = {}
-
-    try:
-        qms = run(["dspmq"]).splitlines()
-        for qm in qms:
-            name = qm.split("(")[1].split(")")[0]
-            status = qm.split("STATUS(")[1].split(")")[0]
-            info[name] = {"status": status}
-    except:
-        info["error"] = "MQ not accessible"
-
-    return info
-
-
-# ---------- MAIN ----------
-
+# ==============================
+# MAIN
+# ==============================
 def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-
     snapshot = {
-        "timestamp": datetime.now().isoformat(),
-        "system": get_system_info(),
-        "certificates": read_endpoint_certs(),
-        "ace": get_ace_info(),
-        "mq": get_mq_info(),
+        "server": HOSTNAME,
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "certificates": collect_certificates(),
+        "ace": collect_ace()
     }
 
-    server_ip = snapshot["system"]["ip"]
-    outfile = f"{OUTPUT_DIR}/{server_ip}.json"
+    out_file = os.path.join(
+        OUTPUT_DIR,
+        f"{HOSTNAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    )
 
-    with open(outfile, "w") as f:
+    with open(out_file, "w") as f:
         json.dump(snapshot, f, indent=2)
 
-    print(f"Generated: {outfile}")
-
+    print(f"Snapshot generated: {out_file}")
 
 if __name__ == "__main__":
     main()
