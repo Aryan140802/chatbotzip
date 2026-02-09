@@ -1,165 +1,150 @@
-#!/usr/bin/env python3
-
-import subprocess
-import json
+#!/usr/bin/python3
 import os
+import json
 import socket
-from datetime import datetime
+import subprocess
+import datetime
+import requests
+from requests.auth import HTTPBasicAuth
 
-# ================= CONFIG =================
-ENVIRONMENT = "PR"              # PR or DR
-SERVER_ID = "24"                # 24 / 25 / 40 / 42
-ACE_REST_PORT = 4414
+# =========================
+# TEMP TESTING CREDENTIALS
+# =========================
+ACE_USERNAME = "PUT_USERNAME_HERE"
+ACE_PASSWORD = "PUT_PASSWORD_HERE"
 
-TRUSTSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_TRUSTSTORE.jks"
-KEYSTORE_PATH   = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_KEYSTORE.jks"
-ENDPOINT_PUBLIC = "/opt/IBM/EndPoint_Public"
-STOREPASS       = "password"
+# =========================
+# SERVER CONFIG
+# =========================
+ENVIRONMENT = "PR"
+SERVER_ID = "24"
+ACE_HOST = "10.188.25.10"
+ACE_PORT = 4414
 
-OUTPUT_DIR = "/sync/outbox"
-# ==========================================
+TRUSTSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/TRUSTSTORE.jks"
+KEYSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/KEYSTORE.jks"
+ENDPOINT_PUBLIC_PATH = "/opt/IBM/EndPoint_Public"
 
+OUTPUT_DIR = "/sync"
 
+# =========================
+# UTILS
+# =========================
 def run(cmd):
     return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
 
+def now():
+    return datetime.datetime.utcnow().isoformat()
 
-# ---------- ACE DATA ----------
+# =========================
+# CERTIFICATE COLLECTION
+# =========================
+def read_jks(path):
+    data = {}
+    if not os.path.exists(path):
+        return data
+
+    out = run(["keytool", "-list", "-v", "-keystore", path, "-storepass", "password"])
+    alias = None
+
+    for line in out.splitlines():
+        if line.startswith("Alias name:"):
+            alias = line.split(":")[1].strip()
+            data[alias] = {}
+        elif "Valid from" in line and alias:
+            parts = line.split("until:")
+            data[alias]["valid_from"] = parts[0].split("from")[1].strip()
+            data[alias]["valid_to"] = parts[1].strip()
+        elif "SHA1:" in line and alias:
+            data[alias]["sha1"] = line.split("SHA1:")[1].strip()
+
+    return data
+
+def read_endpoint_certs():
+    data = {}
+    if not os.path.isdir(ENDPOINT_PUBLIC_PATH):
+        return data
+
+    for f in os.listdir(ENDPOINT_PUBLIC_PATH):
+        full = os.path.join(ENDPOINT_PUBLIC_PATH, f)
+        if not os.path.isfile(full):
+            continue
+
+        out = run(["openssl", "x509", "-in", full, "-noout",
+                   "-startdate", "-enddate", "-fingerprint"])
+        entry = {}
+        for line in out.splitlines():
+            if line.startswith("notBefore="):
+                entry["valid_from"] = line.split("=")[1]
+            elif line.startswith("notAfter="):
+                entry["valid_to"] = line.split("=")[1]
+            elif "SHA1" in line:
+                entry["sha1"] = line.split("=")[1]
+        data[f] = entry
+
+    return data
+
+# =========================
+# ACE DATA
+# =========================
 def get_ace_data():
-    base = f"http://localhost:{ACE_REST_PORT}/apiv2"
-    ace = {"integrationServers": {}}
+    url = f"https://{ACE_HOST}:{ACE_PORT}/apiv2/servers"
+    session = requests.Session()
+    session.auth = HTTPBasicAuth(ACE_USERNAME, ACE_PASSWORD)
+    session.verify = False
+    session.headers = {"Accept": "application/json"}
 
     try:
-        servers = json.loads(run(["curl", "-s", f"{base}/servers"]))["integrationServers"]
-        for srv in servers:
-            name = srv["name"]
-            ace["integrationServers"][name] = {
-                "executionGroups": {},
-                "applications": []
-            }
-
-            egs = json.loads(run(["curl", "-s", f"{base}/servers/{name}/executiongroups"]))["executionGroups"]
-            for eg in egs:
-                ace["integrationServers"][name]["executionGroups"][eg["name"]] = {}
-
-            apps = json.loads(run(["curl", "-s", f"{base}/servers/{name}/applications"]))["applications"]
-            ace["integrationServers"][name]["applications"] = [a["name"] for a in apps]
-
+        r = session.get(url, timeout=20)
+        r.raise_for_status()
+        return r.json()
     except Exception as e:
-        ace["error"] = str(e)
+        return {"error": str(e)}
 
-    return ace
-
-
-# ---------- MQ DATA ----------
+# =========================
+# MQ DATA (LIGHTWEIGHT)
+# =========================
 def get_mq_data():
-    mq = {"queueManagers": {}}
-
+    qms = {}
     try:
-        qmlist = run(["dspmq"]).splitlines()
-        qms = [l.split("(")[1].split(")")[0] for l in qmlist if "QMNAME" in l]
+        out = run(["dspmq"])
+        for line in out.splitlines():
+            if "QMNAME" in line:
+                qm = line.split("(")[1].split(")")[0]
+                qms[qm] = {"channels": [], "listeners": []}
 
-        for qm in qms:
-            mq["queueManagers"][qm] = {
-                "channels": [],
-                "listeners": []
-            }
+                try:
+                    ch = run(["runmqsc", qm], input="DISPLAY CHANNEL(*)\nEND\n")
+                    qms[qm]["channels"] = [l for l in ch.splitlines() if "CHANNEL(" in l]
+                except:
+                    pass
 
-            try:
-                ch = run(["runmqsc", qm], input="DISPLAY CHANNEL(*)\nEND\n", text=True)
-                mq["queueManagers"][qm]["channels"] = [
-                    l.split("(")[1].split(")")[0]
-                    for l in ch.splitlines() if "CHANNEL(" in l
-                ]
-            except:
-                pass
-
-            try:
-                ls = run(["runmqsc", qm], input="DISPLAY LISTENER(*)\nEND\n", text=True)
-                mq["queueManagers"][qm]["listeners"] = [
-                    l.split("(")[1].split(")")[0]
-                    for l in ls.splitlines() if "LISTENER(" in l
-                ]
-            except:
-                pass
-
+                try:
+                    ls = run(["runmqsc", qm], input="DISPLAY LISTENER(*)\nEND\n")
+                    qms[qm]["listeners"] = [l for l in ls.splitlines() if "LISTENER(" in l]
+                except:
+                    pass
     except:
         pass
 
-    return mq
+    return qms
 
-
-# ---------- CERTIFICATES ----------
-def parse_keytool(store_path):
-    data = {}
-    if not os.path.exists(store_path):
-        return data
-
-    out = run(["keytool", "-list", "-keystore", store_path, "-storepass", STOREPASS])
-    aliases = [l.split(",")[0].strip() for l in out.splitlines() if "Entry" in l]
-
-    for alias in aliases:
-        det = run([
-            "keytool", "-list", "-v",
-            "-keystore", store_path,
-            "-storepass", STOREPASS,
-            "-alias", alias
-        ])
-        cert = {}
-        for line in det.splitlines():
-            if "Valid from:" in line:
-                cert["valid_from"] = line.split(":", 1)[1].strip()
-            elif "until:" in line:
-                cert["valid_to"] = line.split("until:")[1].strip()
-            elif "Owner:" in line:
-                cert["owner"] = line.split(":", 1)[1].strip()
-            elif "SHA1:" in line:
-                cert["sha1"] = line.split("SHA1:")[1].strip()
-
-        data[alias] = cert
-
-    return data
-
-
-def parse_endpoint():
-    data = {}
-    if not os.path.exists(ENDPOINT_PUBLIC):
-        return data
-
-    for f in os.listdir(ENDPOINT_PUBLIC):
-        full = os.path.join(ENDPOINT_PUBLIC, f)
-        try:
-            out = run(["openssl", "x509", "-in", full, "-noout",
-                       "-startdate", "-enddate", "-fingerprint"])
-            cert = {}
-            for l in out.splitlines():
-                if l.startswith("notBefore="):
-                    cert["valid_from"] = l.split("=", 1)[1]
-                elif l.startswith("notAfter="):
-                    cert["valid_to"] = l.split("=", 1)[1]
-                elif "SHA1" in l:
-                    cert["sha1"] = l.split("=", 1)[1]
-            data[f] = cert
-        except:
-            pass
-
-    return data
-
-
-# ---------- MAIN ----------
+# =========================
+# MAIN
+# =========================
 def main():
     snapshot = {
         "environment": ENVIRONMENT,
         "server_id": SERVER_ID,
         "hostname": socket.gethostname(),
-        "generated_at": datetime.utcnow().isoformat(),
-        "ace": get_ace_data(),
-        "mq": get_mq_data(),
+        "generated_at": now(),
         "certificates": {
-            "truststore": parse_keytool(TRUSTSTORE_PATH),
-            "keystore": parse_keytool(KEYSTORE_PATH),
-            "endpoint_public": parse_endpoint()
-        }
+            "truststore": read_jks(TRUSTSTORE_PATH),
+            "keystore": read_jks(KEYSTORE_PATH),
+            "endpoint_public": read_endpoint_certs()
+        },
+        "ace": get_ace_data(),
+        "mq": get_mq_data()
     }
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -168,8 +153,7 @@ def main():
     with open(outfile, "w") as f:
         json.dump(snapshot, f, indent=2)
 
-    print(f"Generated: {outfile}")
-
+    print("Generated:", outfile)
 
 if __name__ == "__main__":
     main()
