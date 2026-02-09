@@ -4,7 +4,13 @@ import json
 import socket
 import subprocess
 import platform
+import requests
 from datetime import datetime
+from requests.auth import HTTPBasicAuth
+import urllib3
+
+# Disable SSL warnings if using self-signed certificates
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ================== CONFIG ==================
 OUTPUT_DIR = "./sync"
@@ -13,9 +19,18 @@ TRUSTSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_TRUSTSTORE.jk
 KEYSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_KEYSTORE.jks"
 JKS_PASSWORD = "password"
 
-# TEMP testing credentials (REMOVE LATER)
+# ACE REST API Configuration
+ACE_ADMIN_HOST = "eispraccexp-01"  # From your error message
+ACE_ADMIN_PORT = 4414
 ACE_USER = "v1019468"
 ACE_PASS = "Eisking@1234567"
+ACE_USE_HTTPS = False  # Set to True if using HTTPS
+ACE_VERIFY_SSL = False  # Set to True to verify SSL certificates
+
+# IBM MQ REST API Configuration (if available)
+MQ_REST_HOST = "localhost"
+MQ_REST_PORT = 9443
+MQ_USE_REST = False  # Set to True if MQ REST API is available
 # ============================================
 
 def run(cmd):
@@ -152,69 +167,100 @@ def read_all_certificates():
     
     return all_certs
 
-# ---------- IBM ACE / IIB ----------
-def get_ace_info():
-    """Get ACE/IIB integration node information"""
+# ---------- IBM ACE REST API ----------
+def get_ace_info_rest():
+    """Get ACE information using REST API"""
+    protocol = "https" if ACE_USE_HTTPS else "http"
+    base_url = f"{protocol}://{ACE_ADMIN_HOST}:{ACE_ADMIN_PORT}/apiv2"
+    
+    auth = HTTPBasicAuth(ACE_USER, ACE_PASS)
+    
     info = {}
     
-    # Try to list all nodes
-    nodes_output = run(["mqsilist"])
-    
-    if not nodes_output:
-        return {"error": "ACE not accessible - mqsilist failed"}
-    
-    # Parse node names
-    nodes = []
-    for line in nodes_output.splitlines():
-        line = line.strip()
-        if line and "BIP" in line:
-            # Extract node name from output like "BIP1286I: Integration node 'HEART_BEAT'..."
-            if "Integration node" in line:
-                parts = line.split("'")
-                if len(parts) >= 2:
-                    node_name = parts[1]
-                    nodes.append(node_name)
-    
-    # If no nodes found, try parsing differently
-    if not nodes:
-        for line in nodes_output.splitlines():
-            line = line.strip()
-            if line and not line.startswith("BIP"):
-                nodes.append(line)
-    
-    # Get details for each node
-    for node in nodes:
-        node_info = {"execution_groups": [], "status": "unknown"}
+    try:
+        # Get integration nodes
+        nodes_url = f"{base_url}/servers"
+        response = requests.get(nodes_url, auth=auth, verify=ACE_VERIFY_SSL, timeout=5)
         
-        # Try to get execution groups
-        egs_output = run(["mqsilist", node])
-        
-        if egs_output:
-            egs = []
-            for line in egs_output.splitlines():
-                line = line.strip()
-                if line and "BIP" in line:
-                    # Look for execution group/server info
-                    if "execution group" in line.lower() or "integration server" in line.lower():
-                        parts = line.split("'")
-                        if len(parts) >= 2:
-                            eg_name = parts[1]
-                            egs.append(eg_name)
-                elif line and not line.startswith("BIP"):
-                    egs.append(line)
+        if response.status_code == 200:
+            data = response.json()
             
-            node_info["execution_groups"] = egs
-            node_info["status"] = "accessible"
-        else:
-            node_info["error"] = "Cannot query execution groups"
+            # Parse integration servers (execution groups)
+            if "servers" in data:
+                for server in data["servers"]:
+                    server_name = server.get("name", "Unknown")
+                    info[server_name] = {
+                        "status": server.get("status", "Unknown"),
+                        "type": server.get("type", "Unknown"),
+                        "version": server.get("version", "Unknown"),
+                    }
+                    
+                    # Get deployed applications for this server
+                    apps_url = f"{base_url}/servers/{server_name}/applications"
+                    try:
+                        apps_response = requests.get(apps_url, auth=auth, verify=ACE_VERIFY_SSL, timeout=5)
+                        if apps_response.status_code == 200:
+                            apps_data = apps_response.json()
+                            applications = []
+                            if "applications" in apps_data:
+                                for app in apps_data["applications"]:
+                                    applications.append({
+                                        "name": app.get("name", "Unknown"),
+                                        "status": app.get("status", "Unknown")
+                                    })
+                            info[server_name]["applications"] = applications
+                    except:
+                        info[server_name]["applications"] = []
+            
+            return info if info else {"error": "No integration servers found"}
         
-        info[node] = node_info
+        elif response.status_code == 401:
+            return {"error": "Authentication failed - check credentials"}
+        else:
+            return {"error": f"REST API returned status code {response.status_code}"}
     
-    return info if info else {"error": "No ACE nodes found"}
+    except requests.exceptions.ConnectionError:
+        return {"error": f"Cannot connect to ACE REST API at {ACE_ADMIN_HOST}:{ACE_ADMIN_PORT}"}
+    except requests.exceptions.Timeout:
+        return {"error": "ACE REST API request timed out"}
+    except Exception as e:
+        return {"error": f"REST API error: {str(e)}"}
 
-# ---------- IBM MQ ----------
+def get_ace_node_info_rest():
+    """Get ACE integration node information (alternative endpoint)"""
+    protocol = "https" if ACE_USE_HTTPS else "http"
+    base_url = f"{protocol}://{ACE_ADMIN_HOST}:{ACE_ADMIN_PORT}/apiv2"
+    
+    auth = HTTPBasicAuth(ACE_USER, ACE_PASS)
+    
+    try:
+        # Try to get node-level information
+        node_url = f"{base_url}/"
+        response = requests.get(node_url, auth=auth, verify=ACE_VERIFY_SSL, timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                "node_name": data.get("name", "Unknown"),
+                "version": data.get("version", "Unknown"),
+                "architecture": data.get("architecture", "Unknown"),
+                "operating_system": data.get("operatingSystem", "Unknown")
+            }
+        else:
+            return {}
+    except:
+        return {}
+
+# ---------- IBM MQ (keep simple dspmq for now) ----------
 def get_mq_info():
     """Get IBM MQ queue manager information"""
+    if MQ_USE_REST:
+        return get_mq_info_rest()
+    else:
+        return get_mq_info_dspmq()
+
+def get_mq_info_dspmq():
+    """Get MQ info using dspmq command"""
     info = {}
     
     qms_output = run(["dspmq"])
@@ -225,7 +271,6 @@ def get_mq_info():
     for line in qms_output.splitlines():
         if "QMNAME" in line or "(" in line:
             try:
-                # Parse line like: QMNAME(QM1) STATUS(Running)
                 name_part = line.split("(")[1].split(")")[0]
                 status_part = line.split("STATUS(")[1].split(")")[0] if "STATUS(" in line else "Unknown"
                 info[name_part] = {"status": status_part}
@@ -233,6 +278,25 @@ def get_mq_info():
                 continue
     
     return info if info else {"error": "No queue managers found"}
+
+def get_mq_info_rest():
+    """Get MQ info using REST API (if available)"""
+    protocol = "https"
+    base_url = f"{protocol}://{MQ_REST_HOST}:{MQ_REST_PORT}/ibmmq/rest/v2/admin"
+    
+    try:
+        # This is a placeholder - actual MQ REST API implementation
+        # would depend on your MQ version and configuration
+        qmgr_url = f"{base_url}/qmgr"
+        response = requests.get(qmgr_url, verify=False, timeout=5)
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {"rest_data": data}
+        else:
+            return get_mq_info_dspmq()  # Fallback to dspmq
+    except:
+        return get_mq_info_dspmq()  # Fallback to dspmq
 
 # ---------- MAIN ----------
 def main():
@@ -244,8 +308,15 @@ def main():
     print("Reading certificates...")
     certificates = read_all_certificates()
     
-    print("Checking ACE status...")
-    ace_info = get_ace_info()
+    print("Checking ACE status via REST API...")
+    ace_info = get_ace_info_rest()
+    ace_node_info = get_ace_node_info_rest()
+    
+    # Combine ACE information
+    ace_combined = {
+        "node_info": ace_node_info,
+        "servers": ace_info
+    }
     
     print("Checking MQ status...")
     mq_info = get_mq_info()
@@ -254,7 +325,7 @@ def main():
         "timestamp": datetime.now().isoformat(),
         "system": system_info,
         "certificates": certificates,
-        "ace": ace_info,
+        "ace": ace_combined,
         "mq": mq_info,
     }
     
@@ -275,7 +346,7 @@ def main():
     print(f"✓ Certificates found: {cert_count}")
     
     if "error" not in ace_info:
-        print(f"✓ ACE nodes: {len(ace_info)}")
+        print(f"✓ ACE integration servers: {len(ace_info)}")
     else:
         print(f"⚠ ACE: {ace_info['error']}")
     
