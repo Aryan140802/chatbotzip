@@ -1,89 +1,168 @@
-import sqlite3
+#!/usr/bin/env python3
+
 import subprocess
-import difflib
+import json
+import socket
+import platform
+import requests
+from pathlib import Path
+from datetime import datetime
+import sys
 
-# --- CONFIGURATION ---
-DB_PATH = 'your_data.db'       # Path to your SQLite DB
-TABLE_NAME = 'your_table'      # Name of the table in DB
-QA_FILE = 'qa.txt'             # Path to question/answer file
+# ===================== CONFIG =====================
 
-# --- STEP 1: Read SQL table as plain text ---
-def fetch_table_as_text(db_path, table_name):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute(f"SELECT * FROM {table_name}")
-    rows = cursor.fetchall()
-    headers = [desc[0] for desc in cursor.description]
-    conn.close()
+ENVIRONMENT = "PR"          # PR or DR
+SERVER_ID = "24"            # 24 / 25 / 40 / 42
 
-    text = ' | '.join(headers) + '\n'
-    for row in rows:
-        text += ' | '.join(str(cell) for cell in row) + '\n'
-    return text
+# ---- ACE Admin REST ----
+ACE_ADMIN_HOST = "localhost"
+ACE_ADMIN_PORT = 4414
+ACE_USER = "admin"
+ACE_PASSWORD = "password"
 
-# --- STEP 2: Read Q&A pairs from text file ---
-def load_qa_pairs(filepath):
-    qa_pairs = []
-    with open(filepath, 'r', encoding='utf-8') as file:
-        lines = file.readlines()
-    q, a = '', ''
-    for line in lines:
-        if line.startswith('Q:'):
-            q = line[2:].strip()
-        elif line.startswith('A:'):
-            a = line[2:].strip()
-            qa_pairs.append((q, a))
-    return qa_pairs
+# ---- Certificate path ----
+CERT_DIR = "/sync/certs"    # crt / cer / pem
+CERT_EXT = (".crt", ".cer", ".pem")
 
-# --- STEP 3: Ask question to Mistral via Ollama ---
-def ask_mistral(prompt):
-    result = subprocess.run(
-        ["ollama", "run", "mistral"],
-        input=prompt.encode('utf-8'),
-        stdout=subprocess.PIPE
-    )
-    return result.stdout.decode().strip()
+# ---- Output ----
+OUTPUT_DIR = "/sync/outbox"
 
-# --- STEP 4: Evaluate accuracy ---
-def evaluate(table_text, qa_pairs):
-    correct = 0
-    for i, (question, expected) in enumerate(qa_pairs):
-        prompt = f"""Here is a table:\n{table_text}\n\nQuestion: {question}\nAnswer:"""
-        response = ask_mistral(prompt)
-        sim = difflib.SequenceMatcher(None, response.lower(), expected.lower()).ratio()
-        print(f"\n[{i+1}] Question: {question}")
-        print(f"Expected: {expected}")
-        print(f"Model:    {response}")
-        print(f"Match %:  {sim:.2f}")
-        if sim > 0.8:
-            correct += 1
-    accuracy = correct / len(qa_pairs)
-    print(f"\nFinal Accuracy: {accuracy*100:.2f}%")
-    return accuracy
-
-# --- RUN ---
-if __name__ == '__main__':
-    table_text = fetch_table_as_text(DB_PATH, TABLE_NAME)
-    qa_pairs = load_qa_pairs(QA_FILE)
-    evaluate(table_text, qa_pairs)
+# =================================================
 
 
+def run(cmd):
+    return subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
 
-Q:What is your name? or Who created you?
-A:I am a AI developed by EIS Portal Team.
 
-Q:how many Avinash are there? or who is avinash?
-A:There are two Avinash.
+# ---------------- SERVER INFO ----------------
 
-Q:Who are the team members of Portal Team? or team members of EIS Portal or who are the developers who created you ?
-A:Meghana, Avinash, Affan, Aryan and Abhishek.
+def get_server_info():
+    return {
+        "hostname": socket.gethostname(),
+        "ip": socket.gethostbyname(socket.gethostname()),
+        "os": platform.platform()
+    }
 
-Q:Who is Vijayshankar Chauhan?
-A:Vijayshankar Chauhan is the project manager of EIS Team.
 
-Q:Who is Avinash Naik?
-A:Avinash Naik is the team lead of EIS(Enterprise Integration Team).
+# ---------------- ACE INFO ----------------
 
-Q:Who is Siddharth Nair?
-A:Siddharth Nair is the team lead of EIS ACE Team.
+def get_ace_data():
+    base = f"https://{ACE_ADMIN_HOST}:{ACE_ADMIN_PORT}/apiv2"
+    auth = (ACE_USER, ACE_PASSWORD)
+    ace = {"integration_servers": {}}
 
+    try:
+        servers = requests.get(
+            f"{base}/servers",
+            auth=auth,
+            verify=False,
+            timeout=5
+        ).json()["servers"]
+
+        for s in servers:
+            name = s["name"]
+            apps_resp = requests.get(
+                f"{base}/servers/{name}/applications",
+                auth=auth,
+                verify=False,
+                timeout=5
+            ).json()
+
+            ace["integration_servers"][name] = [
+                {
+                    "name": a["name"],
+                    "status": a.get("status"),
+                    "version": a.get("version", "unknown")
+                }
+                for a in apps_resp.get("applications", [])
+            ]
+
+    except Exception as e:
+        ace["error"] = str(e)
+
+    return ace
+
+
+# ---------------- MQ INFO ----------------
+
+def get_mq_info():
+    mq = {"queue_managers": []}
+    try:
+        out = run(["dspmq"])
+        for line in out.splitlines():
+            if "QMNAME" in line:
+                qm = line.split("(")[1].split(")")[0]
+                status = "RUNNING" if "RUNNING" in line else "STOPPED"
+                mq["queue_managers"].append({
+                    "name": qm,
+                    "status": status
+                })
+    except Exception as e:
+        mq["error"] = str(e)
+
+    return mq
+
+
+# ---------------- CERT INFO ----------------
+
+def parse_cert(path):
+    out = run([
+        "openssl", "x509", "-in", str(path),
+        "-noout", "-subject", "-issuer",
+        "-dates", "-fingerprint", "-sha256"
+    ])
+
+    data = {}
+    for l in out.splitlines():
+        if l.startswith("subject="):
+            data["subject"] = l.split("=", 1)[1]
+        elif l.startswith("issuer="):
+            data["issuer"] = l.split("=", 1)[1]
+        elif l.startswith("notBefore="):
+            data["valid_from"] = l.split("=", 1)[1]
+        elif l.startswith("notAfter="):
+            data["valid_to"] = l.split("=", 1)[1]
+        elif "Fingerprint" in l:
+            data["fingerprint"] = l.split("=")[1]
+
+    return data
+
+
+def get_cert_info():
+    certs = []
+    for f in Path(CERT_DIR).glob("*"):
+        if f.suffix.lower() in CERT_EXT:
+            try:
+                certs.append({
+                    "alias": f.stem,
+                    **parse_cert(f)
+                })
+            except Exception:
+                pass
+    return certs
+
+
+# ---------------- MAIN ----------------
+
+def main():
+    snapshot = {
+        "environment": ENVIRONMENT,
+        "server_id": SERVER_ID,
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "server_info": get_server_info(),
+        "ace": get_ace_data(),
+        "mq": get_mq_info(),
+        "certificates": get_cert_info()
+    }
+
+    Path(OUTPUT_DIR).mkdir(parents=True, exist_ok=True)
+
+    out_file = Path(OUTPUT_DIR) / f"snapshot_{ENVIRONMENT}_{SERVER_ID}.json"
+    with open(out_file, "w") as f:
+        json.dump(snapshot, f, indent=2)
+
+    print(f"Snapshot generated: {out_file}")
+
+
+if __name__ == "__main__":
+    main()
