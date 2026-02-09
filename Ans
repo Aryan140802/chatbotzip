@@ -1,412 +1,185 @@
+getDetailSync.py
+-rwxr-xr-x  1 root    root      2327 Jul  5  2025 getIIBAlerts.py
+-rwxr-xr-x  1 root    root      2490 Jul 23  2025 getMQAlerts.py
+-rwxrwxrwx  1 root    root      1261 Aug 21 15:44 ldabCert.cer
+-rwxr-x---  1 root    root      1261 Nov  5 17:13 ldabCert.crt
+-rw-r-----  1 root    root       686 Nov  5 17:13 ldabLogin.py
+-rwxr-xr-x  1 eisuser eisuser   1375 Nov 22  2024 manage.py
+drwxr-xr-x  2 eisuser eisuser   4096 Dec 27  2024 media
+-rwxr-xr-x  1 eisuser eisuser   3845 Dec  8 13:16 models.py
+-rwxr-xr-x  1 root    root      4155 Jul  3  2025 mq_data_insert.py
+drwxr-xr-x  3 eisuser eisuser     18 May 23  2025 mq_logs
+drwxr-x---  4 root    root      4096 Jan 29 15:36 prDrSync
+-rwxr-xr-x  1 root    root      1481 May 27  2025 prdr.py
+drwxr-xr-x  5 eisuser eisuser     54 Sep 19  2024 productionfiles
+-rwxr-xr-x  1 eisuser eisuser   1863 Dec 19 21:00 saveBrokerEgApi.py
+-rwxr-xr-x  1 eisuser eisuser   1602 Dec 17 21:00 saveLayerBrEgApi.py
+drwxr-xr-x  7 root    root        87 Oct 14 12:50 static
+drwxrwxr-x  3 eisuser eisuser     20 Feb  9 16:29 staticfiles
+-rw-r-----  1 root    root      1403 Jan 12 19:00 task.txt
+-rwxr-xr-x  1 root    root      4530 Jun 24  2025 testanalysis.py
+drwxr-x---  2 root    root        79 Nov 20 13:12 viewsBackup
+-rwxr-xr-x  1 eisuser eisuser   4163 Dec  5 15:18 volume_analysis.py
+-rwxr-xr-x  1 root    root      5224 Sep 25 11:44 volume_analysislive.py
+-rwxr-xr-x  1 root    root      4094 Jun 11  2025 volume_analysislive.py_cp
+[root@eispr-prt1-01 PyPortal]# vi getDetailSync.py
+[root@eispr-prt1-01 PyPortal]# python getDetailSync.py
+Traceback (most recent call last):
+  File "/var/www/cgi-bin/PyPortal/getDetailSync.py", line 2, in <module>
+    import django
+ModuleNotFoundError: No module named 'django'
+[root@eispr-prt1-01 PyPortal]#  /var/www/cgi-bin/djangovenv/venv/bin/python3.9 getDetailSync.py
+{'brokerStatus': True, 'udpPort': 4415, 'egs': {'NP_S_01': {'egName': 'NP_S_01', 'egStatus': True}}}
+v1012665
+@Rocky056
+https://10.188.25.163:4415/apiv2/servers/NP_S_01/rest-apis?depth=5
+/var/www/cgi-bin/djangovenv/venv/lib64/python3.9/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host '10.188.25.163'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+{"type":"responseLog","uri":"","count":1,"LogEntry":[{"type":"logEntry","message":{"source":"BIPmsgs","timestamp":1770639273236,"threadId":0,"threadSequenceNumber":1,"number":8509,"severityCode":"E","severity":20,"inserts":1},"detailedText":"Administration security is enabled. A valid user name and password must be provided. \nRetry with the correct user name and password. If you are still unable to log in, contact your IBM App Connect Enterprise administrator, who can reset the password by using the mqsiwebuseradmin command. If too many unsuccessful login attempts are made, your account will be locked for 300 seconds. ","text":"BIP8509E: Invalid user name or password. "}]}
+None
+[root@eispr-prt1-01 PyPortal]# cat getDetailSync.py
+import os
+import django
 
-{% load static %}
-{% load custom_filter %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Details Monitoring</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" type="text/css" href="{%  static 'brokeregapi/index.css' %}">
-    <style>
-        /* Reset body padding for fixed header */
-        body {
-            margin: 0;
-            padding: 0;
-            background: inherit; /* Keep original background */
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-        }
-        
-        /* Slim Fixed Header */
-        .fixed-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(0, 1, 7, 0.95);
-            padding: 12px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-        }
-        
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .welcome-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .welcome-section h5 {
-            margin: 0;
-            color: white;
-            font-weight: 400;
-            font-size: 1rem;
-        }
-        
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 6px 15px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            text-decoration: none;
-        }
-        
-        .notification-wrapper {
-            position: relative;
-        }
-        
-        .notification-btn {
-            background: linear-gradient(to right, #007bff, #0056b3);
-            color: white;
-            padding: 6px 15px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .notification-btn:hover {
-            background: linear-gradient(to right, #0069d9, #004a9c);
-            color: white;
-            text-decoration: none;
-            transform: translateY(-1px);
-        }
-        
-        .notification-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #dc3545;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            min-width: 18px;
-            text-align: center;
-            font-weight: bold;
-            border: 2px solid rgba(0, 1, 7, 0.95);
-        }
-        
-        .bell-icon {
-            font-size: 0.9rem;
-        }
-        
-        /* Header Bottom - Title and Search */
-        .header-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-        }
-        
-        .page-title {
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 500;
-            margin: 0;
-            white-space: nowrap;
-        }
-        
-        .search-container {
-            flex: 1;
-            max-width: 400px;
-        }
-        
-        .search-form {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .search-input {
-            flex: 1;
-            padding: 8px 15px;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            font-size: 0.9rem;
-        }
-        
-        .search-input::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: #007bff;
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .search-btn {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-        
-        .search-btn:hover {
-            background: #0069d9;
-        }
-        
-        /* Main Content Area */
-        .main-content {
-            margin-top: 120px; /* Space for fixed header */
-            padding: 20px;
-        }
-        
-        /* Cards Container */
-        #div {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        /* Card Styling */
-        .card-backgrounds {
-            background: 0% 0% / 400px rgba(255, 255, 255, 0.13);
-            border-radius: 8px;
-            padding: 20px;
-            color: white;
-            cursor: pointer;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            height: 220px; /* Fixed height */
-            min-width: 350px;
-            max-height: 220px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .card-backgrounds:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Card Content Structure */
-        .card-header {
-            margin-bottom: 12px;
-        }
-        
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* IP Container with 4 lines */
-        .ips-container {
-            flex: 1;
-            margin-bottom: 15px;
-            overflow: hidden;
-        }
-        
-        .ips-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-            max-height: 80px; /* Exactly 4 lines */
-            overflow: hidden;
-        }
-        
-        .ip-item {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        /* Card Footer */
-        .card-footer {
-            margin-top: auto;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .card-link a {
-            display: block;
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 8px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            transition: background 0.2s;
-        }
-        
-        .card-link a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .header-bottom {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 10px;
-            }
-            
-            .search-container {
-                max-width: 100%;
-            }
-            
-            #div {
-                grid-template-columns: 1fr;
-            }
-            
-            .card-backgrounds {
-                min-width: auto;
-            }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-</head>
-<body>
-    <!-- Fixed Slim Header -->
-    <div class="fixed-header">
-        <div class="header-top">
-            <div class="welcome-section">
-                <h5>Welcome, {{ request.session.username }}!</h5>
-                <a class="logout-btn" href="{% url 'logout' %}">
-                    <i class="fa fa-sign-out"></i> Logout
-                </a>
-            </div>
-            
-            <div class="notification-wrapper">
-                <a href="{% url 'approval' %}" class="notification-btn" aria-label="alert">
-                    {% if notification %}
-                        <i class="fa fa-bell bell-icon"></i> Alert
-                    {% else %}
-                        Pending Reflects
-                    {% endif %}
-                </a>
-                <span class="notification-badge">
-                    {% if notification %}{{ lennote }}{% else %}{{ pendings }}{% endif %}
-                </span>
-            </div>
-        </div>
-        
-        <div class="header-bottom">
-            <h1 class="page-title">API Details Monitoring</h1>
-            
-            <div class="search-container">
-                <form method="POST" action="{% url 'index-api' %}" class="search-form" id="editform">
-                    {% csrf_token %}
-                    <input type="text" 
-                           name="service" 
-                           class="search-input" 
-                           placeholder="Search Service..." 
-                           id="searchbar">
-                    <button type="submit" class="search-btn">
-                        <i class="fa fa-search"></i> Search
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <div id="div">
-            {% for data in data_list %}
-            <div class="card-backgrounds">
-                <div class="card-header">
-                    <h5 class="card-title">{{ data.layerName }}</h5>
-                </div>
-                
-                <div class="ips-container">
-                    <div class="ips-grid">
-                        {% for value in data.layerIps|slice:":8" %}
-                            {% if value %}
-                            <div class="ip-item">10.xxx.{{ value.serverIp }}</div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <div class="card-footer">
-                    <div class="card-link">
-                        {% for ip in data.layerIps %}
-                            {% if forloop.first %}
-                            <a href='{% url 'api_server' data.layerName ip.serverIp %}' target="_blank">
-                                Go To {{ data.layerName }}
-                            </a>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
 
-    <script>
-        // Smooth form submission
-        document.getElementById('editform').addEventListener('submit', function(e) {
-            const searchValue = document.getElementById('searchbar').value.trim();
-            if (!searchValue) {
-                e.preventDefault();
-                document.getElementById('searchbar').focus();
-                return false;
+os.environ.setdefault('DJANGO_SETTINGS_MODULE','PyPortal.settings')
+django.setup()
+
+
+from django.shortcuts import render
+#from django.core import serializers
+from django.http import HttpResponse,JsonResponse
+from dbOpTest.models import BrokerDetails,EGDetails,ServiceDetails,ServerDetails,LayerDetails
+from django.views.decorators.csrf import csrf_exempt
+import requests
+from requests.auth import HTTPBasicAuth
+
+def getDataUDP(serverIp,udpPort,egName):
+    username=os.environ.get('UDP_USERNAME')
+    password=os.environ.get('UDP_PASSWORD')
+    print(username)
+    print(password)
+    session=requests.Session()
+    urlTemplate='https://{serverIp}:{udpPort}/apiv2/servers/{egName}/rest-apis?depth=5'
+    #urlTemplate='https://{serverIp}:{udpPort}/apiv2/servers/'
+    session.auth = HTTPBasicAuth(username,password)
+    session.headers.update = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
             }
-        });
-        
-        // Add fade-in animation to cards
-        document.addEventListener('DOMContentLoaded', function() {
-            const cards = document.querySelectorAll('.card-backgrounds');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(10px)';
-                
-                setTimeout(() => {
-                    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 50);
-            });
-        });
-    </script>
-</body>
-</html>
+    session.verify = False
+    currEgDataUrl=urlTemplate.format(serverIp=serverIp,udpPort=udpPort,egName=egName)
+    print(currEgDataUrl)
+    data = session.get(currEgDataUrl)
+    print(data.text)
+
+'''
+server = ServerDetails.objects.prefetch_related("BrokerDetails_entries","BrokerDetails_entries__EGDetails_entries").all()
+print(len(server))
+egSize=0
+serverEgMap=dict()
+for ser in server:
+    br_map={}
+    print(ser.serverIP)
+    serverIp=ser.serverIP
+    if ser.serverIP.startswith("yp"):
+        continue
+    for broker in ser.BrokerDetails_entries.all():
+         print("hosl")
+         ''if broker.brokerName in br_map:
+             continue''
+         br_map[broker.brokerName]="exist"
+         egDetailss=list()
+         eg_map={}
+         exg=0
+         uniqueEg=0
+         for eg in broker.EGDetails_entries.all():
+             if exg == 0:
+                serDetails=list()
+                ser=0
+                if eg.egName in eg_map:
+                   uniqueEg=1
+                   continue
+                eg_map[eg.egName]="exist"
+                egDetailss.append({"egName":eg.egName,"egStatus":eg.egStatus})
+                exg+=1
+         if uniqueEg == 0:
+            if str(serverIp) in serverEgMap:
+                serverEgMap[serverIp]+=1
+            else:
+                serverEgMap[serverIp]=1
+            egSize+=1
+            print({"udpPort":broker.udpPort,"brokerName":broker.brokerName,"brokerStatus":broker.brokerStatus,"egDetails":egDetailss})
+print(egSize)
+print(serverEgMap)
+#getDataUDP("10.188.25.190",4419,"PAN_EXP_01")
+'''
+
+egs = (
+        EGDetails.objects
+        .select_related(
+            "broker",
+            "broker__server",
+            "broker__server__layer",
+            )
+        )
+
+egSize=0
+serEg=dict()
+
+'''
+for eg in egs:
+    if eg.broker.server.serverIP.startswith("yp"):
+        continue
+    if eg.broker.server.serverIP in serEg:
+        if eg.broker.brokerName in serEg[eg.broker.server.serverIP]:
+           if eg.egName not in
+           serEg[eg.broker.server.serverIP][eg.broker.brokerName].append(eg.egName)
+
+        else:
+           serEg[eg.broker.server.serverIP][eg.broker.brokerName]=1
+    else:
+       serEg[eg.broker.server.serverIP]={}
+       serEg[eg.broker.server.serverIP][eg.broker.brokerName]=1
+    print(eg.broker.server.serverIP)
+    print(eg.egName)
+    print(eg.broker.brokerName)
+    egSize+=1
+'''
+
+for eg in egs:
+    serverIP = eg.broker.server.serverIP
+
+    if serverIP.startswith("yp"):
+        continue
+
+    brokerName = eg.broker.brokerName
+    egName = eg.egName
+
+    if serverIP not in serEg:
+        serEg[serverIP] = {}
+
+
+    if brokerName not in serEg[serverIP]:
+        serEg[serverIP][brokerName] = {
+                "brokerStatus" : eg.broker.brokerStatus,
+                "udpPort" : eg.broker.udpPort,
+                "egs": {}
+                }
+    if egName not in serEg[serverIP][brokerName]["egs"]:
+        serEg[serverIP][brokerName]["egs"][egName] = {
+                 "egName": eg.egName,
+                 "egStatus": eg.egStatus
+                 }
+        egSize+=1
+
+
+
+
+
+#print(egSize)
+print(serEg["25_163"]["NP_SYS"])
+
+print(getDataUDP("10.188.25.163",serEg["25_163"]["NP_SYS"]["udpPort"],serEg["25_163"]["NP_SYS"]['egs']['NP_S_01']['egName']))
