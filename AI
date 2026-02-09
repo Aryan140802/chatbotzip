@@ -1,231 +1,175 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import subprocess
-import getpass
+import json
 import os
-import sys
+import socket
+from datetime import datetime
+
+# ================= CONFIG =================
+ENVIRONMENT = "PR"              # PR or DR
+SERVER_ID = "24"                # 24 / 25 / 40 / 42
+ACE_REST_PORT = 4414
+
+TRUSTSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_TRUSTSTORE.jks"
+KEYSTORE_PATH   = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_KEYSTORE.jks"
+ENDPOINT_PUBLIC = "/opt/IBM/EndPoint_Public"
+STOREPASS       = "password"
+
+OUTPUT_DIR = "/sync/outbox"
+# ==========================================
 
 
-Off_white = "\033[38;5;231m"
-CYAN = "\033[96m"
-GREEN = "\033[92m"
-YELLOW = "\033[93m"
-RED = "\033[91m"
-RESET = "\033[0m"
-BOLD = "\033[1m"
-Dark_Orange = "\033[38;5;202m"
+def run(cmd):
+    return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
 
-def list_aliases(store_path, store_type, storepass):
-    if storepass == "password" :
-        cmd = ["keytool", "-list", "-keystore", store_path, "-storepass", storepass]
+
+# ---------- ACE DATA ----------
+def get_ace_data():
+    base = f"http://localhost:{ACE_REST_PORT}/apiv2"
+    ace = {"integrationServers": {}}
+
+    try:
+        servers = json.loads(run(["curl", "-s", f"{base}/servers"]))["integrationServers"]
+        for srv in servers:
+            name = srv["name"]
+            ace["integrationServers"][name] = {
+                "executionGroups": {},
+                "applications": []
+            }
+
+            egs = json.loads(run(["curl", "-s", f"{base}/servers/{name}/executiongroups"]))["executionGroups"]
+            for eg in egs:
+                ace["integrationServers"][name]["executionGroups"][eg["name"]] = {}
+
+            apps = json.loads(run(["curl", "-s", f"{base}/servers/{name}/applications"]))["applications"]
+            ace["integrationServers"][name]["applications"] = [a["name"] for a in apps]
+
+    except Exception as e:
+        ace["error"] = str(e)
+
+    return ace
+
+
+# ---------- MQ DATA ----------
+def get_mq_data():
+    mq = {"queueManagers": {}}
+
+    try:
+        qmlist = run(["dspmq"]).splitlines()
+        qms = [l.split("(")[1].split(")")[0] for l in qmlist if "QMNAME" in l]
+
+        for qm in qms:
+            mq["queueManagers"][qm] = {
+                "channels": [],
+                "listeners": []
+            }
+
+            try:
+                ch = run(["runmqsc", qm], input="DISPLAY CHANNEL(*)\nEND\n", text=True)
+                mq["queueManagers"][qm]["channels"] = [
+                    l.split("(")[1].split(")")[0]
+                    for l in ch.splitlines() if "CHANNEL(" in l
+                ]
+            except:
+                pass
+
+            try:
+                ls = run(["runmqsc", qm], input="DISPLAY LISTENER(*)\nEND\n", text=True)
+                mq["queueManagers"][qm]["listeners"] = [
+                    l.split("(")[1].split(")")[0]
+                    for l in ls.splitlines() if "LISTENER(" in l
+                ]
+            except:
+                pass
+
+    except:
+        pass
+
+    return mq
+
+
+# ---------- CERTIFICATES ----------
+def parse_keytool(store_path):
+    data = {}
+    if not os.path.exists(store_path):
+        return data
+
+    out = run(["keytool", "-list", "-keystore", store_path, "-storepass", STOREPASS])
+    aliases = [l.split(",")[0].strip() for l in out.splitlines() if "Entry" in l]
+
+    for alias in aliases:
+        det = run([
+            "keytool", "-list", "-v",
+            "-keystore", store_path,
+            "-storepass", STOREPASS,
+            "-alias", alias
+        ])
+        cert = {}
+        for line in det.splitlines():
+            if "Valid from:" in line:
+                cert["valid_from"] = line.split(":", 1)[1].strip()
+            elif "until:" in line:
+                cert["valid_to"] = line.split("until:")[1].strip()
+            elif "Owner:" in line:
+                cert["owner"] = line.split(":", 1)[1].strip()
+            elif "SHA1:" in line:
+                cert["sha1"] = line.split("SHA1:")[1].strip()
+
+        data[alias] = cert
+
+    return data
+
+
+def parse_endpoint():
+    data = {}
+    if not os.path.exists(ENDPOINT_PUBLIC):
+        return data
+
+    for f in os.listdir(ENDPOINT_PUBLIC):
+        full = os.path.join(ENDPOINT_PUBLIC, f)
         try:
-            otp  = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode()
-            aliases = []
-            alias_map = {}
-            for line in otp.splitlines():
-                if "keyEntry" in line or "trustedCertEntry" in line or "privateKeyEntry" in line:
-                    alias = line.split(",")[0].strip()
-                    alias_map[alias] = {"path" : store_path,
-                            "password" : storepass,
-                            "storetype" : store_type}
-            return alias_map
-        except subprocess.CalledProcessError as e:
-            print(f"{RED}{BOLD}ERROR LISTING ALIAS: {RESET}",e.output.decode())
-            sys.exit(1)
-            return []
-    else:
-        print(f"{RED}\nPASSWORD IS INCORRECT.{RESET}")
-        sys.exit(1)
-def get_cert_details(store_path, storepass, alias, store_type):
-    cmd = ["keytool", "-list", "-v", "-keystore", store_path, "-storepass", storepass, "-alias", alias]
-    #res = subprocess.run(cmd)
-    try:
-        print(f"\n{Dark_Orange}{store_type}{RESET}")
-        otp = subprocess.check_output(cmd, stderr=subprocess.STDOUT).decode()
-        for line in otp.splitlines():
-            if "Valid from" in line or "Valid until" in line or "Alias" in line or "Owner" in line or "SHA1" in line:
-                print(f"\n{Off_white}{BOLD}{line}{RESET}")
-            else:
-                continue
-                #print(line)
-    except subprocess.CalledProcessError as e:
-        print(f"{RED}{BOLD}Error retrieving details: {RESET}",e.output.decode())
-        sys.exit(1)
+            out = run(["openssl", "x509", "-in", full, "-noout",
+                       "-startdate", "-enddate", "-fingerprint"])
+            cert = {}
+            for l in out.splitlines():
+                if l.startswith("notBefore="):
+                    cert["valid_from"] = l.split("=", 1)[1]
+                elif l.startswith("notAfter="):
+                    cert["valid_to"] = l.split("=", 1)[1]
+                elif "SHA1" in l:
+                    cert["sha1"] = l.split("=", 1)[1]
+            data[f] = cert
+        except:
+            pass
+
+    return data
 
 
-def list_endpoint(store_path):
-    try:
-        aliases = []
-        for file_name in os.listdir(store_path):
-            aliases.append(file_name)
-        aliases.sort()
-        return(aliases)
-    except subprocess.CalledProcessError as e:
-        print(f"{RED}\nERROR LISTING ALIAS:{RESET}", e.output.decode())
+# ---------- MAIN ----------
+def main():
+    snapshot = {
+        "environment": ENVIRONMENT,
+        "server_id": SERVER_ID,
+        "hostname": socket.gethostname(),
+        "generated_at": datetime.utcnow().isoformat(),
+        "ace": get_ace_data(),
+        "mq": get_mq_data(),
+        "certificates": {
+            "truststore": parse_keytool(TRUSTSTORE_PATH),
+            "keystore": parse_keytool(KEYSTORE_PATH),
+            "endpoint_public": parse_endpoint()
+        }
+    }
 
-def get_endpoint(full_path, selected_alias):
-    cmd = ["openssl", "x509", "-in", full_path, "-noout", "-startdate", "-enddate", "-fingerprint"]
-    try:
-        print(f"\n{Dark_Orange}EndPointPublic{RESET}")
-        res = subprocess.check_output(cmd, text = True)
-        strt_dt, end_dt = "", ""
-        fp = ""
-        for line in res.splitlines():
-            if line.startswith("notBefore="):
-                strt_dt = line.split("=", 1)[1].strip()
-            elif line.startswith("notAfter="):
-                end_dt = line.split("=", 1)[1].strip()
-            elif line.startswith("SHA1"):
-                fp = line.split("=", 1)[1].strip()
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    outfile = f"{OUTPUT_DIR}/server_snapshot_{ENVIRONMENT}_{SERVER_ID}.json"
 
+    with open(outfile, "w") as f:
+        json.dump(snapshot, f, indent=2)
 
-        print(f"{GREEN}{'Certificate:':<20} {RESET}{selected_alias}")
-        print(f"{GREEN}{'Start date:':<20}{RESET} {strt_dt}")
-        print(f"{RED}{'End date:':<20}{RESET} {end_dt}")
-        print(f"{GREEN}{'Fingerprint(SHA1):':<20} {RESET}{fp}")
-
-    except subprocess.CalledProcessError as e:
-        print(f"{RED}{BOLD}Error retrieving details: {selected_alias}{RESET}")
-        sys.exit(1)
-
+    print(f"Generated: {outfile}")
 
 
 if __name__ == "__main__":
-    try:
-        print("\n",f"{YELLOW}$"*80)
-        TRUSTSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_TRUSTSTORE.jks"
-        KEYSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_KEYSTORE.jks"
-        storepass = "password"
-        ENDPOINT_PUBLIC = "/opt/IBM/EndPoint_Public/"
-
-        print(f"{GREEN}\nAvailable Certificates aliases : {RESET}")
-        print(f"\n{Dark_Orange}TRUSTSTORE CERTIFICATES{RESET}")
-        if not os.path.exists(TRUSTSTORE_PATH):
-             print(f"{RED}\nNO TRUSTSTORE certficates are available{RESET}")
-        else:
-            ts_path = list_aliases(TRUSTSTORE_PATH, "Truststore", storepass)
-            ts_path = dict(sorted(ts_path.items()))
-            if not ts_path:
-                print("NO truststore certificates available")
-            for alias in ts_path:
-                print(f"{Off_white}- {alias}")
-
-
-        print(f"\n{Dark_Orange}KEYSTORE CERTIFICATES{RESET}")
-        if not os.path.exists(KEYSTORE_PATH):
-            print(f"{RED}\nNO KEYSTORE certficates are available{RESET}")
-        else:
-            ks_path = list_aliases(KEYSTORE_PATH, "Keystore", storepass)
-            ks_path = dict(sorted(ks_path.items()))
-            if not ks_path:
-                print("NO keystore certficates available")
-            for alias in ks_path:
-                print(f"{Off_white}- {alias}")
-
-        print(f"{Dark_Orange}\nENDPOINT-PUBLIC CERTIFICATES{RESET}")
-        if not os.path.exists(ENDPOINT_PUBLIC):
-            print(f"{RED}\nNO ENDPOINT_PUBLIC certficates available{RESET}")
-        else:
-            end_path = list_endpoint(ENDPOINT_PUBLIC)
-            for alias in end_path:
-                print(f"{Off_white}- {alias}")
-
-        all_aliases = {**ts_path, **ks_path}
-        #all_aliases.update(list_aliases(TRUSTSTORE_PATH, "truststore", storepass))
-        #all_aliases.update(list_aliases(KEYSTORE_PATH, "keystore", storepass))
-
-
-        #print(f"{GREEN}\nAvailable Certificates aliases : {RESET}")
-        #for alias in all_aliases:
-            #print(f"- {alias}")
-        print("\n",f"{YELLOW}$"*80)
-        find = input(f"{GREEN}\nFETECH CERTIFICATE: {CYAN}")
-        print("\n",f"{YELLOW}$"*80)
-
-        print(f"\n{Dark_Orange}TRUSTSTORE CERTIFICATES{RESET}")
-        ts = [alias for alias in ts_path if alias.lower().startswith(find) or alias.upper().startswith(find)]
-        if not ts:
-            print(f"{RED}NO CERTIFICATE IS AVAILABLE.{RESET}")
-        else:
-            for i in ts:
-                print(f"{Off_white}- {i}")
-
-        print(f"\n{Dark_Orange}KEYSTORE CERTIFICATES{RESET}")
-        ks = [alias for alias in ks_path if alias.lower().startswith(find) or alias.upper().startswith(find)]
-        if not ks:
-            print(f"{RED}NO CERTIFICATE IS AVAILABLE.{RESET}")
-        else:
-            for i in ks:
-                print(f"{Off_white}- {i}")
-
-        print(f"{Dark_Orange}\nENDPOINT-PUBLIC CERTIFICATES{RESET}")
-        epp = [alias for alias in end_path if alias.lower().startswith(find) or alias.upper().startswith(find)]
-        if not epp:
-            print(f"{RED}NO CERTIFICATE IS AVAILABLE.{RESET}")
-        else:
-            for i in epp:
-                print(f"{Off_white}- {i}")
-
-        if not ks and not ts and not epp:
-            print(f"\n{RED}NOT FOUND ANY CERTIFICATE.{RESET}")
-            sys.exit(1)
-
-        selected = input(f"\n{GREEN}ENTER ALIAS NAME (COMMA - SEPERATED): {RESET}")
-        if selected:
-            selected_aliases = [alias.strip() for alias in selected.split(",")]
-            for alias in selected_aliases:
-                if alias in ts_path and alias in ks_path and alias in end_path:
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    print(f"{GREEN}\nDetails of selected certificate '{alias}' {RESET}")
-                    store_type = ks_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                    store_type = ts_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                    full_path = os.path.join("/opt/IBM/EndPoint_Public/", alias)
-                    get_endpoint(full_path, alias)
-                elif alias in ts_path and alias in ks_path:
-                    #print(alias)
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    print(f"{GREEN}\nDetails of selected certificate '{alias}' {RESET}")
-                    store_type = ks_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                    store_type = ts_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                elif alias in ts_path and alias in end_path:
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    print(f"{GREEN}\nDetails of selected certificate '{alias}' {RESET}")
-                    store_type = ts_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                    full_path = os.path.join("/opt/IBM/EndPoint_Public/", alias)
-                    get_endpoint(full_path, alias)
-                elif alias in ks_path and alias in end_path:
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    print(f"{GREEN}\nDetails of selected certificate '{alias}' {RESET}")
-                    store_type = ks_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                    full_path = os.path.join("/opt/IBM/EndPoint_Public/", alias)
-                    get_endpoint(full_path, alias)
-                elif alias in ts_path:
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    print(f"{GREEN}\nDetails of selected certificate '{alias}' {RESET}")
-                    store_type = ts_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                    #print(f"{GREEN}\nDetails of selected certificate '{alias}'
-                elif alias in ks_path:
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    print(f"{GREEN}\nDetails of selected certificate '{alias}' {RESET}")
-                    store_type = ks_path[alias]
-                    get_cert_details(store_type["path"], store_type["password"], alias, store_type["storetype"])
-                elif alias in end_path:
-                    print("\n",f"{YELLOW}${RESET}"*80)
-                    full_path = os.path.join("/opt/IBM/EndPoint_Public/", alias)
-                    get_endpoint(full_path, alias)
-                else:
-                    continue
-                    #print(f"{BOLD}{RED}\nSelected alias {selected_alias} is not found {RESET}")
-        else:
-            print(f"\n{RED} NO INPUT{RESET}")
-        print(f"\n{RED}FINISHED{RESET}")
-    except KeyboardInterrupt:
-        print(f"\n{Dark_Orange}USER INTERRUPTED. SHUTTING DOWN PROCESS...{RESET}")
-        sys.exit(1)
+    main()
