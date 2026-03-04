@@ -56,70 +56,62 @@ let IGNORE = {
 
 let table = {
 
-
-            //    "YONO_2.O_EXP" :{
-            //  "PR" : ["eispry2exp01","eispry2exp02","eispry2exp03","eispry2exp04"],
-            //     "DR" :["eisdry2exp01","eisdry2exp02","eisdry2exp03","eisdry2exp04"]
-            //    },
-
-            //    "YONO_2.O_SYS" :{
-            //    "PR" : ["eispry2sys11","eispry2sys12","eispry2sys13","eispry2sys14","eispry2sys15","eispry2sys16"],
-        //      "DR" :["eisdry2sys11","eisdry2sys12","eisdry2sys13","eisdry2sys14","eisdry2sys15","eisdry2sys16"]
-          //      },
-
-
            "NEW ACCOUNT_EXP_01" :{
                 "PR" : ["eispraccexp-01","eispraccexp-02","eispraccexp-03","eispraccexp-11","eispraccexp-12","eispraccexp-13"]
                 ,
                 "DR" : ["eisdraccexp-01","eisdraccexp-02","eisdraccexp-03","eisdraccexp-11","eisdraccexp-12","eisdraccexp-13"]
                 } ,
 
-
                 "NEW ACCOUNT_EXP_02" :{
-                "PR" : ["eispraccexp-04","eispraccexp-05","eispraccexp-06","eispraccexp-14","eispraccexp-15","eispraccexp-16"]
+                "PR" : ["eispraccexp-04","eispraccexp-05","eispraccexp-06","eispraccexp-14","eispraccexp-15","eispraccexp-16","eispraccexp-21","eispraccexp-22"]
                 ,
                 "DR" : ["eisdraccexp-04","eisdraccexp-05","eisdraccexp-06","eisdraccexp-14","eisdraccexp-15","eisdraccexp-16"]
                 } ,
 
-
-
                 "NEW ACCOUNT_SYS" :{
-                "PR" : ["eispraccsys-01","eispraccsys-02","eispraccsys-03","eispraccsys-04","eispraccsys-05","eispraccsys-06","eispraccsys-11","eispraccsys-12","eispraccsys-13","eispraccsys-14","eispraccsys-15","eispraccsys-16"]
+                "PR" : ["eispraccsys-01","eispraccsys-02","eispraccsys-03","eispraccsys-04","eispraccsys-05","eispraccsys-06","eispraccsys-11","eispraccsys-12","eispraccsys-13","eispraccsys-14","eispraccsys-15","eispraccsys-16","eispraccsys-21","eispraccsys-22"]
                 ,
                 "DR" : ["eisdraccsys-01","eisdraccsys-02","eisdraccsys-03","eisdraccsys-04","eisdraccsys-05","eisdraccsys-06","eisdraccsys-11","eisdraccsys-12","eisdraccsys-13","eisdraccsys-14","eisdraccsys-15","eisdraccsys-16"]
                 } ,
+
                 "NEW CUSTOMER_EXP" :{
-                "PR" : ["eisprcustexp-01","eisprcustexp-02","eisprcustexp-03","eisprcustexp-04","eisprcustexp-05","eisprcustexp-11","eisprcustexp-12","eisprcustexp-13","eisprcustexp-14","eisprcustexp-15"]
+                "PR" : ["eisprcustexp-01","eisprcustexp-02","eisprcustexp-03","eisprcustexp-04","eisprcustexp-05","eisprcustexp-11","eisprcustexp-12","eisprcustexp-13","eisprcustexp-14","eisprcustexp-15","eisprcustexp-21","eisprcustexp-22"]
                 ,
                 "DR" : ["eisdrcustexp-01","eisdrcustexp-02","eisdrcustexp-03","eisdrcustexp-04","eisdrcustexp-05","eisdrcustexp-11","eisdrcustexp-12","eisdrcustexp-13","eisdrcustexp-14","eisdrcustexp-15"]
                 } ,
+
                 "NEW CUSTOMER_SYS" :{
-                "PR" : ["eisprcustsys-01","eisprcustsys-02","eisprcustsys-03","eisprcustsys-04","eisprcustsys-05","eisprcustsys-06","eisprcustsys-11","eisprcustsys-12","eisprcustsys-13","eisprcustsys-14","eisprcustsys-15","eisprcustsys-16"]
+                "PR" : ["eisprcustsys-01","eisprcustsys-02","eisprcustsys-03","eisprcustsys-04","eisprcustsys-05","eisprcustsys-06","eisprcustsys-11","eisprcustsys-12","eisprcustsys-13","eisprcustsys-14","eisprcustsys-15","eisprcustsys-16","eisprcustsys-21","eisprcustsys-22"]
                 ,
                 "DR" : ["eisdrcustsys-01","eisdrcustsys-02","eisdrcustsys-03","eisdrcustsys-04","eisdrcustsys-05","eisdrcustsys-06","eisdrcustsys-11","eisdrcustsys-12","eisdrcustsys-13","eisdrcustsys-14","eisdrcustsys-15","eisdrcustsys-16"]
                 } ,
+
                 "NEW LOGGING_EXP" :{
-                "PR" : ["eisprloginexp-01","eisprloginexp-02","eisprloginexp-03","eisprloginexp-04","eisprloginexp-05","eisprloginexp-11","eisprloginexp-12","eisprloginexp-13","eisprloginexp-14","eisprloginexp-15"]
+                "PR" : ["eisprloginexp-01","eisprloginexp-02","eisprloginexp-03","eisprloginexp-04","eisprloginexp-05","eisprloginexp-11","eisprloginexp-12","eisprloginexp-13","eisprloginexp-14","eisprloginexp-15","eisprloginexp-21","eisprloginexp-22"]
                 ,
                 "DR" : ["eisdrloginexp-01","eisdrloginexp-02","eisdrloginexp-03","eisdrloginexp-04","eisdrloginexp-05","eisdrloginexp-11","eisdrloginexp-12","eisdrloginexp-13","eisdrloginexp-14","eisdrloginexp-15"]
                 } ,
+
                 "NEW LOGGING_SYS" :{
-                "PR" : ["eisprloginsys-01","eisprloginsys-02","eisprloginsys-03","eisprloginsys-04","eisprloginsys-05","eisprloginsys-06","eisprloginsys-11","eisprloginsys-12","eisprloginsys-13","eisprloginsys-14","eisprloginsys-15","eisprloginsys-16"]
+                "PR" : ["eisprloginsys-01","eisprloginsys-02","eisprloginsys-03","eisprloginsys-04","eisprloginsys-05","eisprloginsys-06","eisprloginsys-11","eisprloginsys-12","eisprloginsys-13","eisprloginsys-14","eisprloginsys-15","eisprloginsys-16","eisprloginsys-21","eisprloginsys-22"]
                 ,
                 "DR" : ["eisdrloginsys-01","eisdrloginsys-02","eisdrloginsys-03","eisdrloginsys-04","eisdrloginsys-05","eisdrloginsys-06","eisdrloginsys-11","eisdrloginsys-12","eisdrloginsys-13","eisdrloginsys-14","eisdrloginsys-15","eisdrloginsys-16"]
                 } ,
+
                 "NEW PAYMENT_EXP" :{
-                "PR" : ["eisprpaymentexp-01","eisprpaymentexp-02","eisprpaymentexp-03","eisprpaymentexp-04","eisprpaymentexp-11","eisprpaymentexp-12","eisprpaymentexp-13","eisprpaymentexp-14"]
+                "PR" : ["eisprpaymentexp-01","eisprpaymentexp-02","eisprpaymentexp-03","eisprpaymentexp-04","eisprpaymentexp-11","eisprpaymentexp-12","eisprpaymentexp-13","eisprpaymentexp-14","eisprpaymentexp-21","eisprpaymentexp-22"]
                 ,
                 "DR" : ["eisdrpaymentexp-01","eisdrpaymentexp-02","eisdrpaymentexp-03","eisdrpaymentexp-04","eisdrpaymentexp-11","eisdrpaymentexp-12","eisdrpaymentexp-13","eisdrpaymentexp-14"]
                 } ,
+
                 "NEW PAYMENT_SYS" :{
-                "PR" : ["eisprpaymentsys-01","eisprspaymentsys-02","eisprpaymentsys-03","eisprpaymentsys-04","eisprpaymentsys-05","eisprpaymentsys-11","eisprpaymentsys-12","eisprpaymentsys-13","eisprpaymentsys-14","eisprpaymentsys-15"]
+                "PR" : ["eisprpaymentsys-01","eisprspaymentsys-02","eisprpaymentsys-03","eisprpaymentsys-04","eisprpaymentsys-05","eisprpaymentsys-11","eisprpaymentsys-12","eisprpaymentsys-13","eisprpaymentsys-14","eisprpaymentsys-15","eisprpaymentsys-21","eisprpaymentsys-22"]
                 ,
                 "DR" : ["eisdrpaymentsys-01","eisdrpaymentsys-02","eisdrpaymentsys-03","eisdrpaymentsys-04","eisdrpaymentsys-05","eisdrpaymentsys-11","eisdrpaymentsys-12","eisdrpaymentsys-13","eisdrpaymentsys-14","eisdrpaymentsys-15"]
                 } ,
+
                 "NEW MISC_EXP" :{
-                "PR" : ["eisprmiscexp-01","eisprmiscexp-02","eisprmiscexp-03","eisprmiscexp-04","eisprmiscexp-05","eisprmiscexp-11","eisprmiscexp-12","eisprmiscexp-13","eisprmiscexp-14","eisprmiscexp-15"]
+                "PR" : ["eisprmiscexp-01","eisprmiscexp-02","eisprmiscexp-03","eisprmiscexp-04","eisprmiscexp-05","eisprmiscexp-11","eisprmiscexp-12","eisprmiscexp-13","eisprmiscexp-14","eisprmiscexp-15","eisprmiscexp-21","eisprmiscexp-22"]
                 ,
                 "DR" : ["eisdrmiscexp-01","eisdrmiscexp-02","eisdrmiscexp-03","eisdrmiscexp-04","eisdrmiscexp-05","eisdrmiscexp-11","eisdrmiscexp-12","eisdrmiscexp-13","eisdrmiscexp-14","eisdrmiscexp-15"]
                 } ,
@@ -131,39 +123,41 @@ let table = {
                 } ,
 
                 "NEW MISC_SYS" :{
-                "PR" : ["eisprmiscsys-01","eisprmiscsys-02","eisprmiscsys-03","eisprmiscsys-04","eisprmiscsys-05","eisprmiscsys-11","eisprmiscsys-12","eisprmiscsys-13","eisprmiscsys-14","eisprmiscsys-15"]
+                "PR" : ["eisprmiscsys-01","eisprmiscsys-02","eisprmiscsys-03","eisprmiscsys-04","eisprmiscsys-05","eisprmiscsys-11","eisprmiscsys-12","eisprmiscsys-13","eisprmiscsys-14","eisprmiscsys-15","eisprmiscsys-21","eisprmiscsys-22"]
                 ,
                 "DR" : ["eisdrmiscsys-01","eisdrmiscsys-02","eisdrmiscsys-03","eisdrmiscsys-04","eisdrmiscsys-05","eisdrmiscsys-11","eisdrmiscsys-12","eisdrmiscsys-13","eisdrmiscsys-14","eisdrmiscsys-15"]
                 } ,
-
 
       "MISC_SYS_EG_SEGREGATED" :{
                 "PR" : ["eisprmiscsys-06","Eisprmiscsys-07","Eisprmiscsys-08","Eisprmiscsys-09","Eisprmiscsys-16","Eisprmiscsys-17","Eisprmiscsys-18","Eisprmiscsys-19"]
                 ,
                 "DR" : ["eisdrmiscsys-06","eisdrmiscsys-07","eisdrmiscsys-08","eisdrmiscsys-09","eisdrmiscsys-16","eisdrmiscsys-17","eisdrmiscsys-18","eisdrmiscsys-19"]
-},
-
+                } ,
 
                 "NEW IVR_EXP" :{
-                "PR" : ["eisprivrexp-01", "eisprivrexp-02", "eisprivrexp-03","eisprivrexp-11", "eisprivrexp-12", "eisprivrexp-13"]
+                "PR" : ["eisprivrexp-01","eisprivrexp-02","eisprivrexp-03","eisprivrexp-11","eisprivrexp-12","eisprivrexp-13","eisprivrexp-21","eisprivrexp-22"]
                 ,
-                "DR" : ["eisdrivrexp-01", "eisdrivrexp-02", "eisdrivrexp-03","eisdrivrexp-11", "eisdrivrexp-12", "eisdrivrexp-13"]
+                "DR" : ["eisdrivrexp-01","eisdrivrexp-02","eisdrivrexp-03","eisdrivrexp-11","eisdrivrexp-12","eisdrivrexp-13"]
                 } ,
+
                 "NEW IVR_SYS" :{
-                "PR" : ["eisprivrsys-01","eisprivrsys-02","eisprivrsys-03","eisprivrsys-04","eisprivrsys-11","eisprivrsys-12","eisprivrsys-13","eisprivrsys-14"]
+                "PR" : ["eisprivrsys-01","eisprivrsys-02","eisprivrsys-03","eisprivrsys-04","eisprivrsys-11","eisprivrsys-12","eisprivrsys-13","eisprivrsys-14","eisprivrsys-21","eisprivrsys-22"]
                 ,
                 "DR" : ["eisdrivrsys-01","eisdrivrsys-02","eisdrivrsys-03","eisdrivrsys-04","eisdrivrsys-11","eisdrivrsys-12","eisdrivrsys-13","eisdrivrsys-14"]
                 } ,
+
                 "NEW AADHAR_EXP" :{
-                "PR" : ["eispr-idhubexp-01", "eispr-idhubexp-02", "eispr-idhubexp-03","eispr-idhubexp-11", "eispr-idhubexp-12", "eispr-idhubexp-13"]
+                "PR" : ["eispr-idhubexp-01","eispr-idhubexp-02","eispr-idhubexp-03","eispr-idhubexp-11","eispr-idhubexp-12","eispr-idhubexp-13","eispr-idhubexp-21","eispr-idhubexp-22"]
                 ,
-                "DR" : ["eisdr-idhubexp-01", "eisdr-idhubexp-02", "eisdr-idhubexp-03","eisdr-idhubexp-11", "eisdr-idhubexp-12", "eisdr-idhubexp-13"]
+                "DR" : ["eisdr-idhubexp-01","eisdr-idhubexp-02","eisdr-idhubexp-03","eisdr-idhubexp-11","eisdr-idhubexp-12","eisdr-idhubexp-13"]
                 } ,
+
                 "NEW AADHAR_SYS" :{
-                "PR" : ["eispr-idhubsys-01", "eispr-idhubsys-02", "eispr-idhubsys-03", "eispr-idhubsys-04","eispr-idhubsys-11", "eispr-idhubsys-12", "eispr-idhubsys-13", "eispr-idhubsys-14"]
+                "PR" : ["eispr-idhubsys-01","eispr-idhubsys-02","eispr-idhubsys-03","eispr-idhubsys-04","eispr-idhubsys-11","eispr-idhubsys-12","eispr-idhubsys-13","eispr-idhubsys-14","eispr-idhubsys-21","eispr-idhubsys-22"]
                 ,
-                "DR" : ["eisdr-idhubsys-01", "eisdr-idhubsys-02", "eisdr-idhubsys-03", "eisdr-idhubsys-04","eisdr-idhubsys-11", "eisdr-idhubsys-12", "eisdr-idhubsys-13", "eisdr-idhubsys-14"]
+                "DR" : ["eisdr-idhubsys-01","eisdr-idhubsys-02","eisdr-idhubsys-03","eisdr-idhubsys-04","eisdr-idhubsys-11","eisdr-idhubsys-12","eisdr-idhubsys-13","eisdr-idhubsys-14"]
                 } ,
+
                 /*"NONGEN-5 [ 4 ]" :{
                 "PR" : ["eisprnongen5-01","eisprnongen5-02","eisprnongen5-11","eisprnongen5-12"]
                 ,
