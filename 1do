@@ -1,4 +1,1261 @@
-X Window System	Service disabled (and removed where mandated)	"xorg-x11-fonts-Type1-7.5-33.el9.noarch
-xorg-x11-fonts-ISO8859-1-100dpi-7.5-33.el9.noarch
-xorg-x11-xauth-1.1-10.el9.x86_64
-xorg-x11-utils-7.5-40.el9.x86_64"	NO	Medium	dnf remove xorg-x11*		Service should be disabled/removed unless explicitly required	Reduce attack surface by disabling unnecessary services.	X11 graphical stack not required on servers
+---
+- name: LINUX_SCD
+  hosts: 'Server_Group_3'
+  become: true
+  gather_facts: no
+
+  tasks:
+    - name: Configure MAC policy audit rules
+      copy:
+        dest: /etc/audit/rules.d/MAC-policy.rules
+        content: |
+          -w /etc/selinux/ -p wa -k MAC-policy
+          -w /usr/share/selinux/ -p wa -k MAC-policy
+        owner: root
+        group: root
+        mode: "0640"
+      register: Output_file
+      tags:
+        - MAC
+
+    - name: Output of Configure MAC policy audit rules
+      debug:
+        msg: "{{ Output_file }}"
+      tags:
+        - MAC
+    - name: Edit File auditd.service
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/system/auditd.service
+        regexp: '^RefuseManualStop=yes'
+        line: RefuseManualStop=no
+      register: filechage
+      tags: MAC1
+
+    - name: Output Edit File auditd.service
+      debug:
+        msg: "{{ filechage }}"
+      tags:
+        - MAC1
+    - name: Daemon Reload
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+      register: filechagereload
+      tags: MAC1
+
+    - name: Output Daemon Reload
+      debug:
+        msg: "{{ filechagereload }}"
+      tags:
+        - MAC1
+
+    - name: Reload auditd service
+      ansible.builtin.service:
+        name: auditd
+        state: restarted
+      register: Output_file2
+      tags:
+        - MAC1
+
+    - name: Output of Configure MAC policy audit rules
+      debug:
+        msg: "{{ Output_file2 }}"
+      tags:
+        - MAC1
+
+
+
+    - name: 3.1  Set permissions and ownership for multiple files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        owner: "{{ item.owner }}"
+        group: "{{ item.group }}"
+        mode: "{{ item.mode }}"
+      loop:
+        - { path: "/etc/passwd", owner: "root", group: "root", mode: "0644" }
+        - { path: "/etc/group", owner: "root", group: "root", mode: "0644" }
+        - { path: "/etc/shadow", owner: "root", group: "root", mode: "0000" }
+        - { path: "/etc/gshadow", owner: "root", group: "root", mode: "0000" }
+      register: output_file
+      tags:
+        - FILE
+
+    - name: Output of Set permissions and ownership for multiple file
+      debug:
+        msg: "{{ output_file }}"
+      tags: FILE
+
+    - name: 2.1.1 Find all *.conf file in /etc/modprobe.d
+      ansible.builtin.find:
+        path: /etc/modprobe.d
+        patterns: "*.conf"
+      register: outputfiles
+      tags:
+        - AUTH
+
+
+    - name: Remove mqsiprofile from root
+      become: true
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        line: '#. /opt/IBM/ace/server/bin/mqsiprofile'
+        regexp: '^\.\s+/opt/IBM/ace/server/bin/mqsiprofile'
+        backrefs: false
+      loop:
+        - "/etc/bashrc"
+        - "/etc/profile"
+        - "/root/.bash_profile"
+        - "/root/.bashrc"
+      register: profile_output
+      tags: profile_tag
+
+    - name: Output of Remove mqsiprofile from root
+      debug:
+        msg: "{{ profile_output }}"
+      tags: profile_tag
+
+
+    - name: Remove mqsiprofile from root
+      become: true
+      ansible.builtin.lineinfile:
+        path: "{{ item }}"
+        line: '. /opt/IBM/ace/server/bin/mqsiprofile'
+        regexp: './opt/IBM/ace/server/bin/mqsiprofile'
+        backrefs: false
+      loop:
+        - "/etc/bashrc"
+        - "/etc/profile"
+        - "/root/.bash_profile"
+        - "/root/.bashrc"
+      register: profile_output
+      tags: profile_add_tag
+
+    - name: Output of Remove mqsiprofile from root
+      debug:
+        msg: "{{ profile_output }}"
+      tags: profile_add_tag
+
+
+    - name: 2.1.1 Ensure mounting of the unused filesystems is disabled and separate partitions are created.
+      ansible.builtin.lineinfile:
+        path: "{{ item.path }}"
+        line: 'install fs /bin/true'
+        regex: '^install\s+fs\s+/bin/true'
+        state: present
+      loop: "{{ outputfiles.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+      register: output1
+      tags:
+        - AUTH
+
+    - name: Output of point 2.1.1
+      debug:
+        msg: "{{ output1 }}"
+      tags:
+        - AUTH
+
+    - name: Ensure nodev, nosuid, and noexec options are set in /etc/fstab for /tmp
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "{{ item.line }}"
+        regex: "{{ item.regex }}"
+        state: present
+      register: output123
+      loop:
+        - line: '/dev/rootvg/tmplv                               /tmp    xfs     defaults,nodev,nosuid,noexec        0       0'
+          regex: '^/dev/rootvg/tmplv\s+/tmp'
+        - line: '/dev/rootvg/homelv                              /home   xfs     defaults,nodev,nosuid        0       0'
+          regex: '^/dev/rootvg/homelv\s+/home'
+        - line: 'tmpfs        /dev/shm      tmpfs      defaults,nodev,nosuid,noexec    0     0'
+          regex: '^tmpfs\s+/dev/shm'
+      tags:
+        - AUTH2
+
+    - name: Output of set in /etc/fstab for /tmp
+      debug:
+        msg: "{{ output123 }}"
+      tags:
+        - AUTH2
+
+
+    - name: Remount specified partitions
+      ansible.posix.mount:
+        path: "{{ item.path }}"
+        state: remounted
+      register: output2
+      loop:
+        - { path: /tmp }
+        - { path: /home }
+        - { path: /dev/shm }
+      tags:
+        - AUTH2
+    - name: Output Remount specified partitions
+      debug:
+        msg: "{{ output2 }}"
+      tags:
+        - AUTH2
+
+#######################################################################################################################################################################################
+    - name: 2.1.2. Ensure sticky bit is set on all world-writable directories
+      ansible.builtin.lineinfile:
+        path: /var/spool/cron/root
+        regex: '^Sticky Bit SCD 14'
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '##############################Sticky Bit SCD 14#################################'
+        - "59 11 * * * df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d -perm -0002 2>/dev/null | xargs chmod a+t"
+        - "59 23 * * * df --local -P | awk {'if (NR!=1) print $6'} | xargs -I '{}' find '{}' -xdev -type d -perm -0002 2>/dev/null | xargs chmod a+t"
+      tags:
+        - CRON
+    - name: 2.1.2. Ensure sticky bit is set on all world-writable directories
+      shell: |
+        df --local -P | awk '{if (NR!=1) print $6}' | xargs -I '{}' find '{}' -xdev -type d \( -perm -0002 -a ! -perm -1000 \) 2>/dev/null | xargs -I '{}' chmod a+t '{}'
+      register: output3
+      tags:
+        - CRON
+    - name: output3
+      debug:
+        msg: "{{ output3 }}"
+      tags:
+        - CRON
+########################################################################################################################################################################################
+    - name: 2.1.3. Disable Automounting and USB Storage
+      shell: |
+        systemctl --now disable autofs
+      register: output4
+      tags:
+        - AUTOMOUNTING
+    - name: output4
+      debug:
+        msg: "{{ output4 }}"
+      tags:
+        - AUTOMOUNTING
+#######################################################################################################################################################################################
+
+    - name: 2.1.1.12.1.16 Harden IPv4 host/router parameters
+      ansible.builtin.replace:
+        path: /etc/sysctl.conf
+        replace: "{{ item.line  }}"
+        regexp: "{{ item.regexp  }}"
+      loop:
+        - { line: 'accept_source_route=0', regexp: '^accept_source_route/s*=.*'}
+        - { line: 'net.ipv4.conf.all.accept_source_route = 0', regexp: '^net.ipv4.conf.all.accept_source_route/s*=.*'}
+        - { line: 'net.ipv4.conf.default.accept_source_route = 0', regexp: '^net.ipv4.conf.default.accept_source_route/s*=.*'}
+        - { line: 'accept_redirects=0', regexp: '^accept_redirects/s*=.*'}
+        - { line: 'net.ipv4.conf.all.accept_redirects = 0', regexp: '^net.ipv4.conf.all.accept_redirects/s*=.*'}
+        - { line: 'net.ipv4.conf.default.accept_redirects = 0', regexp: '^net.ipv4.conf.default.accept_redirects/s*=.*'}
+        - { line: 'net.ipv4.conf.all.secure_redirects = 0', regexp: '^net.ipv4.conf.all.secure_redirects/s*=.*'}
+        - { line: 'net.ipv4.conf.default.secure_redirects = 0', regexp: '^net.ipv4.conf.default.secure_redirects/s*=.*'}
+        - { line: 'secure_redirects=0', regexp: '^secure_redirects/s*=.*'}
+        - { line: 'log_martians=1', regexp: '^log_martians/s*=.*'}
+        - { line: 'net.ipv4.conf.all.log_martians = 1', regexp: '^net.ipv4.conf.all.log_martians/s*=.*'}
+        - { line: 'net.ipv4.conf.default.log_martians = 1', regexp: '^net.ipv4.conf.default.log_martians/s*=.*'}
+        - { line: 'icmp_echo_ignore_broadcasts=1', regexp: 'icmp_echo_ignore_broadcasts/s*=.*'}
+        - { line: 'net.ipv4.conf.all.log_martians = 1', regexp: '^net.ipv4.conf.all.log_martians/s*=.*'}
+        - { line: 'net.ipv4.conf.default.log_martians = 1', regexp: '^net.ipv4.conf.default.log_martians/s*=.*'}
+        - { line: 'ip_forward=0', regexp: '^ip_forward/s*=.*'}
+        - { line: 'icmp_echo_ignore_broadcasts = 1', regexp: '^icmp_echo_ignore_broadcasts/s*=.*'}
+        - { line: 'net.ipv4.icmp_echo_ignore_broadcasts = 1', regexp: 'net.ipv4.icmp_echo_ignore_broadcasts/s*=.*'}
+        - { line: 'send_redirects=0', regexp: '^send_redirects/s*=.*' }
+        - { line: 'rp_filter=1', regexp: '^rp_filter/s*=.*' }
+        - { line: 'tcp_syncookies=1', regexp: '^tcp_syncookies/s*=.*' }
+        - { line: 'icmp_ignore_bogus_error_responses=1', regexp: '^icmp_ignore_bogus_error_responses/s*=.*' }
+        - { line: 'net.ipv6.conf.all.accept_ra=0', regexp: '^net.ipv6.conf.all.accept_ra/s*=.*' }
+        - { line: 'net.ipv6.conf.default.accept_ra=0', regexp: '^net.ipv6.conf.default.accept_ra/s*=.*' }
+        - { line: 'net.ipv6.route.flush=1', regexp: '^net.ipv6.route.flush/s*=.*' }
+      register: output1
+      tags:
+        - Harden_IPv4
+
+    - name: output 2.1.1.12.1.16 Harden IPv4 host/router parameters
+      debug:
+        msg: "{{ output1 }}"
+      tags:
+        - Harden_IPv4
+
+    - name: 2.1.1.12.1.16 Harden IPv4 host/router parameters
+      become: true
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        sysctl_set: yes
+        reload: yes
+      loop:
+        - name: net.ipv4.ip_forward
+          value: 0
+        - name: net.ipv4.conf.all.send_redirects
+          value: 0
+        - name: net.ipv4.conf.default.send_redirects
+          value: 0
+        - name: net.ipv4.conf.all.accept_source_route
+          value: 0
+        - name: net.ipv4.conf.default.accept_source_route
+          value: 0
+        - name: net.ipv4.conf.all.accept_redirects
+          value: 0
+        - name: net.ipv4.conf.default.accept_redirects
+          value: 0
+        - name: net.ipv4.conf.all.secure_redirects
+          value: 0
+        - name: net.ipv4.conf.default.secure_redirects
+          value: 0
+        - name: net.ipv4.conf.all.log_martians
+          value: 1
+        - name: net.ipv4.conf.default.log_martians
+          value: 1
+        - name: net.ipv4.icmp_echo_ignore_broadcasts
+          value: 1
+        - name: net.ipv4.icmp_ignore_bogus_error_responses
+          value: 1
+        - name: net.ipv4.conf.all.rp_filter
+          value: 1
+        - name: net.ipv4.conf.default.rp_filter
+          value: 1
+        - name: net.ipv4.tcp_syncookies
+          value: 1
+      register: output
+      tags:
+        - Harden_IPv4_2
+
+    - name: output 2.1.1.12.1.16 Harden IPv4 host/router parameters
+      debug:
+        msg: "{{ output }}"
+      tags:
+        - Harden_IPv4_2
+
+
+
+######################################################################################################################################################################################
+    - name: 2.2.1. Verify System File Permissions
+      shell: |
+        chmod 644 /etc/passwd
+        chmod 000 /etc/shadow
+        chmod 000 /etc/gshadow
+        chmod 644 /etc/group
+        chown root:root /etc/passwd
+        chown root:root /etc/shadow
+        chown root:root /etc/gshadow
+        chown root:root /etc/group
+      register: output2
+      tags:
+        - SystemFile
+    - name: output5
+      debug:
+        msg: "{{ output5 }}"
+#######################################################################################################################################################################################
+
+    - name: 2.1.1.7.1.9 Configure CLI login banners
+      ansible.builtin.replace:
+        path: "{{ item }}"
+        regexp: '(\\m|\\r|\\s|\\v|\\S|\\M|\\R|\\V)'
+        replace: ''
+      loop:
+        - /etc/motd
+        - /etc/issue
+        - /etc/issue.net
+      register: output1
+      tags:
+        - CLI_login
+    - name: output  2.1.1.7.1.9 Configure CLI login banners
+      debug:
+        msg: "{{ output1 }}"
+      tags:
+        - CLI_login
+######################################################################################################################################################################################
+    - name: 2.3.1. Ensure AIDE is installed
+      ansible.builtin.lineinfile:
+        path: /var/spool/cron/root
+        line: '0 5 * * * /usr/sbin/aide –-check'
+        regex: '^0 5 \* \* \* /usr/sbin/aide –-check'
+        state: present
+        create: yes
+      tags:
+        - AideCron
+      register: output2
+    - name: output 2.3.1. Ensure AIDE is installed
+      debug:
+        msg: "{{ output2 }}"
+      tags:
+        - AideCron
+#######################################################################################################################################################################################
+    - name: 2.4.1 Ensure permissions on bootloader config are configured.
+      shell: |
+        chown root:root /boot/grub2/grub.cfg
+        chmod og-rwx /boot/grub2/grub.cfg
+        chown root:root /boot/grub2/grubenv
+        chmod og-rwx /boot/grub2/grubenv
+        touch /boot/grub2/user.cfg
+        chown root:root /boot/grub2/user.cfg
+        chmod og-rwx /boot/grub2/user.cfg
+      register: output6
+      tags:
+        - GRUB
+    - name: Output of point 2.4.1
+      debug:
+        msg: "{{ output6 }}"
+      tags:
+        - GRUB
+#######################################################################################################################################################################################
+    - name: 2.5.1. Additional Process Hardening.
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/coredump.conf
+        regex: '^#?Storage\s+'
+        line: "Storage=none"
+        state: present
+      tags:
+        - Coredump
+#######################################################################################################################################################################################
+    - name: 2.6.1. Configure SELinux.
+      ansible.builtin.lineinfile:
+        path: /etc/audit/audit.rules
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '-w /etc/selinux/ -p wa -k MAC-policy'
+        - '-w /usr/share/selinux/ -p wa -k MAC-policy'
+      register: Output11
+      tags:
+        - SElinux
+    - name: Output of 2.6.1. Configure SELinux.
+      debug:
+        msg: "{{ Output11  }}"
+      tags:
+        - SElinux
+    - name: 2.17.1 Ensure login and logout events are collected
+      ansible.builtin.lineinfile:
+        path: /etc/audit/audit.rules
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '-w /var/log/lastlog -p wa -k logins'
+        - '-w /var/run/faillock/ -p wa -k logins'
+      register: Output12
+      tags:
+        - SElinux1
+    - name: 2.17.1 Ensure login and logout events are collected
+      debug:
+        msg: "{{ Output12  }}"
+      tags:
+        - SElinux1
+    - name: 2.17.1 Ensure login and logout events are collected
+      ansible.builtin.lineinfile:
+        path: /etc/audit/audit.rules
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '-w /var/run/utmp -p wa -k session'
+        - '-w /var/log/wtmp -p wa -k logins'
+        - '-w /var/log/btmp -p wa -k logins'
+      register: Output13
+      tags:
+        - SElinux13
+    - name: 2.17.1 Ensure session initiation information is collected - utmp
+      debug:
+        msg: "{{ Output13  }}"
+      tags:
+        - SElinux13
+
+#######################################################################################################################################################################################
+### 2.7.2 Our server is non GUI
+#######################################################################################################################################################################################
+    - name: 2.8.1. Ensure xinetd is not installed.
+      shell: |
+        dnf remove xinetd -y --nogpgcheck
+      register: output7
+      ignore_errors: true
+      tags:
+        - Xinetd
+
+    - name: Output of point 2.8.1
+      debug:
+        msg: "{{ 'No packages marked for removal Xinetd is not present' if output7.stdout | regex_search('Nothing to do') else 'Deleted Xinetd' }}"
+      tags:
+        - Xinetd
+#######################################################################################################################################################################################
+    - name: 2.9.1. Time Synchronization.
+      ansible.builtin.lineinfile:
+        path: /etc/chrony.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'server 10.191.174.52 key 1 iburst'
+        - 'server 10.191.174.53 key 1 iburst'
+        - 'server 10.179.70.2 key 1 iburst'
+        - 'server 10.179.70.3 key 1 iburst'
+      register: output8
+      tags:
+        - TimeSync
+    - name: Output of point 2.9.1
+      debug:
+        msg: "{{ output8 }}"
+      tags:
+        - TimeSync
+    - name: "To include -u chrony in chronyd"
+      ansible.builtin.lineinfile:
+        path: /etc/sysconfig/chronyd
+        regex: '^OPTIONS'
+        line: 'OPTIONS="-u chrony"'
+        state: present
+      register: output9
+      tags:
+        - TimeSync
+    - name: 2.9.1 output
+      debug:
+        msg: "{{ output9 }}"
+
+    - name: restart
+      shell: |
+        systemctl restart chronyd
+      tags:
+        - TimeSync
+#######################################################################################################################################################################################
+    - name: 2.9.2. Check and remove for Unconfined Daemons and disable the require daemons
+      shell: |
+        systemctl disable --now "{{ item }}"
+      loop:
+        - 'xinetd'
+        - 'rsync'
+        - 'avahi'
+        - 'snmp'
+        - 'samba'
+        - 'imap'
+        - 'pop3'
+        - 'ftp'
+        - 'dns'
+        - 'nfs'
+        - 'rpc'
+        - 'ldap'
+        - 'dhcp'
+        - 'cups'
+        - 'nis'
+        - 'telnet'
+        - 'httpd'
+      register: output10
+      ignore_errors: true
+      tags:
+        - UNCONFINED_DAEMONS
+    - name: Output of point 2.9.2
+      debug:
+        msg: "{{ 'No packages marked for removal as packages not present' if output10 | regex_search('Nothing to do') else 'Deleted' }}"
+      tags:
+        - UNCONFINED_DAEMONS
+#######################################################################################################################################################################################
+    - name: 2.10.1. Service Clients
+      shell: |
+       dnf remove "{{ item }}" -y --nogpgcheck
+      loop:
+        - 'ypbind'
+        - 'talk'
+        - 'telnet'
+        - 'openldap-clients'
+      tags:
+        - 'SERVICE_CLIENTS'
+######################################################################################################################################################################################
+#    - name: 2.11.1. Remove Legacy Services
+######################################################################################################################################################################################
+    - name: 2.12.1. Network Parameters
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'net.ipv4.conf.all.accept_source_route = 0'
+        - 'net.ipv4.conf.default.accept_source_route = 0'
+        - 'net.ipv4.conf.all.accept_redirects = 0'
+        - 'net.ipv4.conf.default.accept_redirects = 0'
+        - 'net.ipv4.conf.all.secure_redirects = 0'
+        - 'net.ipv4.conf.default.secure_redirects = 0'
+        - 'net.ipv4.conf.all.log_martians = 1'
+        - 'net.ipv4.conf.default.log_martians = 1'
+        - 'net.ipv4.icmp_echo_ignore_broadcasts = 1'
+      register: output11
+      tags:
+        - NetworkParameters
+
+    - name: Output of point 2.12.1
+      debug:
+        msg: "{{ output11 }}"
+      tags:
+        - NetworkParameters
+######################################################################################################################################################################################
+    - name: 2.13.1. Modify Network Parameters
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'net.ipv4.ip_forward = 0'
+        - 'net.ipv4.conf.all.send_redirects = 0'
+        - 'net.ipv4.conf.default.send_redirects = 0'
+        - 'net.ipv4.conf.all.accept_source_route = 0'
+        - 'net.ipv4.conf.default.accept_source_route = 0'
+        - 'net.ipv4.conf.all.accept_redirects = 0'
+        - 'net.ipv4.conf.default.accept_redirects = 0'
+        - 'net.ipv4.conf.all.secure_redirects = 0'
+        - 'net.ipv4.conf.default.secure_redirects = 0'
+        - 'net.ipv4.conf.all.log_martians = 1'
+        - 'net.ipv4.conf.default.log_martians = 1'
+        - 'net.ipv4.icmp_echo_ignore_broadcasts = 1'
+        - 'net.ipv4.icmp_ignore_bogus_error_responses = 1'
+        - 'net.ipv4.conf.all.rp_filter = 1'
+        - 'net.ipv4.conf.default.rp_filter = 1'
+        - 'net.ipv4.tcp_syncookies = 1'
+      register: output12
+      tags:
+        - ModifyNetworkParameters
+
+    - name: Output of point 2.13.1. Modify Network Parameters
+      debug:
+        msg: "{{ output12 }}"
+      tags:
+        - ModifyNetworkParameters
+######################################################################################################################################################################################
+    - name: 2.13.2. Ensure IPv6 router advertisements are not accepted
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'net.ipv6.conf.all.accept_ra = 0'
+        - 'net.ipv6.conf.default.accept_ra = 0'
+      register: output13
+      tags:
+        - IPv6_AVD
+
+    - name:  Output of point 2.13.2. Ensure IPv6 router advertisements are not accepted
+      debug:
+        msg: "{{ output13 }}"
+      tags:
+        - IPv6_AVD
+######################################################################################################################################################################################
+    - name: 2.1.1.5.1.7 Disable core dumps and enable ASLR
+      ansible.builtin.replace:
+        path: /etc/sysctl.conf
+        replace: "{{ item.line }}"
+        regexp: "{{ item.regexp }}"
+      loop:
+        - { line: 'fs.suid_dumpable = 0', regexp: '^fs.suid_dumpable\s*=.*' }
+        - { line: 'kernel.randomize_va_space = 2', regexp: '^kernel.randomize_va_space\s*=.*' }
+      register: output1
+      tags:
+        - ASLR
+
+    - name:  Output 2.1.1.5.1.7 Disable core dumps and enable ASLR
+      debug:
+        msg: "{{ output1 }}"
+      tags:
+        - ASLR
+
+    - name: 2.1.1.5.1.7 Disable core dumps and enable ASLR
+      ansible.builtin.replace:
+        path: /etc/systemd/coredump.conf
+        replace: "{{ item.line  }}"
+        regexp: "{{ item.regexp  }}"
+      loop:
+        - { line: 'Storage=none', regexp: '^Storage\s*=.*' }
+        - { line: 'ProcessSizeMax=0', regexp: '^ProcessSizeMax\s*=.*' }
+      register: output2
+      tags:
+        - ASLR
+
+    - name:  Output 2.1.1.5.1.7 Disable core dumps and enable ASLR
+      debug:
+        msg: "{{ output2 }}"
+      tags:
+        - ASLR
+    - name: Reload Daemon
+      shell: |
+        systemctl daemon-reload
+      register: output3
+      tags:
+        - ASLR
+    - name: Output Reload Daemon
+      debug:
+        msg: "{{ output3 }}"
+      tags:
+        - ASLR
+
+#####################################################################################################################################################################################
+    - name: 2.13.3. Enable Server firewall
+      shell: |
+        systemctl enable firewalld
+      register: output14
+      tags:
+        - Firewall_service
+    - name:  Output of point 2.13.3. Enable Server firewall
+      debug:
+        msg: "{{ output14 }}"
+      tags:
+        - Firewall_service
+######################################################################################################################################################################################
+    - name: 2.14.1. Ensure audit logs are not automatically deleted
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^max_log_file_action'
+        state: absent
+      tags:
+        - AUDIT_CONFIG
+    - name: 2.14.1. Ensure audit logs are not automatically deleted
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^max_log_file_action'
+        line: "max_log_file_action = keep_logs"
+        state: present
+      tags:
+        - AUDIT_CONFIG
+    - name: audit config
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^space_left_action'
+        state: absent
+      tags:
+        - AUDIT_CONFIG
+    - name: audit config
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^space_left_action'
+        line: "space_left_action = email"
+        state: present
+      tags:
+        - AUDIT_CONFIG
+    - name: audit config
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^action_mail_acct'
+        state: absent
+      tags:
+        - AUDIT_CONFIG
+    - name: audit config
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^action_mail_acct'
+        line: "action_mail_acct = root"
+        state: present
+      tags:
+        - AUDIT_CONFIG
+    - name: audit config
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^admin_space_left_action'
+        state: absent
+      tags:
+        - AUDIT_CONFIG
+    - name: audit config
+      ansible.builtin.lineinfile:
+        path: /etc/audit/auditd.conf
+        regex: '^admin_space_left_action'
+        line: "admin_space_left_action = halt"
+        state: present
+      tags:
+        - AUDIT_CONFIG
+
+######################################################################################################################################################################################
+
+# 2.14.2. Ensure no world writable files exist #######
+
+######################################################################################################################################################################################
+
+    - name: 2.15.1. Uncommon Network Protocols to be disabled
+      ansible.builtin.lineinfile:
+        path: /etc/modprobe.d/
+        patterns: "*.conf"
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'install dccp /bin/true'
+        - 'install sctp /bin/true'
+        - 'install rds /bin/true'
+        - 'install tipc /bin/true'
+      register: output15
+      tags:
+        - NetworkProtocol
+
+    - name: Output of point 2.15.1
+      debug:
+        msg: "{{ output15 }}"
+      tags:
+        - NetworkProtocol
+######################################################################################################################################################################################
+
+#    - name: 2.16.1. Configure IP Tables /Firewalld
+#    - name: 2.16.2. Ensure default deny firewall policy
+#    - name: 2.16.3. Ensure loopback traffic is configured
+
+######################################################################################################################################################################################
+    - name: 2.17.1 modify user/group
+      ansible.builtin.lineinfile:
+        path: /etc/audit/audit.rules
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '-w /etc/group -p wa -k identity'
+        - '-w /etc/passwd -p wa -k identity'
+        - '-w /etc/gshadow -p wa -k identity'
+        - '-w /etc/shadow -p wa -k identity'
+        - '-w /etc/security/opasswd -p wa -k identity'
+      register: output1234
+      tags:
+        - new
+
+    - name: Output of point 2.17.1
+      debug:
+        msg: "{{ output1234 }}"
+      tags:
+        - new
+
+
+    - name: 2.17.1. Ensure auditd is installed
+      shell: |
+        dnf install audit audit-libs -y --nogpgcheck
+      register: output16
+      ignore_errors: true
+      tags:
+        - Audit_service
+
+    - name: Output of point 2.17.1
+      debug:
+        msg: "{{ output16 }}"
+      tags:
+        - Audit_service
+
+    - name: Enable audit service
+      shell: |
+        systemctl --now enable auditd
+      register: output17
+      ignore_errors: true
+      tags:
+        - Audit_service
+
+    - name: Output of point 2.17.1
+      debug:
+        msg: "{{ output17 }}"
+      tags:
+        - Audit_service
+######################################################################################################################################################################################
+
+    - name: 2.17.2. [MAC-policy_backup.rules]Ensure events that modify the system's Mandatory Access Controls are collected.
+      ansible.builtin.lineinfile:
+        path: /etc/audit/rules.d/MAC-policy_backup.rules
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '-w /etc/selinux/ -p wa -k MAC-policy'
+        - '-w /usr/share/selinux/ -p wa -k MAC-policy'
+      tags:
+        - Access_Controls
+    - name: 2.17.2. [audit.rules]Ensure events that modify the system's Mandatory Access Controls are collected.
+      ansible.builtin.lineinfile:
+        path: /etc/audit/rules.d/audit.rules
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '-w /etc/selinux/ -p wa -k MAC-policy'
+        - '-w /usr/share/selinux/ -p wa -k MAC-policy'
+      tags:
+        - Access_Controls
+
+######################################################################################################################################################################################
+
+    - name: 2.18.1. Configure rsyslog.
+      shell: |
+        dnf install rsyslog
+        systemctl --now enable rsyslog
+      register: output18
+      tags:
+        - rsyslog
+    - name: Output of point 2.18.1
+      debug:
+        msg: "{{ 'Already installed' if output18 | regex_search('Nothing to do') else 'Installed' }}"
+      tags:
+        - rsyslog
+    - name: 2.18.1. Configure rsyslog.
+      ansible.builtin.lineinfile:
+        path: /etc/rsyslog.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '########################SCD 14########################'
+        - 'user.info                                /var/log/user.log'
+        - '*.emerg                                  :omusrmsg:*'
+        - 'auth,authpriv.*                          /var/log/secure'
+        - 'mail.*                                  -/var/log/mail'
+        - 'mail.info                               -/var/log/mail.info'
+        - 'mail.warning                            -/var/log/mail.warn'
+        - 'mail.err                                 /var/log/mail.err'
+        - 'news.crit                               -/var/log/news/news.crit'
+        - 'news.err                                -/var/log/news/news.err'
+        - 'news.notice                             -/var/log/news/news.notice'
+        - '*.=warning;*.=err                       -/var/log/warn'
+        - '*.crit                                   /var/log/warn'
+        - '*.*;mail.none;news.none                 -/var/log/messages'
+        - 'local0,local1.*                         -/var/log/localmessages'
+        - 'local2,local3.*                         -/var/log/localmessages'
+        - 'local4,local5.*                         -/var/log/localmessages'
+        - 'local6,local7.*                         -/var/log/localmessages'
+        - '$FileCreateMode 0640'
+      register: output19
+      tags:
+        - rsyslog
+#    - name: Output of point 2.18.1
+#      debug:
+#        msg: "{{ output19 }}"
+#      tags:
+#        - rsyslog
+    - name: "reload rsyslog"
+      shell: |
+         systemctl reload rsyslog
+      register: output20
+      tags:
+        - rsyslog
+    - name: output20
+      debug:
+        msg: "{{ output20 }}"
+
+    - name: 2.18.1. Configure rsyslog.
+      ansible.builtin.lineinfile:
+        path: /etc/rsyslog.d/21-cloudinit.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - '########################SCD 14########################'
+        - 'user.info                                /var/log/user.log'
+        - '*.emerg                                  :omusrmsg:*'
+        - 'auth,authpriv.*                          /var/log/secure'
+        - 'mail.*                                  -/var/log/mail'
+        - 'mail.info                               -/var/log/mail.info'
+        - 'mail.warning                            -/var/log/mail.warn'
+        - 'mail.err                                 /var/log/mail.err'
+        - 'news.crit                               -/var/log/news/news.crit'
+        - 'news.err                                -/var/log/news/news.err'
+        - 'news.notice                             -/var/log/news/news.notice'
+        - '*.=warning;*.=err                       -/var/log/warn'
+        - '*.crit                                   /var/log/warn'
+        - '*.*;mail.none;news.none                 -/var/log/messages'
+        - 'local0,local1.*                         -/var/log/localmessages'
+        - 'local2,local3.*                         -/var/log/localmessages'
+        - 'local4,local5.*                         -/var/log/localmessages'
+        - 'local6,local7.*                         -/var/log/localmessages'
+        - '$FileCreateMode 0640'
+      register: output20a
+      tags:
+        - rsyslog
+    - name: "reload rsyslog"
+      shell: |
+         systemctl reload rsyslog
+      register: output20b
+      tags:
+        - rsyslog
+    - name: output20b
+      debug:
+        msg: "{{ output20b }}"
+####################################################################################################################################################################################
+
+    - name: 2.19.1. Cron Configuration.
+      shell: |
+        systemctl --now enable cron
+        chown root:root /etc/crontab
+        chmod og-rwx /etc/crontab
+        chown root:root /etc/cron.hourly
+        chmod og-rwx /etc/cron.hourly
+        chown root:root /etc/cron.daily
+        chmod og-rwx /etc/cron.daily
+        chown root:root /etc/cron.weekly
+        chmod og-rwx /etc/cron.weekly
+        chown root:root /etc/cron.monthly
+        chmod og-rwx /etc/cron.monthly
+        chown root:root /etc/cron.d
+        chmod og-rwx /etc/cron.d
+        rm /etc/cron.deny
+        rm /etc/at.deny
+        touch /etc/cron.allow
+        touch /etc/at.allow
+        chmod o-rwx /etc/cron.allow
+        chmod g-wx /etc/cron.allow
+        chmod o-rwx /etc/at.allow
+        chmod g-wx /etc/at.allow
+        chown root:root /etc/cron.allow
+        chown root:root /etc/at.allow
+      register: output21
+      tags:
+        - Cron_Configuration
+    - name: output21
+      debug:
+        msg: "{{ output21 }}"
+
+####################################################################################################################################################################################
+    - name: Check Name 2.21.1 Ensure lockout for failed password attempts is configured
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/password-auth
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'auth  required  pam_faillock.so preauth audit silent deny=5 unlock_time=900'
+        - 'auth [success=1 default=bad] pam_unix.so'
+        - 'auth [default=die] pam_faillock.so authfail audit deny=5 unlock_time=900'
+        - 'auth sufficient pam_faillock.so authsucc audit deny=5 unlock_time=900'
+      register: Output12
+      tags:
+        - Lockout
+    - name: Check Name 2.21.1 Ensure lockout for failed password attempts is configured system-auth 'auth sufficient pam_faillock.so'
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/system-auth
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'auth  required  pam_faillock.so preauth audit silent deny=5 unlock_time=900'
+        - 'auth [success=1 default=bad] pam_unix.so'
+        - 'auth [default=die] pam_faillock.so authfail audit deny=5 unlock_time=900'
+        - 'auth sufficient pam_faillock.so authsucc audit deny=5 unlock_time=900'
+      register: Output123
+      tags:
+        - Lockout
+
+    - name: output Check Name 2.21.1 Ensure lockout for failed password attempts is configured system-auth 'auth sufficient pam_faillock.so'
+      debug:
+        msg: "{{ Output12 }}"
+      tags:
+        - Lockout
+    - name: output Check Name 2.21.1 Ensure lockout for failed password attempts is configured system-auth 'auth sufficient pam_faillock.so'
+      debug:
+        msg: "{{ Output123 }}"
+      tags:
+        - Lockout
+
+
+
+
+####################################################################################################################################################################################
+    - name: 2.21.1. PAM configuration.
+      ansible.builtin.lineinfile:
+        path: /etc/security/pwquality.conf
+        line: "{{ item }}"
+        state: present
+      loop:
+        - 'minclass = 4'
+        - 'dcredit = -1'
+        - 'ucredit = -1'
+        - 'ocredit = -1'
+        - 'lcredit = -1'
+      tags:
+        - PAM
+    - name: 2.21.1. PAM configuration.
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/common-password
+        line: 'password required pam_pwhistory.so remember=5'
+        state: present
+      tags:
+        - PAM
+    - name: 2.21.1. PAM configuration.
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/common-password
+        line: 'password requisite pam_pwquality.so retry=3'
+        state: present
+      tags:
+        - PAM
+    - name: 2.21.1. PAM configuration.
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/common-password
+        line: 'password [success=1 default=ignore] pam_unix.so sha512'
+        state: present
+      tags:
+        - PAM
+    - name: 2.21.1. PAM configuration.
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/common-auth
+        line: 'auth required pam_tally2.so onerr=fail audit silent deny=5 unlock_time=900'
+        state: present
+      tags:
+        - PAM
+
+####################################################################################################################################################################################
+    - name: 2.22.1. Ensure default user shell timeout is 900 seconds or less - /etc/bashrc
+      ansible.builtin.lineinfile:
+        path: /etc/bashrc
+        regex: '^TMOUT'
+        line: "TMOUT=900"
+        state: present
+      register: Output11
+      tags:
+        - SHELLT
+    - name: 2.22.1.OUTPUT  Ensure default user shell timeout is 900 seconds or less - /etc/bashrc
+      debug:
+        msg: "{{ Output11  }}"
+      tags:
+        - SHELLT
+
+
+    - name: 2.22.1. Ensure default user shell timeout is 900 seconds or less - /etc/profile
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regex: '^TMOUT'
+        line: "TMOUT=900"
+        state: present
+      register: Output11
+      tags:
+        - SHELLT
+    - name: 2.22.1.OUTPUT  Ensure default user shell timeout is 900 seconds or less - /etc/profile
+      debug:
+        msg: "{{ Output11  }}"
+      tags:
+        - SHELLT
+
+
+
+
+    - name: 2.22.1. [max days] Set Shadow Password Suite Parameters
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regex: '^PASS_MAX_DAYS'
+        line: "PASS_MAX_DAYS   90"
+        state: present
+      tags:
+        - LOGINs
+    - name: 2.22.1. [warn age] Set Shadow Password Suite Parameters
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regex: '^PASS_WARN_AGE'
+        line: "PASS_WARN_AGE   14"
+        state: present
+      tags:
+        - LOGIN
+    - name: 2.22.1. [max days] Set Shadow Password Suite Parameters
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regex: '^PASS_MIN_DAYS'
+        line: "PASS_MIN_DAYS   7"
+        state: present
+      tags:
+        - LOGIN
+    - name: 2.22.1. [max days] Set Shadow Password Suite Parameters
+      ansible.builtin.lineinfile:
+        path: /etc/login.defs
+        regex: '^PASS_MIN_LEN'
+        line: "PASS_MIN_LEN   8"
+      tags:
+        - LOGINs
+    - name: 2.22.1. [default password inactivity period to 30 days] Set Shadow Password Suite Parameters
+      shell: |
+        useradd -D -f 30
+      tags:
+        - LOGIN
+####################################################################################################################################################################################
+
+    - name: 2.22.2. Logging and Auditing
+      ansible.builtin.lineinfile:
+        path: /etc/pam.d/su
+        regex: '^auth            required        pam_wheel.so use_uid group=sugroup'
+        line: "auth            required        pam_wheel.so use_uid group=sugroup"
+        state: present
+      tags:
+        - SU_FILE
+####################################################################################################################################################################################
+
+    - name: 2.23.1. System File Permissions.
+      shell: |
+        chown root:root /etc/passwd
+        chmod u-x,go-wx /etc/passwd-
+        chown root:root /etc/gshadow-
+        chmod g-wx,o-rwx /etc/gshadow-
+        chmod o-rwx,g-wx /etc/shadow
+        chown root:root /etc/group
+        chmod 644 /etc/group
+        chown root:root /etc/passwd-
+        chmod u-x,go-rwx /etc/passwd-
+        chown root:root /etc/shadow-
+        chmod u-x,go-rwx /etc/shadow-
+        chown root:root /etc/group-
+        chmod u-x,go-wx /etc/group-
+        chown root:root /etc/gshadow
+        chmod o-rwx,g-wx /etc/gshadow
+      register: output22
+      tags:
+        - File_Permissions
+    - name: output22
+      debug:
+        msg: "{{ output22 }}"
+      tags:
+        - File_Permissions
+####################################################################################################################################################################################
+#    - name: 2.24.1. User and Group Settings.
+####################################################################################################################################################################################
+    - name: 2.25.1. Restrict Cipher list
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regex: '^Ciphers aes128-ctr,aes192-ctr,aes256-ctr'
+        line: "Ciphers aes128-ctr,aes192-ctr,aes256-ctr"
+        state: present
+      notify: Restart ssh
+      tags:
+        - CIPHER
+  handlers:
+    - name: Restart ssh
+      service:
+        name: sshd
+        state: restarted
+
+####################################################################################################################################################################################
+    - name: 2.26.2. Set Default Group for root Account.
+      shell: |
+        usermod -g 0 root
+      register: output23
+      tags:
+        - Group_for_root
+    - name: output23
+      debug:
+        msg: "{{ output23 }}"
+####################################################################################################################################################################################
+    - name: 2.26.3. Set Default umask for Users.
+      ansible.builtin.lineinfile:
+        path: /etc/profile
+        line: "umask 027"
+        state: present
+        register: output22
+      tags:
+        - UMASK_1
+    - name: output 2.26.3. Set Default umask for Users.
+      debug:
+        msg: "{{ output22 }}"
+      tags:
+        - File_Permissions
+    - name: 2.26.3. Set Default umask for Users.
+      ansible.builtin.find:
+        paths: /etc/profile.d
+        patterns: '*.sh'
+      register: sh_files
+      tags:
+        - UMASK_1
+    - name: 2.26.3. Set Default umask for Users.
+      ansible.builtin.lineinfile:
+        path: "{{ item.path }}"
+        line: 'umask 027'
+        state: present
+      loop: "{{ sh_files.files }}"
+      tags:
+        - UMASK_1
+####################################################################################################################################################################################
+    - name: Find all modprobe conf files
+      ansible.builtin.find:
+        paths: /etc/modprobe.d/
+        patterns: "*.conf"
+      register: modprobe_files
+      tags:
+        - NNP
+
+    - name: Disable uncommon network protocols in all conf files
+      ansible.builtin.lineinfile:
+        path: "{{ item.0.path }}"
+        line: "{{ item.1 }}"
+        state: present
+        create: yes
+      loop: "{{ modprobe_files.files | product(['install dccp /bin/true', 'install sctp /bin/true', 'install rds /bin/true', 'install tipc /bin/true']) | list }}"
+      register: output15
+      tags:
+        - NNP
+
+    - name: Output of point 2.15.1
+      ansible.builtin.debug:
+        msg: "{{ output15 }}"
+      tags:
+        - NNP
