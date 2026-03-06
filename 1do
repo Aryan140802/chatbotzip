@@ -1,24 +1,4 @@
-- name: Find all modprobe conf files
-  ansible.builtin.find:
-    paths: /etc/modprobe.d/
-    patterns: "*.conf"
-  register: modprobe_files
-  tags:
-    - NNP
-
-- name: Disable uncommon network protocols in all conf files
-  ansible.builtin.lineinfile:
-    path: "{{ item.0.path }}"
-    line: "{{ item.1 }}"
-    state: present
-    create: yes
-  loop: "{{ modprobe_files.files | product(['install dccp /bin/true', 'install sctp /bin/true', 'install rds /bin/true', 'install tipc /bin/true']) | list }}"
-  register: output15
-  tags:
-    - NNP
-
-- name: Output of point 2.15.1
-  ansible.builtin.debug:
-    msg: "{{ output15 }}"
-  tags:
-    - NNP
+X Window System	Service disabled (and removed where mandated)	"xorg-x11-fonts-Type1-7.5-33.el9.noarch
+xorg-x11-fonts-ISO8859-1-100dpi-7.5-33.el9.noarch
+xorg-x11-xauth-1.1-10.el9.x86_64
+xorg-x11-utils-7.5-40.el9.x86_64"	NO	Medium	dnf remove xorg-x11*		Service should be disabled/removed unless explicitly required	Reduce attack surface by disabling unnecessary services.	X11 graphical stack not required on servers
