@@ -1,186 +1,36 @@
-#!/usr/bin/env python3
-import os
-import json
-import socket
-import subprocess
-import platform
-from datetime import datetime
+Key observations from the breakdown:
 
-# ================== CONFIG ==================
-OUTPUT_DIR = "./sync"
+**DR side:** The `.40.x` subnet carries the most servers (62) as it hosts the primary DR node set including MQ queues (eisdrmq-17 to 25) and all the -11 to -16 series. The `.42.x` subnet is smaller (28) and only has the -21/22 series plus MQ-31 to 40. Notably, Misc and IVR layers have no presence in `.42.x`.
 
-ENDPOINT_PUBLIC_PATH = "/opt/IBM/EndPoint_Public"
-RSA_KEYSTORE_PATH = "/opt/IBM/RSAKeystore"
-
-TRUSTSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_TRUSTSTORE.jks"
-KEYSTORE_PATH = "/opt/IBM/Broker_Properties/JKS/EISBRK10_PROD_N1_KEYSTORE.jks"
-
-JKS_PASSWORD = "password"   # Change if needed
-
-# ============================================
-
-def run(cmd):
-    try:
-        return subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
-    except:
-        return None
-
-
-# ---------- SYSTEM INFO ----------
-def get_system_info():
-    return {
-        "hostname": socket.gethostname(),
-        "ip": socket.gethostbyname(socket.gethostname()),
-        "os": platform.platform(),
-        "uptime": run(["uptime"]).strip() if run(["uptime"]) else "N/A",
-    }
+**PR side:** Distribution is more even — `.24.x` (55) and `.25.x` (49) carry similar loads, with `.26.x` (28) being the smaller extension subnet. The `.26.x` subnet has no Ansible, HRT, or Y2 nodes at all. PR also has no MQ servers, unlike Disaster Recovery — Layer-wise server count by subnet
+Layer	10.177.40.x	10.177.41.x	10.177.42.x	DR Total
+Login (loginsys + loginexp)	6	6	4	16
+Account (accsys + accexp)	6	6	4	16
+Customer (custsys + custexp)	6	6	4	16
+Misc (miscsys + miscexp)	10	10	0	20
+Payment (paymentsys + paymentexp)	5	5	4	14
+IVR (ivrsys + ivrexp)	4	4	0	8
+IDHub (idhubsys + idhubexp)	4	4	0	8
+Y2 Login / EXP nodes	6	4	0	10
+MQ (message queue)	9	0	10	19
+HRT systems	2	0	2	4
+Ansible / Automation	4	6	0	10
+Total	62	51	28	141
+PR
+Primary — Layer-wise server count by subnet
+Layer	10.188.24.x	10.188.25.x	10.188.26.x	PR Total
+Login (loginsys + loginexp)	6	6	4	16
+Account (accsys + accexp)	6	6	4	16
+Customer (custsys + custexp)	6	6	4	16
+Misc (miscsys + miscexp)	10	10	4	24
+Payment (paymentsys + paymentexp)	5	5	4	14
+IVR (ivrsys + ivrexp)	4	4	4	12
+IDHub (idhubsys + idhubexp)	4	4	4	12
+Y2 Login / EXP nodes	6	4	0	10
+HRT systems	4	1	0	5
+Ansible / Automation	4	3	0	7
+Total	55	49	28	132
 
 
-# ---------- /etc/hosts ----------
-def read_etc_hosts():
-    hosts_data = []
-    try:
-        with open("/etc/hosts", "r") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    hosts_data.append(line)
-    except:
-        return {"error": "Unable to read /etc/hosts"}
-
-    return hosts_data
 
 
-# ---------- OPENSSL CERT ----------
-def parse_openssl_cert(file_path):
-    cmd = ["openssl", "x509", "-in", file_path,
-           "-noout", "-startdate", "-enddate",
-           "-fingerprint", "-subject"]
-
-    output = run(cmd)
-    if not output:
-        return {"error": "Unable to read certificate"}
-
-    data = {}
-    for line in output.splitlines():
-        if line.startswith("notBefore="):
-            data["valid_from"] = line.split("=", 1)[1]
-        elif line.startswith("notAfter="):
-            data["valid_to"] = line.split("=", 1)[1]
-        elif "Fingerprint" in line:
-            data["sha1"] = line.split("=", 1)[1]
-        elif line.startswith("subject="):
-            data["subject"] = line.split("=", 1)[1]
-
-    return data
-
-
-# ---------- KEYTOOL ----------
-def list_jks_aliases(store_path):
-    cmd = ["keytool", "-list",
-           "-keystore", store_path,
-           "-storepass", JKS_PASSWORD]
-
-    output = run(cmd)
-    if not output:
-        return []
-
-    aliases = []
-    for line in output.splitlines():
-        if "trustedCertEntry" in line or "PrivateKeyEntry" in line:
-            alias = line.split(",")[0].strip()
-            aliases.append(alias)
-
-    return aliases
-
-
-def parse_jks_cert(store_path, alias):
-    cmd = ["keytool", "-list", "-v",
-           "-keystore", store_path,
-           "-storepass", JKS_PASSWORD,
-           "-alias", alias]
-
-    output = run(cmd)
-    if not output:
-        return {"error": "Unable to read alias"}
-
-    data = {"alias": alias}
-
-    for line in output.splitlines():
-        if "Valid from:" in line:
-            parts = line.split("until:")
-            data["valid_from"] = parts[0].split("from:")[1].strip()
-            data["valid_to"] = parts[1].strip()
-        elif "SHA1:" in line:
-            data["sha1"] = line.split("SHA1:")[1].strip()
-        elif "Owner:" in line:
-            data["owner"] = line.split("Owner:")[1].strip()
-
-    return data
-
-
-def read_jks_store(path, name):
-    if not os.path.exists(path):
-        return {name: {"error": "Not found"}}
-
-    aliases = list_jks_aliases(path)
-    if not aliases:
-        return {name: {"error": "Unable to read or wrong password"}}
-
-    certs = {}
-    for alias in aliases:
-        certs[alias] = parse_jks_cert(path, alias)
-
-    return {name: certs}
-
-
-# ---------- DIRECTORY CERT READER ----------
-def read_cert_directory(directory):
-    if not os.path.isdir(directory):
-        return {"error": "Directory not found"}
-
-    certs = {}
-    for file_name in os.listdir(directory):
-        full_path = os.path.join(directory, file_name)
-
-        if not os.path.isfile(full_path):
-            continue
-
-        if file_name.endswith((".cer", ".crt", ".pem", ".der")):
-            certs[file_name] = parse_openssl_cert(full_path)
-
-        elif file_name.endswith(".jks"):
-            certs[file_name] = read_jks_store(full_path, file_name)
-
-    return certs
-
-
-# ---------- MAIN ----------
-def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    snapshot = {
-        "timestamp": datetime.now().isoformat(),
-        "system": get_system_info(),
-        "etc_hosts": read_etc_hosts(),
-        "certificates": {
-            "Truststore": read_jks_store(TRUSTSTORE_PATH, "Truststore"),
-            "Keystore": read_jks_store(KEYSTORE_PATH, "Keystore"),
-            "EndPoint_Public": read_cert_directory(ENDPOINT_PUBLIC_PATH),
-            "RSAKeystore": read_cert_directory(RSA_KEYSTORE_PATH)
-        }
-    }
-
-    server_ip = snapshot["system"]["ip"]
-    outfile = f"{OUTPUT_DIR}/{server_ip}.json"
-
-    with open(outfile, "w") as f:
-        json.dump(snapshot, f, indent=2)
-
-    print(f"\n✓ Snapshot generated: {outfile}")
-    print(f"✓ Host: {snapshot['system']['hostname']}")
-    print(f"✓ Certificates scanned successfully")
-
-
-if __name__ == "__main__":
-    main()
