@@ -1,36 +1,22 @@
-Key observations from the breakdown:
+SYS servers — PR (10.188.24.x / 25.x / 26.x)
 
-**DR side:** The `.40.x` subnet carries the most servers (62) as it hosts the primary DR node set including MQ queues (eisdrmq-17 to 25) and all the -11 to -16 series. The `.42.x` subnet is smaller (28) and only has the -21/22 series plus MQ-31 to 40. Notably, Misc and IVR layers have no presence in `.42.x`.
+Layer	10.188.24.x	10.188.25.x	10.188.26.x	Total
+Login (loginsys)	6	6	2	14
+Account (accsys)	6	6	2	14
+Customer (custsys)	6	6	2	14
+Misc (miscsys)	2	10	2	14
+Payment (paymentsys)	5	5	4	14
+IVR (ivrsys)	4	4	2	10
+ADHAAR (idhubsys)	4	4	2	10
+Total	33	41	16	90
+EXP servers — PR (10.188.24.x / 25.x / 26.x)
 
-**PR side:** Distribution is more even — `.24.x` (55) and `.25.x` (49) carry similar loads, with `.26.x` (28) being the smaller extension subnet. The `.26.x` subnet has no Ansible, HRT, or Y2 nodes at all. PR also has no MQ servers, unlike Disaster Recovery — Layer-wise server count by subnet
-Layer	10.177.40.x	10.177.41.x	10.177.42.x	DR Total
-Login (loginsys + loginexp)	6	6	4	16
-Account (accsys + accexp)	6	6	4	16
-Customer (custsys + custexp)	6	6	4	16
-Misc (miscsys + miscexp)	10	10	0	20
-Payment (paymentsys + paymentexp)	5	5	4	14
-IVR (ivrsys + ivrexp)	4	4	0	8
-IDHub (idhubsys + idhubexp)	4	4	0	8
-Y2 Login / EXP nodes	6	4	0	10
-MQ (message queue)	9	0	10	19
-HRT systems	2	0	2	4
-Ansible / Automation	4	6	0	10
-Total	62	51	28	141
-PR
-Primary — Layer-wise server count by subnet
-Layer	10.188.24.x	10.188.25.x	10.188.26.x	PR Total
-Login (loginsys + loginexp)	6	6	4	16
-Account (accsys + accexp)	6	6	4	16
-Customer (custsys + custexp)	6	6	4	16
-Misc (miscsys + miscexp)	10	10	4	24
-Payment (paymentsys + paymentexp)	5	5	4	14
-IVR (ivrsys + ivrexp)	4	4	4	12
-IDHub (idhubsys + idhubexp)	4	4	4	12
-Y2 Login / EXP nodes	6	4	0	10
-HRT systems	4	1	0	5
-Ansible / Automation	4	3	0	7
-Total	55	49	28	132
-
-
-
-
+Layer	10.188.24.x	10.188.25.x	10.188.26.x	Total
+Login (loginexp)	5	5	2	12
+Account (accexp)	6	6	4	16
+Customer (custexp)	5	5	2	12
+Misc (miscexp)	2	10	2	14
+Payment (paymentexp)	4	4	4	12
+IVR (ivrexp)	3	3	2	8
+ADHAAR (idhubexp)	3	3	2	8
+Total	28	36	18	82
