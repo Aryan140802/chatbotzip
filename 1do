@@ -1,470 +1,408 @@
-10.177.40.10,OK,2026-03-19 12:00:04 PM,2 weeks 4 days 23 hours 43 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000056272 seconds slow of NTP time, Apr 13 2026, Apr 27 2026, May 01 2026, Apr 12 2026
-10.177.40.101,OK,2026-03-13 04:00:02 PM,1 week 6 days 3 hours 29 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000117043 seconds fast of NTP time, Mar 24 2026, Apr 27 2026, Mar 27 2026, Apr 12 2026
-10.177.40.102,OK,2026-03-13 09:00:03 PM,5 weeks 5 days 1 hour 50 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,12.0.12.10, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000031969 seconds slow of NTP time, Mar 24 2026, Apr 23 2026, Apr 10 2026, Apr 12 2026
-10.177.40.103,OK,2026-03-13 09:00:03 PM,5 weeks 1 day 21 hours 2 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000012386 seconds slow of NTP time, Apr 22 2026, Apr 26 2026, Apr 22 2026, Apr 10 2026
-10.177.40.104,OK,2026-03-13 06:00:03 AM,5 weeks 1 day 6 hours 2 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000021115 seconds fast of NTP time, Apr 22 2026, Apr 26 2026, Apr 22 2026, Apr 10 2026
-10.177.40.105,OK,2026-03-13 09:00:04 PM,9 weeks 6 days 1 hour 20 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.11.1.el9_7.x86_64,Tue Nov EST 25,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000027574 seconds slow of NTP time, Apr 22 2026, Apr 26 2026, Apr 22 2026, Apr 10 2026
-10.177.40.106,OK,2026-03-13 01:00:02 PM,5 weeks 1 day 1 hour 42 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000005351 seconds fast of NTP time, Apr 22 2026, Apr 26 2026, Apr 22 2026, Apr 10 2026
-10.177.40.11,OK,2026-03-19 01:00:06 PM,4 weeks 2 days 2 hours 22 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000038280 seconds fast of NTP time, Apr 22 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.40.110,OK,2026-03-19 12:00:03 PM,4 weeks 2 days 52 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000024596 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 04 2026, Apr 12 2026
-10.177.40.111,OK,2026-03-19 10:00:04 AM,4 weeks 1 day 22 hours 39 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000099954 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 12 2026, Apr 12 2026
-10.177.40.112,OK,2026-03-19 01:00:03 PM,4 weeks 2 days 1 hour 36 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000001509 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, Apr 30 2026, Apr 12 2026
-10.177.40.113,OK,2026-03-19 09:00:03 AM,4 weeks 1 day 21 hours 25 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000049825 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.114,OK,2026-03-19 01:00:04 PM,4 weeks 2 days 1 hour 23 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000019147 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, Apr 04 2026, Apr 12 2026
-10.177.40.115,OK,2026-03-19 12:00:04 PM,4 weeks 1 day 22 hours 59 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000067050 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.12,OK,2026-03-19 09:00:04 AM,4 weeks 1 day 22 hours 16 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000180615 seconds slow of NTP time, Apr 22 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.40.13,OK,2026-03-19 01:00:06 PM,4 weeks 2 days 2 hours 10 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000056094 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.131,OK,2026-03-19 01:00:04 PM,4 weeks 1 day 22 hours 46 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000054 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.132,/home/scripts (71%) ,2026-03-19 01:00:05 PM,4 weeks 1 day 22 hours 32 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000137112 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.133,OK,2026-03-19 01:00:04 PM,2 weeks 5 days 18 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000847 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, Apr 12 2026, Apr 12 2026
-10.177.40.134,OK,2026-03-19 01:00:07 PM,4 weeks 1 day 22 hours 11 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000028992 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 04 2026, Apr 12 2026
-10.177.40.135,OK,2026-03-19 11:00:04 AM,4 weeks 1 day 19 hours 58 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000081217 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.14,OK,2026-03-19 01:00:04 PM,4 weeks 2 days 2 hours,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000098796 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 30 2026, Apr 03 2026
-10.177.40.141,OK,2026-03-19 09:00:03 AM,4 weeks 1 day 11 hours 56 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000084117 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.40.142,OK,2026-03-18 03:00:03 PM,4 weeks 17 hours 56 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000095383 seconds fast of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.40.143,OK,2026-03-19 01:00:05 PM,4 weeks 1 day 3 hours 7 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000023194 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Apr 03 2026
-10.177.40.144,OK,2026-03-19 11:00:03 AM,4 weeks 1 day 12 hours 52 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000144221 seconds slow of NTP time, Apr 17 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.40.145,OK,2026-03-19 01:00:06 PM,4 weeks 20 hours 40 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000059917 seconds slow of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.177.40.146,OK,2026-03-19 10:00:04 AM,4 weeks 17 hours 38 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000096801 seconds slow of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.177.40.15,OK,2026-03-19 06:00:02 AM,4 weeks 19 hours 44 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000058924 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.155,OK,2026-03-19 01:00:02 PM,4 weeks 1 day 2 hours 44 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000082170 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 03 2026, Apr 12 2026
-10.177.40.156,OK,2026-03-19 11:00:02 AM,4 weeks 23 hours 29 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000069385 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Jun 04 2026
-10.177.40.157,OK,2026-03-19 01:00:04 PM,4 weeks 1 day 1 hour 32 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000023373 seconds slow of NTP time, Mar 30 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.40.158,OK,2026-03-19 12:00:03 PM,4 weeks 1 day 9 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000021844 seconds fast of NTP time, Apr 22 2026, Apr 29 2026, Apr 12 2026, Apr 12 2026
-10.177.40.159,OK,2026-03-19 01:00:05 PM,4 weeks 1 day 1 hour 8 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000062076 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 10 2026, Apr 03 2026
-10.177.40.160,OK,2026-03-19 01:00:04 PM,4 weeks 1 day 39 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000013958 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 10 2026, Apr 03 2026
-10.177.40.161,OK,2026-03-16 11:00:03 PM,3 days 1 hour 15 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000071126 seconds fast of NTP time, Apr 13 2026, Apr 27 2026, Mar 23 2026, Apr 12 2026
-10.177.40.162,OK,2026-03-17 01:00:02 PM,3 days 15 hours 13 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000223200 seconds fast of NTP time, Apr 13 2026, Apr 27 2026, May 01 2026, Apr 12 2026
-10.177.40.163,OK,2026-03-19 12:00:05 PM,1 week 2 days 16 hours 7 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000312316 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 25 2026, Apr 12 2026
-10.177.40.164,OK,2026-03-19 01:00:03 PM,3 weeks 6 days 23 hours 4 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000080014 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.165,OK,2026-03-19 01:00:07 PM,1 week 2 days 17 hours,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000001485 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.166,OK,11:00:00 AM,3 weeks 6 days 20 hours 28 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000097266 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.167,OK,01:00:00 PM,3 weeks 6 days 22 hours 20 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000168765 seconds slow of NTP time, Mar 30 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.177.40.168,OK,11:00:00 AM,3 weeks 6 days 19 hours 55 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,608,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000047043 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.169,OK,12:00:00 PM,3 weeks 6 days 20 hours 54 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000017909 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.170,OK,12:00:00 PM,3 weeks 6 days 20 hours 35 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000004711 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.171,OK,12:00:00 PM,3 weeks 6 days 20 hours 35 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000082147 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.172,OK,2026-03-17 01:00:03 PM,3 days 15 hours 8 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000107716 seconds slow of NTP time, Apr 13 2026, Apr 27 2026, May 01 2026, Apr 12 2026
-10.177.40.173,OK,01:00:00 PM,3 weeks 6 days 20 hours 23 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000027330 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.174,OK,01:00:00 PM,3 weeks 6 days 20 hours 24 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000012723 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 30 2026, Apr 12 2026
-10.177.40.175,OK,01:00:00 PM,3 weeks 6 days 20 hours 1 minute,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000199483 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 04 2026, Apr 12 2026
-10.177.40.176,OK,12:00:00 PM,1 day 23 hours 3 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000051658 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 04 2026, Apr 12 2026
-10.177.40.177,OK,09:00:00 PM,3 weeks 1 day 3 hours 34 minutes,DR LINUX,32,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.16,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000013197 seconds fast of NTP time, May 18 2026, May 14 2026, May 15 2026, Jun 02 2026
-10.177.40.178,OK,08:00:00 PM,3 weeks 1 day 2 hours 34 minutes,DR LINUX,32,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.16,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000017149 seconds fast of NTP time, May 18 2026, May 14 2026, Jun 06 2026, May 04 2026
-10.177.40.190,OK,12:00:00 PM,3 weeks 6 days 2 hours,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000282137 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.191,OK,12:00:00 PM,3 weeks 6 days 1 hour 49 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000002239 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 10 2026, Apr 12 2026
-10.177.40.192,OK,12:00:00 PM,3 weeks 6 days 1 hour 37 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000028607 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.194,OK,01:00:00 PM,3 weeks 6 days 2 hours 16 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000318340 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.195,OK,01:00:00 PM,3 weeks 6 days 2 hours 12 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000080378 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.196,OK,09:00:00 AM,3 weeks 5 days 21 hours 19 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000103159 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 18 2026, Apr 03 2026
-10.177.40.197,OK,01:00:00 PM,3 weeks 6 days 1 hour 18 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000008401 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.31,OK,09:00:00 AM,3 weeks 5 days 20 hours 57 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000047329 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 03 2026, Apr 12 2026
-10.177.40.32,OK,12:00:00 PM,3 weeks 5 days 23 hours 56 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000046943 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.33,OK,08:00:00 AM,3 weeks 5 days 19 hours 44 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000013747 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.34,OK,01:00:00 PM,3 weeks 6 days 43 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000102860 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.40.41,OK,07:00:00 AM,3 weeks 5 days 18 hours 25 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000058242 seconds fast of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.40.42,OK,11:00:00 AM,3 weeks 5 days 22 hours 24 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000115420 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 02 2026, Apr 12 2026
-10.177.40.43,OK,01:00:00 PM,3 weeks 5 days 23 hours 13 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000098356 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 03 2026, Apr 12 2026
-10.177.40.44,OK,01:00:00 PM,3 weeks 5 days 23 hours 10 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000044272 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 03 2026, Apr 12 2026
-10.177.40.45,OK,01:00:00 PM,3 weeks 5 days 22 hours 56 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000107910 seconds slow of NTP time, Apr 09 2026, Apr 09 2026, May 01 2026, Apr 09 2026
-10.177.40.55,OK,01:00:00 PM,3 weeks 5 days 22 hours 54 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000051175 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 30 2026, Apr 12 2026
-10.177.40.56,OK,10:00:00 AM,3 weeks 5 days 19 hours 33 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000193395 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 03 2026, Apr 12 2026
-10.177.40.57,OK,12:00:00 PM,3 weeks 5 days 21 hours 32 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000040717 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Mar 31 2026, Apr 03 2026
-10.177.40.58,OK,12:00:00 PM,3 weeks 4 days 58 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000562812 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 10 2026, Apr 03 2026
-10.177.40.59,OK,11:00:00 AM,3 weeks 3 days 23 hours 58 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000253764 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Mar 31 2026, Apr 03 2026
-10.177.40.61,OK,2026-03-17 01:00:02 PM,3 days 15 hours 24 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000097910 seconds slow of NTP time, Apr 13 2026, Apr 27 2026, May 01 2026, Apr 12 2026
-10.177.40.62,OK,2026-03-17 01:00:02 PM,3 days 15 hours 22 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000059240 seconds slow of NTP time, Apr 13 2026, Apr 27 2026, May 01 2026, Apr 12 2026
-10.177.40.63,OK,01:00:00 PM,3 weeks 4 days 1 hour 26 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000015857 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 12 2026, Apr 12 2026
-10.177.40.64,OK,11:00:00 AM,3 weeks 3 days 23 hours 32 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000127505 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 04 2026, Apr 12 2026
-10.177.40.65,OK,12:00:00 PM,3 weeks 3 days 23 hours 38 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000184356 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 02 2026, Apr 22 2026
-10.177.40.66,OK,01:00:00 PM,3 weeks 4 days 39 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,failed,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000237777 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.40.67,/home/scripts (72%) ,01:00:00 PM,3 weeks 4 days 5 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000001592 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 12 2026, Apr 03 2026
-10.177.40.68,OK,11:00:00 AM,3 weeks 3 days 22 hours 6 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000117638 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.69,OK,11:00:00 AM,3 weeks 3 days 20 hours 51 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000117172 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.70,OK,01:00:00 PM,3 weeks 3 days 22 hours 51 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000160903 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.71,OK,01:00:00 PM,3 weeks 3 days 22 hours 3 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000056817 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.40.72,OK,2026-03-17 01:00:02 PM,17 hours 9 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.34.1.el9_7.x86_64,Sat Feb EST 7,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000017 seconds fast of NTP time, Apr 13 2026, Apr 27 2026, May 01 2026, Apr 12 2026
-10.177.40.73,OK,12:00:00 PM,3 weeks 3 days 21 hours 3 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000149363 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.177.40.74,OK,10:00:00 AM,3 weeks 3 days 18 hours 35 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000072443 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Mar 31 2026, Apr 03 2026
-10.177.40.75,OK,10:00:00 AM,3 weeks 3 days 18 hours 35 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000089709 seconds slow of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.177.40.81,/var (70%) ,12:00:00 PM,3 weeks 3 days 2 hours 1 minute,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000051971 seconds slow of NTP time, Apr 09 2026, Apr 09 2026, Apr 09 2026, Apr 09 2026
-10.177.40.82,OK,01:00:00 PM,3 weeks 3 days 1 hour 26 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000266604 seconds slow of NTP time, Apr 09 2026, Apr 26 2026, Apr 09 2026, May 24 2026
-10.177.40.83,OK,12:00:00 PM,3 weeks 2 days 23 hours 53 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000016318 seconds slow of NTP time, Apr 09 2026, Apr 09 2026, Apr 10 2026, Apr 09 2026
-10.177.40.84,OK,12:00:00 PM,3 weeks 2 days 23 hours 10 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000286601 seconds slow of NTP time, May 03 2026, May 03 2026, Apr 18 2026, May 03 2026
-10.177.40.85,OK,01:00:00 PM,3 weeks 2 days 22 hours 1 minute,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000013 seconds fast of NTP time, Apr 09 2026, Apr 09 2026, Apr 30 2026, Apr 09 2026
-10.177.40.86,OK,12:00:00 PM,3 weeks 2 days 21 hours 2 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000028 seconds fast of NTP time, Mar 27 2026, Apr 26 2026, May 01 2026, Jun 11 2026
-10.177.40.87,OK,01:00:00 PM,3 weeks 2 days 21 hours 41 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000052354 seconds slow of NTP time, Apr 09 2026, Apr 09 2026, Apr 20 2026, Apr 09 2026
-10.177.40.88,OK,01:00:00 PM,3 weeks 2 days 21 hours 41 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,607,DSnotrunning,SPLrunning,undefined,10.179.70.2, 0.000030173 seconds slow of NTP time, Apr 08 2026, Apr 08 2026, Apr 08 2026, Apr 08 2026
-10.177.40.89,OK,01:00:00 PM,3 weeks 2 days 19 hours 26 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000336608 seconds slow of NTP time, Apr 23 2026, Apr 19 2026, May 01 2026, Apr 19 2026
-10.177.40.95,OK,11:00:00 AM,3 weeks 2 days 17 hours 23 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.3, 9.4.0.10,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000113134 seconds slow of NTP time, Apr 24 2026, Apr 24 2026, Jun 15 2026, Apr 24 2026
-10.177.41.10,OK,2026-03-19 01:00:03 PM,3 weeks 6 days 13 hours 49 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000090701 seconds fast of NTP time, Apr 21 2026, Apr 27 2026, Apr 30 2026, Apr 12 2026
-10.177.41.101,OK,2026-03-13 08:00:02 PM,2 weeks 6 days 19 hours 3 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000034240 seconds fast of NTP time, Mar 27 2026, Apr 23 2026, Apr 10 2026, Apr 12 2026
-10.177.41.102,OK,2026-03-13 08:00:02 PM,2 weeks 6 days 18 hours 56 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000001 seconds slow of NTP time, Mar 27 2026, Apr 23 2026, Mar 27 2026, Apr 12 2026
-10.177.41.11,OK,2026-03-19 01:00:03 PM,3 weeks 6 days 13 hours 34 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,610,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000142055 seconds slow of NTP time, Apr 12 2026, Mar 28 2026, Apr 12 2026, Apr 12 2026
-10.177.41.110,OK,2026-03-19 11:00:02 AM,3 weeks 6 days 10 hours 9 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000208802 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.41.111,OK,2026-03-19 01:00:03 PM,3 weeks 6 days 11 hours 55 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,815,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000092415 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 12 2026, Apr 12 2026
-10.177.41.112,/opt (74%) ,2026-03-19 12:00:02 PM,3 weeks 6 days 10 hours 33 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000114752 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.41.113,OK,2026-03-19 01:00:04 PM,3 weeks 6 days 11 hours 17 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000092504 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 02 2026, Apr 12 2026
-10.177.41.114,OK,2026-03-19 01:00:02 PM,3 weeks 6 days 11 hours 5 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,611,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000077102 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 03 2026, Apr 12 2026
-10.177.41.115,OK,2026-03-19 08:00:02 AM,3 weeks 6 days 5 hours 48 minutes,DR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000144083 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Jun 04 2026
-10.177.41.12,OK,2026-03-19 01:00:04 PM,3 weeks 6 days 13 hours 14 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000079490 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 12 2026, Apr 12 2026
-10.177.41.13,OK,2026-03-19 12:00:05 PM,3 weeks 6 days 11 hours 58 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000140819 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 12 2026, Apr 12 2026
-10.177.41.131,OK,2026-03-19 12:00:03 PM,3 weeks 5 days 11 hours 57 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000219342 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, Apr 22 2026, Apr 12 2026
-10.177.41.132,OK,2026-03-19 08:00:02 AM,3 weeks 5 days 7 hours 47 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000012900 seconds fast of NTP time, Apr 03 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.41.133,OK,2026-03-19 11:00:04 AM,3 weeks 5 days 10 hours 37 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000403994 seconds slow of NTP time, Apr 03 2026, Apr 29 2026, May 01 2026, Apr 03 2026
-10.177.41.134,OK,2026-03-19 11:00:04 AM,3 weeks 5 days 10 hours 23 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000043114 seconds slow of NTP time, Apr 03 2026, Apr 29 2026, Apr 12 2026, Apr 12 2026
-10.177.41.135,OK,2026-03-19 01:00:04 PM,3 weeks 5 days 12 hours 13 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000008575 seconds slow of NTP time, Apr 03 2026, Apr 29 2026, Apr 03 2026, Apr 03 2026
-10.177.41.14,OK,2026-03-19 10:00:02 AM,3 weeks 6 days 9 hours 47 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000097812 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 02 2026, Apr 12 2026
-10.177.41.141,OK,2026-03-19 01:00:03 PM,3 weeks 5 days 11 hours 46 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000303 seconds fast of NTP time, Apr 03 2026, Apr 26 2026, Jun 15 2026, Apr 12 2026
-10.177.41.142,OK,2026-03-19 09:00:03 AM,3 weeks 5 days 7 hours 35 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000064793 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 12 2026
-10.177.41.143,OK,2026-03-19 01:00:04 PM,3 weeks 5 days 11 hours 23 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000123730 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 12 2026
-10.177.41.144,OK,2026-03-19 05:00:03 AM,3 weeks 3 days 12 hours 13 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000067399 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 12 2026
-10.177.41.145,OK,2026-03-19 11:00:03 AM,3 weeks 3 days 18 hours 12 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000082965 seconds slow of NTP time, Apr 03 2026, Apr 29 2026, Apr 02 2026, Apr 12 2026
-10.177.41.146,OK,2026-03-19 01:00:04 PM,3 weeks 3 days 19 hours 27 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000144424 seconds slow of NTP time, Apr 03 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.41.15,OK,2026-03-19 11:00:03 AM,3 weeks 6 days 10 hours 25 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000217704 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 30 2026, Apr 03 2026
-10.177.41.155,OK,2026-03-19 01:00:06 PM,3 weeks 3 days 3 hours 25 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000046953 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 12 2026
-10.177.41.156,OK,2026-03-19 01:00:03 PM,3 weeks 3 days 3 hours 25 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000921172 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 10 2026, Jan 24 2026
-10.177.41.157,OK,2026-03-19 01:00:04 PM,3 weeks 3 days 18 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000166687 seconds fast of NTP time, Apr 03 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.41.158,OK,2026-03-19 01:00:03 PM,3 weeks 3 days 19 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000229558 seconds slow of NTP time, Mar 21 2026, Mar 24 2026, Jun 15 2026, Mar 21 2026
-10.177.41.159,/opt (73%) ,2026-03-19 11:00:03 AM,3 weeks 2 days 20 hours 53 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000557288 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Jan 15 2026
-10.177.41.160,OK,2026-03-19 01:00:03 PM,3 weeks 2 days 22 hours 53 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000282 seconds fast of NTP time, May 02 2026, Apr 30 2026, Mar 30 2026, Apr 03 2026
-10.177.41.163,OK,2026-03-19 12:00:03 PM,1 week 23 hours 33 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSnotrunning,SPLrunning,undefined,10.179.70.2, 0.000112533 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.41.164,/home (73%) ,2026-03-19 07:00:03 AM,2 days 13 hours 28 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000085888 seconds fast of NTP time, Apr 03 2026, Mar 30 2026, Apr 03 2026, Apr 12 2026
-10.177.41.165,/home (71%) ,2026-03-19 01:00:05 PM,2 days 19 hours 35 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000065618 seconds fast of NTP time, Apr 22 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.41.166,/home (71%) ,2026-03-19 01:00:03 PM,4 days 23 hours 8 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLnotrunning,undefined,10.179.70.2, 0.000033232 seconds slow of NTP time, Apr 22 2026, May 03 2026, May 01 2026, Apr 12 2026
-10.177.41.167,OK,12:00:00 PM,2 weeks 4 days 22 hours 8 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000178 seconds fast of NTP time, Mar 30 2026, Apr 26 2026, May 01 2026, Apr 03 2026
-10.177.41.168,OK,2026-03-19 12:00:03 PM,2 weeks 4 days 21 hours 43 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000379306 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.169,OK,2026-03-19 12:00:04 PM,2 weeks 4 days 21 hours 44 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000402011 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.170,OK,2026-03-19 01:00:05 PM,2 weeks 4 days 22 hours 44 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000140044 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.171,OK,12:00:00 PM,3 weeks 3 days 52 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000198155 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.173,OK,12:00:00 PM,3 weeks 3 days 7 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,596,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000321259 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 03 2026, Apr 12 2026
-10.177.41.174,OK,01:00:00 PM,3 days 18 hours 17 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000047410 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Apr 12 2026
-10.177.41.175,OK,01:00:00 PM,3 days 18 hours 15 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000306257 seconds fast of NTP time, Apr 22 2026, May 03 2026, May 01 2026, Apr 12 2026
-10.177.41.176,OK,01:00:00 PM,3 days 18 hours 13 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000014443 seconds slow of NTP time, Apr 22 2026, May 03 2026, May 01 2026, Apr 12 2026
-10.177.41.190,OK,01:00:00 PM,2 weeks 5 days 2 hours 3 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000098351 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 03 2026, Apr 12 2026
-10.177.41.191,OK,01:00:00 PM,2 weeks 5 days 2 hours 3 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000426768 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 12 2026, Apr 12 2026
-10.177.41.192,OK,07:00:00 AM,3 weeks 2 days 13 hours 36 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000046412 seconds fast of NTP time, Mar 30 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.41.194,OK,11:00:00 AM,3 weeks 2 days 18 hours 20 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000143834 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 12 2026
-10.177.41.195,OK,08:00:00 AM,3 weeks 2 days 19 hours 26 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,595,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000108098 seconds fast of NTP time, Apr 03 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.41.196,OK,01:00:00 PM,3 weeks 3 days 1 hour 7 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,594,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000141106 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.41.197,OK,01:00:00 PM,3 weeks 3 days 1 hour 51 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000018543 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 03 2026
-10.177.41.20,OK,09:00:00 PM,9 weeks 6 days 2 hours 42 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.11.1.el9_7.x86_64,Tue Nov EST 25,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000009037 seconds slow of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 12 2026
-10.177.41.21,OK,08:00:00 PM,5 weeks 1 day 7 hours 19 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000399661 seconds slow of NTP time, Apr 22 2026, Apr 26 2026, Apr 22 2026, Apr 12 2026
-10.177.41.31,/ (74%) ,12:00:00 PM,3 weeks 3 hours 24 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000054884 seconds slow of NTP time, Apr 22 2026, Apr 29 2026, May 01 2026, Apr 12 2026
-10.177.41.32,/ (75%) ,12:00:00 PM,3 weeks 3 hours 24 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000191389 seconds slow of NTP time, Apr 03 2026, Apr 29 2026, Apr 12 2026, Apr 12 2026
-10.177.41.33,OK,11:00:00 AM,3 weeks 2 hours 11 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000824187 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 12 2026
-10.177.41.34,/ (72%) ,11:00:00 AM,3 weeks 2 hours 11 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000194506 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 03 2026, Apr 12 2026
-10.177.41.41,OK,01:00:00 PM,3 weeks 3 hours 58 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000022275 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, May 01 2026, Apr 12 2026
-10.177.41.42,/var (70%) ,01:00:00 PM,3 weeks 3 hours 57 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000158746 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 02 2026, Apr 12 2026
-10.177.41.43,OK,12:00:00 PM,3 weeks 2 hours 36 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000203673 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 12 2026, Apr 12 2026
-10.177.41.44,OK,01:00:00 PM,3 weeks 3 hours 36 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000113943 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 12 2026
-10.177.41.45,OK,12:00:00 PM,3 weeks 2 hours 19 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000069 seconds fast of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 03 2026
-10.177.41.55,OK,11:00:00 AM,2 weeks 6 days 23 hours 51 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000158643 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 19 2026, Apr 12 2026
-10.177.41.56,OK,11:00:00 AM,2 weeks 6 days 23 hours 51 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000107008 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 03 2026, Apr 12 2026
-10.177.41.57,OK,12:00:00 PM,3 weeks 29 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000044650 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, May 01 2026, Apr 03 2026
-10.177.41.58,OK,12:00:00 PM,3 weeks 29 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000065280 seconds slow of NTP time, Apr 03 2026, Apr 26 2026, Apr 19 2026, Apr 03 2026
-10.177.41.59,OK,01:00:00 PM,2 weeks 4 days 22 hours 18 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000432642 seconds fast of NTP time, May 02 2026, Apr 26 2026, May 01 2026, Apr 03 2026
-10.177.41.63,/home/scripts (70%) ,01:00:00 PM,2 weeks 4 days 22 hours 18 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000328949 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 12 2026, Apr 12 2026
-10.177.41.64,OK,01:00:00 PM,2 weeks 4 days 22 hours 17 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000015230 seconds fast of NTP time, Apr 22 2026, May 03 2026, May 01 2026, Apr 12 2026
-10.177.41.65,/home/scripts (70%) ,01:00:00 PM,2 weeks 4 days 21 hours 54 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000151 seconds fast of NTP time, Apr 22 2026, May 03 2026, May 01 2026, Apr 12 2026
-10.177.41.66,OK,12:00:00 PM,21 hours 24 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000125467 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 12 2026, Apr 12 2026
-10.177.41.67,/opt/IBM (76%) ,01:00:00 PM,2 weeks 4 days 21 hours 55 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000028147 seconds slow of NTP time, Mar 30 2026, Apr 26 2026, Apr 12 2026, Apr 03 2026
-10.177.41.68,OK,12:00:00 PM,7 weeks 5 days 8 hours 6 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000182850 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.69,OK,01:00:00 PM,7 weeks 5 days 8 hours 42 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000291459 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.70,OK,10:00:00 AM,7 weeks 5 days 5 hours 25 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000082534 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.71,OK,01:00:00 PM,2 weeks 4 days 21 hours 32 minutes,DR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000040613 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.177.41.73,OK,01:00:00 PM,2 weeks 4 days 21 hours 32 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,595,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000001151 seconds fast of NTP time, Apr 22 2026, May 03 2026, May 01 2026, Apr 12 2026
-10.177.41.74,/opt/IBM (73%) ,01:00:00 PM,2 weeks 4 days 21 hours 51 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000610 seconds fast of NTP time, Apr 22 2026, May 03 2026, Apr 25 2026, Apr 12 2026
-10.177.41.75,OK,01:00:00 PM,2 weeks 4 days 21 hours 51 minutes,DR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000096471 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 02 2026, Apr 12 2026
-10.177.41.81,OK,04:00:00 AM,3 weeks 2 days 16 hours 27 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,825,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000010088 seconds slow of NTP time, Apr 29 2026, Apr 26 2026, Jun 15 2026, Apr 27 2026
-10.177.41.82,/var/www/html/rhel (100%) ,11:00:00 AM,3 weeks 22 hours 54 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,604,DSrunning,SPLnotrunning,undefined,10.179.70.2, 0.000000022 seconds fast of NTP time, Apr 29 2026, Apr 26 2026, May 01 2026, Apr 27 2026
-10.177.41.83,OK,01:00:00 PM,3 weeks 1 day 6 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,604,DSrunning,SPLnotrunning,undefined,10.179.70.2, 0.000099115 seconds slow of NTP time, Apr 29 2026, Apr 26 2026, Apr 12 2026, Apr 27 2026
-10.177.41.84,OK,01:00:00 PM,3 weeks 23 hours 55 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,604,DSrunning,SPLnotrunning,undefined,10.179.70.2, 0.000122334 seconds slow of NTP time, Apr 29 2026, Apr 26 2026, May 01 2026, Apr 27 2026
-10.177.41.85,OK,01:00:00 PM,3 weeks 23 hours 44 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000014185 seconds fast of NTP time, Apr 29 2026, Mar 30 2026, May 01 2026, Apr 20 2026
-10.177.41.86,OK,09:00:00 AM,3 weeks 19 hours 35 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,604,DSrunning,SPLnotrunning,undefined,10.179.70.2, 0.000009864 seconds fast of NTP time, Apr 29 2026, Apr 29 2026, Apr 12 2026, Apr 20 2026
-10.177.41.87,OK,01:00:00 PM,3 weeks 23 hours 26 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000036036 seconds fast of NTP time, Apr 29 2026, Apr 26 2026, May 01 2026, Apr 27 2026
-10.177.41.88,OK,01:00:00 PM,3 weeks 23 hours 14 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,12.0.12.10, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000193768 seconds slow of NTP time, Apr 29 2026, Mar 30 2026, Mar 27 2026, Apr 20 2026
-10.177.41.89,OK,09:00:00 AM,3 weeks 19 hours 3 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,824,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000138756 seconds slow of NTP time, Apr 29 2026, Apr 23 2026, May 01 2026, Apr 20 2026
-10.177.41.90,OK,2026-03-04 03:00:02 AM,1 week 1 day 12 hours 46 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.16,active,825,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000113319 seconds fast of NTP time, Mar 21 2026, Mar 03 2026, Mar 23 2026, Jan 24 2026
-10.177.41.91,OK,2026-03-04 02:00:01 AM,1 week 1 day 11 hours 46 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.16,active,825,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000027140 seconds slow of NTP time, Mar 03 2026, Mar 03 2026, Apr 04 2026, Apr 16 2026
-10.177.41.92,OK,2026-03-04 04:00:03 AM,1 week 1 day 13 hours 32 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.16,active,825,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000017435 seconds slow of NTP time, Mar 03 2026, Mar 03 2026, Mar 23 2026, Mar 03 2026
-10.177.41.93,OK,2026-03-04 04:00:02 AM,1 week 1 day 13 hours 32 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.16,active,825,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000029142 seconds fast of NTP time, Mar 03 2026, Mar 03 2026, Mar 23 2026, Mar 03 2026
-10.177.41.94,OK,01:00:00 PM,3 weeks 22 hours 20 minutes,DR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,825,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000013693 seconds slow of NTP time, Apr 23 2026, Apr 19 2026, May 01 2026, Apr 19 2026
-10.177.42.10,OK,2026-03-17 12:00:02 PM,2 weeks 3 days 2 hours 5 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,,active,DSrunning,SPLrunning, 0.000068912 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 27 2026
-10.177.42.11,OK,2026-03-17 11:00:02 AM,2 weeks 3 days 23 hours 51 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000039863 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.110,OK,2026-03-17 12:00:02 PM,2 weeks 4 days 51 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000100061 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.111,OK,2026-03-17 01:00:03 PM,2 weeks 3 days 23 hours 17 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000041 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.131,OK,2026-03-17 01:00:03 PM,2 weeks 4 days 1 hour 51 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000061653 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.132,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 23 hours 17 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000050447 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.133,OK,2026-03-17 01:00:03 PM,3 days 14 hours 55 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000018 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 27 2026
-10.177.42.141,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 23 hours 17 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000095309 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.142,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 23 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000000449 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.155,OK,2026-03-17 01:00:03 PM,2 weeks 3 days 23 hours 3 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000083911 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.156,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 22 hours 47 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000362403 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.163,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 23 hours 3 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000061027 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.164,OK,2026-03-17 01:00:02 PM,2 weeks 2 days 22 hours 17 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000103164 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 27 2026
-10.177.42.173,OK,2026-03-17 01:00:03 PM,2 weeks 3 days 22 hours 46 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000168282 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.174,OK,2026-03-17 11:00:03 AM,2 weeks 3 days 20 hours 46 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000079919 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.190,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 22 hours 31 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000345771 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.191,OK,2026-03-17 11:00:02 AM,2 weeks 3 days 1 hour 5 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000009002 seconds slow of NTP time, Apr 13 2026, Apr 13 2026, Apr 30 2026, Apr 13 2026
-10.177.42.194,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 22 hours 31 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000046210 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.195,OK,2026-03-17 10:00:02 AM,2 weeks 3 days 19 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000085058 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.31,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 22 hours 30 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000013888 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.32,OK,2026-03-17 12:00:03 PM,2 weeks 3 days 21 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000051545 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.33,OK,2026-03-17 01:00:02 PM,3 days 14 hours 59 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000019726 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 27 2026
-10.177.42.34,OK,2026-03-17 01:00:03 PM,3 days 14 hours 57 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000089372 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 27 2026
-10.177.42.41,OK,2026-03-17 11:00:02 AM,2 weeks 3 days 20 hours 30 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000063517 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.42,OK,2026-03-17 01:00:03 PM,2 weeks 3 days 22 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000044032 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.55,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 22 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000047688 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.56,OK,2026-03-17 12:00:03 PM,2 weeks 3 days 2 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000208129 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.63,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 3 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000233841 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.64,OK,2026-03-17 12:00:02 PM,2 weeks 3 days 1 hour 51 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000191043 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.73,OK,2026-03-17 01:00:03 PM,2 weeks 3 days 2 hours 51 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.3, 0.000188035 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.74,OK,2026-03-17 01:00:02 PM,2 weeks 3 days 2 hours 50 minutes,,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000038881 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.81,OK,01:00:00 PM,3 weeks 2 days 19 hours 9 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000084911 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.82,OK,11:00:00 AM,3 weeks 2 days 17 hours 9 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000090840 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.83,OK,12:00:00 PM,3 weeks 2 days 44 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000370089 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.84,OK,01:00:00 PM,3 weeks 2 days 1 hour 36 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000006239 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.85,OK,12:00:00 PM,3 weeks 2 days 29 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000465028 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.86,OK,01:00:00 PM,3 weeks 2 days 39 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000081693 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.87,OK,01:00:00 PM,3 weeks 2 days 32 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000150788 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.88,OK,01:00:00 PM,3 weeks 2 days 22 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000007537 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.89,OK,01:00:00 PM,3 weeks 1 day 22 hours 5 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000018112 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.177.42.90,OK,11:00:00 AM,3 weeks 1 day 19 hours 42 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000076157 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.24.10,/var (71%) ,01:00:00 PM,4 weeks 13 hours 47 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000008151 seconds slow of NTP time, Apr 13 2026, May 02 2026, May 01 2026, Apr 17 2026
-10.188.24.100,/mysql (74%) /var (71%) /opt (86%) ,2026-02-17 08:00:04 AM,3 weeks 3 days 11 hours 59 minutes,PR LINUX,64,                      16,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,12.0.12.0,,active,980,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000020528 seconds fast of NTP time, May 13 2026, May 13 2026, May 07 2026, Sep 09 2026
-10.188.24.11,OK,2026-03-19 01:00:05 PM,3 weeks 1 day 13 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000038167 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.188.24.110,/var (70%) ,2026-03-19 01:00:03 PM,4 weeks 1 day 23 hours 21 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.16.1.el9_7.x86_64,Sun Dec EST 7,13.0.5.0, 9.4.0.17,active,618,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000030165 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.111,/var/mqm (73%) ,2026-03-19 01:00:03 PM,3 weeks 1 day 14 hours 7 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000057884 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Jun 04 2026
-10.188.24.112,OK,2026-03-19 01:00:04 PM,4 weeks 13 hours 47 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000081301 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.113,/var (71%) ,2026-03-19 01:00:05 PM,3 weeks 1 day 13 hours 41 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000064860 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.114,OK,2026-03-19 01:00:04 PM,4 weeks 13 hours 47 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000021391 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 02 2026, Apr 03 2026
-10.188.24.115,OK,2026-03-19 01:00:04 PM,3 weeks 3 days 12 hours 42 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000084990 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 30 2026, Apr 03 2026
-10.188.24.12,/var (71%) ,2026-03-19 11:00:03 AM,4 weeks 11 hours 47 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000002777 seconds slow of NTP time, Apr 23 2026, Apr 23 2026, Apr 23 2026, Apr 03 2026
-10.188.24.13,OK,2026-03-19 01:00:05 PM,3 weeks 3 days 12 hours 42 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000023995 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.131,OK,2026-03-19 01:00:04 PM,3 weeks 3 days 14 hours 7 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000009428 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.24.132,/var (71%) ,2026-03-19 01:00:03 PM,3 weeks 3 days 13 hours 46 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000020840 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 01 2026, Apr 03 2026
-10.188.24.133,OK,2026-03-19 01:00:04 PM,3 weeks 3 days 13 hours 31 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000046997 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.134,OK,2026-03-19 01:00:05 PM,3 weeks 3 days 13 hours 16 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000022946 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.135,OK,2026-03-19 01:00:03 PM,3 weeks 3 days 12 hours 59 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000009088 seconds fast of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.14,OK,2026-03-19 01:00:06 PM,4 weeks 13 hours 47 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.53, 0.000006607 seconds fast of NTP time, Mar 27 2026, May 02 2026, Mar 31 2026, Apr 08 2026
-10.188.24.141,/var (71%) ,2026-03-19 01:00:06 PM,3 weeks 3 days 13 hours 46 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000022377 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.142,OK,2026-03-19 01:00:06 PM,3 weeks 3 days 13 hours 31 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000061590 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.143,/var (71%) ,2026-03-19 01:00:04 PM,3 weeks 3 days 13 hours 16 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000000763 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.144,OK,2026-03-19 01:00:05 PM,3 weeks 3 days 12 hours 59 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000022301 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.145,OK,2026-03-19 01:00:04 PM,3 weeks 2 days 13 hours 51 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000083211 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 23 2026, Apr 03 2026
-10.188.24.146,OK,2026-03-19 01:00:05 PM,3 weeks 2 days 13 hours 35 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000004075 seconds fast of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.15,/var (76%) ,2026-03-19 01:00:03 PM,3 weeks 2 days 13 hours 51 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000023734 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Mar 30 2026, Apr 03 2026
-10.188.24.155,OK,2026-03-19 01:00:03 PM,3 weeks 14 hours 5 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000011674 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 10 2026, Apr 03 2026
-10.188.24.156,/var (70%) ,2026-03-19 01:00:05 PM,3 weeks 13 hours 42 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000020575 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.157,/var (73%) ,2026-03-19 01:00:06 PM,3 weeks 13 hours 14 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000009970 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.158,OK,2026-03-19 01:00:04 PM,2 weeks 4 days 13 hours 57 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000015135 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.159,OK,2026-03-19 10:00:03 AM,3 weeks 9 hours 55 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000024544 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.24.160,OK,2026-03-19 12:00:05 PM,3 weeks 11 hours 33 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000050833 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.24.161,/var (72%) /opt/IBM (77%) ,01:00:00 PM,5 days 18 hours 13 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLnotrunning,undefined,10.191.174.53, 0.000003410 seconds fast of NTP time, Apr 13 2026, May 02 2026, Apr 25 2026, Apr 17 2026
-10.188.24.162,/var (72%) /opt/IBM (77%) ,01:00:00 PM,5 days 18 hours 11 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLnotrunning,undefined,10.191.174.53, 0.000021930 seconds slow of NTP time, Apr 13 2026, May 02 2026, Apr 25 2026, Apr 17 2026
-10.188.24.163,/log_temp (76%) /home (72%) ,2026-03-19 01:00:03 PM,3 days 29 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000199479 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.164,/log_temp (82%) ,2026-03-19 12:00:03 PM,3 weeks 12 hours 42 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000009880 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.165,/log_temp (74%) ,2026-03-19 01:00:38 PM,3 weeks 13 hours 14 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000007376 seconds fast of NTP time, Apr 03 2026, May 02 2026, Mar 31 2026, Apr 03 2026
-10.188.24.166,/var (70%) ,01:00:00 PM,3 weeks 12 hours 55 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000008919 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.167,/var (72%) ,01:00:00 PM,3 weeks 12 hours 33 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000071380 seconds slow of NTP time, Mar 30 2026, Apr 27 2026, Apr 16 2026, Apr 03 2026
-10.188.24.168,OK,01:00:00 PM,2 weeks 5 days 13 hours 31 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000016218 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.169,/var (73%) ,01:00:00 PM,2 weeks 5 days 13 hours 2 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000056272 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.170,/var (72%) ,12:00:00 PM,2 weeks 5 days 11 hours 46 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000170352 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.171,/var (70%) ,01:00:00 PM,2 weeks 5 days 12 hours 46 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000028948 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.173,/var (72%) ,01:00:00 PM,3 weeks 1 day 13 hours 41 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000011202 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.174,/opt (77%) ,01:00:00 PM,3 weeks 1 day 13 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000088115 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.175,/opt (74%) ,12:00:00 PM,3 weeks 1 day 11 hours 23 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000034762 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.176,/opt (74%) ,01:00:00 PM,2 weeks 5 days 12 hours 28 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000027681 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.190,/var (71%) ,12:00:00 PM,3 weeks 2 days 12 hours 50 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000027793 seconds fast of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.191,/var (73%) ,01:00:00 PM,3 weeks 2 days 13 hours 36 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000014655 seconds slow of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.192,/var (73%) ,01:00:00 PM,3 weeks 1 day 14 hours 6 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000052648 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.194,/var (72%) ,01:00:00 PM,3 weeks 2 days 13 hours 35 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000036086 seconds slow of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.195,OK,01:00:00 PM,3 weeks 1 day 14 hours 6 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000002693 seconds fast of NTP time, Apr 22 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.196,OK,01:00:00 PM,3 weeks 1 day 13 hours 40 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000009734 seconds slow of NTP time, Apr 22 2026, Mar 30 2026, Apr 30 2026, Apr 03 2026
-10.188.24.197,OK,12:00:00 PM,3 weeks 1 day 12 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000029969 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.230,OK,2025-06-24 10:00:02 AM,2 days 20 hours 27 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,712,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000051791 seconds slow of NTP time, Aug 05 2025, Aug 01 2025, Aug 05 2025, Aug 05 2025
-10.188.24.231,OK,2025-07-29 10:00:07 PM,5 weeks 6 days 11 hours 12 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,610,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000145433 seconds fast of NTP time, Aug 05 2025, Sep 09 2025, Aug 05 2025, Aug 25 2025
-10.188.24.232,OK,2025-06-24 12:00:02 PM,6 days 1 hour 9 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,610,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000162768 seconds slow of NTP time, Aug 05 2025, Aug 01 2025, Aug 05 2025, Aug 05 2025
-10.188.24.233,OK,2025-07-30 09:00:03 AM,5 weeks 6 days 22 hours 6 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,610,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000166206 seconds fast of NTP time, Sep 13 2025, Sep 09 2025, Sep 13 2025, Aug 25 2025
-10.188.24.31,OK,12:00:00 PM,3 weeks 1 day 11 hours 23 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000018409 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.24.32,OK,01:00:00 PM,3 weeks 14 hours 5 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,601,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000005507 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.33,/ (75%) ,12:00:00 PM,3 weeks 12 hours 42 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,600,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000036860 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.34,/opt (74%) ,11:00:00 AM,3 weeks 11 hours 13 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000033060 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 06 2026
-10.188.24.41,OK,01:00:00 PM,3 weeks 1 day 12 hours 23 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,599,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000035199 seconds fast of NTP time, May 08 2026, May 05 2026, May 07 2026, May 28 2026
-10.188.24.42,/var (70%) /home (70%) ,12:00:00 PM,3 weeks 11 hours 55 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,600,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000012808 seconds fast of NTP time, Apr 17 2026, Apr 29 2026, May 01 2026, Apr 03 2026
-10.188.24.43,/var (71%) /home (71%) ,01:00:00 PM,3 weeks 12 hours 33 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,607,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000065395 seconds fast of NTP time, May 08 2026, Feb 07 2027, May 15 2026, Jun 03 2026
-10.188.24.44,OK,01:00:00 PM,2 weeks 6 days 14 hours 4 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,600,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000008736 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.24.45,/var (70%) ,01:00:00 PM,2 weeks 13 hours 33 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000139178 seconds fast of NTP time, Apr 23 2026, Apr 23 2026, May 01 2026, Apr 03 2026
-10.188.24.55,/var (71%) ,12:00:00 PM,2 weeks 6 days 13 hours 4 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000016475 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 20 2026, Apr 03 2026
-10.188.24.56,OK,08:00:00 AM,2 weeks 6 days 8 hours 39 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000010322 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.57,OK,01:00:00 PM,2 weeks 6 days 13 hours 16 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000058802 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 30 2026, Apr 03 2026
-10.188.24.58,/var (70%) ,01:00:00 PM,2 weeks 6 days 12 hours 25 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000077971 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 23 2026, Apr 03 2026
-10.188.24.59,OK,12:00:00 PM,2 weeks 5 days 13 hours 13 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000044155 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 23 2026, Apr 03 2026
-10.188.24.61,/var (72%) /opt/IBM (74%) ,08:00:00 AM,5 days 13 hours 16 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLnotrunning,undefined,10.191.174.53, 0.000075047 seconds slow of NTP time, Apr 13 2026, May 02 2026, Apr 25 2026, Apr 17 2026
-10.188.24.62,/var (72%) /opt/IBM (74%) ,01:00:00 PM,5 days 18 hours 14 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLnotrunning,undefined,10.191.174.53, 0.000024425 seconds slow of NTP time, Apr 13 2026, May 02 2026, Apr 25 2026, Apr 17 2026
-10.188.24.63,OK,12:00:00 PM,2 weeks 6 days 12 hours 17 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.27.1.el9_7.x86_64,Tue Jan EST 20,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000125797 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.64,/ (77%) ,01:00:00 PM,2 weeks 6 days 12 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000026301 seconds slow of NTP time, Apr 16 2026, Apr 27 2026, Apr 12 2026, Apr 03 2026
-10.188.24.65,/var (71%) ,12:00:00 PM,2 weeks 5 days 13 hours 12 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000003859 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.66,OK,01:00:00 PM,1 day 17 hours 31 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.36.1.el9_7.x86_64,Tue Feb EST 24,13.0.5.0, 9.4.0.17,inactive,605,DSnotrunning,SPLrunning,undefined,10.179.70.2, 0.000149095 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 02 2026, May 01 2026
-10.188.24.67,OK,01:00:00 PM,2 weeks 5 days 12 hours 55 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000032249 seconds slow of NTP time, Mar 30 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.24.68,/ (70%) /var (73%) ,01:00:00 PM,2 weeks 5 days 12 hours 45 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.179.70.2, 0.000025180 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.69,/ (71%) /var (72%) ,01:00:00 PM,2 weeks 5 days 12 hours 29 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSnotrunning,SPLrunning,undefined,10.191.174.53, 0.000014694 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.70,/var (70%) ,01:00:00 PM,2 weeks 4 days 14 hours 11 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,608,DSnotrunning,SPLrunning,undefined,10.191.174.53, 0.000027213 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.71,/var (79%) ,07:00:00 AM,2 weeks 5 days 7 hours 52 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,605,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000122817 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.24.72,/var (71%) ,01:00:00 PM,2 days 17 hours 19 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLnotrunning,undefined,10.191.174.52, 0.000068332 seconds slow of NTP time, Apr 13 2026, May 02 2026, Apr 25 2026, Apr 17 2026
-10.188.24.73,OK,12:00:00 PM,2 weeks 5 days 12 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000018832 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.74,OK,10:00:00 AM,2 weeks 5 days 9 hours 56 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000004162 seconds slow of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.75,OK,01:00:00 PM,2 weeks 5 days 12 hours 40 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000103439 seconds fast of NTP time, Apr 22 2026, May 02 2026, Apr 22 2026, Apr 03 2026
-10.188.24.81,/opt (70%) /opt/IBM (74%) ,12:00:00 PM,3 weeks 3 days 13 hours 8 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000013724 seconds slow of NTP time, May 01 2026, May 01 2026, Apr 03 2026, Apr 30 2026
-10.188.24.82,OK,01:00:00 PM,3 weeks 3 days 13 hours 55 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000040522 seconds slow of NTP time, May 01 2026, Mar 30 2026, May 01 2026, May 06 2026
-10.188.24.83,OK,01:00:00 PM,3 weeks 3 days 13 hours 47 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000123721 seconds fast of NTP time, Apr 30 2026, May 01 2026, Apr 03 2026, May 06 2026
-10.188.24.84,OK,10:00:00 AM,3 weeks 3 days 10 hours 40 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000056478 seconds fast of NTP time, May 01 2026, May 02 2026, May 01 2026, May 06 2026
-10.188.24.85,OK,12:00:00 PM,3 weeks 3 days 12 hours 33 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000003086 seconds fast of NTP time, Apr 30 2026, May 01 2026, Apr 25 2026, May 03 2026
-10.188.24.86,/var (74%) ,01:00:00 PM,3 weeks 3 days 13 hours 25 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000047656 seconds slow of NTP time, Apr 30 2026, May 02 2026, Apr 03 2026, May 06 2026
-10.188.24.87,OK,01:00:00 PM,3 weeks 3 days 13 hours 17 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000020504 seconds slow of NTP time, Apr 30 2026, May 02 2026, May 01 2026, May 06 2026
-10.188.24.88,/opt/IBM (72%) ,01:00:00 PM,3 weeks 14 hours 18 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000002651 seconds fast of NTP time, Apr 30 2026, May 02 2026, May 01 2026, May 06 2026
-10.188.24.89,/var (83%) ,12:00:00 PM,3 weeks 13 hours 4 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000038307 seconds fast of NTP time, May 01 2026, May 01 2026, Apr 10 2026, Apr 20 2026
-10.188.24.90,/var (77%) ,01:00:00 PM,3 weeks 13 hours 58 minutes,PR LINUX,128,                      16,9.7(Plow),5.14.0-611.13.1.el9_7.x86_64,Sat Nov EST 29,13.0.5.0, 9.4.0.17,active,602,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000034465 seconds slow of NTP time, May 01 2026, May 01 2026, Apr 20 2026, Jun 15 2026
-10.188.25.10,OK,2026-03-19 01:00:04 PM,3 weeks 6 days 9 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000016423 seconds slow of NTP time, Apr 07 2026, Mar 30 2026, Apr 21 2026, Apr 11 2026
-10.188.25.11,/opt (74%) ,2026-03-19 01:00:05 PM,2 weeks 6 days 13 hours 50 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000039014 seconds fast of NTP time, Apr 13 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.110,/var (71%) /opt (76%) ,2026-03-19 01:00:03 PM,2 weeks 6 days 12 hours 18 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000167868 seconds slow of NTP time, Apr 07 2026, May 02 2026, Apr 13 2026, Apr 03 2026
-10.188.25.111,/var (73%) ,2026-03-19 11:00:03 AM,2 weeks 6 days 10 hours 26 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000087265 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.112,/opt (76%) ,2026-03-19 12:00:05 PM,2 weeks 5 days 13 hours 19 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000011210 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.113,/var (70%) /opt (76%) ,2026-03-19 12:00:04 PM,2 weeks 5 days 13 hours 19 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000143091 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.114,/var/mqm (73%) ,2026-03-19 01:00:03 PM,2 weeks 5 days 14 hours 6 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000008329 seconds fast of NTP time, Apr 14 2026, Mar 30 2026, Apr 30 2026, Apr 03 2026
-10.188.25.115,OK,2026-03-19 12:00:03 PM,2 weeks 5 days 13 hours 7 minutes,PR LINUX,64,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000077753 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.12,OK,2026-03-19 01:00:03 PM,2 weeks 6 days 12 hours 39 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000061433 seconds slow of NTP time, Apr 24 2026, Apr 29 2026, May 01 2026, Apr 03 2026
-10.188.25.13,/opt (76%) ,2026-03-19 01:00:04 PM,2 weeks 6 days 12 hours 39 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000054832 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 10 2026, Apr 03 2026
-10.188.25.131,OK,2026-03-19 12:00:04 PM,2 weeks 6 days 12 hours 26 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000002537 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.132,OK,2026-03-19 01:00:03 PM,2 weeks 6 days 13 hours 16 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000127331 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 10 2026, Apr 03 2026
-10.188.25.133,OK,2026-03-19 01:00:03 PM,2 weeks 6 days 13 hours 6 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000036536 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.25.134,OK,2026-03-19 12:00:03 PM,2 weeks 6 days 11 hours 56 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000022599 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.25.135,OK,2026-03-19 12:00:03 PM,2 weeks 6 days 11 hours 56 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000023211 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.14,/var (70%) ,2026-03-19 12:00:05 PM,2 weeks 6 days 12 hours 37 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000052462 seconds fast of NTP time, Apr 13 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.141,OK,2026-03-19 01:00:06 PM,3 weeks 3 days 13 hours 45 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000020055 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.142,OK,2026-03-19 01:00:05 PM,3 weeks 3 days 13 hours 29 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000177977 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 10 2026, Apr 03 2026
-10.188.25.143,OK,2026-03-19 01:00:05 PM,3 weeks 3 days 13 hours 16 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000034417 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.144,/var (70%) ,2026-03-19 01:00:05 PM,3 weeks 3 days 13 hours 3 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000008459 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.145,OK,2026-03-19 01:00:05 PM,3 weeks 13 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000025577 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.25.146,OK,2026-03-19 01:00:05 PM,3 weeks 13 hours 2 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000026738 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.15,OK,2026-03-19 01:00:03 PM,3 weeks 12 hours 41 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000002849 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.188.25.155,OK,2026-03-19 01:00:05 PM,3 weeks 12 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000000022 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.156,OK,2026-03-19 01:00:04 PM,2 weeks 6 days 13 hours 27 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000002402 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.157,OK,2026-03-19 12:00:04 PM,2 weeks 6 days 12 hours 10 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000080109 seconds slow of NTP time, Apr 03 2026, May 02 2026, Mar 30 2026, Apr 03 2026
-10.188.25.158,OK,2026-03-19 01:00:04 PM,2 weeks 6 days 12 hours 58 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000067319 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.25.159,OK,2026-03-19 12:00:03 PM,2 weeks 6 days 11 hours 24 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000048107 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.160,OK,2026-03-19 01:00:04 PM,2 weeks 5 days 13 hours 32 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000014352 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.161,/tmp (74%) /var (71%) ,10:00:00 AM,2 days 14 hours 3 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000055468 seconds slow of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 03 2026
-10.188.25.162,/tmp (74%) /var (70%) ,10:00:00 AM,5 days 15 hours 22 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000004520 seconds fast of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 03 2026
-10.188.25.163,/opt (73%) /tmp (86%) /var (71%) /home (75%) /var/mqm (71%) ,2026-03-19 01:00:03 PM,2 weeks 5 days 13 hours 30 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000005617 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 25 2026, Apr 03 2026
-10.188.25.164,/var (71%) /home (72%) ,2026-03-19 12:00:25 PM,2 weeks 5 days 12 hours 29 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000036180 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.165,/var/mqm (74%) ,2026-03-19 01:00:49 PM,2 weeks 5 days 13 hours 42 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000025859 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 18 2026, Apr 03 2026
-10.188.25.166,/var (71%) /home (71%) /home/scripts (70%) ,2026-03-19 01:00:54 PM,2 weeks 5 days 13 hours 43 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,602,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000013768 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.167,/home (70%) /opt (76%) ,2026-03-19 01:00:06 PM,2 weeks 5 days 14 hours 17 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000088292 seconds fast of NTP time, Mar 30 2026, Apr 27 2026, Apr 18 2026, Apr 03 2026
-10.188.25.168,/log_temp (70%) ,2026-03-19 01:00:06 PM,2 weeks 5 days 14 hours 18 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,617,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000114661 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.25.169,/log_temp (70%) ,2026-03-19 01:00:06 PM,2 weeks 5 days 14 hours 18 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000017625 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.25.170,OK,2026-03-19 12:00:03 PM,2 weeks 5 days 13 hours 5 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000010443 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.25.171,/var (71%) ,01:00:00 PM,2 weeks 5 days 14 hours 4 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000002553 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.25.172,OK,12:00:00 PM,5 days 17 hours 20 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000012427 seconds fast of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 03 2026
-10.188.25.173,/var (70%) ,01:00:00 PM,2 weeks 6 days 12 hours 27 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000000217 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 03 2026, Apr 03 2026
-10.188.25.174,OK,12:00:00 PM,2 weeks 6 days 11 hours 27 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000018544 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.175,OK,12:00:00 PM,2 weeks 6 days 11 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000118678 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.176,OK,01:00:00 PM,2 weeks 6 days 12 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000028210 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 10 2026, Apr 03 2026
-10.188.25.190,OK,01:00:00 PM,3 weeks 12 hours 57 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000013161 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.191,OK,12:00:00 PM,3 weeks 11 hours 57 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000002580 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.192,OK,01:00:00 PM,3 weeks 12 hours 44 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000067009 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.194,OK,12:00:00 PM,3 weeks 11 hours 57 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000020076 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.195,OK,01:00:00 PM,3 weeks 12 hours 57 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000074918 seconds fast of NTP time, Mar 21 2026, Apr 27 2026, Mar 23 2026, Mar 21 2026
-10.188.25.196,OK,01:00:00 PM,3 weeks 12 hours 44 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000121109 seconds fast of NTP time, Apr 03 2026, May 02 2026, Mar 30 2026, Apr 03 2026
-10.188.25.197,OK,12:00:00 PM,3 weeks 11 hours 43 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000017541 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.230,OK,2025-06-24 01:00:03 PM,6 days 17 hours 43 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000194449 seconds slow of NTP time, Aug 05 2025, Aug 01 2025, Aug 05 2025, Aug 05 2025
-10.188.25.231,OK,2025-07-30 10:00:03 AM,6 weeks 14 hours 41 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,610,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000125644 seconds slow of NTP time, Sep 02 2025, Sep 02 2025, Sep 02 2025, Aug 25 2025
-10.188.25.232,OK,2025-06-24 12:00:02 PM,6 days 16 hours 39 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,619,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000273597 seconds slow of NTP time, Aug 05 2025, Aug 01 2025, Aug 05 2025, Aug 05 2025
-10.188.25.234,OK,2025-06-24 01:00:03 PM,6 days 17 hours 31 minutes,PR LINUX,16,                   2,9.6(Plow),5.14.0-570.21.1.el9_6.x86_64,Tue Jun EDT 3,12.0.11.1, 9.3.0.0,active,610,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000026396 seconds fast of NTP time, Aug 05 2025, Aug 01 2025, Aug 05 2025, Aug 05 2025
-10.188.25.31,OK,01:00:00 PM,3 weeks 13 hours 34 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,605,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000081061 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.32,OK,10:00:00 AM,3 weeks 10 hours 35 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000017151 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.33,OK,01:00:00 PM,3 weeks 13 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000070707 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.34,OK,01:00:00 PM,3 weeks 13 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000034248 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.41,/var (70%) ,01:00:00 PM,3 weeks 13 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000003442 seconds fast of NTP time, Apr 03 2026, May 02 2026, Mar 30 2026, Apr 03 2026
-10.188.25.42,/log_temp (70%) /var (70%) ,01:00:00 PM,3 weeks 13 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000075208 seconds fast of NTP time, Apr 04 2026, May 02 2026, Apr 04 2026, Apr 03 2026
-10.188.25.43,OK,12:00:00 PM,3 weeks 12 hours 15 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000006653 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.44,OK,01:00:00 PM,3 weeks 13 hours 35 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000033752 seconds fast of NTP time, Apr 03 2026, May 02 2026, Mar 30 2026, Apr 03 2026
-10.188.25.45,OK,01:00:00 PM,3 weeks 13 hours 35 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000026267 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 10 2026, Apr 03 2026
-10.188.25.55,/var (71%) ,01:00:00 PM,3 weeks 2 days 12 hours 58 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000020437 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.56,/var (70%) ,01:00:00 PM,3 weeks 2 days 13 hours 13 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000031099 seconds slow of NTP time, Apr 03 2026, May 02 2026, Apr 30 2026, Apr 03 2026
-10.188.25.57,/var (70%) ,01:00:00 PM,3 weeks 2 days 13 hours 13 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000021050 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.58,/var (71%) ,01:00:00 PM,3 weeks 2 days 13 hours 42 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000036107 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.59,OK,01:00:00 PM,3 weeks 2 days 13 hours 43 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000010767 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.61,/var (71%) ,01:00:00 PM,5 days 18 hours 29 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000020569 seconds fast of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 03 2026
-10.188.25.62,/var (71%) ,12:00:00 PM,5 days 17 hours 26 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000094171 seconds fast of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 03 2026
-10.188.25.63,/log_temp (77%) ,01:00:00 PM,3 weeks 3 days 13 hours 9 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,605,DSrunning,SPLrunning,undefined,10.179.70.2, 0.000111774 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.64,/var (71%) /log_temp (75%) ,01:00:00 PM,3 weeks 3 days 13 hours 9 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,inactive,604,DSnotrunning,SPLrunning,undefined,10.191.174.52, 0.000008303 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.65,/var (72%) ,01:00:00 PM,3 weeks 3 days 13 hours 22 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000016015 seconds fast of NTP time, Apr 03 2026, May 02 2026, Mar 31 2026, Apr 03 2026
-10.188.25.66,OK,01:00:00 PM,3 weeks 3 days 13 hours 22 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000048531 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.67,/opt (76%) ,09:00:00 AM,3 weeks 3 days 9 hours 26 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,632,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000069284 seconds fast of NTP time, May 02 2026, Apr 27 2026, Apr 12 2026, Apr 03 2026
-10.188.25.68,OK,01:00:00 PM,3 weeks 3 days 13 hours 34 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000145187 seconds slow of NTP time, Mar 30 2026, May 25 2026, Apr 12 2026, Apr 03 2026
-10.188.25.69,OK,01:00:00 PM,3 weeks 3 days 13 hours 34 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000009156 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.25.70,/var (70%) ,01:00:00 PM,3 weeks 3 days 13 hours 45 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000023564 seconds slow of NTP time, Mar 30 2026, May 25 2026, Apr 12 2026, Apr 03 2026
-10.188.25.71,OK,01:00:00 PM,3 weeks 3 days 13 hours 45 minutes,PR LINUX,64,                      2,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,616,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000018886 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Apr 21 2026, Apr 03 2026
-10.188.25.72,OK,01:00:00 PM,2 days 17 hours 14 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.35.1.el9_7.x86_64,Tue Feb EST 17,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000073411 seconds slow of NTP time, Apr 22 2026, Apr 27 2026, Apr 22 2026, Apr 03 2026
-10.188.25.73,OK,01:00:00 PM,3 weeks 3 days 13 hours 55 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000033908 seconds fast of NTP time, Apr 03 2026, May 02 2026, Apr 12 2026, Apr 03 2026
-10.188.25.74,OK,01:00:00 PM,3 weeks 3 days 14 hours 5 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000013332 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.75,OK,01:00:00 PM,3 weeks 3 days 14 hours 5 minutes,PR LINUX,64,                      4,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,604,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000007169 seconds slow of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.79,/home/scripts (75%) ,03:00:00 PM,6 weeks 5 days 19 hours 57 minutes,PR LINUX,16,              4,9.5(Plow),5.14.0-284.30.1.el9_2.x86_64,Fri Aug EDT 25,,,inactive,585,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000017969 seconds slow of NTP time, Mar 13 2025, Mar 13 2025, Mar 12 2025, Mar 18 2025
-10.188.25.81,/opt (75%) /opt/IBM (74%) ,01:00:00 PM,3 weeks 3 days 14 hours 9 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000036430 seconds slow of NTP time, Apr 01 2026, Mar 30 2026, Mar 31 2026, Apr 03 2026
-10.188.25.82,/opt (75%) /opt/IBM (72%) /var/www/html/rhel (100%) ,01:00:00 PM,3 weeks 3 days 14 hours 1 minute,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000089415 seconds fast of NTP time, Apr 01 2026, Mar 30 2026, May 01 2026, Apr 03 2026
-10.188.25.83,/opt/IBM (74%) ,01:00:00 PM,3 weeks 3 days 13 hours 47 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,602,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000005604 seconds slow of NTP time, Apr 01 2026, Mar 30 2026, Mar 31 2026, Apr 03 2026
-10.188.25.84,/opt/IBM (74%) ,01:00:00 PM,3 weeks 3 days 13 hours 40 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000051436 seconds slow of NTP time, Apr 01 2026, Mar 30 2026, Apr 04 2026, Apr 03 2026
-10.188.25.85,/opt/IBM (72%) ,12:00:00 PM,2 days 23 hours 59 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,603,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000043166 seconds fast of NTP time, Apr 29 2026, Apr 29 2026, Apr 04 2026, Apr 29 2026
-10.188.25.86,/var (75%) /opt/IBM (74%) ,01:00:00 PM,3 weeks 3 days 13 hours 25 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,602,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000006354 seconds slow of NTP time, Apr 01 2026, Mar 30 2026, Apr 04 2026, Apr 03 2026
-10.188.25.87,/opt/IBM (74%) ,01:00:00 PM,3 weeks 3 days 13 hours 18 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,602,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000044373 seconds slow of NTP time, Apr 03 2026, Mar 30 2026, Apr 30 2026, Apr 03 2026
-10.188.25.88,/opt (74%) /opt/IBM (72%) ,01:00:00 PM,3 weeks 14 hours 18 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,602,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000025988 seconds fast of NTP time, Apr 03 2026, May 02 2026, May 01 2026, Apr 03 2026
-10.188.25.89,/opt/IBM (74%) ,01:00:00 PM,3 weeks 14 hours 9 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.13.1.el9_7.x86_64,Sat Nov EST 29,13.0.5.0, 9.4.0.17,active,600,DSrunning,SPLnotrunning,undefined,10.191.174.52, 0.000018506 seconds slow of NTP time, Apr 23 2026, Apr 23 2026, Apr 23 2026, Apr 03 2026
-10.188.25.90,/var (70%) /opt/IBM (74%) ,01:00:00 PM,3 weeks 13 hours 58 minutes,PR LINUX,128,                   8,9.5(Plow),5.14.0-503.35.1.el9_5.x86_64,Mon Mar EDT 24,13.0.5.0, 9.4.0.17,active,540,DSrunning,SPLnotrunning,undefined,10.191.174.52, 0.000048713 seconds fast of NTP time, Mar 30 2026, Mar 30 2026, Mar 30 2026, Apr 03 2026
-10.188.25.91,/opt/IBM (74%) ,01:00:00 PM,3 weeks 13 hours 47 minutes,PR LINUX,128,                   8,9.5(Plow),5.14.0-503.35.1.el9_5.x86_64,Mon Mar EDT 24,13.0.5.0, 9.4.0.17,active,541,DSrunning,SPLnotrunning,undefined,10.191.174.53, 0.000012160 seconds slow of NTP time, Mar 30 2026, Mar 30 2026, Mar 30 2026, Apr 11 2026
-10.188.25.92,/opt (74%) /var (72%) ,01:00:00 PM,3 weeks 13 hours 47 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000038757 seconds slow of NTP time, Apr 23 2026, Apr 23 2026, Apr 23 2026, Apr 03 2026
-10.188.25.93,/opt (74%) ,01:00:00 PM,3 weeks 13 hours 39 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000044978 seconds fast of NTP time, Apr 23 2026, Apr 23 2026, May 01 2026, Apr 03 2026
-10.188.25.94,/opt (74%) ,01:00:00 PM,3 weeks 13 hours 40 minutes,PR LINUX,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,606,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000021696 seconds slow of NTP time, Apr 23 2026, Apr 23 2026, May 01 2026, Apr 03 2026
-10.188.26.10,OK,10:00:00 AM,5 weeks 5 days 14 hours 33 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000013343 seconds fast of NTP time, Apr 01 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.11,/opt (74%) ,12:00:00 PM,13 weeks 2 days 17 hours 37 minutes,,64,                      4,9.7(Plow),5.14.0-611.8.1.el9_7.x86_64,Thu Nov EST 13,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000042974 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.110,/opt (74%) ,12:00:00 PM,13 weeks 2 days 17 hours 4 minutes,,64,                      4,9.7(Plow),5.14.0-611.8.1.el9_7.x86_64,Thu Nov EST 13,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000000490 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.111,/opt (74%) ,01:00:00 PM,4 weeks 4 days 13 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000046343 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.131,/opt (86%) ,01:00:00 PM,6 weeks 16 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000016260 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.132,/opt (86%) ,01:00:00 PM,5 weeks 5 days 22 hours,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000129343 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.133,OK,01:00:00 PM,5 days 18 hours,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000032680 seconds slow of NTP time, Apr 01 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.134,OK,01:00:00 PM,5 days 17 hours 58 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000007380 seconds slow of NTP time, Apr 01 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.141,/opt (87%) ,11:00:00 AM,6 weeks 20 hours 6 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000042615 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.142,/opt (87%) ,01:00:00 PM,6 weeks 21 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000020797 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.155,/opt (90%) ,12:00:00 PM,6 weeks 21 hours 19 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000011465 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.156,/opt (89%) ,01:00:00 PM,6 weeks 1 hour 59 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000021876 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.163,OK,11:00:00 AM,13 weeks 2 days 15 hours 38 minutes,,64,                      4,9.7(Plow),5.14.0-611.8.1.el9_7.x86_64,Thu Nov EST 13,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000030025 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.164,OK,11:00:00 AM,6 weeks 20 hours 11 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000061193 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.173,/opt (87%) ,11:00:00 AM,13 weeks 2 days 15 hours 33 minutes,,64,                      4,9.7(Plow),5.14.0-611.8.1.el9_7.x86_64,Thu Nov EST 13,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000082167 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.174,/opt (87%) ,12:00:00 PM,5 weeks 5 days 17 hours 23 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000010898 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.190,/opt (87%) ,01:00:00 PM,5 weeks 5 days 17 hours 28 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000009926 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.191,/opt (87%) ,01:00:00 PM,13 weeks 2 days 17 hours 30 minutes,,64,                      4,9.7(Plow),5.14.0-611.8.1.el9_7.x86_64,Thu Nov EST 13,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000012711 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.194,/opt (87%) ,01:00:00 PM,4 weeks 4 days 13 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000002822 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.195,/opt (87%) ,12:00:00 PM,13 weeks 2 days 16 hours 27 minutes,,64,                      4,9.7(Plow),5.14.0-611.8.1.el9_7.x86_64,Thu Nov EST 13,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000002881 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.31,/opt (88%) ,01:00:00 PM,5 weeks 5 days 21 hours 31 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000021572 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.32,/opt (87%) ,01:00:00 PM,5 weeks 5 days 18 hours 10 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000093646 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.33,OK,01:00:00 PM,5 days 18 hours 3 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000024880 seconds fast of NTP time, Apr 01 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.34,OK,12:00:00 PM,5 days 17 hours 1 minute,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000062793 seconds fast of NTP time, Apr 01 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
-10.188.26.41,/opt (89%) /var (75%) ,12:00:00 PM,5 weeks 5 days 21 hours 9 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000005493 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.42,/opt (88%) /var (74%) ,10:00:00 AM,5 weeks 5 days 14 hours 16 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000041009 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.55,/opt (89%) /var (90%) ,01:00:00 PM,4 weeks 4 days 13 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000004330 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.56,/opt (87%) /var (87%) ,12:00:00 PM,5 weeks 5 days 17 hours 29 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000022152 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.63,/var (79%) /home/scripts (70%) ,2026-03-19 12:00:02 PM,5 weeks 6 days 23 hours 19 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000021020 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.64,/var (70%) ,01:00:00 PM,5 weeks 5 days 21 hours 48 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000057436 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.73,/opt (87%) ,01:00:00 PM,6 weeks 8 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000061719 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.74,/opt (87%) ,12:00:00 PM,6 weeks 21 hours 8 minutes,,64,                      4,9.7(Plow),5.14.0-611.26.1.el9_7.x86_64,Sat Jan EST 17,13.0.5.0, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000055429 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.81,/var (79%) ,01:00:00 PM,3 weeks 13 hours 31 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000017470 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.82,/var (74%) ,01:00:00 PM,3 weeks 13 hours 31 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,614,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000001313 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.83,/var (85%) ,01:00:00 PM,3 weeks 13 hours 19 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000001619 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.84,/var (75%) ,12:00:00 PM,3 weeks 12 hours 19 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000001469 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.85,/var (79%) ,01:00:00 PM,3 weeks 13 hours 10 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000002752 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.86,/var (80%) ,01:00:00 PM,3 weeks 13 hours 11 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000032982 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.87,/var (76%) ,01:00:00 PM,3 weeks 13 hours 2 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.52, 0.000000094 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.88,/var (73%) ,12:00:00 PM,3 weeks 12 hours 1 minute,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000009420 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.89,/var (71%) ,12:00:00 PM,3 weeks 11 hours 54 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000011952 seconds slow of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 21 2026
-10.188.26.90,/var (77%) ,01:00:00 PM,3 weeks 12 hours 54 minutes,,128,                      8,9.7(Plow),5.14.0-611.30.1.el9_7.x86_64,Thu Jan EST 29,12.0.12.10, 9.4.0.17,active,613,DSrunning,SPLrunning,undefined,10.191.174.53, 0.000011176 seconds fast of NTP time, Apr 21 2026, Apr 26 2026, Apr 26 2026, Apr 20 2026
+Layer,Environment,Hostname,IP
+PAYMENT_SYS,DR,eisdrpaymentsys-22,10.177.42.132
+PAYMENT_SYS,DR,eisdrpaymentsys-01,10.177.41.131
+PAYMENT_SYS,DR,eisdrpaymentsys-15,10.177.40.135
+PAYMENT_SYS,PR,eisprpaymentsys-04,10.188.25.134
+PAYMENT_SYS,PR,eisprpaymentsys-12,10.188.24.132
+PAYMENT_SYS,PR,eisprpaymentsys-01,10.188.25.131
+PAYMENT_SYS,PR,eisprpaymentsys-05,10.188.25.135
+PAYMENT_SYS,DR,eisdrpaymentsys-05,10.177.41.135
+PAYMENT_SYS,PR,eisprpaymentsys-15,10.188.24.135
+PAYMENT_SYS,DR,eisdrpaymentsys-21,10.177.42.131
+PAYMENT_SYS,DR,eisdrpaymentsys-03,10.177.41.133
+PAYMENT_SYS,DR,eisdrpaymentsys-02,10.177.41.132
+PAYMENT_SYS,DR,eisdrpaymentsys-13,10.177.40.133
+PAYMENT_SYS,DR,eisdrpaymentsys-04,10.177.41.134
+PAYMENT_SYS,DR,eisdrpaymentsys-14,10.177.40.134
+PAYMENT_SYS,DR,eisdrpaymentsys-11,10.177.40.131
+PAYMENT_SYS,PR,eisprpaymentsys-11,10.188.24.131
+PAYMENT_SYS,DR,eisdrpaymentsys-12,10.177.40.132
+PAYMENT_SYS,PR,eisprpaymentsys-14,10.188.24.134
+PAYMENT_SYS,PR,eisprpaymentsys-13,10.188.24.133
+PAYMENT_SYS,PR,eisprpaymentsys-03,10.188.25.133
+PAYMENT_SYS,DR,eisdrpaymentsys-24,10.177.42.134
+PAYMENT_SYS,PR,eisprpaymentsys-23,10.188.26.133
+PAYMENT_SYS,PR,eisprpaymentsys-24,10.188.26.134
+PAYMENT_SYS,PR,eisprpaymentsys-21,10.188.26.131
+PAYMENT_SYS,PR,eisprpaymentsys-22,10.188.26.132
+PAYMENT_SYS,DR,eisdrpaymentsys-23,10.177.42.133
+
+Layer,Environment,Hostname,IP
+ACCOUNT_EXP_02,PR,eispraccexp-16,10.188.24.15
+ACCOUNT_EXP_02,PR,eispraccexp-23,10.188.26.12
+ACCOUNT_EXP_02,DR,eisdraccexp-24,10.177.42.13
+ACCOUNT_EXP_02,DR,eisdraccexp-05,10.177.41.14
+ACCOUNT_EXP_02,DR,eisdraccexp-04,10.177.41.13
+ACCOUNT_EXP_02,DR,eisdraccexp-23,10.177.42.12
+ACCOUNT_EXP_02,PR,eispraccexp-14,10.188.24.13
+ACCOUNT_EXP_02,DR,eisdraccexp-15,10.177.40.14
+ACCOUNT_EXP_02,DR,eisdraccexp-14,10.177.40.13
+ACCOUNT_EXP_02,DR,eisdraccexp-16,10.177.40.15
+ACCOUNT_EXP_02,PR,eispraccexp-15,10.188.24.14
+ACCOUNT_EXP_02,DR,eisdraccexp-06,10.177.41.15
+ACCOUNT_EXP_02,PR,eispraccexp-04,10.188.25.13
+ACCOUNT_EXP_02,PR,eispraccexp-06,10.188.25.15
+ACCOUNT_EXP_02,PR,eispraccexp-24,10.188.26.13
+ACCOUNT_EXP_02,PR,eispraccexp-05,10.188.25.14
+
+ACCOUNT_SYS,PR,eispraccsys-14,10.188.24.113
+ACCOUNT_SYS,PR,eispraccsys-03,10.188.25.112
+ACCOUNT_SYS,PR,eispraccsys-15,10.188.24.114
+ACCOUNT_SYS,DR,eisdraccsys-15,10.177.40.114
+ACCOUNT_SYS,PR,eispraccsys-06,10.188.25.115
+ACCOUNT_SYS,PR,eispraccsys-13,10.188.24.112
+ACCOUNT_SYS,DR,eisdraccsys-04,10.177.41.113
+ACCOUNT_SYS,DR,eisdraccsys-13,10.177.40.112
+ACCOUNT_SYS,DR,eisdraccsys-02,10.177.41.111
+ACCOUNT_SYS,DR,eisdraccsys-03,10.177.41.112
+ACCOUNT_SYS,DR,eisdraccsys-16,10.177.40.115
+ACCOUNT_SYS,DR,eisdraccsys-11,10.177.40.110
+ACCOUNT_SYS,DR,eisdraccsys-14,10.177.40.113
+ACCOUNT_SYS,DR,eisdraccsys-01,10.177.41.110
+ACCOUNT_SYS,PR,eispraccsys-02,10.188.25.111
+ACCOUNT_SYS,DR,eisdraccsys-12,10.177.40.111
+ACCOUNT_SYS,PR,eispraccsys-11,10.188.24.110
+ACCOUNT_SYS,DR,eisdraccsys-06,10.177.41.115
+ACCOUNT_SYS,PR,eispraccsys-01,10.188.25.110
+ACCOUNT_SYS,PR,eispraccsys-05,10.188.25.114
+ACCOUNT_SYS,PR,eispraccsys-04,10.188.25.113
+ACCOUNT_SYS,PR,eispraccsys-12,10.188.24.111
+ACCOUNT_SYS,PR,eispraccsys-16,10.188.24.115
+ACCOUNT_SYS,DR,eisdraccsys-05,10.177.41.114
+
+Layer,Environment,Hostname,IP
+MISC_SYS,DR,eisdrmiscsys-17,10.177.40.169
+MISC_SYS,PR,eisprmiscsys-05,10.188.25.167
+MISC_SYS,DR,eisdrmiscsys-05,10.177.41.167
+MISC_SYS,PR,Eisprmiscsys-08,10.188.25.170
+MISC_SYS,DR,eisdrmiscsys-08,10.177.41.170
+MISC_SYS,PR,Eisprmiscsys-16,10.188.24.168
+MISC_SYS,DR,eisdrmiscsys-10,10.177.41.172
+MISC_SYS,DR,eisdrmiscsys-15,10.177.40.167
+MISC_SYS,DR,eisdrmiscsys-20,10.177.40.172
+MISC_SYS,DR,eisdrmiscsys-16,10.177.40.168
+MISC_SYS,DR,eisdrmiscsys-19,10.177.40.171
+MISC_SYS,PR,eisprmiscsys-06,10.188.25.168
+MISC_SYS,PR,Eisprmiscsys-09,10.188.25.171
+MISC_SYS,DR,eisdrmiscsys-06,10.177.41.168
+MISC_SYS,PR,Eisprmiscsys-17,10.188.24.169
+MISC_SYS,DR,eisdrmiscsys-18,10.177.40.170
+MISC_SYS,PR,Eisprmiscsys-18,10.188.24.170
+MISC_SYS,PR,Eisprmiscsys-15,10.188.24.167
+MISC_SYS,PR,Eisprmiscsys-20,10.188.24.172
+MISC_SYS,DR,eisdrmiscsys-09,10.177.41.171
+MISC_SYS,PR,eisprmiscsys-10,10.188.25.172
+MISC_SYS,DR,eisdrmiscsys-07,10.177.41.169
+MISC_SYS,PR,Eisprmiscsys-19,10.188.24.171
+MISC_SYS,PR,Eisprmiscsys-07,10.188.25.169
+
+Layer,Environment,Hostname,IP
+MISC_EXP,DR,eisdrmiscexp-09,10.177.41.71
+MISC_EXP,DR,eisdrmiscexp-06,10.177.41.68
+MISC_EXP,DR,eisdrmiscexp-05,10.177.41.67
+MISC_EXP,DR,eisdrmiscexp-18,10.177.40.70
+MISC_EXP,DR,eisdrmiscexp-17,10.177.40.69
+MISC_EXP,DR,eisdrmiscexp-07,10.177.41.69
+MISC_EXP,PR,Eisprmiscexp-19,10.188.24.71
+MISC_EXP,DR,eisdrmiscexp-20,10.177.40.72
+MISC_EXP,PR,eisprmiscexp-08,10.188.25.70
+MISC_EXP,PR,Eisprmiscexp-18,10.188.24.70
+MISC_EXP,PR,Eisprmiscexp-17,10.188.24.69
+MISC_EXP,DR,eisdrmiscexp-15,10.177.40.67
+MISC_EXP,PR,Eisprmiscexp-16,10.188.24.68
+MISC_EXP,PR,Eisprmiscexp-09,10.188.25.71
+MISC_EXP,DR,eisdrmiscexp-19,10.177.40.71
+MISC_EXP,DR,eisdrmiscexp-08,10.177.41.70
+MISC_EXP,PR,Eisprmiscexp-07,10.188.25.69
+MISC_EXP,DR,eisdrmiscexp-10,10.177.41.72
+MISC_EXP,DR,eisdrmiscexp-16,10.177.40.68
+MISC_EXP,PR,Eisprmiscexp-05,10.188.25.67
+MISC_EXP,PR,eisprmiscexp-15,10.188.24.67
+MISC_EXP,PR,Eisprmiscexp-06,10.188.25.68
+MISC_EXP,PR,eisprmiscexp-10,10.188.25.72
+MISC_EXP,PR,Eisprmiscexp-20,10.188.24.72
+
+Layer,Environment,Hostname,IP
+IDHubSys,PR,eispr-idhubsys-22,10.188.26.195
+IDHubSys,DR,eisdr-idhubsys-01,10.177.41.194
+IDHubSys,PR,eispr-idhubsys-01,10.188.25.194
+IDHubSys,PR,eispr-idhubsys-12,10.188.24.195
+IDHubSys,PR,eispr-idhubsys-02,10.188.25.195
+IDHubSys,PR,eispr-idhubsys-13,10.188.24.196
+IDHubSys,PR,eispr-idhubsys-14,10.188.24.197
+IDHubSys,DR,eisdr-idhubsys-11,10.177.40.194
+IDHubSys,DR,eisdr-idhubsys-03,10.177.41.196
+IDHubSys,PR,eispr-idhubsys-04,10.188.25.197
+IDHubSys,PR,eispr-idhubsys-03,10.188.25.196
+IDHubSys,DR,eisdr-idhubsys-12,10.177.40.195
+IDHubSys,DR,eisdr-idhubsys-13,10.177.40.196
+IDHubSys,PR,eispr-idhubsys-11,10.188.24.194
+IDHubSys,PR,eispr-idhubsys-21,10.188.26.194
+IDHubSys,DR,eisdr-idhubsys-04,10.177.41.197
+IDHubSys,DR,eisdr-idhubsys-14,10.177.40.197
+IDHubSys,DR,eisdr-idhubsys-02,10.177.41.195
+
+Layer,Environment,Hostname,IP
+IDHubExp,PR,eispr-idhubexp-21,10.188.26.190
+IDHubExp,PR,eispr-idhubexp-22,10.188.26.191
+IDHubExp,DR,eisdr-idhubexp-01,10.177.41.190
+IDHubExp,PR,eispr-idhubexp-01,10.188.25.190
+IDHubExp,PR,eispr-idhubexp-03,10.188.25.192
+IDHubExp,PR,eispr-idhubexp-13,10.188.24.192
+IDHubExp,DR,eisdr-idhubexp-13,10.177.40.192
+IDHubExp,PR,eispr-idhubexp-02,10.188.25.191
+IDHubExp,DR,eisdr-idhubexp-03,10.177.41.192
+IDHubExp,DR,eisdr-idhubexp-11,10.177.40.190
+IDHubExp,DR,eisdr-idhubexp-02,10.177.41.191
+IDHubExp,DR,eisdr-idhubexp-12,10.177.40.191
+IDHubExp,PR,eispr-idhubexp-12,10.188.24.191
+IDHubExp,PR,eispr-idhubexp-11,10.188.24.190
+
+Layer,Environment,Hostname,IP
+IVRExp,PR,eisprivrexp-21,10.188.26.73
+IVRExp,DR,eisdrivrexp-12,10.177.40.74
+IVRExp,PR,eisprivrexp-13,10.188.24.75
+IVRExp,DR,eisdrivrexp-01,10.177.41.73
+IVRExp,PR,eisprivrexp-03,10.188.25.75
+IVRExp,PR,eisprivrexp-11,10.188.24.73
+IVRExp,PR,eisprivrexp-01,10.188.25.73
+IVRExp,PR,eisprivrexp-12,10.188.24.74
+IVRExp,PR,eisprivrexp-22,10.188.26.74
+IVRExp,DR,eisdrivrexp-11,10.177.40.73
+IVRExp,DR,eisdrivrexp-02,10.177.41.74
+IVRExp,DR,eisdrivrexp-03,10.177.41.75
+IVRExp,DR,eisdrivrexp-13,10.177.40.75
+IVRExp,PR,eisprivrexp-02,10.188.25.74
+
+Layer,Environment,Hostname,IP
+IVRSys,DR,eisdrivrsys-01,10.177.41.173
+IVRSys,DR,eisdrivrsys-11,10.177.40.173
+IVRSys,PR,eisprivrsys-14,10.188.24.176
+IVRSys,DR,eisdrivrsys-03,10.177.41.175
+IVRSys,PR,eisprivrsys-12,10.188.24.174
+IVRSys,PR,eisprivrsys-21,10.188.26.173
+IVRSys,DR,eisdrivrsys-02,10.177.41.174
+IVRSys,PR,eisprivrsys-03,10.188.25.175
+IVRSys,PR,eisprivrsys-13,10.188.24.175
+IVRSys,PR,eisprivrsys-22,10.188.26.174
+IVRSys,PR,eisprivrsys-11,10.188.24.173
+IVRSys,PR,eisprivrsys-04,10.188.25.176
+IVRSys,DR,eisdrivrsys-12,10.177.40.174
+IVRSys,DR,eisdrivrsys-13,10.177.40.175
+IVRSys,PR,eisprivrsys-02,10.188.25.174
+IVRSys,PR,eisprivrsys-01,10.188.25.173
+IVRSys,DR,eisdrivrsys-14,10.177.40.176
+IVRSys,DR,eisdrivrsys-04,10.177.41.176
+
+Layer,Environment,Hostname,IP
+ACCExp,PR,eispraccexp-01,10.188.25.10
+ACCExp,PR,eispraccexp-02,10.188.25.11
+ACCExp,PR,eispraccexp-03,10.188.25.12
+ACCExp,PR,eispraccexp-11,10.188.24.10
+ACCExp,PR,eispraccexp-12,10.188.24.11
+ACCExp,PR,eispraccexp-13,10.188.24.12
+ACCExp,PR,eispraccexp-21,10.188.26.10
+ACCExp,PR,eispraccexp-22,10.188.26.11
+ACCExp,DR,eisdraccexp-01,10.177.41.10
+ACCExp,DR,eisdraccexp-02,10.177.41.11
+ACCExp,DR,eisdraccexp-03,10.177.41.12
+ACCExp,DR,eisdraccexp-11,10.177.40.10
+ACCExp,DR,eisdraccexp-12,10.177.40.11
+ACCExp,DR,eisdraccexp-13,10.177.40.12
+ACCExp,DR,eisdraccexp-21,10.177.42.10
+ACCExp,DR,eisdraccexp-22,10.177.42.11
+
+
+Layer,Environment,Hostname,IP
+PaymentExp,DR,eisdrpaymentexp-01,10.177.41.31
+PaymentExp,DR,eisdrpaymentexp-02,10.177.41.32
+PaymentExp,DR,eisdrpaymentexp-03,10.177.41.33
+PaymentExp,DR,eisdrpaymentexp-04,10.177.41.34
+PaymentExp,DR,eisdrpaymentexp-11,10.177.40.31
+PaymentExp,DR,eisdrpaymentexp-12,10.177.40.32
+PaymentExp,DR,eisdrpaymentexp-13,10.177.40.33
+PaymentExp,DR,eisdrpaymentexp-14,10.177.40.34
+PaymentExp,DR,eisdrpaymentexp-21,10.177.42.31
+PaymentExp,DR,eisdrpaymentexp-22,10.177.42.32
+PaymentExp,DR,eisdrpaymentexp-23,10.177.42.33
+PaymentExp,DR,eisdrpaymentexp-24,10.177.42.34
+PaymentExp,PR,eisprpaymentexp-01,10.188.25.31
+PaymentExp,PR,eisprpaymentexp-02,10.188.25.32
+PaymentExp,PR,eisprpaymentexp-03,10.188.25.33
+PaymentExp,PR,eisprpaymentexp-04,10.188.25.34
+PaymentExp,PR,eisprpaymentexp-11,10.188.24.31
+PaymentExp,PR,eisprpaymentexp-12,10.188.24.32
+PaymentExp,PR,eisprpaymentexp-13,10.188.24.33
+PaymentExp,PR,eisprpaymentexp-14,10.188.24.34
+PaymentExp,PR,eisprpaymentexp-21,10.188.26.31
+PaymentExp,PR,eisprpaymentexp-22,10.188.26.32
+PaymentExp,PR,eisprpaymentexp-23,10.188.26.33
+PaymentExp,PR,eisprpaymentexp-24,10.188.26.34
+
+Layer,Environment,Hostname,IP
+CustSys,DR,eisdrcustsys-01,10.177.41.141
+CustSys,DR,eisdrcustsys-02,10.177.41.142
+CustSys,DR,eisdrcustsys-03,10.177.41.143
+CustSys,DR,eisdrcustsys-04,10.177.41.144
+CustSys,DR,eisdrcustsys-05,10.177.41.145
+CustSys,DR,eisdrcustsys-06,10.177.41.146
+CustSys,DR,eisdrcustsys-11,10.177.40.141
+CustSys,DR,eisdrcustsys-12,10.177.40.142
+CustSys,DR,eisdrcustsys-13,10.177.40.143
+CustSys,DR,eisdrcustsys-14,10.177.40.144
+CustSys,DR,eisdrcustsys-15,10.177.40.145
+CustSys,DR,eisdrcustsys-16,10.177.40.146
+CustSys,DR,eisdrcustsys-21,10.177.42.141
+CustSys,DR,eisdrcustsys-22,10.177.42.142
+CustSys,PR,eisprcustsys-01,10.188.25.141
+CustSys,PR,eisprcustsys-02,10.188.25.142
+CustSys,PR,eisprcustsys-03,10.188.25.143
+CustSys,PR,eisprcustsys-04,10.188.25.144
+CustSys,PR,eisprcustsys-05,10.188.25.145
+CustSys,PR,eisprcustsys-06,10.188.25.146
+CustSys,PR,eisprcustsys-11,10.188.24.141
+CustSys,PR,eisprcustsys-12,10.188.24.142
+CustSys,PR,eisprcustsys-13,10.188.24.143
+CustSys,PR,eisprcustsys-14,10.188.24.144
+CustSys,PR,eisprcustsys-15,10.188.24.145
+CustSys,PR,eisprcustsys-16,10.188.24.146
+CustSys,PR,eisprcustsys-21,10.188.26.141
+CustSys,PR,eisprcustsys-22,10.188.26.142
+
+
+Layer,Environment,Hostname,IP
+CustExp,DR,eisdrcustexp-01,10.177.41.41
+CustExp,DR,eisdrcustexp-02,10.177.41.42
+CustExp,DR,eisdrcustexp-03,10.177.41.43
+CustExp,DR,eisdrcustexp-04,10.177.41.44
+CustExp,DR,eisdrcustexp-05,10.177.41.45
+CustExp,DR,eisdrcustexp-11,10.177.40.41
+CustExp,DR,eisdrcustexp-12,10.177.40.42
+CustExp,DR,eisdrcustexp-13,10.177.40.43
+CustExp,DR,eisdrcustexp-14,10.177.40.44
+CustExp,DR,eisdrcustexp-15,10.177.40.45
+CustExp,DR,eisdrcustexp-21,10.177.42.41
+CustExp,DR,eisdrcustexp-22,10.177.42.42
+CustExp,PR,eisprcustexp-01,10.188.25.41
+CustExp,PR,eisprcustexp-02,10.188.25.42
+CustExp,PR,eisprcustexp-03,10.188.25.43
+CustExp,PR,eisprcustexp-04,10.188.25.44
+CustExp,PR,eisprcustexp-05,10.188.25.45
+CustExp,PR,eisprcustexp-11,10.188.24.41
+CustExp,PR,eisprcustexp-12,10.188.24.42
+CustExp,PR,eisprcustexp-13,10.188.24.43
+CustExp,PR,eisprcustexp-14,10.188.24.44
+CustExp,PR,eisprcustexp-15,10.188.24.45
+CustExp,PR,eisprcustexp-21,10.188.26.41
+CustExp,PR,eisprcustexp-22,10.188.26.42
+
+
+MISC_SYS,DR,eisdrmiscsys-23,10.177.41.161
+MISC_SYS,DR,eisdrmiscsys-01,10.177.41.163
+MISC_SYS,DR,eisdrmiscsys-13,10.177.40.165
+MISC_SYS,DR,eisdrmiscsys-03,10.177.41.165
+MISC_SYS,DR,eisdrmiscsys-26,10.177.40.162
+MISC_SYS,DR,eisdrmiscsys-25,10.177.40.161
+MISC_SYS,DR,eisdrmiscsys-24,10.177.41.162
+MISC_SYS,DR,eisdrmiscsys-12,10.177.40.164
+MISC_SYS,DR,eisdrmiscsys-02,10.177.41.164
+MISC_SYS,DR,eisdrmiscsys-11,10.177.40.163
+MISC_SYS,DR,eisdrmiscsys-14,10.177.40.166
+MISC_SYS,DR,eisdrmiscsys-04,10.177.41.166
+MISC_SYS,PR,eisprmiscsys-26,10.188.24.162
+MISC_SYS,PR,eisprmiscsys-23,10.188.25.161
+MISC_SYS,PR,eisprmiscsys-25,10.188.24.161
+MISC_SYS,PR,eisprmiscsys-13,10.188.24.165
+MISC_SYS,PR,eisprmiscsys-12,10.188.24.164
+MISC_SYS,PR,eisprmiscsys-02,10.188.25.164
+MISC_SYS,PR,eisprmiscsys-03,10.188.25.165
+MISC_SYS,PR,eisprmiscsys-04,10.188.25.166
+MISC_SYS,PR,eisprmiscsys-01,10.188.25.163
+MISC_SYS,PR,eisprmiscsys-11,10.188.24.163
+
+Layer,Environment,Hostname,IP
+MISC_EXP,DR,eisdrmiscexp-14,10.177.40.66
+MISC_EXP,DR,eisdrmiscexp-12,10.177.40.64
+MISC_EXP,DR,eisdrmiscexp-02,10.177.41.64
+MISC_EXP,DR,eisdrmiscexp-13,10.177.40.65
+MISC_EXP,DR,eisdrmiscexp-11,10.177.40.63
+MISC_EXP,DR,eisdrmiscexp-25,10.177.40.61
+MISC_EXP,DR,eisdrmiscexp-03,10.177.41.65
+MISC_EXP,DR,eisdrmiscexp-01,10.177.41.63
+MISC_EXP,DR,eisdrmiscexp-04,10.177.41.66
+MISC_EXP,DR,eisdrmiscexp-24,10.177.41.62
+MISC_EXP,DR,eisdrmiscexp-26,10.177.40.62
+MISC_EXP,DR,eisdrmiscexp-23,10.177.41.61
+
+MISC_EXP,PR,eisprmiscexp-23,10.188.25.61
+MISC_EXP,PR,eisprmiscexp-25,10.188.24.61
+MISC_EXP,PR,eisprmiscexp-01,10.188.25.63
+MISC_EXP,PR,eisprmiscexp-12,10.188.24.64
+MISC_EXP,PR,eisprmiscexp-14,10.188.24.66
+MISC_EXP,PR,eisprmiscexp-26,10.188.24.62
+MISC_EXP,PR,eisprmiscexp-03,10.188.25.65
+MISC_EXP,PR,eisprmiscexp-24,10.188.25.62
+MISC_EXP,PR,eisprmiscexp-02,10.188.25.64
+MISC_EXP,PR,eisprmiscexp-11,10.188.24.63
+MISC_EXP,PR,eisprmiscexp-04,10.188.25.66
+MISC_EXP,PR,eisprmiscexp-13,10.188.24.65
+
+
+LOGIN_EXP,DR,eisdrloginexp-22,10.177.42.56
+LOGIN_EXP,DR,eisdrloginexp-21,10.177.42.55
+LOGIN_EXP,DR,eisdrloginexp-03,10.177.41.57
+LOGIN_EXP,DR,eisdrloginexp-02,10.177.41.56
+LOGIN_EXP,DR,eisdrloginexp-05,10.177.41.59
+LOGIN_EXP,DR,eisdrloginexp-11,10.177.40.55
+LOGIN_EXP,DR,eisdrloginexp-14,10.177.40.58
+LOGIN_EXP,DR,eisdrloginexp-15,10.177.40.59
+LOGIN_EXP,DR,eisdrloginexp-13,10.177.40.57
+LOGIN_EXP,DR,eisdrloginexp-12,10.177.40.56
+LOGIN_EXP,DR,eisdrloginexp-04,10.177.41.58
+LOGIN_EXP,DR,eisdrloginexp-01,10.177.41.55
+
+LOGIN_EXP,PR,eisprloginexp-15,10.188.24.59
+LOGIN_EXP,PR,eisprloginexp-13,10.188.24.57
+LOGIN_EXP,PR,eisprloginexp-12,10.188.24.56
+LOGIN_EXP,PR,eisprloginexp-11,10.188.24.55
+LOGIN_EXP,PR,eisprloginexp-05,10.188.25.59
+LOGIN_EXP,PR,eisprloginexp-04,10.188.25.58
+LOGIN_EXP,PR,eisprloginexp-03,10.188.25.57
+LOGIN_EXP,PR,eisprloginexp-02,10.188.25.56
+LOGIN_EXP,PR,eisprloginexp-01,10.188.25.55
+LOGIN_EXP,PR,eisprloginexp-22,10.188.26.56
+LOGIN_EXP,PR,eisprloginexp-21,10.188.26.55
+
+Layer,Environment,Hostname,IP
+LOGIN_SYS,DR,eisdrloginsys-21,10.177.42.155
+LOGIN_SYS,DR,eisdrloginsys-01,10.177.41.155
+LOGIN_SYS,PR,eisprloginsys-01,10.188.25.155
+LOGIN_SYS,PR,eisprloginsys-11,10.188.24.155
+LOGIN_SYS,DR,eisdrloginsys-13,10.177.40.157
+LOGIN_SYS,PR,eisprloginsys-13,10.188.24.157
+LOGIN_SYS,PR,eisprloginsys-04,10.188.25.158
+LOGIN_SYS,PR,eisprloginsys-15,10.188.24.159
+LOGIN_SYS,DR,eisdrloginsys-22,10.177.42.156
+LOGIN_SYS,DR,eisdrloginsys-11,10.177.40.155
+LOGIN_SYS,DR,eisdrloginsys-15,10.177.40.159
+LOGIN_SYS,PR,eisprloginsys-14,10.188.24.158
+LOGIN_SYS,DR,eisdrloginsys-12,10.177.40.156
+LOGIN_SYS,PR,eisprloginsys-03,10.188.25.157
+LOGIN_SYS,PR,eisprloginsys-05,10.188.25.159
+LOGIN_SYS,DR,eisdrloginsys-06,10.177.41.160
+LOGIN_SYS,DR,eisdrloginsys-16,10.177.40.160
+LOGIN_SYS,PR,eisprloginsys-02,10.188.25.156
+LOGIN_SYS,DR,eisdrloginsys-02,10.177.41.156
+LOGIN_SYS,DR,eisdrloginsys-14,10.177.40.158
+LOGIN_SYS,DR,eisdrloginsys-05,10.177.41.159
+LOGIN_SYS,PR,eisprloginsys-12,10.188.24.156
+LOGIN_SYS,PR,eisprloginsys-16,10.188.24.160
+LOGIN_SYS,PR,eisprloginsys-06,10.188.25.160
+LOGIN_SYS,DR,eisdrloginsys-03,10.177.41.157
+LOGIN_SYS,DR,eisdrloginsys-04,10.177.41.158
+LOGIN_SYS,PR,eisprloginsys-22,10.188.26.156
+LOGIN_SYS,PR,eisprloginsys-21,10.188.26.155
+
+
+
+
