@@ -1,4 +1,10 @@
-curl -X GET \
-  'https://oneview.sbi:443/e/01e03b7a-7c38-40a9-a794-8fd9c90bf213/api/v2/metrics/query?metricSelector=builtin:host.cpu.usage:filter(and(or(in("dt.entity.host",entitySelector("type(host),entityName.equals(\"EISDRAPPIND10.CORP.AD.SBI - 16.177.40.204 - EIS_DR_App_New\"))")))):splitBy():sort(value(auto,descending)):limit(20)' \
-  -H 'Authorization: Api-Token YOUR_API_TOKEN' \
-  -H 'Accept: application/json'
+for i in 113 114
+do
+    ssh -tq 10.188.24.$i "sudo su -c 'hostname -i;
+    for j in \$(dspmq | cut -d\"(\" -f2 | cut -d\")\" -f1);
+    do
+        echo \$j;
+        strmqm \$j;
+    done;
+    systemctl status firewalld'"
+done
